@@ -21,6 +21,7 @@ const http = require('http');
 const socketIo = require('socket.io');
 const sharedsession = require('express-socket.io-session');
 const { pool } = require('./database');
+const poolConnect = Promise.resolve(); // PostgreSQL doesn't need this - compatibility shim
 // Auto-migration: create tables if they don't exist (first deploy only)
 (async () => {
     try {
@@ -914,32 +915,18 @@ async function spendCredits(userId, amount, reason, feature, durationDays = 0, u
 // ==================== USER CREDITS INIT ====================
 async function initializeUserCredits(userId) {
     try {
-        await poolConnect;
-        const existing = await pool.request()
-            .input('user_id', sql.Int, userId)
-            .query('SELECT id FROM user_credits WHERE user_id = @user_id');
-        
-        if (existing.recordset.length === 0) {
-            const welcomeBonus = 600;
-            await pool.request()
-                .input('user_id', sql.Int, userId)
-                .input('balance', sql.Decimal(10,2), welcomeBonus)
-                .input('lifetime_earned', sql.Decimal(10,2), welcomeBonus)
-                .query(`
-                    INSERT INTO user_credits (user_id, balance, lifetime_earned)
-                    VALUES (@user_id, @balance, @lifetime_earned)
-                `);
-            
-            await pool.request()
-                .input('user_id', sql.Int, userId)
-                .input('amount', sql.Decimal(10,2), welcomeBonus)
-                .input('type', sql.NVarChar, 'bonus')
-                .input('description', sql.NVarChar, 'Welcome bonus for joining Sraveik')
-                .query(`
-                    INSERT INTO credit_transactions (user_id, amount, type, description)
-                    VALUES (@user_id, @amount, @type, @description)
-                `);
-        }
+        const welcomeBonus = 600;
+        await pool.query(
+            `INSERT INTO user_credits (user_id, balance, lifetime_earned)
+             VALUES ($1, $2, $2)
+             ON CONFLICT (user_id) DO NOTHING`,
+            [userId, welcomeBonus]
+        );
+        await pool.query(
+            `INSERT INTO credit_transactions (user_id, amount, type, description)
+             VALUES ($1, $2, 'bonus', 'Welcome bonus for joining Sraveik')`,
+            [userId, welcomeBonus]
+        );
     } catch (err) {
         console.error('Error initializing user credits:', err);
     }
@@ -947,11 +934,11 @@ async function initializeUserCredits(userId) {
 
 async function ensureUserCredits(userId) {
     try {
-        await poolConnect;
-        const existing = await pool.request()
-            .input('user_id', sql.Int, userId)
-            .query('SELECT id FROM user_credits WHERE user_id = @user_id');
-        if (existing.recordset.length === 0) {
+        const existing = await pool.query(
+            'SELECT id FROM user_credits WHERE user_id = $1',
+            [userId]
+        );
+        if (existing.rows.length === 0) {
             await initializeUserCredits(userId);
         }
     } catch (err) {
@@ -1203,18 +1190,16 @@ io.use(sharedsession(sessionMiddleware, { autoSave: true }));
 const onlineUsers = new Map(); // userId -> { socketId: string, socketIds: Set }
 
 async function getFriendsList(userId) {
-    await poolConnect;
-    const result = await pool.request()
-        .input('user_id', sql.Int, userId)
-        .query(`
-            SELECT u.id, u.username, u.display_name, u.avatar_url, u.status
-            FROM friendships f
-            JOIN users u ON (f.user_id = u.id OR f.friend_id = u.id)
-            WHERE (f.user_id = @user_id OR f.friend_id = @user_id)
-              AND f.status = 'accepted'
-              AND u.id != @user_id
-        `);
-    return result.recordset;
+    const result = await pool.query(
+        `SELECT u.id, u.username, u.display_name, u.avatar_url, u.status
+         FROM friendships f
+         JOIN users u ON (f.user_id = u.id OR f.friend_id = u.id)
+         WHERE (f.user_id = $1 OR f.friend_id = $1)
+           AND f.status = 'accepted'
+           AND u.id != $1`,
+        [userId]
+    );
+    return result.rows;
 }
 
 // Helper for real‑time admin stats
