@@ -20,6 +20,21 @@ const http = require('http');
 const socketIo = require('socket.io');
 const sharedsession = require('express-socket.io-session');
 const { pool } = require('./database');
+// Auto-migration: create tables if they don't exist (first deploy only)
+(async () => {
+    try {
+        await pool.query('SELECT 1 FROM users LIMIT 1');
+        console.log('✅ Database tables already exist');
+    } catch (err) {
+        console.log('⚠️ Tables missing, running migration...');
+        try {
+            require('./migrate-pg.js');
+            console.log('✅ Migration completed');
+        } catch (migrateErr) {
+            console.error('❌ Migration failed:', migrateErr.message);
+        }
+    }
+})();
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const { rateLimit, ipKeyGenerator } = require('express-rate-limit');
