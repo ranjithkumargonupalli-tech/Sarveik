@@ -10,6 +10,7 @@ console.log('Google Callback URL:', process.env.GOOGLE_CALLBACK_URL);
 
 const express = require('express');
 const session = require('express-session');
+const pgSession = require('connect-pg-simple')(session);
 const bcrypt = require('bcrypt');
 const multer = require('multer');
 const path = require('path');
@@ -21,7 +22,7 @@ const sharedsession = require('express-socket.io-session');
 const { pool } = require('./database');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const { rateLimit } = require('express-rate-limit');
+const { rateLimit, ipKeyGenerator } = require('express-rate-limit');
 const zxcvbn = require('zxcvbn');
 const cron = require('node-cron');
 const nodemailer = require('nodemailer');
@@ -169,7 +170,13 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use('/api/phonepe-webhook', express.raw({ type: 'application/json' }));
 app.use(express.static('public'));
 
+// ==================== SESSION MIDDLEWARE (PostgreSQL store) ====================
 const sessionMiddleware = session({
+    store: new pgSession({
+        pool: pool,
+        tableName: 'session',
+        createTableIfMissing: true
+    }),
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
@@ -218,12 +225,13 @@ const authLimiter = rateLimit({
     skipSuccessfulRequests: true,
     message: 'Too many attempts, please try again later.'
 });
+// FIXED: Use ipKeyGenerator properly
 const otpVerificationLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 5,
     keyGenerator: (req) => {
         if (req.body.email) return req.body.email;
-        return req.ip;
+        return ipKeyGenerator(req);
     },
     message: 'Too many OTP verification attempts, please try again later.'
 });
@@ -412,7 +420,7 @@ async function getDailyQuests(userId) {
         LEFT JOIN user_daily_quests uqd ON q.id = uqd.quest_id AND uqd.user_id = $1 AND uqd.date = $2
     `, [userId, today]);
     for (const q of quests.rows) {
-        if (q.progress === 0 && q.completed === false && q.claimed === false && !q.progress_from_db) { // crude check if missing
+        if (q.progress === 0 && q.completed === false && q.claimed === false && !q.progress_from_db) {
             await pool.query(
                 `INSERT INTO user_daily_quests (user_id, quest_id, date, progress, completed, claimed)
                  VALUES ($1, $2, $3, 0, false, false)
@@ -4062,8 +4070,8 @@ app.post('/api/activity-log', isAuthenticated, async (req, res) => {
     const { action, target, details } = req.body;
     try {
         await pool.query(
-            `INSERT INTO moderator_activity (moderator_id, moderator_name, action, target, details)
-             VALUES ($1, $2, $3, $4, $5)`,
+            `INSERT INTO moderator_activity (moderator_id, moderator_name, action, target, details, created_at)
+             VALUES ($1, $2, $3, $4, $5, NOW())`,
             [req.session.userId, req.session.username, action, target || '', details || '']
         );
         res.json({ success: true });
@@ -4096,8 +4104,8 @@ app.post('/api/user-notes/:userId', isAdminOrModerator, async (req, res) => {
     const { notes } = req.body;
     try {
         await pool.query(
-            `INSERT INTO user_notes (user_id, notes, updated_by)
-             VALUES ($1, $2, $3)
+            `INSERT INTO user_notes (user_id, notes, updated_by, updated_at)
+             VALUES ($1, $2, $3, NOW())
              ON CONFLICT (user_id) DO UPDATE SET notes = $2, updated_by = $3, updated_at = NOW()`,
             [req.params.userId, notes, req.session.userId]
         );
