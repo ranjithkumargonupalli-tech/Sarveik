@@ -732,19 +732,15 @@ const isAuthenticated = async (req, res, next) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Not authenticated' });
     try {
         if (!req.session.role) {
-            const result = await pool.query(
-                'SELECT role, is_banned FROM users WHERE id = $1',
-                [req.session.userId]
-            );
-            if (result.rows.length === 0) {
-                req.session.destroy();
-                return res.status(401).json({ error: 'User not found' });
-            }
-            if (result.rows[0].is_banned) {
-                req.session.destroy();
-                return res.status(403).json({ error: 'Your account has been banned' });
-            }
-            req.session.role = result.rows[0].role;
+ const result = await pool.query(
+    'SELECT role, is_banned FROM users WHERE id = $1',
+    [req.session.userId]
+);
+if (result.rows[0].is_banned) {
+    req.session.destroy();
+    return res.status(403).json({ error: 'Your account has been banned' });
+}
+req.session.role = result.rows[0].role;
         }
         next();
     } catch (err) {
@@ -958,15 +954,12 @@ async function awardCreditsForToolApproval(userId, toolName) {
                 WHERE user_id = @user_id
             `);
         
-        await pool.request()
-            .input('user_id', sql.Int, userId)
-            .input('amount', sql.Decimal(10,2), approvalBonus)
-            .input('type', sql.NVarChar, 'earn')
-            .input('description', sql.NVarChar, `Tool approved: ${toolName}`)
-            .query(`
-                INSERT INTO credit_transactions (user_id, amount, type, description)
-                VALUES (@user_id, @amount, @type, @description)
-            `);
+       await pool.query(
+          `INSERT INTO otp_store (email, otp, expires_at)
+           VALUES ($1, $2, $3)
+           ON CONFLICT (email) DO UPDATE SET otp = $2, expires_at = $3`,
+           [email, otp, expires]
+        );
         
         console.log(`✅ Awarded ${approvalBonus} credits to user ${userId} for tool approval: ${toolName}`);
     } catch (err) {
