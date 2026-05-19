@@ -2593,20 +2593,19 @@ app.post('/api/support/tickets', isAuthenticated, async (req, res) => {
         );
         const ticketId = result.rows[0].id;
         
-        const aiReplyText = await getAIResponseForSupport(subject, message);
-        const aiReply = {
-            id: Date.now(),
-            message: aiReplyText,
-            sender_id: null,
-            sender_name: 'Sraveik AI',
-            sender_role: 'ai',
-            created_at: new Date().toISOString()
-        };
-        
-        await pool.query(
-            `UPDATE support_tickets SET replies = $1, ai_handled = true WHERE id = $2`,
-            [JSON.stringify([aiReply]), ticketId]
-        );
+        // Optional: Add a static system message (e.g., "Ticket received")
+const systemReply = {
+    id: Date.now(),
+    message: 'Your ticket has been submitted. A moderator will respond soon.',
+    sender_id: null,
+    sender_name: 'System',
+    sender_role: 'system',
+    created_at: new Date().toISOString()
+};
+await pool.query(
+    `UPDATE support_tickets SET replies = $1, ai_handled = false WHERE id = $2`,
+    [JSON.stringify([systemReply]), ticketId]
+);
         
         res.status(201).json({ success: true, ticketId: ticketId, aiReply: aiReplyText });
     } catch (err) {
