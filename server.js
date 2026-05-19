@@ -3583,7 +3583,8 @@ app.get('/profile', isAuthenticated, async (req, res) => {
         const result = await pool.query(
             `SELECT id, username, email, role, display_name, 
                     bio, phone, github, twitter, linkedin,
-                    avatar_url, created_at, updated_at
+                    avatar_url, created_at, updated_at,
+                    email_verified
              FROM users WHERE id = $1`,
             [req.session.userId]
         );
