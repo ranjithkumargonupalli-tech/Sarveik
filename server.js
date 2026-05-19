@@ -3133,9 +3133,7 @@ app.post('/api/support/tickets/:id/escalate', isAuthenticated, async (req, res) 
 app.get('/api/support/tickets', isAuthenticated, async (req, res) => {
     try {
         await poolConnect;
-        const userRole = await pool.request()
-            .input('userId', sql.Int, req.session.userId)
-            .query('SELECT role FROM users WHERE id = @userId');
+        const userRole = await pool.query('SELECT * FROM users WHERE id = $1', [req.session.userId]);
         const isModOrAdmin = ['admin', 'moderator'].includes(userRole.recordset[0]?.role);
 
         let query;
