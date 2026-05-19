@@ -1686,11 +1686,11 @@ app.post('/send-otp', authLimiter, async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).send('Email is required');
     try {
-        await poolConnect;
+        /*await poolConnect;
         const check = await pool.request()
             .input('email', sql.NVarChar, email)
             .query('SELECT id FROM users WHERE email = @email');
-        if (check.recordset.length > 0) return res.status(409).send('Email already registered');
+        if (check.recordset.length > 0) return res.status(409).send('Email already registered');*/
         
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const expires = new Date(Date.now() + 10 * 60 * 1000);
