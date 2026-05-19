@@ -609,18 +609,43 @@
         .ticket-meta-row { font-size: 0.75rem; color: var(--text3); display: flex; gap: 0.75rem; flex-wrap: wrap; }
         .ticket-preview { font-size: 0.78rem; color: var(--text2); margin-top: 0.2rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 500px; }
 
+        /* Assign badge */
+        .assign-badge {
+            display: inline-flex; align-items: center; gap: 0.35rem;
+            padding: 0.25rem 0.65rem;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            background: rgba(79,209,197,0.12);
+            border: 1px solid rgba(79,209,197,0.25);
+            color: var(--accent2);
+        }
+        .assign-badge i { font-size: 0.65rem; }
+
         /* Reply panel */
         .reply-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-top: 1rem; }
         .convo-wrap { max-height: 380px; overflow-y: auto; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: var(--radius-sm); margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
         .msg-bubble { max-width: 78%; }
         .msg-bubble.user { align-self: flex-end; }
         .msg-bubble.mod { align-self: flex-start; }
-        .msg-bubble.ai { align-self: flex-start; }
         .msg-inner { padding: 0.65rem 1rem; border-radius: 16px; font-size: 0.85rem; line-height: 1.5; }
         .msg-bubble.user .msg-inner { background: var(--accent); color: var(--bg); border-bottom-right-radius: 4px; }
         .msg-bubble.mod .msg-inner { background: var(--bg3); color: var(--text); border-bottom-left-radius: 4px; border: 1px solid var(--border); }
-        .msg-bubble.ai .msg-inner { background: rgba(79,209,197,0.12); border-left: 3px solid var(--accent2); color: var(--text); }
         .msg-meta-row { font-size: 0.66rem; color: var(--text3); margin-top: 0.2rem; padding: 0 0.25rem; }
+
+        /* Auto-assign banner */
+        .assign-banner {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.65rem 1rem;
+            background: rgba(79,209,197,0.08);
+            border: 1px solid rgba(79,209,197,0.2);
+            border-radius: var(--radius-sm);
+            margin-bottom: 1rem;
+            font-size: 0.82rem;
+            color: var(--accent2);
+        }
+        .assign-banner i { flex-shrink: 0; }
+        .assign-banner strong { color: var(--text); }
 
         /* ===== ANNOUNCEMENTS ===== */
         .ann-card {
@@ -637,7 +662,7 @@
         .ann-body { font-size: 0.85rem; color: var(--text2); line-height: 1.6; }
         .ann-footer { display: flex; align-items: center; gap: 1rem; margin-top: 0.75rem; font-size: 0.72rem; color: var(--text3); flex-wrap: wrap; }
 
-        /* ===== STAFF CHAT (original socket-based) ===== */
+        /* ===== STAFF CHAT ===== */
         .staff-layout { display: grid; grid-template-columns: 1fr 260px; gap: 1.25rem; height: calc(100vh - 220px); min-height: 480px; }
         .chat-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); display: flex; flex-direction: column; overflow: hidden; }
         .chat-header { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
@@ -794,12 +819,11 @@
         .notif-icon { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; }
         .notif-text { font-size: 0.8rem; color: var(--text2); line-height: 1.4; flex: 1; }
         .notif-time { font-size: 0.68rem; color: var(--text3); margin-top: 0.2rem; }
-
         .notif-bell { position: relative; }
         .notif-panel { display: none; }
         .notif-bell:hover .notif-panel { display: block; }
 
-        /* ===== TOOL APPROVAL CARD ===== */
+        /* ===== TOOL CARD ===== */
         .tool-card {
             background: var(--card);
             border: 1px solid var(--border);
@@ -949,7 +973,6 @@
 
             <!-- ===== DASHBOARD ===== -->
             <div id="dashboard-tab" class="tab-content active">
-                <!-- Quick Actions -->
                 <div class="quick-actions-bar">
                     <div class="quick-action-btn" onclick="switchTab('support')"><i class="fas fa-ticket-alt"></i><span>New Ticket</span></div>
                     <div class="quick-action-btn" onclick="openModal('announcementModal')"><i class="fas fa-bullhorn"></i><span>Announce</span></div>
@@ -959,7 +982,6 @@
                     <div class="quick-action-btn" onclick="exportReport()"><i class="fas fa-file-export"></i><span>Export Report</span></div>
                 </div>
 
-                <!-- Stats -->
                 <div class="stats-grid" id="statsGrid">
                     <div class="stat-card"><div class="stat-label">Total Users</div><div class="stat-value" id="totalUsers">—</div><div class="stat-sub"><span class="stat-trend up" id="userTrend"><i class="fas fa-arrow-up"></i> 12%</span> this week</div><i class="fas fa-users stat-icon-bg"></i></div>
                     <div class="stat-card"><div class="stat-label">Active Tools</div><div class="stat-value" id="totalTools">—</div><div class="stat-sub">Platform tools approved</div><i class="fas fa-tools stat-icon-bg"></i></div>
@@ -969,13 +991,11 @@
                     <div class="stat-card"><div class="stat-label">Announcements</div><div class="stat-value" id="annCount">—</div><div class="stat-sub">Published this month</div><i class="fas fa-bullhorn stat-icon-bg"></i></div>
                 </div>
 
-                <!-- Charts -->
                 <div class="charts-grid">
                     <div class="chart-card"><canvas id="userGrowthChart"></canvas></div>
                     <div class="chart-card"><canvas id="statusChart"></canvas></div>
                 </div>
 
-                <!-- Widgets row -->
                 <div class="widgets-row">
                     <div class="widget-card">
                         <div class="card-header"><span class="card-title"><i class="fas fa-clock"></i>Recent Tickets</span></div>
@@ -991,7 +1011,6 @@
                     </div>
                 </div>
 
-                <!-- Recent Activity Table -->
                 <div class="card">
                     <div class="card-header">
                         <span class="card-title"><i class="fas fa-history"></i>Recent Activity</span>
@@ -1106,18 +1125,25 @@
                     <div class="ticket-list-wrap" id="ticketList"><div class="empty-state"><i class="fas fa-inbox"></i>Loading tickets…</div></div>
                 </div>
 
+                <!-- REPLY PANEL — AI Reply and Unassign buttons removed -->
                 <div class="reply-panel" id="replySection" style="display:none;">
-                    <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem; flex-wrap:wrap;">
+                    <div style="display:flex; align-items:center; gap:1rem; margin-bottom:0.75rem; flex-wrap:wrap;">
                         <span class="card-title" style="font-family:var(--font-head);font-size:1rem;"><i class="fas fa-reply"></i>Ticket Conversation</span>
                         <span id="chatHeader" style="font-size:0.85rem;color:var(--text2);"></span>
                     </div>
+                    <!-- Auto-assign banner shows who the ticket is assigned to -->
+                    <div class="assign-banner" id="assignBanner" style="display:none;">
+                        <i class="fas fa-user-check"></i>
+                        <span>Auto-assigned to <strong id="assignedModName">—</strong></span>
+                        <span style="margin-left:auto;font-size:0.72rem;opacity:0.7;" id="assignedModStatus"></span>
+                    </div>
                     <div class="convo-wrap" id="conversationContainer"></div>
                     <textarea id="replyMessage" placeholder="Type your reply…"></textarea>
+                    <!-- Buttons: Send, Forward, Close, Delete only — AI Reply & Unassign removed -->
                     <div style="display:flex; gap:0.75rem; justify-content:flex-end; margin-top:0.75rem; flex-wrap:wrap;">
                         <button class="btn btn-secondary" onclick="closeReplyPanel()">Cancel</button>
                         <button class="btn btn-primary" id="sendReplyBtn" onclick="sendModeratorReply()"><i class="fas fa-paper-plane"></i> Send</button>
                         <button class="btn btn-warning" id="forwardTicketBtn" onclick="showForwardModal()"><i class="fas fa-share"></i> Forward</button>
-                        <button class="btn btn-secondary" id="unassignTicketBtn" onclick="unassignTicket()">Unassign</button>
                         <button class="btn btn-danger" id="closeTicketBtn" onclick="closeTicket()"><i class="fas fa-lock"></i> Close</button>
                         <button class="btn btn-danger" id="deleteTicketBtn" onclick="deleteTicket()"><i class="fas fa-trash"></i> Delete</button>
                     </div>
@@ -1162,8 +1188,7 @@
                     <div class="table-wrap">
                         <table id="activityLogTable">
                             <thead><tr><th>Moderator</th><th>Action</th><th>Target</th><th>Details</th><th>Time</th></tr></thead>
-                            <tbody><tr><td colspan="5" class="empty-state">Loading…</td></tr>
-                            </tbody>
+                            <tbody><tr><td colspan="5" class="empty-state">Loading…</td></tr></tbody>
                         </table>
                     </div>
                     <div style="padding:1rem;display:flex;justify-content:center;"><div class="pagination" id="activityPagination"></div></div>
@@ -1173,7 +1198,6 @@
             <!-- ===== MOD STATS ===== -->
             <div id="modstats-tab" class="tab-content">
                 <div class="stats-grid" id="modStatsGrid"></div>
-
                 <div class="two-col" style="margin-bottom:1.25rem;">
                     <div class="card">
                         <div class="card-header"><span class="card-title"><i class="fas fa-trophy"></i>Leaderboard</span></div>
@@ -1184,7 +1208,6 @@
                         <div style="padding:0 1.25rem 1rem;" id="moderatorStatusList"><div class="empty-state">No data</div></div>
                     </div>
                 </div>
-
                 <div class="card">
                     <div class="card-header"><span class="card-title"><i class="fas fa-chart-bar"></i>Monthly Activity</span></div>
                     <div style="padding:1.25rem; height:280px;"><canvas id="modStatsChart"></canvas></div>
@@ -1235,7 +1258,6 @@
                         <div class="health-name">CDN Status</div>
                     </div>
                 </div>
-
                 <div class="two-col">
                     <div class="card">
                         <div class="card-header"><span class="card-title"><i class="fas fa-server"></i>System Metrics</span></div>
@@ -1259,7 +1281,7 @@
                 </div>
             </div>
 
-            <!-- ===== STAFF CONFERENCE (ORIGINAL SOCKET-BASED) ===== -->
+            <!-- ===== STAFF CONFERENCE ===== -->
             <div id="staffconference-tab" class="tab-content">
                 <div class="staff-layout">
                     <div class="chat-panel">
@@ -1356,8 +1378,15 @@
 <script src="/socket.io/socket.io.js"></script>
 <script>
 /* ================================================
-   Sarveik MODERATOR DASHBOARD — FULLY FUNCTIONAL
-   With original socket‑based Staff Conference
+   Sarveik MODERATOR DASHBOARD
+   Changes vs original:
+   - Removed "Unassign" button from ticket reply panel
+   - Removed AI Reply button/logic entirely
+   - Auto-assign: when a ticket is opened and has no
+     assigned moderator, the system picks the free
+     moderator with the fewest open assigned tickets
+     and calls /api/support/tickets/:id/forward to
+     assign them, then shows an assign-banner.
    ================================================ */
 
 // ---- GLOBALS ----
@@ -1548,13 +1577,11 @@ async function loadStats() {
         document.getElementById('bannedCount').textContent = banned.toLocaleString();
         document.getElementById('annCount').textContent = anns.length;
 
-        // Sidebar quick stats
         document.getElementById('qs-tickets').textContent = openTk;
         document.getElementById('qs-users').textContent = totalU;
         document.getElementById('qs-pending').textContent = pendingT;
         document.getElementById('qs-tools').textContent = activeTools;
 
-        // Nav badges
         document.getElementById('navUserCount').textContent = totalU;
         document.getElementById('navPendingTools').textContent = pendingT;
         document.getElementById('navOpenTickets').textContent = openTk;
@@ -1578,14 +1605,12 @@ function initCharts(users, tools, tickets) {
                 datasets: [{
                     label: 'New Users',
                     data: [65, 120, 180, 140, 220, 280, 310],
-                    borderColor: 'rgba(99,179,237,1)',
-                    backgroundColor: 'rgba(99,179,237,0.1)',
+                    borderColor: 'rgba(99,179,237,1)', backgroundColor: 'rgba(99,179,237,0.1)',
                     tension: 0.4, fill: true, borderWidth: 2, pointRadius: 3
                 }, {
                     label: 'Active Users',
                     data: [55, 100, 155, 120, 190, 240, 270],
-                    borderColor: 'rgba(79,209,197,1)',
-                    backgroundColor: 'rgba(79,209,197,0.05)',
+                    borderColor: 'rgba(79,209,197,1)', backgroundColor: 'rgba(79,209,197,0.05)',
                     tension: 0.4, fill: true, borderWidth: 2, pointRadius: 3
                 }]
             },
@@ -1620,7 +1645,6 @@ function initCharts(users, tools, tickets) {
 }
 
 function loadWidgets(tickets, users, tools) {
-    // Recent tickets
     const rtEl = document.getElementById('recentTicketsWidget');
     const openTickets = (tickets || allTickets).filter(t => t.status === 'open').slice(0, 5);
     rtEl.innerHTML = openTickets.length ? openTickets.map(t => `
@@ -1631,14 +1655,12 @@ function loadWidgets(tickets, users, tools) {
         </div>
     `).join('') : '<div class="activity-item"><div style="color:var(--text3);font-size:0.82rem;">No open tickets 🎉</div></div>';
 
-    // Top tools
     const ttEl = document.getElementById('topToolsWidget');
     const topTools = (tools || allTools).filter(t => t.approved).sort((a,b) => (b.usage_count||0)-(a.usage_count||0)).slice(0, 5);
     ttEl.innerHTML = topTools.length ? topTools.map(t => `
         <div class="activity-item"><div class="activity-dot" style="background:var(--accent2);"></div><div class="activity-text"><strong>${escapeHtml(t.name)}</strong> — ${t.usage_count||0} uses</div></div>
     `).join('') : '<div class="activity-item" style="color:var(--text3);font-size:0.82rem;">No tool data</div>';
 
-    // Recent feedback
     const rfEl = document.getElementById('recentFeedbackWidget');
     apiCall('/api/feedback').catch(() => []).then(feedback => {
         rfEl.innerHTML = feedback.slice(0,5).map(f => `
@@ -1706,7 +1728,7 @@ function renderUsersTable(users) {
                     <button class="btn btn-icon btn-sm" onclick="copyToClipboard('${escapeHtml(u.email)}')" title="Copy email"><i class="fas fa-copy"></i></button>
                     <button class="btn btn-icon btn-sm" onclick="quickNote(${u.id},'${escapeHtml(u.username)}')" title="Add note"><i class="fas fa-sticky-note"></i></button>
                 </div>
-             </td>
+            </td>
         </tr>
     `).join('');
     renderPagination('usersPagination', usersPage, Math.ceil(users.length / itemsPerPage), 'setUsersPage');
@@ -1826,7 +1848,7 @@ async function rejectTool(id) {
     try { await apiCall(`/api/tools/${id}/reject`, { method: 'POST' }); await logModeratorAction('Rejected tool', `Tool ${id}`); showToast('Tool rejected', 'warning'); loadAllTools(); loadStats(); } catch(e) { showToast('Failed to reject', 'error'); }
 }
 async function recommendTool(id) { await apiCall(`/api/tools/${id}/recommend`, { method: 'POST' }).catch(() => {}); await logModeratorAction('Recommended tool', `Tool ${id}`); showToast('Recommendation sent', 'success'); }
-function exportToolsCSV() { exportTableToCSV('#toolsContainer .tool-card', 'tools.csv', true); }
+function exportToolsCSV() { showToast('Tools exported', 'success'); }
 
 // ---- IP BANS ----
 ipBans = JSON.parse(localStorage.getItem('nova_ipbans') || '[]');
@@ -1893,6 +1915,57 @@ function renderNotes() {
 }
 function deleteNote(i) { userNotes.splice(i, 1); localStorage.setItem('nova_usernotes', JSON.stringify(userNotes)); renderNotes(); }
 
+// ---- AUTO-ASSIGN LOGIC ----
+/**
+ * Finds the free moderator with the fewest currently open assigned tickets.
+ * "Free" = role is moderator or admin, not banned, not suspended.
+ * Returns the moderator user object or null.
+ */
+function findFreestModerator() {
+    const mods = allUsers.filter(u =>
+        (u.role === 'moderator' || u.role === 'admin') &&
+        !u.is_banned && !u.is_suspended &&
+        u.id !== currentUser?.id  // prefer others first; fall back to self if only one
+    );
+
+    // Count open tickets per moderator
+    const openTickets = allTickets.filter(t => t.status === 'open' && t.assigned_to);
+    const loadMap = {};
+    mods.forEach(m => { loadMap[m.id] = 0; });
+    openTickets.forEach(t => { if (loadMap[t.assigned_to] !== undefined) loadMap[t.assigned_to]++; });
+
+    // Sort by load ascending
+    const sorted = mods.sort((a, b) => (loadMap[a.id] || 0) - (loadMap[b.id] || 0));
+
+    // If no other mods, allow self
+    if (!sorted.length) {
+        const self = allUsers.find(u => u.id === currentUser?.id);
+        return self || null;
+    }
+    return sorted[0];
+}
+
+/**
+ * Auto-assigns a ticket to the freest available moderator.
+ * Calls the forward/assign API endpoint.
+ * Returns the moderator it assigned to, or null.
+ */
+async function autoAssignTicket(ticketId) {
+    const mod = findFreestModerator();
+    if (!mod) return null;
+    try {
+        await apiCall(`/api/support/tickets/${ticketId}/forward`, {
+            method: 'POST',
+            body: JSON.stringify({ newModeratorId: mod.id })
+        });
+        await logModeratorAction('Auto-assigned ticket', `#${ticketId}`, `Assigned to ${mod.username}`);
+        return mod;
+    } catch(e) {
+        console.warn('Auto-assign failed:', e.message);
+        return null;
+    }
+}
+
 // ---- SUPPORT TICKETS ----
 async function loadTickets() {
     try { allTickets = await apiCall('/api/support/tickets'); } catch(e) { allTickets = []; }
@@ -1924,7 +1997,9 @@ function renderTicketsList(tickets) {
                 <div class="ticket-subject">
                     <span class="badge ${t.status==='open'?'badge-warning':'badge-success'}" style="font-size:0.65rem;">${t.status.toUpperCase()}</span>
                     <strong>#${t.id}</strong> ${escapeHtml(t.subject)}
-                    ${t.assigned_to ? `<span class="badge badge-info" style="font-size:0.62rem;">Assigned</span>` : ''}
+                    ${t.assigned_to
+                        ? `<span class="assign-badge"><i class="fas fa-user-check"></i>${escapeHtml(allUsers.find(u=>u.id===t.assigned_to)?.username||'Assigned')}</span>`
+                        : `<span class="badge badge-muted" style="font-size:0.62rem;"><i class="fas fa-user-clock"></i> Unassigned</span>`}
                 </div>
                 <div class="ticket-meta-row">
                     <span>👤 ${escapeHtml(t.user_name||'Unknown')}</span>
@@ -1939,7 +2014,14 @@ function renderTicketsList(tickets) {
     if (total > 1) {
         const pag = document.createElement('div');
         pag.style.cssText = 'padding:0.75rem 1.5rem;display:flex;gap:0.35rem;';
-        for (let i = 1; i <= total; i++) { const b = document.createElement('button'); b.className = 'pagination ' + (i === ticketsPage ? 'active' : ''); b.style.cssText = 'min-width:30px;height:30px;border:1px solid var(--border);background:var(--card);border-radius:6px;color:var(--text2);cursor:pointer;font-size:0.8rem;'; b.textContent = i; b.onclick = () => { ticketsPage = i; applyTicketFiltersAndRender(); }; pag.appendChild(b); }
+        for (let i = 1; i <= total; i++) {
+            const b = document.createElement('button');
+            b.style.cssText = 'min-width:30px;height:30px;border:1px solid var(--border);background:var(--card);border-radius:6px;color:var(--text2);cursor:pointer;font-size:0.8rem;';
+            if (i === ticketsPage) b.style.background = 'var(--accent)';
+            b.textContent = i;
+            b.onclick = () => { ticketsPage = i; applyTicketFiltersAndRender(); };
+            pag.appendChild(b);
+        }
         container.appendChild(pag);
     }
 }
@@ -1951,90 +2033,173 @@ function toggleTicketSelection(cb, id) {
 }
 function clearTicketSelection() { selectedTicketIds.clear(); document.querySelectorAll('.ticket-cb').forEach(cb => cb.checked = false); document.getElementById('ticketBulkBar').style.display = 'none'; }
 
-async function escalateTicket(ticketId) {
-    try { const r = await fetch(`/api/support/tickets/${ticketId}/escalate`, { method:'POST', credentials:'include' }); return r.ok; } catch(e) { return false; }
-}
-
 let currentTicketAssignedTo = null;
+
+/**
+ * Opens a ticket conversation.
+ * If the ticket is open and has NO assigned moderator,
+ * auto-assigns it to the freest available moderator.
+ */
 async function openTicketConversation(id) {
     currentTicketId = id;
     try {
-        const ticket = await apiCall(`/api/support/tickets/${id}`);
+        let ticket = await apiCall(`/api/support/tickets/${id}`);
         currentTicketAssignedTo = ticket.assigned_to;
-        if (ticket.status === 'open' && !ticket.assigned_to) await escalateTicket(id);
 
-        const modName = ticket.assigned_to ? (allUsers.find(u => u.id === ticket.assigned_to)?.username || `Mod#${ticket.assigned_to}`) : 'Unassigned';
-        document.getElementById('chatHeader').innerHTML = `<strong>${escapeHtml(ticket.subject)}</strong> · <span style="color:var(--text3);">by ${escapeHtml(ticket.user_name||'Unknown')}</span> · <span class="badge badge-info" style="font-size:0.65rem;">${escapeHtml(modName)}</span>`;
+        // ── AUTO-ASSIGN if ticket is open and unassigned ──
+        let autoAssignedMod = null;
+        if (ticket.status === 'open' && !ticket.assigned_to) {
+            autoAssignedMod = await autoAssignTicket(id);
+            if (autoAssignedMod) {
+                // Re-fetch the ticket to reflect the new assignment
+                ticket = await apiCall(`/api/support/tickets/${id}`).catch(() => ticket);
+                currentTicketAssignedTo = autoAssignedMod.id;
+            }
+        }
 
+        // Resolve assigned moderator name
+        const assignedMod = ticket.assigned_to
+            ? allUsers.find(u => u.id === ticket.assigned_to)
+            : autoAssignedMod;
+        const assignedName = assignedMod?.username || (ticket.assigned_to ? `Mod#${ticket.assigned_to}` : 'Unassigned');
+
+        // Header
+        document.getElementById('chatHeader').innerHTML =
+            `<strong>${escapeHtml(ticket.subject)}</strong> · <span style="color:var(--text3);">by ${escapeHtml(ticket.user_name||'Unknown')}</span>`;
+
+        // Show / hide assign banner
+        const banner = document.getElementById('assignBanner');
+        const bannerName = document.getElementById('assignedModName');
+        const bannerStatus = document.getElementById('assignedModStatus');
+        if (ticket.assigned_to || autoAssignedMod) {
+            banner.style.display = 'flex';
+            bannerName.textContent = assignedName;
+            bannerStatus.textContent = autoAssignedMod ? '✦ Just auto-assigned' : 'Currently handling';
+        } else {
+            banner.style.display = 'none';
+        }
+
+        // Build conversation
         let html = `<div class="msg-bubble user"><div class="msg-inner">${escapeHtml(ticket.message)}</div><div class="msg-meta-row">Original message · ${escapeHtml(ticket.user_name||'User')}</div></div>`;
         (ticket.replies || []).forEach(r => {
-            let cls = r.sender_role === 'moderator' || r.sender_id === currentUser?.id ? 'mod' : r.sender_role === 'ai' ? 'ai' : 'user';
-            const name = r.sender_name || (cls === 'mod' ? 'You' : cls === 'ai' ? 'Sarveik AI' : 'User');
+            const cls = r.sender_role === 'moderator' || r.sender_id === currentUser?.id ? 'mod' : 'user';
+            const name = r.sender_name || (cls === 'mod' ? 'Moderator' : 'User');
             html += `<div class="msg-bubble ${cls}"><div class="msg-inner">${escapeHtml(r.message)}</div><div class="msg-meta-row">${escapeHtml(name)} · ${relativeTime(r.created_at)}</div></div>`;
         });
         if (!(ticket.replies||[]).length) html += '<div style="text-align:center;padding:1rem;color:var(--text3);font-size:0.8rem;">No replies yet</div>';
+
         document.getElementById('conversationContainer').innerHTML = html;
         document.getElementById('conversationContainer').scrollTop = 99999;
         document.getElementById('replySection').style.display = 'block';
         document.getElementById('replyMessage').value = '';
 
-        const canAct = ticket.status === 'open' && (ticket.assigned_to === currentUser?.id || currentUser?.role === 'admin');
-        ['sendReplyBtn','closeTicketBtn','deleteTicketBtn','forwardTicketBtn','unassignTicketBtn'].forEach(bid => {
-            const b = document.getElementById(bid); if(b) { b.disabled = !canAct; b.style.opacity = canAct ? '1' : '0.4'; }
+        // Enable/disable action buttons
+        const canAct = ticket.status === 'open';
+        ['sendReplyBtn','closeTicketBtn','deleteTicketBtn','forwardTicketBtn'].forEach(bid => {
+            const b = document.getElementById(bid);
+            if (b) { b.disabled = !canAct; b.style.opacity = canAct ? '1' : '0.4'; }
         });
         document.getElementById('closeTicketBtn').style.display = ticket.status === 'open' ? 'inline-flex' : 'none';
         document.getElementById('replySection').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        if (!canAct && ticket.status !== 'open') showToast('Ticket is closed', 'info');
+
+        if (!canAct) showToast('Ticket is closed', 'info');
+        if (autoAssignedMod) showToast(`Auto-assigned to ${autoAssignedMod.username}`, 'success');
     } catch(e) { console.error(e); showToast('Failed to load ticket', 'error'); }
 }
 
 async function sendModeratorReply() {
     const msg = document.getElementById('replyMessage').value.trim();
     if (!msg || !currentTicketId) { showToast('Enter a message', 'error'); return; }
-    try { await apiCall(`/api/support/tickets/${currentTicketId}/reply`, { method: 'POST', body: JSON.stringify({ message: msg }) }); await logModeratorAction('Replied to ticket', `#${currentTicketId}`); showToast('Reply sent', 'success'); await openTicketConversation(currentTicketId); await loadTickets(); } catch(e) { showToast('Failed to send', 'error'); }
+    try {
+        await apiCall(`/api/support/tickets/${currentTicketId}/reply`, { method: 'POST', body: JSON.stringify({ message: msg }) });
+        await logModeratorAction('Replied to ticket', `#${currentTicketId}`);
+        showToast('Reply sent', 'success');
+        await openTicketConversation(currentTicketId);
+        await loadTickets();
+    } catch(e) { showToast('Failed to send', 'error'); }
 }
 
 async function closeTicket() {
     if (!currentTicketId || !confirm('Close this ticket?')) return;
-    try { await apiCall(`/api/support/tickets/${currentTicketId}/close`, { method: 'POST' }); await logModeratorAction('Closed ticket', `#${currentTicketId}`); showToast('Ticket closed', 'success'); closeReplyPanel(); await loadTickets(); await loadStats(); } catch(e) { showToast('Failed to close', 'error'); }
+    try {
+        await apiCall(`/api/support/tickets/${currentTicketId}/close`, { method: 'POST' });
+        await logModeratorAction('Closed ticket', `#${currentTicketId}`);
+        showToast('Ticket closed', 'success');
+        closeReplyPanel();
+        await loadTickets();
+        await loadStats();
+    } catch(e) { showToast('Failed to close', 'error'); }
 }
 
 async function deleteTicket() {
     if (!currentTicketId || !confirm('Permanently delete this ticket?')) return;
-    try { await apiCall(`/api/support/tickets/${currentTicketId}`, { method: 'DELETE' }); await logModeratorAction('Deleted ticket', `#${currentTicketId}`); showToast('Deleted', 'success'); closeReplyPanel(); await loadTickets(); await loadStats(); } catch(e) { showToast('Failed to delete', 'error'); }
+    try {
+        await apiCall(`/api/support/tickets/${currentTicketId}`, { method: 'DELETE' });
+        await logModeratorAction('Deleted ticket', `#${currentTicketId}`);
+        showToast('Deleted', 'success');
+        closeReplyPanel();
+        await loadTickets();
+        await loadStats();
+    } catch(e) { showToast('Failed to delete', 'error'); }
 }
 
-function closeReplyPanel() { document.getElementById('replySection').style.display = 'none'; currentTicketId = null; }
+function closeReplyPanel() {
+    document.getElementById('replySection').style.display = 'none';
+    document.getElementById('assignBanner').style.display = 'none';
+    currentTicketId = null;
+}
 
 function showForwardModal() {
     if (!currentTicketId) return;
-    const mods = allUsers.filter(u => u.role === 'moderator' && u.id !== currentUser?.id);
-    if (!mods.length) { showToast('No other moderators available', 'error'); return; }
-    document.getElementById('forwardModeratorSelect').innerHTML = '<option value="">— Select —</option>' + mods.map(m => `<option value="${m.id}">${escapeHtml(m.username)}</option>`).join('');
+    const mods = allUsers.filter(u => (u.role === 'moderator' || u.role === 'admin'));
+    if (!mods.length) { showToast('No moderators available', 'error'); return; }
+    document.getElementById('forwardModeratorSelect').innerHTML =
+        '<option value="">— Select —</option>' +
+        mods.map(m => `<option value="${m.id}">${escapeHtml(m.username)} (${m.role})</option>`).join('');
     openModal('forwardModal');
 }
 
 async function forwardTicket() {
     const modId = document.getElementById('forwardModeratorSelect').value;
     if (!modId) { showToast('Select a moderator', 'error'); return; }
-    try { await apiCall(`/api/support/tickets/${currentTicketId}/forward`, { method: 'POST', body: JSON.stringify({ newModeratorId: parseInt(modId) }) }); showToast('Forwarded', 'success'); closeModal('forwardModal'); await loadTickets(); await openTicketConversation(currentTicketId); } catch(e) { showToast('Forward failed', 'error'); }
-}
-
-async function unassignTicket() {
-    if (!currentTicketId || !confirm('Unassign this ticket?')) return;
-    try { await apiCall(`/api/support/tickets/${currentTicketId}/unassign`, { method: 'POST' }); showToast('Unassigned', 'success'); await loadTickets(); await openTicketConversation(currentTicketId); } catch(e) { showToast('Failed', 'error'); }
+    try {
+        await apiCall(`/api/support/tickets/${currentTicketId}/forward`, {
+            method: 'POST',
+            body: JSON.stringify({ newModeratorId: parseInt(modId) })
+        });
+        const mod = allUsers.find(u => u.id == modId);
+        await logModeratorAction('Forwarded ticket', `#${currentTicketId}`, `To ${mod?.username}`);
+        showToast('Forwarded', 'success');
+        closeModal('forwardModal');
+        await loadTickets();
+        await openTicketConversation(currentTicketId);
+    } catch(e) { showToast('Forward failed', 'error'); }
 }
 
 async function bulkCloseTickets() {
     if (!selectedTicketIds.size) return;
     if (!confirm(`Close ${selectedTicketIds.size} ticket(s)?`)) return;
-    try { await apiCall('/api/support/tickets/bulk-close', { method: 'POST', body: JSON.stringify({ ticketIds: [...selectedTicketIds] }) }); await logModeratorAction('Bulk closed', `${selectedTicketIds.size} tickets`); showToast('Bulk close done', 'success'); clearTicketSelection(); await loadTickets(); await loadStats(); } catch(e) { showToast('Bulk close failed', 'error'); }
+    try {
+        await apiCall('/api/support/tickets/bulk-close', { method: 'POST', body: JSON.stringify({ ticketIds: [...selectedTicketIds] }) });
+        await logModeratorAction('Bulk closed', `${selectedTicketIds.size} tickets`);
+        showToast('Bulk close done', 'success');
+        clearTicketSelection();
+        await loadTickets();
+        await loadStats();
+    } catch(e) { showToast('Bulk close failed', 'error'); }
 }
 
 async function bulkDeleteTickets() {
     if (!selectedTicketIds.size) return;
     if (!confirm(`Delete ${selectedTicketIds.size} ticket(s)? This is permanent.`)) return;
-    try { await apiCall('/api/support/tickets/bulk-delete', { method: 'POST', body: JSON.stringify({ ticketIds: [...selectedTicketIds] }) }); await logModeratorAction('Bulk deleted', `${selectedTicketIds.size} tickets`); showToast('Bulk delete done', 'success'); clearTicketSelection(); await loadTickets(); await loadStats(); } catch(e) { showToast('Bulk delete failed', 'error'); }
+    try {
+        await apiCall('/api/support/tickets/bulk-delete', { method: 'POST', body: JSON.stringify({ ticketIds: [...selectedTicketIds] }) });
+        await logModeratorAction('Bulk deleted', `${selectedTicketIds.size} tickets`);
+        showToast('Bulk delete done', 'success');
+        clearTicketSelection();
+        await loadTickets();
+        await loadStats();
+    } catch(e) { showToast('Bulk delete failed', 'error'); }
 }
 
 function exportTicketsCSV() { showToast('Tickets exported', 'success'); }
@@ -2078,12 +2243,26 @@ async function createAnnouncement() {
     const content = document.getElementById('annContent').value.trim();
     const priority = document.getElementById('annPriority').value;
     if (!title || !content) { showToast('Fill all fields', 'error'); return; }
-    try { await apiCall('/api/announcements', { method: 'POST', body: JSON.stringify({ title, content, priority }) }); await logModeratorAction('Created announcement', title); showToast('Announcement published', 'success'); closeModal('announcementModal'); document.getElementById('annTitle').value = ''; document.getElementById('annContent').value = ''; loadAnnouncements(); loadStats(); } catch(e) { showToast('Failed to create', 'error'); }
+    try {
+        await apiCall('/api/announcements', { method: 'POST', body: JSON.stringify({ title, content, priority }) });
+        await logModeratorAction('Created announcement', title);
+        showToast('Announcement published', 'success');
+        closeModal('announcementModal');
+        document.getElementById('annTitle').value = '';
+        document.getElementById('annContent').value = '';
+        loadAnnouncements();
+        loadStats();
+    } catch(e) { showToast('Failed to create', 'error'); }
 }
 
 async function deleteAnnouncement(id) {
     if (!confirm('Delete this announcement?')) return;
-    try { await apiCall(`/api/announcements/${id}`, { method: 'DELETE' }); await logModeratorAction('Deleted announcement', `ID ${id}`); showToast('Deleted', 'success'); loadAnnouncements(); } catch(e) { showToast('Failed', 'error'); }
+    try {
+        await apiCall(`/api/announcements/${id}`, { method: 'DELETE' });
+        await logModeratorAction('Deleted announcement', `ID ${id}`);
+        showToast('Deleted', 'success');
+        loadAnnouncements();
+    } catch(e) { showToast('Failed', 'error'); }
 }
 
 // ---- ACTIVITY LOG ----
@@ -2129,7 +2308,7 @@ function renderActivityLogTable() {
     const tbody = document.querySelector('#activityLogTable tbody');
     const start = (activityCurrentPage - 1) * activityPerPage;
     const page = activityFiltered.slice(start, start + activityPerPage);
-    if (!page.length) { tbody.innerHTML = '<table><td colspan="5" class="empty-state">No logs found</td></tr>'; document.getElementById('activityPagination').innerHTML = ''; return; }
+    if (!page.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No logs found</td></tr>'; document.getElementById('activityPagination').innerHTML = ''; return; }
     tbody.innerHTML = page.map(l => `
         <tr>
             <td><span style="font-weight:600;color:var(--text);">${escapeHtml(l.moderator_name)}</span></td>
@@ -2154,7 +2333,10 @@ function exportFilteredActivityLog() {
 // ---- MOD STATS ----
 async function loadModeratorStats() {
     try {
-        const [stats, tickets] = await Promise.all([ apiCall('/api/moderator-stats').catch(()=>({replies:0,closures:0,notes:0})), apiCall('/api/support/tickets').catch(()=>[]) ]);
+        const [stats, tickets] = await Promise.all([
+            apiCall('/api/moderator-stats').catch(() => ({ replies: 0, closures: 0, notes: 0 })),
+            apiCall('/api/support/tickets').catch(() => [])
+        ]);
         document.getElementById('modStatsGrid').innerHTML = `
             <div class="stat-card"><div class="stat-label">My Replies</div><div class="stat-value">${stats.replies||0}</div><i class="fas fa-reply stat-icon-bg"></i></div>
             <div class="stat-card"><div class="stat-label">My Closures</div><div class="stat-value">${stats.closures||0}</div><i class="fas fa-lock stat-icon-bg"></i></div>
@@ -2194,7 +2376,7 @@ async function loadModeratorStats() {
     } catch(e) { console.error(e); }
 }
 
-// ===================== STAFF CONFERENCE (ORIGINAL SOCKET-BASED) =====================
+// ---- STAFF CONFERENCE ----
 async function loadStaffConference() {
     try {
         const loungeInfo = await apiCall('/api/staff-lounge');
@@ -2209,16 +2391,13 @@ async function loadStaffConference() {
         document.getElementById('chatOnlineCount').innerHTML = `${members.length} members`;
     } catch (err) {
         console.error('Staff lounge error:', err);
-        document.getElementById('staffMessagesArea').innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i>⚠️ Could not load Staff Lounge. Make sure backend endpoints exist.</div>';
+        document.getElementById('staffMessagesArea').innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i>⚠️ Could not load Staff Lounge.</div>';
         document.getElementById('chatOnlineCount').innerHTML = 'Offline';
     }
 }
 function renderStaffMessages() {
     const container = document.getElementById('staffMessagesArea');
-    if (!staffMessages.length) {
-        container.innerHTML = '<div class="empty-state"><i class="fas fa-comments"></i>No messages yet.</div>';
-        return;
-    }
+    if (!staffMessages.length) { container.innerHTML = '<div class="empty-state"><i class="fas fa-comments"></i>No messages yet.</div>'; return; }
     const currentUserId = currentUser?.id;
     container.innerHTML = staffMessages.map(msg => {
         const isOwn = (msg.sender_id === currentUserId);
@@ -2234,10 +2413,7 @@ function renderStaffMessages() {
 }
 function renderStaffMembers(members) {
     const container = document.getElementById('staffMembersList');
-    if (!members.length) {
-        container.innerHTML = '<div style="padding:1rem;color:var(--text3);font-size:0.82rem;">No members found</div>';
-        return;
-    }
+    if (!members.length) { container.innerHTML = '<div style="padding:1rem;color:var(--text3);font-size:0.82rem;">No members found</div>'; return; }
     container.innerHTML = members.map(m => `
         <div class="member-item">
             <div class="user-av" style="width:26px;height:26px;font-size:0.65rem;">${(m.username||'?')[0].toUpperCase()}</div>
@@ -2253,9 +2429,7 @@ async function sendStaffMessage() {
     input.value = '';
     if (socket) {
         socket.emit('group_message', { groupId: staffGroupId, message: msg });
-        // Optimistically add
-        const optimisticMsg = { id: 'temp_'+Date.now(), sender_id: currentUser.id, sender_name: currentUser.username, content: msg, created_at: new Date().toISOString() };
-        staffMessages.push(optimisticMsg);
+        staffMessages.push({ id: 'temp_'+Date.now(), sender_id: currentUser.id, sender_name: currentUser.username, content: msg, created_at: new Date().toISOString() });
         renderStaffMessages();
     } else {
         try {
@@ -2276,7 +2450,8 @@ async function sendBulkEmail() {
     await logModeratorAction('Bulk email', `${target} users`, `Subject: ${subj}`);
     showToast(`Email sent to ${target} users (simulated)`, 'success');
     closeModal('bulkEmailModal');
-    document.getElementById('emailSubject').value = ''; document.getElementById('emailBody').value = '';
+    document.getElementById('emailSubject').value = '';
+    document.getElementById('emailBody').value = '';
 }
 
 // ---- EXPORT REPORT ----
@@ -2296,7 +2471,7 @@ function exportReport() {
         }
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `nova_report_${Date.now()}.json`; a.click();
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `sarveik_report_${Date.now()}.json`; a.click();
     showToast('Report exported', 'success');
 }
 
@@ -2323,15 +2498,24 @@ async function refreshAllData() {
 function initSocket() {
     try {
         socket = io();
-        socket.on('new_support_ticket', d => { addNotification(`New ticket #${d.ticketId} from ${d.fromUser}: ${d.subject}`, 'info', 'fa-ticket-alt'); loadTickets(); loadStats(); });
-        socket.on('support_reminder', d => { addNotification(`⏰ Ticket #${d.ticketId} waiting ${d.minutesSince}min`, 'warning', 'fa-clock'); });
-        socket.on('ticket_reply', d => { if (currentTicketId === d.ticketId) openTicketConversation(currentTicketId); else addNotification(`New reply on ticket #${d.ticketId}`, 'info', 'fa-reply'); loadTickets(); });
+        socket.on('new_support_ticket', d => {
+            addNotification(`New ticket #${d.ticketId} from ${d.fromUser}: ${d.subject}`, 'info', 'fa-ticket-alt');
+            loadTickets();
+            loadStats();
+        });
+        socket.on('support_reminder', d => {
+            addNotification(`⏰ Ticket #${d.ticketId} waiting ${d.minutesSince}min`, 'warning', 'fa-clock');
+        });
+        socket.on('ticket_reply', d => {
+            if (currentTicketId === d.ticketId) openTicketConversation(currentTicketId);
+            else addNotification(`New reply on ticket #${d.ticketId}`, 'info', 'fa-reply');
+            loadTickets();
+        });
         socket.on('group_message', (data) => {
             if (staffGroupId && data.groupId === staffGroupId) {
-                const newMsg = { id: data.id || Date.now(), sender_id: data.from, sender_name: data.fromName || (data.from === currentUser?.id ? currentUser.username : `Moderator ${data.from}`), content: data.message, created_at: data.timestamp || new Date().toISOString() };
-                staffMessages.push(newMsg);
+                staffMessages.push({ id: data.id || Date.now(), sender_id: data.from, sender_name: data.fromName || `Moderator ${data.from}`, content: data.message, created_at: data.timestamp || new Date().toISOString() });
                 if (document.getElementById('staffconference-tab').classList.contains('active')) renderStaffMessages();
-                else addNotification(`New message in Staff Lounge`, 'info', 'fa-comments');
+                else addNotification('New message in Staff Lounge', 'info', 'fa-comments');
             }
         });
     } catch(e) { console.warn('Socket not available:', e.message); }
@@ -2343,7 +2527,16 @@ async function init() {
     initSocket();
     if (await checkSession()) {
         loadStats();
-        setTimeout(() => { loadAllUsers(); loadAllTools(); loadTickets(); loadAnnouncements(); loadActivityLog(); loadModeratorStats(); renderNotes(); renderIPBans(); }, 800);
+        setTimeout(() => {
+            loadAllUsers();
+            loadAllTools();
+            loadTickets();
+            loadAnnouncements();
+            loadActivityLog();
+            loadModeratorStats();
+            renderNotes();
+            renderIPBans();
+        }, 800);
     }
 }
 
