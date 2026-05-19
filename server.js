@@ -169,15 +169,23 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use('/api/phonepe-webhook', express.raw({ type: 'application/json' }));
 app.use(express.static('public'));
 
+const session = require('express-session');
+const pgSession = require('connect-pg-simple')(session);
+
 const sessionMiddleware = session({
+    store: new pgSession({
+        pool: pool,                // your existing PostgreSQL pool from database.js
+        tableName: 'session',      // table name (auto‑created)
+        createTableIfMissing: true
+    }),
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
     cookie: {
-        maxAge: 1000 * 60 * 60,
+        maxAge: 1000 * 60 * 60,    // 1 hour
         httpOnly: true,
         sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production'
+        secure: process.env.NODE_ENV === 'production'   // true on Railway (HTTPS)
     }
 });
 app.use(sessionMiddleware);
@@ -218,12 +226,16 @@ const authLimiter = rateLimit({
     skipSuccessfulRequests: true,
     message: 'Too many attempts, please try again later.'
 });
+const { rateLimit, ipKeyGenerator } = require('express-rate-limit');
+
 const otpVerificationLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 5,
     keyGenerator: (req) => {
+        // If email is present, use email as key (prevents IP‑based blocking for OTP)
         if (req.body.email) return req.body.email;
-        return req.ip;
+        // Otherwise use the safe IPv4/IPv6 key generator
+        return ipKeyGenerator(req);
     },
     message: 'Too many OTP verification attempts, please try again later.'
 });
