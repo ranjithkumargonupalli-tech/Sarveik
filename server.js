@@ -1,4 +1,7 @@
 require('dotenv').config();
+app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+});
 
 // ==================== ENVIRONMENT CHECKS ====================
 // FIXED: session secret length check operator precedence
@@ -5376,7 +5379,7 @@ app.get('/api/csrf-token', (req, res) => {
 
 // ==================== START SERVER ====================
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
+server.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📧 Email service ready`);
     console.log(`⭐ Credits system active (atomic spends, PhonePe purchases)`);
