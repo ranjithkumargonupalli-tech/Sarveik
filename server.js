@@ -611,11 +611,11 @@ passport.serializeUser((user, done) => {
 
 passport.deserializeUser(async (id, done) => {
     try {
-        await poolConnect;
-        const result = await pool.request()
-            .input('id', sql.Int, id)
-            .query('SELECT id, username, email, role FROM users WHERE id = @id');
-        done(null, result.recordset[0]);
+        const result = await pool.query(
+            'SELECT id, username, email, role FROM users WHERE id = $1',
+            [id]
+        );
+        done(null, result.rows[0]);
     } catch (err) {
         done(err);
     }
@@ -718,20 +718,20 @@ const upload = multer({
 const isAuthenticated = async (req, res, next) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Not authenticated' });
     try {
-        await poolConnect;
         if (!req.session.role) {
-            const result = await pool.request()
-                .input('id', sql.Int, req.session.userId)
-                .query('SELECT role, is_banned FROM users WHERE id = @id');
-            if (result.recordset.length === 0) {
+            const result = await pool.query(
+                'SELECT role, is_banned FROM users WHERE id = $1',
+                [req.session.userId]
+            );
+            if (result.rows.length === 0) {
                 req.session.destroy();
                 return res.status(401).json({ error: 'User not found' });
             }
-            if (result.recordset[0].is_banned) {
+            if (result.rows[0].is_banned) {
                 req.session.destroy();
                 return res.status(403).json({ error: 'Your account has been banned' });
             }
-            req.session.role = result.recordset[0].role;
+            req.session.role = result.rows[0].role;
         }
         next();
     } catch (err) {
@@ -742,41 +742,40 @@ const isAuthenticated = async (req, res, next) => {
 
 const isAdmin = async (req, res, next) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Not authenticated' });
-    if (req.session.role !== 'admin') {
-        try {
-            const result = await pool.request()
-                .input('id', sql.Int, req.session.userId)
-                .query('SELECT role FROM users WHERE id = @id');
-            if (result.recordset.length === 0 || result.recordset[0].role !== 'admin')
-                return res.status(403).json({ error: 'Access denied' });
-            req.session.role = 'admin';
-        } catch (err) {
-            return res.status(500).json({ error: 'Server error' });
+    if (req.session.role === 'admin') return next();
+    try {
+        const result = await pool.query(
+            'SELECT role FROM users WHERE id = $1',
+            [req.session.userId]
+        );
+        if (result.rows.length === 0 || result.rows[0].role !== 'admin') {
+            return res.status(403).json({ error: 'Access denied' });
         }
+        req.session.role = 'admin';
+        next();
+    } catch (err) {
+        res.status(500).json({ error: 'Server error' });
     }
-    next();
 };
 
+// ==================== isAdminOrModerator MIDDLEWARE (fixed) ====================
 const isAdminOrModerator = async (req, res, next) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Not authenticated' });
     const role = req.session.role;
-    if (role === 'admin' || role === 'moderator') {
-        next();
-    } else {
-        try {
-            const result = await pool.request()
-                .input('id', sql.Int, req.session.userId)
-                .query('SELECT role FROM users WHERE id = @id');
-            const dbRole = result.recordset[0]?.role;
-            if (dbRole === 'admin' || dbRole === 'moderator') {
-                req.session.role = dbRole;
-                next();
-            } else {
-                res.status(403).json({ error: 'Access denied' });
-            }
-        } catch (err) {
-            res.status(500).json({ error: 'Server error' });
+    if (role === 'admin' || role === 'moderator') return next();
+    try {
+        const result = await pool.query(
+            'SELECT role FROM users WHERE id = $1',
+            [req.session.userId]
+        );
+        const dbRole = result.rows[0]?.role;
+        if (dbRole === 'admin' || dbRole === 'moderator') {
+            req.session.role = dbRole;
+            return next();
         }
+        res.status(403).json({ error: 'Access denied' });
+    } catch (err) {
+        res.status(500).json({ error: 'Server error' });
     }
 };
 
@@ -1686,30 +1685,21 @@ app.post('/send-otp', authLimiter, async (req, res) => {
     const { email } = req.body;
     if (!email) return res.status(400).send('Email is required');
     try {
-        /*await poolConnect;
-        const check = await pool.request()
-            .input('email', sql.NVarChar, email)
-            .query('SELECT id FROM users WHERE email = @email');
-        if (check.recordset.length > 0) return res.status(409).send('Email already registered');*/
-        
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const expires = new Date(Date.now() + 10 * 60 * 1000);
-        
-        await pool.request()
-            .input('email', sql.NVarChar, email)
-            .input('otp', sql.NVarChar, otp)
-            .input('expires', sql.DateTime, expires)
-            .query(`MERGE INTO otp_store AS target
-                    USING (SELECT @email AS email) AS source
-                    ON target.email = source.email
-                    WHEN MATCHED THEN UPDATE SET otp = @otp, expires_at = @expires
-                    WHEN NOT MATCHED THEN INSERT (email, otp, expires_at) VALUES (@email, @otp, @expires);`);
-        
+ 
+        await pool.query(
+            `INSERT INTO otp_store (email, otp, expires_at)
+             VALUES ($1, $2, $3)
+             ON CONFLICT (email) DO UPDATE SET otp = $2, expires_at = $3`,
+            [email, otp, expires]
+        );
+ 
         const emailSent = await sendOtpEmail(email, otp);
         if (!emailSent.success) return res.status(500).send('Failed to send OTP email');
         res.status(200).send('OTP sent successfully');
     } catch (err) {
-        console.error(err);
+        console.error('OTP error:', err);
         res.status(500).send('Server error');
     }
 });
@@ -1982,19 +1972,12 @@ app.post('/api/track-usage', isAuthenticated, async (req, res) => {
     const { tool_name, tool_category } = req.body;
     if (!tool_name) return res.status(400).send('Tool name required');
     try {
-        await poolConnect;
-        await pool.request()
-            .input('user_id', sql.Int, req.session.userId)
-            .input('tool_name', sql.NVarChar, tool_name)
-            .input('tool_category', sql.NVarChar, tool_category || null)
-            .query('INSERT INTO tool_usage (user_id, tool_name, tool_category) VALUES (@user_id, @tool_name, @tool_category)');
-
-        // ========== GAMIFICATION ADDITIONS ==========
-        await addXP(req.session.userId, 2, 'Tool used');
+        await pool.query(
+            'INSERT INTO tool_usage (user_id, tool_name, tool_category) VALUES ($1, $2, $3)',
+            [req.session.userId, tool_name, tool_category || null]
+        );
         await updateQuestProgress(req.session.userId, 'use_tool');
         await checkAchievements(req.session.userId);
-        // ===========================================
-
         res.send('Tracked');
     } catch (err) {
         console.error(err);
@@ -2298,16 +2281,13 @@ app.post('/api/tools/submit', isAuthenticated, async (req, res) => {
 // Get all pending tools (for admin/moderator)
 app.get('/api/admin/tools/pending', isAdminOrModerator, async (req, res) => {
     try {
-        await poolConnect;
-        const result = await pool.request()
-            .query(`
-                SELECT t.*, u.username as submitted_by, u.email as submitter_email
-                FROM tools t
-                LEFT JOIN users u ON t.user_id = u.id
-                WHERE t.approved = false OR t.approved IS NULL
-                ORDER BY t.submitted_at DESC
-            `);
-        res.json(result.recordset);
+        const result = await pool.query(
+            `SELECT t.*, u.username as submitted_by, u.email as submitter_email
+             FROM tools t LEFT JOIN users u ON t.user_id = u.id
+             WHERE t.approved = false OR t.approved IS NULL
+             ORDER BY t.submitted_at DESC`
+        );
+        res.json(result.rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -2315,19 +2295,17 @@ app.get('/api/admin/tools/pending', isAdminOrModerator, async (req, res) => {
 });
 
 // Get all tools (admin/moderator view - includes pending) - ENHANCED with usage_count and is_featured
+// ==================== ALL TOOLS (admin) ====================
 app.get('/api/admin/tools', isAdminOrModerator, async (req, res) => {
     try {
-        await poolConnect;
-        const result = await pool.request()
-            .query(`
-                SELECT t.*, u.username as submitted_by, 
-                       (SELECT COUNT(*) FROM tool_usage WHERE tool_name = t.name) as usage_count,
-                       COALESCE(t.is_featured, false) as is_featured
-                FROM tools t
-                LEFT JOIN users u ON t.user_id = u.id
-                ORDER BY t.id DESC
-            `);
-        res.json(result.recordset);
+        const result = await pool.query(
+            `SELECT t.*, u.username as submitted_by,
+                    (SELECT COUNT(*) FROM tool_usage WHERE tool_name = t.name) as usage_count,
+                    COALESCE(t.is_featured, false) as is_featured
+             FROM tools t LEFT JOIN users u ON t.user_id = u.id
+             ORDER BY t.id DESC`
+        );
+        res.json(result.rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -2335,79 +2313,68 @@ app.get('/api/admin/tools', isAdminOrModerator, async (req, res) => {
 });
 
 // Approve a tool (admin only)
+// ==================== APPROVE TOOL ====================
 app.put('/api/admin/tools/:id/approve', isAdmin, async (req, res) => {
     const toolId = req.params.id;
-    
     try {
-        await poolConnect;
-        
-        const toolResult = await pool.request()
-            .input('id', sql.Int, toolId)
-            .query(`
-                SELECT t.*, u.email as submitter_email, u.username as submitter_name
-                FROM tools t
-                LEFT JOIN users u ON t.user_id = u.id
-                WHERE t.id = @id
-            `);
-        
-        if (toolResult.recordset.length === 0) {
-            return res.status(404).json({ error: 'Tool not found' });
-        }
-        
-        const tool = toolResult.recordset[0];
-        
-        await pool.request()
-            .input('id', sql.Int, toolId)
-            .query('UPDATE tools SET approved = true WHERE id = @id');
-        
+        const toolResult = await pool.query(
+            `SELECT t.*, u.email as submitter_email, u.username as submitter_name
+             FROM tools t LEFT JOIN users u ON t.user_id = u.id WHERE t.id = $1`,
+            [toolId]
+        );
+        if (toolResult.rows.length === 0) return res.status(404).json({ error: 'Tool not found' });
+        const tool = toolResult.rows[0];
+ 
+        await pool.query('UPDATE tools SET approved = true WHERE id = $1', [toolId]);
+ 
         if (tool.user_id) {
-            await awardCreditsForToolApproval(tool.user_id, tool.name);
-            
+            const approvalBonus = 25;
+            await pool.query(
+                `UPDATE user_credits SET balance = balance + $1, lifetime_earned = lifetime_earned + $1
+                 WHERE user_id = $2`,
+                [approvalBonus, tool.user_id]
+            );
+            await pool.query(
+                `INSERT INTO credit_transactions (user_id, amount, type, description)
+                 VALUES ($1, $2, 'earn', $3)`,
+                [tool.user_id, approvalBonus, `Tool approved: ${tool.name}`]
+            );
             if (tool.submitter_email) {
                 await sendToolApprovalEmail(tool.submitter_email, tool.submitter_name, tool.name);
             }
         }
-        
-        res.json({ 
-            success: true, 
-            message: 'Tool approved successfully! User has been awarded 25 credits.' 
-        });
-        
+        res.json({ success: true, message: 'Tool approved! User awarded 25 credits.' });
     } catch (err) {
         console.error('Approval error:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
 
-// ==================== ADMIN: GET USER CREDIT TRANSACTIONS ====================
-app.get('/api/admin/users/:id/credits/transactions', isAdmin, async (req, res) => {
+
+// ==================== ADMIN GIVE CREDITS ====================
+app.post('/api/admin/users/:id/credits', isAdmin, async (req, res) => {
     const userId = parseInt(req.params.id);
-    const { limit = 50, offset = 0 } = req.query;
+    let { amount, reason } = req.body;
     if (isNaN(userId)) return res.status(400).json({ error: 'Invalid user ID' });
+    const numericAmount = parseFloat(amount);
+    if (isNaN(numericAmount) || numericAmount <= 0) return res.status(400).json({ error: 'Invalid amount' });
     try {
-        await poolConnect;
-        const result = await pool.request()
-            .input('user_id', sql.Int, userId)
-            .input('limit', sql.Int, parseInt(limit))
-            .input('offset', sql.Int, parseInt(offset))
-            .query(`
-                SELECT id, amount, type, description, created_at,
-                       CASE WHEN type IN ('earn', 'bonus', 'refund') THEN '+' ELSE '-' END as sign
-                FROM credit_transactions
-                WHERE user_id = @user_id
-                ORDER BY created_at DESC
-                OFFSET @offset ROWS
-                FETCH NEXT @limit ROWS ONLY
-            `);
-        const countResult = await pool.request()
-            .input('user_id', sql.Int, userId)
-            .query('SELECT COUNT(*) as total FROM credit_transactions WHERE user_id = @user_id');
-        res.json({
-            transactions: result.recordset,
-            total: countResult.recordset[0]?.total || 0
-        });
+        const userCheck = await pool.query('SELECT id FROM users WHERE id = $1', [userId]);
+        if (userCheck.rows.length === 0) return res.status(404).json({ error: 'User not found' });
+        await ensureUserCredits(userId);
+        await pool.query(
+            `UPDATE user_credits SET balance = balance + $1, lifetime_earned = lifetime_earned + $1
+             WHERE user_id = $2`,
+            [numericAmount, userId]
+        );
+        await pool.query(
+            `INSERT INTO credit_transactions (user_id, amount, type, description)
+             VALUES ($1, $2, 'earn', $3)`,
+            [userId, numericAmount, reason?.trim() || `Admin added ${numericAmount} credits`]
+        );
+        res.json({ success: true, message: `Added ${numericAmount} credits to user ${userId}` });
     } catch (err) {
-        console.error(err);
+        console.error('Error giving credits:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -2503,43 +2470,23 @@ app.post('/api/admin/users/:id/credits', isAdmin, async (req, res) => {
 });
 
 // Reject a tool (admin only)
+// ==================== REJECT TOOL ====================
 app.delete('/api/admin/tools/:id/reject', isAdmin, async (req, res) => {
     const toolId = req.params.id;
     const { reason } = req.body;
-    
     try {
-        await poolConnect;
-        
-        const toolResult = await pool.request()
-            .input('id', sql.Int, toolId)
-            .query(`
-                SELECT t.name, t.user_id, u.email as submitter_email, u.username as submitter_name
-                FROM tools t
-                LEFT JOIN users u ON t.user_id = u.id
-                WHERE t.id = @id
-            `);
-        
-        if (toolResult.recordset.length === 0) {
-            return res.status(404).json({ error: 'Tool not found' });
-        }
-        
-        const tool = toolResult.recordset[0];
-        
+        const toolResult = await pool.query(
+            `SELECT t.name, t.user_id, u.email as submitter_email, u.username as submitter_name
+             FROM tools t LEFT JOIN users u ON t.user_id = u.id WHERE t.id = $1`,
+            [toolId]
+        );
+        if (toolResult.rows.length === 0) return res.status(404).json({ error: 'Tool not found' });
+        const tool = toolResult.rows[0];
         if (tool.submitter_email) {
             await sendToolRejectionEmail(tool.submitter_email, tool.submitter_name || 'User', tool.name, reason);
         }
-        
-        await pool.request()
-            .input('id', sql.Int, toolId)
-            .query('DELETE FROM tools WHERE id = @id');
-        
-        console.log(`❌ Tool "${tool.name}" rejected by admin`);
-        
-        res.json({ 
-            success: true, 
-            message: 'Tool rejected and removed.' 
-        });
-        
+        await pool.query('DELETE FROM tools WHERE id = $1', [toolId]);
+        res.json({ success: true, message: 'Tool rejected and removed.' });
     } catch (err) {
         console.error('Rejection error:', err);
         res.status(500).json({ error: 'Server error' });
@@ -2599,74 +2546,35 @@ app.get('/api/tools/recent', isAuthenticated, async (req, res) => {
 // Admin add tool directly (ENHANCED: now accepts is_featured flag)
 app.post('/api/admin/tools', isAdmin, async (req, res) => {
     const { name, url, description, category, approved, pageType, is_premium, is_featured } = req.body;
-    
-    if (!name || !url) {
-        return res.status(400).json({ error: 'Name and URL are required' });
-    }
-    
+    if (!name || !url) return res.status(400).json({ error: 'Name and URL are required' });
     try {
-        await poolConnect;
-        
-        const result = await pool.request()
-            .input('name', sql.NVarChar, name)
-            .input('url', sql.NVarChar, url)
-            .input('description', sql.NVarChar, description || '')
-            .input('category', sql.NVarChar, category || 'study')
-            .input('approved', sql.Bit, approved === undefined ? 1 : approved)
-            .input('page_type', sql.NVarChar, pageType || 'student')
-            .input('is_premium', sql.Bit, is_premium || 0)
-            .input('is_featured', sql.Bit, is_featured || 0)
-            .query(`
-                INSERT INTO tools (name, url, description, category, approved, page_type, is_premium, is_featured, created_at)
-                OUTPUT INSERTED.id
-                VALUES (@name, @url, @description, @category, @approved, @page_type, @is_premium, @is_featured, NOW())
-            `);
-        
-        res.status(201).json({ 
-            success: true, 
-            message: 'Tool added successfully',
-            toolId: result.recordset[0]?.id 
-        });
-        
+        const result = await pool.query(
+            `INSERT INTO tools (name, url, description, category, approved, page_type, is_premium, is_featured, created_at)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW()) RETURNING id`,
+            [name, url, description || '', category || 'study',
+             approved === undefined ? true : approved,
+             pageType || 'student', is_premium || false, is_featured || false]
+        );
+        res.status(201).json({ success: true, toolId: result.rows[0].id });
     } catch (err) {
         console.error('Add tool error:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
 
-// Admin update tool (ENHANCED: includes is_featured)
+
 app.put('/api/admin/tools/:id', isAdmin, async (req, res) => {
-    const toolId = req.params.id;
     const { name, url, description, category, approved, pageType, is_premium, is_featured } = req.body;
-    
     try {
-        await poolConnect;
-        
-        await pool.request()
-            .input('id', sql.Int, toolId)
-            .input('name', sql.NVarChar, name)
-            .input('url', sql.NVarChar, url)
-            .input('description', sql.NVarChar, description || '')
-            .input('category', sql.NVarChar, category || 'study')
-            .input('approved', sql.Bit, approved)
-            .input('page_type', sql.NVarChar, pageType || 'student')
-            .input('is_premium', sql.Bit, is_premium || 0)
-            .input('is_featured', sql.Bit, is_featured || 0)
-            .query(`
-                UPDATE tools SET 
-                    name = @name, 
-                    url = @url, 
-                    description = @description,
-                    category = @category, 
-                    approved = @approved,
-                    page_type = @page_type,
-                    is_premium = @is_premium,
-                    is_featured = @is_featured
-                WHERE id = @id
-            `);
-        
-        res.json({ success: true, message: 'Tool updated successfully' });
-        
+        await pool.query(
+            `UPDATE tools SET name=$1, url=$2, description=$3, category=$4,
+             approved=$5, page_type=$6, is_premium=$7, is_featured=$8
+             WHERE id=$9`,
+            [name, url, description || '', category || 'study',
+             approved, pageType || 'student', is_premium || false, is_featured || false,
+             req.params.id]
+        );
+        res.json({ success: true, message: 'Tool updated' });
     } catch (err) {
         console.error('Update tool error:', err);
         res.status(500).json({ error: 'Server error' });
@@ -2675,19 +2583,10 @@ app.put('/api/admin/tools/:id', isAdmin, async (req, res) => {
 
 // Admin delete tool
 app.delete('/api/admin/tools/:id', isAdmin, async (req, res) => {
-    const toolId = req.params.id;
-    
     try {
-        await poolConnect;
-        
-        await pool.request()
-            .input('id', sql.Int, toolId)
-            .query('DELETE FROM tools WHERE id = @id');
-        
-        res.json({ success: true, message: 'Tool deleted successfully' });
-        
+        await pool.query('DELETE FROM tools WHERE id = $1', [req.params.id]);
+        res.json({ success: true });
     } catch (err) {
-        console.error('Delete tool error:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -2804,25 +2703,19 @@ app.delete('/api/cards/:id', isAdmin, async (req, res) => {
 // Get user credits balance
 app.get('/api/credits/balance', isAuthenticated, async (req, res) => {
     try {
-        await poolConnect;
         await ensureUserCredits(req.session.userId);
-        const result = await pool.request()
-            .input('user_id', sql.Int, req.session.userId)
-            .query(`
-                SELECT 
-                    COALESCE(balance, false) as balance,
-                    COALESCE(lifetime_earned, false) as lifetime_earned,
-                    COALESCE(lifetime_spent, false) as lifetime_spent
-                FROM user_credits 
-                WHERE user_id = @user_id
-            `);
-        
-        if (result.recordset.length === 0) {
+        const result = await pool.query(
+            `SELECT COALESCE(balance, 0) as balance,
+                    COALESCE(lifetime_earned, 0) as lifetime_earned,
+                    COALESCE(lifetime_spent, 0) as lifetime_spent
+             FROM user_credits WHERE user_id = $1`,
+            [req.session.userId]
+        );
+        if (result.rows.length === 0) {
             await initializeUserCredits(req.session.userId);
-            return res.json({ balance: 100, lifetime_earned: 100, lifetime_spent: 0 });
+            return res.json({ balance: 600, lifetime_earned: 600, lifetime_spent: 0 });
         }
-        
-        res.json(result.recordset[0]);
+        res.json(result.rows[0]);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -2831,42 +2724,23 @@ app.get('/api/credits/balance', isAuthenticated, async (req, res) => {
 
 // Get credit transactions
 app.get('/api/credits/transactions', isAuthenticated, async (req, res) => {
-    const { limit = 50, offset = 0 } = req.query;
-    // Validate integers
-    const validLimit = validateIntParam(limit, 'limit');
-    const validOffset = validateIntParam(offset, 'offset');
+    const limit = Math.min(parseInt(req.query.limit) || 50, 200);
+    const offset = parseInt(req.query.offset) || 0;
     try {
-        await poolConnect;
-        const result = await pool.request()
-            .input('user_id', sql.Int, req.session.userId)
-            .input('limit', sql.Int, validLimit)
-            .input('offset', sql.Int, validOffset)
-            .query(`
-                SELECT 
-                    id,
-                    amount,
-                    type,
-                    description,
-                    created_at,
-                    CASE 
-                        WHEN type IN ('earn', 'bonus', 'refund') THEN '+'
-                        WHEN type = 'spend' THEN '-'
-                    END as sign
-                FROM credit_transactions
-                WHERE user_id = @user_id
-                ORDER BY created_at DESC
-                OFFSET @offset ROWS
-                FETCH NEXT @limit ROWS ONLY
-            `);
-        
-        const countResult = await pool.request()
-            .input('user_id', sql.Int, req.session.userId)
-            .query('SELECT COUNT(*) as total FROM credit_transactions WHERE user_id = @user_id');
-        
-        res.json({
-            transactions: result.recordset,
-            total: countResult.recordset[0].total
-        });
+        const result = await pool.query(
+            `SELECT id, amount, type, description, created_at,
+                    CASE WHEN type IN ('earn','bonus','refund') THEN '+' ELSE '-' END as sign
+             FROM credit_transactions
+             WHERE user_id = $1
+             ORDER BY created_at DESC
+             LIMIT $2 OFFSET $3`,
+            [req.session.userId, limit, offset]
+        );
+        const countResult = await pool.query(
+            'SELECT COUNT(*) as total FROM credit_transactions WHERE user_id = $1',
+            [req.session.userId]
+        );
+        res.json({ transactions: result.rows, total: parseInt(countResult.rows[0].total) });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -2886,42 +2760,32 @@ app.get('/api/credits/opportunities', isAuthenticated, async (req, res) => {
     res.json(opportunities);
 });
 
-// Claim daily bonus
+// ==================== CLAIM DAILY BONUS ====================
+
 app.post('/api/credits/claim-daily', isAuthenticated, async (req, res) => {
     try {
         await ensureUserCredits(req.session.userId);
-        
-        // Check if already claimed today (using NOW() and CURRENT_DATE)
-        const lastClaim = await pool.query(`
-            SELECT created_at 
-            FROM credit_transactions 
-            WHERE user_id = $1 
-              AND type = 'bonus' 
-              AND description LIKE '%Daily login%'
-              AND CAST(created_at AS DATE) = CURRENT_DATE
-            ORDER BY created_at DESC
-            LIMIT 1
-        `, [req.session.userId]);
-        
+        const lastClaim = await pool.query(
+            `SELECT created_at FROM credit_transactions
+             WHERE user_id = $1 AND type = 'bonus' AND description LIKE '%Daily login%'
+               AND created_at::date = CURRENT_DATE
+             ORDER BY created_at DESC LIMIT 1`,
+            [req.session.userId]
+        );
         if (lastClaim.rows.length > 0) {
             return res.status(400).json({ error: 'Daily bonus already claimed today' });
         }
-        
         const dailyBonus = 5;
-        
-        // Update user credits
-        await pool.query(`
-            UPDATE user_credits 
-            SET balance = balance + $1, lifetime_earned = lifetime_earned + $1
-            WHERE user_id = $2
-        `, [dailyBonus, req.session.userId]);
-        
-        // Insert transaction record
-        await pool.query(`
-            INSERT INTO credit_transactions (user_id, amount, type, description)
-            VALUES ($1, $2, 'bonus', 'Daily login bonus')
-        `, [req.session.userId, dailyBonus]);
-        
+        await pool.query(
+            `UPDATE user_credits SET balance = balance + $1, lifetime_earned = lifetime_earned + $1
+             WHERE user_id = $2`,
+            [dailyBonus, req.session.userId]
+        );
+        await pool.query(
+            `INSERT INTO credit_transactions (user_id, amount, type, description)
+             VALUES ($1, $2, 'bonus', 'Daily login bonus')`,
+            [req.session.userId, dailyBonus]
+        );
         res.json({ success: true, message: `Claimed ${dailyBonus} credits!` });
     } catch (err) {
         console.error(err);
@@ -2944,29 +2808,21 @@ app.get('/api/credits/spend-options', isAuthenticated, async (req, res) => {
 // ==================== REFERRAL SYSTEM ====================
 app.get('/api/referrals/stats', isAuthenticated, async (req, res) => {
     try {
-        await poolConnect;
         const userId = req.session.userId;
-        
-        const earningsResult = await pool.request()
-            .input('user_id', sql.Int, userId)
-            .query(`
-                SELECT COALESCE(SUM(amount), false) as total 
-                FROM credit_transactions 
-                WHERE user_id = @user_id AND type = 'earn' AND description LIKE '%Referral%'
-            `);
-        
-        const referralsResult = await pool.request()
-            .input('referrer_id', sql.Int, userId)
-            .query(`
-                SELECT id, username, email, created_at 
-                FROM users 
-                WHERE referrer_id = @referrer_id
-                ORDER BY created_at DESC
-            `);
-        
+        const earningsResult = await pool.query(
+            `SELECT COALESCE(SUM(amount), 0) as total
+             FROM credit_transactions
+             WHERE user_id = $1 AND type = 'earn' AND description ILIKE '%Referral%'`,
+            [userId]
+        );
+        const referralsResult = await pool.query(
+            `SELECT id, username, email, created_at
+             FROM users WHERE referrer_id = $1 ORDER BY created_at DESC`,
+            [userId]
+        );
         res.json({
-            totalEarned: earningsResult.recordset[0]?.total || 0,
-            referrals: referralsResult.recordset
+            totalEarned: earningsResult.rows[0]?.total || 0,
+            referrals: referralsResult.rows
         });
     } catch (err) {
         console.error('Referral stats error:', err);
@@ -3622,66 +3478,48 @@ cron.schedule('*/5 * * * *', async () => {
 // ==================== STATS, USER STATUS, USAGE ANALYTICS ====================
 app.get('/api/stats', isAuthenticated, async (req, res) => {
     try {
-        await poolConnect;
         const userId = req.session.userId;
-
-        const toolsResult = await pool.request()
-            .input('userId', sql.Int, userId)
-            .query('SELECT COUNT(*) as count FROM tool_usage WHERE user_id = @userId');
-        const toolsUsed = toolsResult.recordset[0].count;
-
-        const friendsResult = await pool.request()
-            .input('userId', sql.Int, userId)
-            .query(`
-                SELECT COUNT(*) as count FROM friendships 
-                WHERE (user_id = @userId OR friend_id = @userId) AND status = 'accepted'
-            `);
-        const friendsCount = friendsResult.recordset[0].count;
-
-        let streak = 0;
-        const streakResult = await pool.request()
-            .input('userId', sql.Int, userId)
-            .query(`
-                SELECT DISTINCT CAST(used_at AS DATE) as date
-                FROM tool_usage
-                WHERE user_id = @userId
-                ORDER BY date DESC
-            `);
-        const dates = streakResult.recordset.map(row => new Date(row.date));
-        let expected = new Date();
-        expected.setHours(0,0,0,0);
-        for (let d of dates) {
-            if (d.getTime() === expected.getTime()) {
-                streak++;
-                expected.setDate(expected.getDate() - 1);
-            } else break;
-        }
-
-        const creditsResult = await pool.request()
-            .input('user_id', sql.Int, userId)
-            .query('SELECT balance FROM user_credits WHERE user_id = @user_id');
-        const aiCredits = creditsResult.recordset[0]?.balance || 0;
-
-        res.json({ toolsUsed, friendsCount, streak, aiCredits });
+ 
+        const toolsResult = await pool.query(
+            'SELECT COUNT(*) as count FROM tool_usage WHERE user_id = $1',
+            [userId]
+        );
+        const friendsResult = await pool.query(
+            `SELECT COUNT(*) as count FROM friendships
+             WHERE (user_id = $1 OR friend_id = $1) AND status = 'accepted'`,
+            [userId]
+        );
+        const creditsResult = await pool.query(
+            'SELECT balance FROM user_credits WHERE user_id = $1',
+            [userId]
+        );
+ 
+        res.json({
+            toolsUsed: parseInt(toolsResult.rows[0].count),
+            friendsCount: parseInt(friendsResult.rows[0].count),
+            streak: 0,
+            aiCredits: creditsResult.rows[0]?.balance || 0
+        });
     } catch (err) {
         console.error('Stats error:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
 
+// ==================== USER STATUS ====================
 app.get('/api/user-status', isAuthenticated, async (req, res) => {
     try {
-        await poolConnect;
-        const result = await pool.request()
-            .input('id', sql.Int, req.session.userId)
-            .query('SELECT status FROM users WHERE id = @id');
-        const status = result.recordset[0]?.status || 'online';
-        res.json({ status });
+        const result = await pool.query(
+            'SELECT status FROM users WHERE id = $1',
+            [req.session.userId]
+        );
+        res.json({ status: result.rows[0]?.status || 'online' });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
     }
 });
+
 
 app.get('/api/usage/analytics', isAuthenticated, async (req, res) => {
     try {
@@ -3715,52 +3553,46 @@ app.post('/api/friends/request', isAuthenticated, async (req, res) => {
     const { friendUsername } = req.body;
     if (!friendUsername) return res.status(400).send('Username required');
     try {
-        await poolConnect;
-        const friendResult = await pool.request()
-            .input('username', sql.NVarChar, friendUsername)
-            .query('SELECT id, email FROM users WHERE username = @username');
-        if (friendResult.recordset.length === 0) return res.status(404).send('User not found');
-        const friendId = friendResult.recordset[0].id;
-        const friendEmail = friendResult.recordset[0].email;
+        const friendResult = await pool.query(
+            'SELECT id, email FROM users WHERE username = $1',
+            [friendUsername]
+        );
+        if (friendResult.rows.length === 0) return res.status(404).send('User not found');
+        const friendId = friendResult.rows[0].id;
+        const friendEmail = friendResult.rows[0].email;
         if (friendId === req.session.userId) return res.status(400).send('Cannot add yourself');
-
-        const existing = await pool.request()
-            .input('user_id', sql.Int, req.session.userId)
-            .input('friend_id', sql.Int, friendId)
-            .query(`SELECT * FROM friendships WHERE (user_id = @user_id AND friend_id = @friend_id)
-                    OR (user_id = @friend_id AND friend_id = @user_id)`);
-        if (existing.recordset.length > 0) {
-            const row = existing.recordset[0];
+ 
+        const existing = await pool.query(
+            `SELECT * FROM friendships
+             WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1)`,
+            [req.session.userId, friendId]
+        );
+        if (existing.rows.length > 0) {
+            const row = existing.rows[0];
             if (row.status === 'accepted') return res.status(409).send('Already friends');
-            if (row.status === 'pending' && row.expires_at > new Date()) {
-                return res.status(409).send('Friend request already pending');
-            }
-            if (row.status === 'pending' && row.expires_at <= new Date()) {
-                await pool.request()
-                    .input('id', sql.Int, row.id)
-                    .query('DELETE FROM friendships WHERE id = @id');
-            }
+            if (row.status === 'pending') return res.status(409).send('Friend request already pending');
         }
-
+ 
         const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
-        await pool.request()
-            .input('user_id', sql.Int, req.session.userId)
-            .input('friend_id', sql.Int, friendId)
-            .input('expires_at', sql.DateTime, expiresAt)
-            .query('INSERT INTO friendships (user_id, friend_id, status, expires_at) VALUES (@user_id, @friend_id, \'pending\', @expires_at)');
-
-        sendFriendRequestEmail(friendEmail, req.session.username).catch(err => console.error('Friend request email failed:', err));
+        await pool.query(
+            `INSERT INTO friendships (user_id, friend_id, status, expires_at)
+             VALUES ($1, $2, 'pending', $3)`,
+            [req.session.userId, friendId, expiresAt]
+        );
+ 
+        sendFriendRequestEmail(friendEmail, req.session.username)
+            .catch(err => console.error('Friend request email failed:', err));
+ 
         const friendEntry = onlineUsers.get(friendId);
-        if (friendEntry && friendEntry.socketId) io.to(friendEntry.socketId).emit('friend_request_notification', {
-            from: req.session.userId,
-            fromUsername: req.session.username
-        });
-        
-        // GAMIFICATION: award XP for sending a friend request, update quest, check achievements
-        await addXP(req.session.userId, 5, 'Friend request');
+        if (friendEntry?.socketId) {
+            io.to(friendEntry.socketId).emit('friend_request_notification', {
+                from: req.session.userId,
+                fromUsername: req.session.username
+            });
+        }
+ 
         await updateQuestProgress(req.session.userId, 'friend_request');
         await checkAchievements(req.session.userId);
-        
         res.send('Friend request sent');
     } catch (err) {
         console.error(err);
@@ -3769,25 +3601,13 @@ app.post('/api/friends/request', isAuthenticated, async (req, res) => {
 });
 
 app.put('/api/friends/accept/:requestId', isAuthenticated, async (req, res) => {
-    const requestId = req.params.requestId;
     try {
-        await poolConnect;
-        const result = await pool.request()
-            .input('id', sql.Int, requestId)
-            .input('friend_id', sql.Int, req.session.userId)
-            .query('UPDATE friendships SET status = \'accepted\' WHERE id = @id AND friend_id = @friend_id AND status = \'pending\'');
-        if (result.rowsAffected[0] === 0) return res.status(404).send('Request not found');
-        const request = await pool.request()
-            .input('id', sql.Int, requestId)
-            .query('SELECT user_id FROM friendships WHERE id = @id');
-        const otherUserId = request.recordset[0]?.user_id;
-        if (otherUserId) {
-            const otherEntry = onlineUsers.get(otherUserId);
-            if (otherEntry && otherEntry.socketId) io.to(otherEntry.socketId).emit('connection_accepted', {
-                from: req.session.userId,
-                fromUsername: req.session.username
-            });
-        }
+        const result = await pool.query(
+            `UPDATE friendships SET status = 'accepted'
+             WHERE id = $1 AND friend_id = $2 AND status = 'pending'`,
+            [req.params.requestId, req.session.userId]
+        );
+        if (result.rowCount === 0) return res.status(404).send('Request not found');
         res.send('Friend request accepted');
     } catch (err) {
         console.error(err);
@@ -3796,14 +3616,13 @@ app.put('/api/friends/accept/:requestId', isAuthenticated, async (req, res) => {
 });
 
 app.put('/api/friends/decline/:requestId', isAuthenticated, async (req, res) => {
-    const requestId = req.params.requestId;
     try {
-        await poolConnect;
-        const result = await pool.request()
-            .input('id', sql.Int, requestId)
-            .input('friend_id', sql.Int, req.session.userId)
-            .query('UPDATE friendships SET status = \'declined\' WHERE id = @id AND friend_id = @friend_id AND status = \'pending\'');
-        if (result.rowsAffected[0] === 0) return res.status(404).send('Request not found');
+        const result = await pool.query(
+            `UPDATE friendships SET status = 'declined'
+             WHERE id = $1 AND friend_id = $2 AND status = 'pending'`,
+            [req.params.requestId, req.session.userId]
+        );
+        if (result.rowCount === 0) return res.status(404).send('Request not found');
         res.send('Friend request declined');
     } catch (err) {
         console.error(err);
@@ -3813,24 +3632,21 @@ app.put('/api/friends/decline/:requestId', isAuthenticated, async (req, res) => 
 
 app.get('/api/friends', isAuthenticated, async (req, res) => {
     try {
-        await poolConnect;
-        const userId = req.session.userId;
-        const { status, search } = req.query;
+        const { search } = req.query;
         let query = `
             SELECT u.id, u.username, u.display_name, u.avatar_url, u.status
             FROM friendships f
             JOIN users u ON (f.user_id = u.id OR f.friend_id = u.id)
-            WHERE (f.user_id = @userId OR f.friend_id = @userId)
-              AND f.status = 'accepted'
-              AND u.id != @userId
+            WHERE (f.user_id = $1 OR f.friend_id = $1)
+              AND f.status = 'accepted' AND u.id != $1
         `;
-        if (status) query += ` AND u.status = @status`;
-        if (search) query += ` AND (u.username LIKE @search OR u.display_name LIKE @search)`;
-        const request = pool.request().input('userId', sql.Int, userId);
-        if (status) request.input('status', sql.NVarChar, status);
-        if (search) request.input('search', sql.NVarChar, `%${search}%`);
-        const result = await request.query(query);
-        res.json(result.recordset);
+        const params = [req.session.userId];
+        if (search) {
+            query += ` AND (u.username ILIKE $2 OR u.display_name ILIKE $2)`;
+            params.push(`%${search}%`);
+        }
+        const result = await pool.query(query, params);
+        res.json(result.rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -3839,17 +3655,13 @@ app.get('/api/friends', isAuthenticated, async (req, res) => {
 
 app.get('/api/friends/requests', isAuthenticated, async (req, res) => {
     try {
-        await poolConnect;
-        const userId = req.session.userId;
-        const result = await pool.request()
-            .input('userId', sql.Int, userId)
-            .query(`
-                SELECT f.id, u.id as sender_id, u.username, u.display_name, u.avatar_url
-                FROM friendships f
-                JOIN users u ON f.user_id = u.id
-                WHERE f.friend_id = @userId AND f.status = 'pending'
-            `);
-        res.json(result.recordset);
+        const result = await pool.query(
+            `SELECT f.id, u.id as sender_id, u.username, u.display_name, u.avatar_url
+             FROM friendships f JOIN users u ON f.user_id = u.id
+             WHERE f.friend_id = $1 AND f.status = 'pending'`,
+            [req.session.userId]
+        );
+        res.json(result.rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -3875,45 +3687,38 @@ app.get('/api/friends/outgoing-requests', isAuthenticated, async (req, res) => {
     }
 });
 
+app.get('/api/messages/:friendId', isAuthenticated, async (req, res) => {
+    const friendId = req.params.friendId;
+    const offset = parseInt(req.query.offset) || 0;
+    const limit = parseInt(req.query.limit) || 30;
+    try {
+        const result = await pool.query(
+            `SELECT * FROM messages
+             WHERE (sender_id = $1 AND receiver_id = $2)
+                OR (sender_id = $2 AND receiver_id = $1)
+             ORDER BY created_at DESC
+             LIMIT $3 OFFSET $4`,
+            [req.session.userId, friendId, limit, offset]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 app.delete('/api/friends/:friendId', isAuthenticated, async (req, res) => {
     const friendId = parseInt(req.params.friendId);
     if (isNaN(friendId)) return res.status(400).send('Invalid friend ID');
     try {
-        await poolConnect;
-        const result = await pool.request()
-            .input('user_id', sql.Int, req.session.userId)
-            .input('friend_id', sql.Int, friendId)
-            .query(`
-                DELETE FROM friendships
-                WHERE (user_id = @user_id AND friend_id = @friend_id)
-                   OR (user_id = @friend_id AND friend_id = @user_id)
-            `);
-        if (result.rowsAffected[0] === 0) return res.status(404).send('Friend not found');
+        await pool.query(
+            `DELETE FROM friendships
+             WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1)`,
+            [req.session.userId, friendId]
+        );
         res.send('Friend removed');
     } catch (err) {
-        console.error('Error deleting friend:', err);
-        res.status(500).send('Server error');
-    }
-});
-
-app.delete('/api/friends/request/:friendId', isAuthenticated, async (req, res) => {
-    const friendId = parseInt(req.params.friendId);
-    if (isNaN(friendId)) return res.status(400).send('Invalid friend ID');
-    try {
-        await poolConnect;
-        const result = await pool.request()
-            .input('user_id', sql.Int, req.session.userId)
-            .input('friend_id', sql.Int, friendId)
-            .query(`
-                DELETE FROM friendships
-                WHERE user_id = @user_id
-                  AND friend_id = @friend_id
-                  AND status = 'pending'
-            `);
-        if (result.rowsAffected[0] === 0) return res.status(404).send('No pending request found');
-        res.send('Friend request cancelled');
-    } catch (err) {
-        console.error('Error cancelling friend request:', err);
+        console.error(err);
         res.status(500).send('Server error');
     }
 });
@@ -3947,14 +3752,11 @@ app.get('/api/messages/:friendId', isAuthenticated, async (req, res) => {
 app.post('/api/messages/read/:friendId', isAuthenticated, async (req, res) => {
     const friendId = req.params.friendId;
     try {
-        await poolConnect;
-        await pool.request()
-            .input('user_id', sql.Int, req.session.userId)
-            .input('friend_id', sql.Int, friendId)
-            .query(`
-                UPDATE messages SET is_read = true
-                WHERE receiver_id = @user_id AND sender_id = @friend_id AND is_read = false
-            `);
+        await pool.query(
+            `UPDATE messages SET is_read = true
+             WHERE receiver_id = $1 AND sender_id = $2 AND is_read = false`,
+            [req.session.userId, friendId]
+        );
         res.send('ok');
     } catch (err) {
         console.error(err);
@@ -3965,26 +3767,22 @@ app.post('/api/messages/read/:friendId', isAuthenticated, async (req, res) => {
 // ==================== NETWORK ENDPOINTS ====================
 app.get('/api/network/stats', isAuthenticated, async (req, res) => {
     try {
-        await poolConnect;
         const userId = req.session.userId;
-        const totalRes = await pool.request()
-            .input('userId', sql.Int, userId)
-            .query(`SELECT COUNT(*) as count FROM friendships WHERE (user_id = @userId OR friend_id = @userId) AND status = 'accepted'`);
-        const total = totalRes.recordset[0].count;
-        const onlineRes = await pool.request()
-            .input('userId', sql.Int, userId)
-            .query(`
-                SELECT COUNT(*) as count FROM friendships f
-                JOIN users u ON (f.user_id = u.id OR f.friend_id = u.id)
-                WHERE (f.user_id = @userId OR f.friend_id = @userId) AND f.status = 'accepted'
-                  AND u.id != @userId AND u.status = 'online'
-            `);
-        const online = onlineRes.recordset[0].count;
-        const pendingRes = await pool.request()
-            .input('userId', sql.Int, userId)
-            .query('SELECT COUNT(*) as count FROM friendships WHERE friend_id = @userId AND status = \'pending\'');
-        const requests = pendingRes.recordset[0].count;
-        res.json({ total, online, requests });
+        const total = await pool.query(
+            `SELECT COUNT(*) as count FROM friendships
+             WHERE (user_id = $1 OR friend_id = $1) AND status = 'accepted'`,
+            [userId]
+        );
+        const pending = await pool.query(
+            `SELECT COUNT(*) as count FROM friendships
+             WHERE friend_id = $1 AND status = 'pending'`,
+            [userId]
+        );
+        res.json({
+            total: parseInt(total.rows[0].count),
+            online: 0,
+            requests: parseInt(pending.rows[0].count)
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -4142,11 +3940,10 @@ app.post('/api/update-status', isAuthenticated, async (req, res) => {
         return res.status(400).send('Invalid status');
     }
     try {
-        await poolConnect;
-        await pool.request()
-            .input('id', sql.Int, req.session.userId)
-            .input('status', sql.NVarChar, status)
-            .query('UPDATE users SET status = @status WHERE id = @id');
+        await pool.query(
+            'UPDATE users SET status = $1 WHERE id = $2',
+            [status, req.session.userId]
+        );
         res.send('Status updated');
     } catch (err) {
         console.error(err);
@@ -4157,15 +3954,11 @@ app.post('/api/update-status', isAuthenticated, async (req, res) => {
 // ==================== ADMIN ROUTES (with moderator view access) ====================
 app.get('/admin/users', isAdminOrModerator, async (req, res) => {
     try {
-        await poolConnect;
-        const result = await pool.request()
-            .query(`
-                SELECT id, username, email, role, created_at, is_banned,
-                       display_name, avatar_url
-                FROM users 
-                ORDER BY id
-            `);
-        res.json(result.recordset);
+        const result = await pool.query(
+            `SELECT id, username, email, role, created_at, is_banned, display_name, avatar_url
+             FROM users ORDER BY id`
+        );
+        res.json(result.rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -4278,13 +4071,17 @@ app.post('/api/forgot-password', authLimiter, async (req, res) => {
     try {
         const user = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
         if (user.rows.length === 0) return res.status(404).send('No account with that email');
-
+ 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const expires = new Date(Date.now() + 10 * 60 * 1000);
+ 
         await pool.query(
-            'INSERT INTO password_resets (email, otp, expires_at) VALUES ($1, $2, $3)',
+            `INSERT INTO password_resets (email, otp, expires_at)
+             VALUES ($1, $2, $3)
+             ON CONFLICT (email) DO UPDATE SET otp = $2, expires_at = $3`,
             [email, otp, expires]
         );
+ 
         const emailSent = await sendPasswordResetOtp(email, otp);
         if (!emailSent.success) {
             console.error('Email send failed:', emailSent.error);
@@ -4292,62 +4089,61 @@ app.post('/api/forgot-password', authLimiter, async (req, res) => {
         }
         res.send('OTP sent to email');
     } catch (err) {
-        console.error('ERROR at step:', err);
+        console.error('Forgot password error:', err);
         res.status(500).send('Server error');
     }
 });
+ 
 
 app.post('/api/reset-password', authLimiter, async (req, res) => {
     const { email, otp, newPassword } = req.body;
     if (!email || !otp || !newPassword) return res.status(400).send('All fields are required');
-
     try {
-        // Check OTP (using NOW() which is local time; your expires_at should be stored in same time zone)
-        const result = await pool.query(`
-            SELECT * FROM password_resets 
-            WHERE LOWER(email) = LOWER($1) 
-              AND otp = $2 
-              AND expires_at > NOW()
-        `, [email, otp]);
+        const result = await pool.query(
+            `SELECT * FROM password_resets
+             WHERE LOWER(email) = LOWER($1) AND otp = $2 AND expires_at > NOW()`,
+            [email, otp]
+        );
         if (result.rows.length === 0) return res.status(400).send('Invalid or expired OTP');
-
+ 
         const strength = validatePasswordStrength(newPassword);
         if (!strength.valid) return res.status(400).send(strength.message);
-
+ 
         const hashedPassword = await bcrypt.hash(newPassword, 10);
-        await pool.query('UPDATE users SET password = $1 WHERE LOWER(email) = LOWER($2)', [hashedPassword, email]);
-
-        await pool.query('DELETE FROM password_resets WHERE LOWER(email) = LOWER($1)', [email]);
-
+        await pool.query(
+            'UPDATE users SET password = $1 WHERE LOWER(email) = LOWER($2)',
+            [hashedPassword, email]
+        );
+        await pool.query(
+            'DELETE FROM password_resets WHERE LOWER(email) = LOWER($1)',
+            [email]
+        );
         res.send('Password reset successfully');
     } catch (err) {
         console.error('Reset error:', err);
         res.status(500).send('Server error');
     }
 });
+ 
 // ==================== USER SEARCH, PROFILE, ETC. ====================
 app.get('/api/users/search', isAuthenticated, async (req, res) => {
     const query = req.query.q;
     if (!query || query.length < 2) return res.json([]);
     try {
-        await poolConnect;
-        const result = await pool.request()
-            .input('q', sql.NVarChar, `%${query}%`)
-            .input('userId', sql.Int, req.session.userId)
-            .query(`
-                SELECT id, username, display_name, avatar_url
-                FROM users
-                WHERE (username LIKE @q OR display_name LIKE @q)
-                  AND id != @userId
-                ORDER BY username
-                OFFSET 0 ROWS FETCH NEXT 10 ROWS ONLY
-            `);
-        res.json(result.recordset);
+        const result = await pool.query(
+            `SELECT id, username, display_name, avatar_url
+             FROM users
+             WHERE (username ILIKE $1 OR display_name ILIKE $1) AND id != $2
+             ORDER BY username LIMIT 10`,
+            [`%${query}%`, req.session.userId]
+        );
+        res.json(result.rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
     }
 });
+
 
 app.get('/profile', isAuthenticated, async (req, res) => {
     try {
@@ -4362,24 +4158,7 @@ app.get('/profile', isAuthenticated, async (req, res) => {
     }
 });
 
-app.get('/profile/full', isAuthenticated, async (req, res) => {
-    try {
-        await poolConnect;
-        const result = await pool.request()
-            .input('id', sql.Int, req.session.userId)
-            .query(`
-                SELECT id, username, display_name, email, bio, phone,
-                       github, twitter, linkedin, email_verified,
-                       two_factor_enabled, created_at, updated_at,
-                       avatar_url
-                FROM users WHERE id = @id
-            `);
-        res.json(result.recordset[0]);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
+/profile/update
 
 app.put('/profile/update', isAuthenticated, async (req, res) => {
     const { display_name, bio, phone, github, twitter, linkedin } = req.body;
@@ -4420,42 +4199,46 @@ app.put('/profile/update', isAuthenticated, async (req, res) => {
     }
 });
 
+// ==================== AVATAR UPLOAD ====================
 app.post('/profile/avatar', isAuthenticated, upload.single('avatar'), async (req, res) => {
-    if (!req.file) {
-        return res.status(400).send('No file uploaded');
-    }
+    if (!req.file) return res.status(400).send('No file uploaded');
     try {
+        const buffer = fs.readFileSync(req.file.path);
+        const fileType = await fileTypeFromBuffer(buffer);
+        if (!fileType || !['image/jpeg', 'image/png', 'image/gif'].includes(fileType.mime)) {
+            fs.unlinkSync(req.file.path);
+            return res.status(400).send('Invalid image file');
+        }
         const avatarUrl = '/uploads/avatars/' + req.file.filename;
-        await poolConnect;
-        await pool.request()
-            .input('id', sql.Int, req.session.userId)
-            .input('avatar_url', sql.NVarChar, avatarUrl)
-            .query('UPDATE users SET avatar_url = @avatar_url WHERE id = @id');
+        await pool.query(
+            'UPDATE users SET avatar_url = $1 WHERE id = $2',
+            [avatarUrl, req.session.userId]
+        );
         res.send('Avatar uploaded successfully');
     } catch (err) {
         console.error(err);
+        if (req.file) fs.unlinkSync(req.file.path);
         res.status(500).send('Server error');
     }
 });
 
+// ==================== CHANGE PASSWORD ====================
 app.put('/profile/password', isAuthenticated, async (req, res) => {
     const { currentPassword, newPassword } = req.body;
     if (!currentPassword || !newPassword) return res.status(400).send('All fields required');
-    
     try {
-        // Fetch the user's current password hash
-        const result = await pool.query('SELECT password FROM users WHERE id = $1', [req.session.userId]);
+        const result = await pool.query(
+            'SELECT password FROM users WHERE id = $1',
+            [req.session.userId]
+        );
         if (result.rows.length === 0) return res.status(404).send('User not found');
-        const user = result.rows[0];
-
-        const match = await bcrypt.compare(currentPassword, user.password);
+        const match = await bcrypt.compare(currentPassword, result.rows[0].password);
         if (!match) return res.status(401).send('Current password incorrect');
-        
         const hashedNew = await bcrypt.hash(newPassword, 10);
-        
-        // Update password
-        await pool.query('UPDATE users SET password = $1 WHERE id = $2', [hashedNew, req.session.userId]);
-        
+        await pool.query(
+            'UPDATE users SET password = $1 WHERE id = $2',
+            [hashedNew, req.session.userId]
+        );
         if (req.session.email) {
             sendPasswordChangeNotification(req.session.email, req.session.username)
                 .catch(err => console.error('Password change email failed:', err.message));
@@ -4467,12 +4250,14 @@ app.put('/profile/password', isAuthenticated, async (req, res) => {
     }
 });
 
+
+// ==================== TOGGLE 2FA ====================
 app.post('/profile/toggle-2fa', isAuthenticated, async (req, res) => {
     try {
-        await poolConnect;
-        await pool.request()
-            .input('id', sql.Int, req.session.userId)
-            .query('UPDATE users SET two_factor_enabled = ~two_factor_enabled WHERE id = @id');
+        await pool.query(
+            'UPDATE users SET two_factor_enabled = NOT two_factor_enabled WHERE id = $1',
+            [req.session.userId]
+        );
         res.send('2FA setting toggled');
     } catch (err) {
         console.error(err);
@@ -4528,24 +4313,18 @@ app.delete('/profile/delete', isAuthenticated, async (req, res) => {
 app.put('/api/admin/users/:id/ban', isAdmin, async (req, res) => {
     const userId = req.params.id;
     try {
-        await poolConnect;
-        await pool.request()
-            .input('id', sql.Int, userId)
-            .query('UPDATE users SET is_banned = true WHERE id = @id');
+        await pool.query('UPDATE users SET is_banned = true WHERE id = $1', [userId]);
         res.send('User banned');
     } catch (err) {
         console.error(err);
         res.status(500).send('Server error');
     }
 });
-
+ 
 app.put('/api/admin/users/:id/unban', isAdmin, async (req, res) => {
     const userId = req.params.id;
     try {
-        await poolConnect;
-        await pool.request()
-            .input('id', sql.Int, userId)
-            .query('UPDATE users SET is_banned = false WHERE id = @id');
+        await pool.query('UPDATE users SET is_banned = false WHERE id = $1', [userId]);
         res.send('User unbanned');
     } catch (err) {
         console.error(err);
@@ -4555,16 +4334,12 @@ app.put('/api/admin/users/:id/unban', isAdmin, async (req, res) => {
 
 // ==================== MESSAGE DELETE & CLEAR ====================
 app.delete('/api/messages/:messageId', isAuthenticated, async (req, res) => {
-    const messageId = req.params.messageId;
     try {
-        await poolConnect;
-        const result = await pool.request()
-            .input('id', sql.Int, messageId)
-            .input('sender_id', sql.Int, req.session.userId)
-            .query('DELETE FROM messages WHERE id = @id AND sender_id = @sender_id');
-        if (result.rowsAffected[0] === 0) {
-            return res.status(404).send('Message not found or you are not the sender');
-        }
+        const result = await pool.query(
+            'DELETE FROM messages WHERE id = $1 AND sender_id = $2',
+            [req.params.messageId, req.session.userId]
+        );
+        if (result.rowCount === 0) return res.status(404).send('Message not found or not yours');
         res.send('Message deleted');
     } catch (err) {
         console.error(err);
@@ -4573,15 +4348,13 @@ app.delete('/api/messages/:messageId', isAuthenticated, async (req, res) => {
 });
 
 app.delete('/api/messages/clear/:friendId', isAuthenticated, async (req, res) => {
-    const friendId = req.params.friendId;
     try {
-        await poolConnect;
-        await pool.request()
-            .input('user_id', sql.Int, req.session.userId)
-            .input('friend_id', sql.Int, friendId)
-            .query(`DELETE FROM messages 
-                    WHERE (sender_id = @user_id AND receiver_id = @friend_id)
-                       OR (sender_id = @friend_id AND receiver_id = @user_id)`);
+        await pool.query(
+            `DELETE FROM messages
+             WHERE (sender_id = $1 AND receiver_id = $2)
+                OR (sender_id = $2 AND receiver_id = $1)`,
+            [req.session.userId, req.params.friendId]
+        );
         res.send('Conversation cleared');
     } catch (err) {
         console.error(err);
@@ -4589,23 +4362,23 @@ app.delete('/api/messages/clear/:friendId', isAuthenticated, async (req, res) =>
     }
 });
 
+// ==================== UNREAD COUNTS ====================
 app.get('/api/unread', isAuthenticated, async (req, res) => {
     try {
-        await poolConnect;
-        const unread = await pool.request()
-            .input('user_id', sql.Int, req.session.userId)
-            .query(`
-                SELECT sender_id as friend_id, COUNT(*) as count
-                FROM messages
-                WHERE receiver_id = @user_id AND is_read = false
-                GROUP BY sender_id
-            `);
-        const requests = await pool.request()
-            .input('user_id', sql.Int, req.session.userId)
-            .query('SELECT COUNT(*) as count FROM friendships WHERE friend_id = @user_id AND status = \'pending\'');
+        const unread = await pool.query(
+            `SELECT sender_id as friend_id, COUNT(*) as count
+             FROM messages WHERE receiver_id = $1 AND is_read = false
+             GROUP BY sender_id`,
+            [req.session.userId]
+        );
+        const requests = await pool.query(
+            `SELECT COUNT(*) as count FROM friendships
+             WHERE friend_id = $1 AND status = 'pending'`,
+            [req.session.userId]
+        );
         res.json({
-            unread: unread.recordset,
-            pendingRequests: requests.recordset[0].count
+            unread: unread.rows,
+            pendingRequests: parseInt(requests.rows[0].count)
         });
     } catch (err) {
         console.error(err);
@@ -4941,19 +4714,19 @@ app.get('/api/recommendations/:toolName', isAuthenticated, async (req, res) => {
 // ==================== MODERATOR FEATURES ====================
 
 
+// ==================== ACTIVITY LOG ====================
 app.post('/api/activity-log', isAuthenticated, async (req, res) => {
     const { action, target, details } = req.body;
     try {
-        await poolConnect;
-        await pool.request()
-            .input('moderator_id', sql.Int, req.session.userId)
-            .input('moderator_name', sql.NVarChar, req.session.username)
-            .input('action', sql.NVarChar, action)
-            .input('target', sql.NVarChar, target || '')
-            .input('details', sql.NVarChar, details || '')
-            .query(`INSERT INTO moderator_activity (moderator_id, moderator_name, action, target, details) VALUES (@moderator_id, @moderator_name, @action, @target, @details)`);
+        await pool.query(
+            `INSERT INTO moderator_activity (moderator_id, moderator_name, action, target, details)
+             VALUES ($1, $2, $3, $4, $5)`,
+            [req.session.userId, req.session.username, action, target || '', details || '']
+        );
         res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: err.message }); }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 app.get('/api/activity-log', isAdminOrModerator, async (req, res) => {
@@ -4968,36 +4741,34 @@ app.get('/api/activity-log', isAdminOrModerator, async (req, res) => {
 
 
 
+// ==================== USER NOTES ====================
 app.get('/api/user-notes/:userId', isAdminOrModerator, async (req, res) => {
-    const userId = req.params.userId;
     try {
-        await poolConnect;
-        const result = await pool.request()
-            .input('user_id', sql.Int, userId)
-            .query(`SELECT notes FROM user_notes WHERE user_id = @user_id ORDER BY updated_at DESC`);
-        res.json(result.recordset[0]?.notes || '');
-    } catch (err) { res.status(500).json({ error: err.message }); }
+        const result = await pool.query(
+            'SELECT notes FROM user_notes WHERE user_id = $1',
+            [req.params.userId]
+        );
+        res.json(result.rows[0]?.notes || '');
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
-
+ 
 app.post('/api/user-notes/:userId', isAdminOrModerator, async (req, res) => {
-    const userId = req.params.userId;
     const { notes } = req.body;
     try {
-        await poolConnect;
-        await pool.request()
-            .input('user_id', sql.Int, userId)
-            .input('notes', sql.NVarChar, notes)
-            .input('updated_by', sql.Int, req.session.userId)
-            .query(`
-                MERGE INTO user_notes AS target
-                USING (SELECT @user_id AS user_id) AS source
-                ON target.user_id = source.user_id
-                WHEN MATCHED THEN UPDATE SET notes = @notes, updated_by = @updated_by, updated_at = NOW()
-                WHEN NOT MATCHED THEN INSERT (user_id, notes, updated_by) VALUES (@user_id, @notes, @updated_by);
-            `);
+        await pool.query(
+            `INSERT INTO user_notes (user_id, notes, updated_by)
+             VALUES ($1, $2, $3)
+             ON CONFLICT (user_id) DO UPDATE SET notes = $2, updated_by = $3, updated_at = NOW()`,
+            [req.params.userId, notes, req.session.userId]
+        );
         res.json({ success: true });
-    } catch (err) { res.status(500).json({ error: err.message }); }
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
+
 
 
 
@@ -5150,51 +4921,65 @@ app.get('/api/moderator-stats', isAdminOrModerator, async (req, res) => {
  */
 // ==================== GAMIFICATION API ENDPOINTS ====================
 // ==================== GAMIFICATION API ENDPOINTS ====================
+// ==================== GAMIFICATION STATUS ====================
 app.get('/api/gamification/status', isAuthenticated, async (req, res) => {
     const userId = req.session.userId;
     try {
-        const user = await pool.request()
-            .input('userId', sql.Int, userId)
-            .query('SELECT level, xp, total_xp_earned FROM users WHERE id = @userId');
-        if (!user.recordset[0]) return res.status(404).json({ error: 'User not found' });
-        
-        const level = user.recordset[0].level;
-        const currentXP = user.recordset[0].xp;
+        const user = await pool.query(
+            'SELECT level, xp, total_xp_earned FROM users WHERE id = $1',
+            [userId]
+        );
+        if (!user.rows[0]) return res.status(404).json({ error: 'User not found' });
+ 
+        const { level, xp, total_xp_earned } = user.rows[0];
         const nextLevelXP = xpForLevel(level + 1);
-        const progress = (currentXP - xpForLevel(level)) / (nextLevelXP - xpForLevel(level)) * 100;
-        
-        const streak = await pool.request()
-            .input('userId', sql.Int, userId)
-            .query('SELECT current_streak, longest_streak, multiplier FROM user_streak WHERE user_id = @userId');
-        
-        const dailyQuests = await getDailyQuests(userId);
-        
-        const achievements = await pool.request()
-            .input('userId', sql.Int, userId)
-            .query(`
-                SELECT a.id, a.name, a.description, a.icon, a.xp_reward, ua.earned_at
-                FROM achievements a
-                LEFT JOIN user_achievements ua ON a.id = ua.achievement_id AND ua.user_id = @userId
-            `);
-        
+        const currentLevelXP = xpForLevel(level);
+        const progress = nextLevelXP > currentLevelXP
+            ? Math.min(100, Math.max(0, ((xp - currentLevelXP) / (nextLevelXP - currentLevelXP)) * 100))
+            : 100;
+ 
+        const streak = await pool.query(
+            'SELECT current_streak, longest_streak, multiplier FROM user_streak WHERE user_id = $1',
+            [userId]
+        );
+ 
+        const achievements = await pool.query(
+            `SELECT a.id, a.name, a.description, a.icon, a.xp_reward, ua.earned_at
+             FROM achievements a
+             LEFT JOIN user_achievements ua ON a.id = ua.achievement_id AND ua.user_id = $1`,
+            [userId]
+        );
+ 
+        const today = new Date().toISOString().slice(0, 10);
+        const quests = await pool.query(
+            `SELECT q.id, q.name, q.description, q.target_count, q.xp_reward, q.credits_reward,
+                    COALESCE(uqd.progress, 0) as progress,
+                    COALESCE(uqd.completed, false) as completed,
+                    COALESCE(uqd.claimed, false) as claimed
+             FROM daily_quests q
+             LEFT JOIN user_daily_quests uqd ON q.id = uqd.quest_id
+               AND uqd.user_id = $1 AND uqd.date = $2`,
+            [userId, today]
+        );
+ 
         res.json({
             level,
-            xp: currentXP,
-            totalXP: user.recordset[0].total_xp_earned,
+            xp,
+            totalXP: total_xp_earned,
             nextLevelXP,
-            progress: Math.min(100, Math.max(0, progress)),
-            streak: streak.recordset[0] || { current_streak: 0, longest_streak: 0, multiplier: 1 },
-            dailyQuests: dailyQuests.map(q => ({
+            progress,
+            streak: streak.rows[0] || { current_streak: 0, longest_streak: 0, multiplier: 1 },
+            dailyQuests: quests.rows.map(q => ({
                 id: q.id,
                 name: q.name,
                 description: q.description,
-                progress: q.progress || 0,
+                progress: q.progress,
                 target: q.target_count,
-                completed: q.completed === 1,
+                completed: q.completed,
                 xpReward: q.xp_reward,
                 creditsReward: q.credits_reward
             })),
-            achievements: achievements.recordset.map(a => ({
+            achievements: achievements.rows.map(a => ({
                 id: a.id,
                 name: a.name,
                 description: a.description,
@@ -5329,12 +5114,10 @@ app.post('/api/feedback', isAuthenticated, async (req, res) => {
         return res.status(400).json({ error: 'Rating must be between 1 and 5' });
     }
     try {
-        await poolConnect;
-        await pool.request()
-            .input('user_id', sql.Int, req.session.userId)
-            .input('rating', sql.Int, rating)
-            .input('comment', sql.NVarChar, comment || null)
-            .query('INSERT INTO user_feedback (user_id, rating, comment) VALUES (@user_id, @rating, @comment)');
+        await pool.query(
+            'INSERT INTO user_feedback (user_id, rating, comment) VALUES ($1, $2, $3)',
+            [req.session.userId, rating, comment || null]
+        );
         res.json({ success: true, message: 'Thank you for your feedback!' });
     } catch (err) {
         console.error('Feedback error:', err);
@@ -5345,15 +5128,13 @@ app.post('/api/feedback', isAuthenticated, async (req, res) => {
 // ==================== GET USER FEEDBACK (ADMIN ONLY) ====================
 app.get('/api/admin/feedback', isAdmin, async (req, res) => {
     try {
-        await poolConnect;
-        const result = await pool.request().query(`
-            SELECT f.id, f.rating, f.comment, f.created_at,
-                   u.id as user_id, u.username, u.email
-            FROM user_feedback f
-            JOIN users u ON f.user_id = u.id
-            ORDER BY f.created_at DESC
-        `);
-        res.json(result.recordset);
+        const result = await pool.query(
+            `SELECT f.id, f.rating, f.comment, f.created_at,
+                    u.id as user_id, u.username, u.email
+             FROM user_feedback f JOIN users u ON f.user_id = u.id
+             ORDER BY f.created_at DESC`
+        );
+        res.json(result.rows);
     } catch (err) {
         console.error('Error fetching feedback:', err);
         res.status(500).json({ error: 'Failed to fetch feedback' });
