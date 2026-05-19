@@ -318,40 +318,49 @@ function xpForLevel(level) {
  * Add XP to a user, trigger level‑up, and log transaction
  */
 async function addXP(userId, amount, source) {
-    await pool.request()
-        .input('userId', sql.Int, userId)
-        .input('amount', sql.Int, amount)
-        .query('UPDATE users SET xp = xp + @amount, total_xp_earned = total_xp_earned + @amount WHERE id = @userId');
-    await checkLevelUp(userId);
-    await pool.request()
-        .input('userId', sql.Int, userId)
-        .input('amount', sql.Int, amount)
-        .input('source', sql.NVarChar, source)
-        .query('INSERT INTO credit_transactions (user_id, amount, type, description) VALUES (@userId, @amount, \'xp\', @source)');
+    try {
+        await pool.query(
+            'UPDATE users SET xp = xp + $1, total_xp_earned = total_xp_earned + $1 WHERE id = $2',
+            [amount, userId]
+        );
+        await pool.query(
+            `INSERT INTO credit_transactions (user_id, amount, type, description)
+             VALUES ($1, $2, 'xp', $3)`,
+            [userId, amount, source]
+        );
+        await checkLevelUp(userId);
+    } catch (err) {
+        console.error('addXP error:', err);
+    }
 }
 
 /**
  * Check if user reached a new level and grant rewards
  */
 async function checkLevelUp(userId) {
-    const user = await pool.request()
-        .input('userId', sql.Int, userId)
-        .query('SELECT level, xp FROM users WHERE id = @userId');
-    if (!user.recordset[0]) return;
-    let { level, xp } = user.recordset[0];
-    let newLevel = level;
-    while (xp >= xpForLevel(newLevel + 1)) {
-        newLevel++;
-    }
-    if (newLevel > level) {
-        await pool.request()
-            .input('userId', sql.Int, userId)
-            .input('newLevel', sql.Int, newLevel)
-            .query('UPDATE users SET level = @newLevel WHERE id = @userId');
-        await grantLevelRewards(userId, level, newLevel);
-        const socketInfo = onlineUsers.get(userId);
-        if (socketInfo && socketInfo.socketId) io.to(socketInfo.socketId).emit('level_up', { oldLevel: level, newLevel });
-        console.log(`User ${userId} leveled up from ${level} to ${newLevel}`);
+    try {
+        const user = await pool.query(
+            'SELECT level, xp FROM users WHERE id = $1',
+            [userId]
+        );
+        if (!user.rows[0]) return;
+        let { level, xp } = user.rows[0];
+        let newLevel = level;
+        while (xp >= xpForLevel(newLevel + 1)) {
+            newLevel++;
+        }
+        if (newLevel > level) {
+            await pool.query(
+                'UPDATE users SET level = $1 WHERE id = $2',
+                [newLevel, userId]
+            );
+            const socketInfo = onlineUsers.get(userId);
+            if (socketInfo?.socketId) {
+                io.to(socketInfo.socketId).emit('level_up', { oldLevel: level, newLevel });
+            }
+        }
+    } catch (err) {
+        console.error('checkLevelUp error:', err);
     }
 }
 
@@ -405,46 +414,49 @@ async function grantLevelRewards(userId, oldLevel, newLevel) {
 /**
  * Update daily login streak and return multiplier
  */
-async function updateStreak(userId, loginDate = new Date()) {
-    const dateStr = loginDate.toISOString().slice(0,10);
-    const streak = await pool.request()
-        .input('userId', sql.Int, userId)
-        .query('SELECT current_streak, last_login_date FROM user_streak WHERE user_id = @userId');
-    if (streak.recordset.length === 0) {
-        await pool.request()
-            .input('userId', sql.Int, userId)
-            .input('date', sql.Date, dateStr)
-            .query('INSERT INTO user_streak (user_id, current_streak, longest_streak, last_login_date, multiplier) VALUES (@userId, 1, 1, @date, 1.0)');
+async function updateStreak(userId) {
+    const today = new Date().toISOString().slice(0, 10);
+    try {
+        const streak = await pool.query(
+            'SELECT current_streak, last_login_date FROM user_streak WHERE user_id = $1',
+            [userId]
+        );
+        if (streak.rows.length === 0) {
+            await pool.query(
+                `INSERT INTO user_streak (user_id, current_streak, longest_streak, last_login_date, multiplier)
+                 VALUES ($1, 1, 1, $2, 1.0)`,
+                [userId, today]
+            );
+            return 1;
+        }
+        const { current_streak, last_login_date } = streak.rows[0];
+        const lastDate = last_login_date ? new Date(last_login_date) : null;
+        const now = new Date();
+        let current = current_streak;
+        let multiplier = 1.0;
+
+        if (lastDate) {
+            const diffDays = Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
+            if (diffDays === 1) {
+                current++;
+                multiplier = Math.min(2.0, 1 + (current - 1) * 0.05);
+            } else if (diffDays > 1) {
+                current = 1;
+                multiplier = 1.0;
+            }
+        }
+        const longest = Math.max(current, current_streak);
+        await pool.query(
+            `UPDATE user_streak SET current_streak=$1, longest_streak=$2,
+             last_login_date=$3, multiplier=$4 WHERE user_id=$5`,
+            [current, longest, today, multiplier, userId]
+        );
+        return multiplier;
+    } catch (err) {
+        console.error('updateStreak error:', err);
         return 1;
     }
-    const lastDate = streak.recordset[0].last_login_date ? new Date(streak.recordset[0].last_login_date) : null;
-    let current = streak.recordset[0].current_streak;
-    let longest = streak.recordset[0].longest_streak;
-    let multiplier = 1.0;
-    if (lastDate) {
-        const diffDays = Math.floor((loginDate - lastDate) / (1000*60*60*24));
-        if (diffDays === 1) {
-            current++;
-            multiplier = Math.min(2.0, 1 + (current-1)*0.05);
-        } else if (diffDays > 1) {
-            current = 1;
-            multiplier = 1.0;
-        }
-    } else {
-        current = 1;
-        multiplier = 1.0;
-    }
-    if (current > longest) longest = current;
-    await pool.request()
-        .input('userId', sql.Int, userId)
-        .input('streak', sql.Int, current)
-        .input('longest', sql.Int, longest)
-        .input('date', sql.Date, dateStr)
-        .input('multiplier', sql.Decimal(3,2), multiplier)
-        .query('UPDATE user_streak SET current_streak = @streak, longest_streak = @longest, last_login_date = @date, multiplier = @multiplier WHERE user_id = @userId');
-    return multiplier;
 }
-
 /**
  * Get or initialise daily quests for a user (creates missing rows)
  */
@@ -1873,7 +1885,10 @@ app.post('/login', authLimiter, async (req, res) => {
     try {
         const isEmail = username.includes('@') && username.includes('.');
         const column = isEmail ? 'email' : 'username';
-        const result = await pool.query(`SELECT * FROM users WHERE ${column} = $1`, [username]);
+        const result = await pool.query(
+            `SELECT * FROM users WHERE ${column} = $1`, 
+            [username]
+        );
         
         if (result.rows.length === 0) {
             return res.status(401).send('Invalid username/email or password');
@@ -1899,7 +1914,8 @@ app.post('/login', authLimiter, async (req, res) => {
                     UPDATE users SET 
                         login_attempts = login_attempts + 1,
                         lock_until = CASE 
-                            WHEN login_attempts + 1 >= $1 THEN NOW() + INTERVAL '30 minutes'
+                            WHEN login_attempts + 1 >= $1 
+                            THEN NOW() + INTERVAL '30 minutes'
                             ELSE lock_until
                         END
                     WHERE id = $2
@@ -1925,18 +1941,16 @@ app.post('/login', authLimiter, async (req, res) => {
             else res.send('Login successful');
         });
 
-        // GAMIFICATION: update login streak, award XP, and check achievements
-        const multiplier = await updateStreak(user.id);
-        await addXP(user.id, Math.floor(5 * multiplier), 'Daily login');
-        await updateQuestProgress(user.id, 'login');
-        await checkAchievements(user.id);
+        // Gamification after login
+        updateStreak(user.id).catch(err => console.error('Streak error:', err));
+        updateQuestProgress(user.id, 'login').catch(err => console.error('Quest error:', err));
+        checkAchievements(user.id).catch(err => console.error('Achievement error:', err));
 
     } catch (err) {
-        console.error(err);
+        console.error('Login error:', err);
         res.status(500).send('Server error');
     }
 });
-
 
 // ==================== LOGOUT ====================
 const logoutHandler = (req, res) => {
