@@ -2372,7 +2372,7 @@ app.post('/api/admin/users/:id/credits', isAdmin, async (req, res) => {
              VALUES ($1, $2, 'earn', $3)`,
             [userId, numericAmount, reason?.trim() || `Admin added ${numericAmount} credits`]
         );
-        res.json({ success: true, message: `Added ${numericAmount} credits to user ${userId}` });
+       res.json({ success: true, message: `Added ${numericAmount} credits to user ${userId}` });
     } catch (err) {
         console.error('Error giving credits:', err);
         res.status(500).json({ error: 'Server error' });
