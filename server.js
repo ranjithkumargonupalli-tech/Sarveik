@@ -800,36 +800,35 @@ app.get('/uploads/avatars/:filename', isAuthenticated, (req, res) => {
 
 // ==================== HELPER: GET PREMIUM STATUS (WITH BADGE) ====================
 async function getPremiumStatus(userId) {
-    const result = await pool.query(`
-        SELECT 
-            premium_until,
-            analytics_until,
-            featured_until,
-            priority_support_until,
-            message_boosts_remaining,
-            has_custom_badge,
-            selected_badge
-        FROM users 
-        WHERE id = $1
-    `, [userId]);
-    const user = result.rows[0];
-    if (!user) return {}; // handle missing user
-    const now = new Date();
-    return {
-        isPremium: user.premium_until && new Date(user.premium_until) > now,
-        premiumUntil: user.premium_until,
-        hasAnalytics: user.analytics_until && new Date(user.analytics_until) > now,
-        analyticsUntil: user.analytics_until,
-        isFeatured: user.featured_until && new Date(user.featured_until) > now,
-        featuredUntil: user.featured_until,
-        hasPrioritySupport: user.priority_support_until && new Date(user.priority_support_until) > now,
-        prioritySupportUntil: user.priority_support_until,
-        messageBoostsRemaining: user.message_boosts_remaining || 0,
-        hasCustomBadge: user.has_custom_badge === true,   // PostgreSQL BOOLEAN
-        selectedBadge: user.selected_badge
-    };
+    try {
+        const result = await pool.query(
+            `SELECT premium_until, analytics_until, featured_until,
+                    priority_support_until, message_boosts_remaining,
+                    has_custom_badge, selected_badge
+             FROM users WHERE id = $1`,
+            [userId]
+        );
+        const user = result.rows[0];
+        if (!user) return {};
+        const now = new Date();
+        return {
+            isPremium: user.premium_until && new Date(user.premium_until) > now,
+            premiumUntil: user.premium_until,
+            hasAnalytics: user.analytics_until && new Date(user.analytics_until) > now,
+            analyticsUntil: user.analytics_until,
+            isFeatured: user.featured_until && new Date(user.featured_until) > now,
+            featuredUntil: user.featured_until,
+            hasPrioritySupport: user.priority_support_until && new Date(user.priority_support_until) > now,
+            prioritySupportUntil: user.priority_support_until,
+            messageBoostsRemaining: user.message_boosts_remaining || 0,
+            hasCustomBadge: user.has_custom_badge === true,
+            selectedBadge: user.selected_badge
+        };
+    } catch (err) {
+        console.error('getPremiumStatus error:', err);
+        return {};
+    }
 }
-
 // ==================== CREDITS SYSTEM (ATOMIC SPEND WITH TRANSACTION) ====================
 async function spendCredits(userId, amount, reason, feature, durationDays = 0, uses = 0) {
     const client = await pool.connect(); // get a client for transaction
@@ -1183,16 +1182,21 @@ io.use(sharedsession(sessionMiddleware, { autoSave: true }));
 const onlineUsers = new Map(); // userId -> { socketId: string, socketIds: Set }
 
 async function getFriendsList(userId) {
-    const result = await pool.query(
-        `SELECT u.id, u.username, u.display_name, u.avatar_url, u.status
-         FROM friendships f
-         JOIN users u ON (f.user_id = u.id OR f.friend_id = u.id)
-         WHERE (f.user_id = $1 OR f.friend_id = $1)
-           AND f.status = 'accepted'
-           AND u.id != $1`,
-        [userId]
-    );
-    return result.rows;
+    try {
+        const result = await pool.query(
+            `SELECT u.id, u.username, u.display_name, u.avatar_url, u.status
+             FROM friendships f
+             JOIN users u ON (f.user_id = u.id OR f.friend_id = u.id)
+             WHERE (f.user_id = $1 OR f.friend_id = $1)
+               AND f.status = 'accepted'
+               AND u.id != $1`,
+            [userId]
+        );
+        return result.rows;
+    } catch (err) {
+        console.error('getFriendsList error:', err);
+        return [];
+    }
 }
 
 // Helper for real‑time admin stats
@@ -2201,11 +2205,10 @@ app.post('/profile/avatar', isAuthenticated, upload.single('avatar'), async (req
             return res.status(400).send('Invalid image file');
         }
         const avatarUrl = '/uploads/avatars/' + req.file.filename;
-        await poolConnect;
-        await pool.request()
-            .input('id', sql.Int, req.session.userId)
-            .input('avatar_url', sql.NVarChar, avatarUrl)
-            .query('UPDATE users SET avatar_url = @avatar_url WHERE id = @id');
+        await pool.query(
+            'UPDATE users SET avatar_url = $1 WHERE id = $2',
+            [avatarUrl, req.session.userId]
+        );
         res.send('Avatar uploaded successfully');
     } catch (err) {
         console.error(err);
@@ -3471,7 +3474,6 @@ cron.schedule('*/5 * * * *', async () => {
 app.get('/api/stats', isAuthenticated, async (req, res) => {
     try {
         const userId = req.session.userId;
- 
         const toolsResult = await pool.query(
             'SELECT COUNT(*) as count FROM tool_usage WHERE user_id = $1',
             [userId]
@@ -3485,11 +3487,14 @@ app.get('/api/stats', isAuthenticated, async (req, res) => {
             'SELECT balance FROM user_credits WHERE user_id = $1',
             [userId]
         );
- 
+        const streakResult = await pool.query(
+            'SELECT current_streak FROM user_streak WHERE user_id = $1',
+            [userId]
+        );
         res.json({
             toolsUsed: parseInt(toolsResult.rows[0].count),
             friendsCount: parseInt(friendsResult.rows[0].count),
-            streak: 0,
+            streak: streakResult.rows[0]?.current_streak || 0,
             aiCredits: creditsResult.rows[0]?.balance || 0
         });
     } catch (err) {
@@ -3497,7 +3502,6 @@ app.get('/api/stats', isAuthenticated, async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
-
 // ==================== USER STATUS ====================
 app.get('/api/user-status', isAuthenticated, async (req, res) => {
     try {
@@ -4140,7 +4144,10 @@ app.get('/api/users/search', isAuthenticated, async (req, res) => {
 app.get('/profile', isAuthenticated, async (req, res) => {
     try {
         const result = await pool.query(
-            'SELECT id, username, email, role FROM users WHERE id = $1',
+            `SELECT id, username, email, role, display_name, 
+                    bio, phone, github, twitter, linkedin,
+                    avatar_url, created_at, updated_at
+             FROM users WHERE id = $1`,
             [req.session.userId]
         );
         res.json(result.rows[0]);
@@ -4155,36 +4162,30 @@ app.get('/profile', isAuthenticated, async (req, res) => {
 app.put('/profile/update', isAuthenticated, async (req, res) => {
     const { display_name, bio, phone, github, twitter, linkedin } = req.body;
     try {
-        await poolConnect;
-        await pool.request()
-            .input('id', sql.Int, req.session.userId)
-            .input('display_name', sql.NVarChar, display_name || null)
-            .input('bio', sql.NVarChar, bio || null)
-            .input('phone', sql.NVarChar, phone || null)
-            .input('github', sql.NVarChar, github || null)
-            .input('twitter', sql.NVarChar, twitter || null)
-            .input('linkedin', sql.NVarChar, linkedin || null)
-            .query(`
-                UPDATE users SET
-                    display_name = @display_name,
-                    bio = @bio,
-                    phone = @phone,
-                    github = @github,
-                    twitter = @twitter,
-                    linkedin = @linkedin,
-                    updated_at = NOW()
-                WHERE id = @id
-            `);
-        const updated = await pool.request()
-            .input('id', sql.Int, req.session.userId)
-            .query(`
-                SELECT id, username, display_name, email, bio, phone,
-                       github, twitter, linkedin, email_verified,
-                       two_factor_enabled, created_at, updated_at,
-                       avatar_url
-                FROM users WHERE id = @id
-            `);
-        res.json(updated.recordset[0]);
+        await pool.query(
+            `UPDATE users SET
+                display_name = $1, bio = $2, phone = $3,
+                github = $4, twitter = $5, linkedin = $6,
+                updated_at = NOW()
+             WHERE id = $7`,
+            [
+                display_name ? escapeHtml(display_name) : null,
+                bio ? escapeHtml(bio) : null,
+                phone ? escapeHtml(phone) : null,
+                github ? escapeHtml(github) : null,
+                twitter ? escapeHtml(twitter) : null,
+                linkedin ? escapeHtml(linkedin) : null,
+                req.session.userId
+            ]
+        );
+        const updated = await pool.query(
+            `SELECT id, username, display_name, email, bio, phone,
+                    github, twitter, linkedin, email_verified,
+                    two_factor_enabled, created_at, updated_at, avatar_url
+             FROM users WHERE id = $1`,
+            [req.session.userId]
+        );
+        res.json(updated.rows[0]);
     } catch (err) {
         console.error(err);
         res.status(500).send('Server error');
@@ -4242,7 +4243,6 @@ app.put('/profile/password', isAuthenticated, async (req, res) => {
     }
 });
 
-
 // ==================== TOGGLE 2FA ====================
 app.post('/profile/toggle-2fa', isAuthenticated, async (req, res) => {
     try {
@@ -4260,34 +4260,32 @@ app.post('/profile/toggle-2fa', isAuthenticated, async (req, res) => {
 // ==================== FIXED DELETE ACCOUNT (Fully functional) ====================
 app.delete('/profile/delete', isAuthenticated, async (req, res) => {
     try {
-        await poolConnect;
         const userId = req.session.userId;
         const userEmail = req.session.email;
         const username = req.session.username;
 
-        // Delete all related data in correct order (foreign key constraints)
-        await pool.request().input('userId', sql.Int, userId).query('DELETE FROM messages WHERE sender_id = @userId OR receiver_id = @userId');
-        await pool.request().input('userId', sql.Int, userId).query('DELETE FROM friendships WHERE user_id = @userId OR friend_id = @userId');
-        await pool.request().input('email', sql.NVarChar, userEmail).query('DELETE FROM password_resets WHERE email = @email');
-        await pool.request().input('userId', sql.Int, userId).query('DELETE FROM user_credits WHERE user_id = @userId');
-        await pool.request().input('userId', sql.Int, userId).query('DELETE FROM credit_transactions WHERE user_id = @userId');
-        await pool.request().input('userId', sql.Int, userId).query('DELETE FROM tool_usage WHERE user_id = @userId');
-        await pool.request().input('userId', sql.Int, userId).query('DELETE FROM user_achievements WHERE user_id = @userId');
-        await pool.request().input('userId', sql.Int, userId).query('DELETE FROM user_daily_quests WHERE user_id = @userId');
-        await pool.request().input('userId', sql.Int, userId).query('DELETE FROM user_streak WHERE user_id = @userId');
-        await pool.request().input('userId', sql.Int, userId).query('DELETE FROM support_tickets WHERE user_id = @userId');
-        await pool.request().input('userId', sql.Int, userId).query('DELETE FROM user_feedback WHERE user_id = @userId');
-        await pool.request().input('userId', sql.Int, userId).query('DELETE FROM moderator_activity WHERE moderator_id = @userId');
-        await pool.request().input('userId', sql.Int, userId).query('DELETE FROM group_messages WHERE sender_id = @userId');
-        await pool.request().input('userId', sql.Int, userId).query('DELETE FROM group_members WHERE user_id = @userId');
-        await pool.request().input('userId', sql.Int, userId).query('DELETE FROM groups WHERE created_by = @userId');
-        await pool.request().input('userId', sql.Int, userId).query('DELETE FROM tools WHERE user_id = @userId');
-        await pool.request().input('userId', sql.Int, userId).query('DELETE FROM tool_reviews WHERE user_id = @userId');
-        await pool.request().input('userId', sql.Int, userId).query('DELETE FROM category_reviews WHERE user_id = @userId');
-        await pool.request().input('userId', sql.Int, userId).query('DELETE FROM credit_purchases WHERE user_id = @userId');
+        const tables = [
+            'DELETE FROM messages WHERE sender_id = $1 OR receiver_id = $1',
+            'DELETE FROM friendships WHERE user_id = $1 OR friend_id = $1',
+            'DELETE FROM user_credits WHERE user_id = $1',
+            'DELETE FROM credit_transactions WHERE user_id = $1',
+            'DELETE FROM tool_usage WHERE user_id = $1',
+            'DELETE FROM user_achievements WHERE user_id = $1',
+            'DELETE FROM user_daily_quests WHERE user_id = $1',
+            'DELETE FROM user_streak WHERE user_id = $1',
+            'DELETE FROM support_tickets WHERE user_id = $1',
+            'DELETE FROM user_feedback WHERE user_id = $1',
+            'DELETE FROM group_messages WHERE sender_id = $1',
+            'DELETE FROM group_members WHERE user_id = $1',
+            'DELETE FROM tool_reviews WHERE user_id = $1',
+            'DELETE FROM category_reviews WHERE user_id = $1',
+            'DELETE FROM credit_purchases WHERE user_id = $1',
+            'DELETE FROM users WHERE id = $1'
+        ];
 
-        // Finally delete the user
-        await pool.request().input('id', sql.Int, userId).query('DELETE FROM users WHERE id = @id');
+        for (const query of tables) {
+            await pool.query(query, [userId]);
+        }
 
         await sendAccountDeletionAlert({ id: userId, username, email: userEmail });
 
