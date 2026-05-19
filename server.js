@@ -158,7 +158,7 @@ async function sendToolSubmissionAlert(details) {
 }
 
 const app = express();
-
+app.get('/health', (req, res) => res.send('OK'));
 // ==================== SECURITY MIDDLEWARE ====================
 // HTTPS enforcement (production)
 if (process.env.NODE_ENV === 'production') {
