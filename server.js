@@ -4158,7 +4158,7 @@ app.get('/profile', isAuthenticated, async (req, res) => {
     }
 });
 
-/profile/update
+//profile/update
 
 app.put('/profile/update', isAuthenticated, async (req, res) => {
     const { display_name, bio, phone, github, twitter, linkedin } = req.body;
