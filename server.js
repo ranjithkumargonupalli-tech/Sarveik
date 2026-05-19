@@ -2296,7 +2296,7 @@ app.get('/api/admin/tools', isAdminOrModerator, async (req, res) => {
         const result = await pool.query(
             `SELECT t.*, u.username as submitted_by,
                     (SELECT COUNT(*) FROM tool_usage WHERE tool_name = t.name) as usage_count,
-                    COALESCE(t.is_featured, 0) as is_featured
+                    COALESCE(t.is_featured, false) as is_featured
              FROM tools t LEFT JOIN users u ON t.user_id = u.id
              ORDER BY t.id DESC`
         );
@@ -2853,7 +2853,7 @@ app.post('/api/user/use-boost', isAuthenticated, async (req, res) => {
         const result = await pool.request()
             .input('userId', req.session.userId)
             .query('SELECT message_boosts_remaining FROM users WHERE id = @userId');
-        const remaining = result.rows[0]?.message_boosts_remaining || 0;
+        const remaining = result.recordset[0]?.message_boosts_remaining || 0;
         if (remaining <= 0) {
             return res.status(400).json({ error: 'No boosts remaining' });
         }
@@ -3519,7 +3519,7 @@ app.get('/api/usage/analytics', isAuthenticated, async (req, res) => {
     try {
         await poolConnect;
         const userId = req.session.userId;
-        const result = await pool.query()
+        const result = await pool.request()
             .input('userId', sql.Int, userId)
             .query(`
                 SELECT 
@@ -4604,8 +4604,8 @@ app.get('/api/analytics/user-stats', isAuthenticated, async (req, res) => {
            COALESCE(lifetime_earned, 0) as lifetime_earned,
            COALESCE(lifetime_spent, 0) as lifetime_spent
            FROM user_credits WHERE user_id = $1`,
-           [req.session.userId]
-           );
+    [req.session.userId]
+        );
         const friends = await pool.query(`
             SELECT COUNT(*) as total_friends
             FROM friendships WHERE (user_id = $1 OR friend_id = $1) AND status = 'accepted'
@@ -4945,8 +4945,8 @@ app.get('/api/gamification/status', isAuthenticated, async (req, res) => {
         const quests = await pool.query(
             `SELECT q.id, q.name, q.description, q.target_count, q.xp_reward, q.credits_reward,
                     COALESCE(uqd.progress, 0) as progress,
-                    COALESCE(uqd.completed, 0) as completed,
-                    COALESCE(uqd.claimed, 0) as claimed
+                    COALESCE(uqd.completed, false) as completed,
+                    COALESCE(uqd.claimed, false) as claimed
              FROM daily_quests q
              LEFT JOIN user_daily_quests uqd ON q.id = uqd.quest_id
                AND uqd.user_id = $1 AND uqd.date = $2`,
