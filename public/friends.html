@@ -1,0 +1,2226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Sarveik Network – Friends & Groups</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* ========== ALL EXISTING STYLES (PRESERVED & ENHANCED) ========== */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #fff;
+            min-height: 100vh;
+        }
+        .navbar {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+        }
+        .nav-brand {
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #00e6ff;
+        }
+        .nav-links {
+            display: flex;
+            list-style: none;
+            gap: 1rem;
+            align-items: center;
+        }
+        .nav-links a {
+            color: #fff;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .nav-links a:hover, .nav-links a.active {
+            background: rgba(0, 230, 255, 0.2);
+            color: #00e6ff;
+        }
+        .badge {
+            background: #ef4444;
+            color: white;
+            border-radius: 20px;
+            padding: 2px 8px;
+            font-size: 0.7rem;
+            margin-left: 8px;
+            display: inline-block;
+        }
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            cursor: pointer;
+            gap: 4px;
+        }
+        .hamburger span {
+            width: 25px;
+            height: 3px;
+            background: #fff;
+            transition: 0.3s;
+        }
+        .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+        .hamburger.active span:nth-child(2) { opacity: 0; }
+        .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(7px, -6px); }
+        @media (max-width: 768px) {
+            .hamburger { display: flex; }
+            .nav-links {
+                position: fixed;
+                top: 0;
+                right: -100%;
+                height: 100vh;
+                width: 280px;
+                background: rgba(15, 23, 42, 0.98);
+                backdrop-filter: blur(20px);
+                flex-direction: column;
+                justify-content: flex-start;
+                padding-top: 5rem;
+                transition: right 0.3s ease;
+                border-left: 1px solid rgba(148, 163, 184, 0.3);
+            }
+            .nav-links.active { right: 0; }
+        }
+        .friends-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            transition: all 0.3s ease;
+        }
+        .stat-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #00e6ff;
+            margin-bottom: 0.5rem;
+        }
+        h2 {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin: 2rem 0 1rem 0;
+            font-weight: 600;
+            color: #fff;
+        }
+        .filters-section {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+        }
+        .filters-row {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .filter-input, .filter-select {
+            padding: 0.75rem 1rem;
+            border-radius: 25px;
+            border: 1px solid rgba(148, 163, 184, 0.5);
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            flex: 1;
+            min-width: 150px;
+        }
+        .filter-input::placeholder { color: #94a3b8; }
+        .search-section, .add-friend {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .search-section input, .add-friend input {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            border-radius: 30px;
+            border: 1px solid rgba(148, 163, 184, 0.5);
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+            font-size: 1rem;
+        }
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 25px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            white-space: nowrap;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #00e6ff, #00b8cc);
+            color: #fff;
+        }
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 230, 255, 0.3);
+        }
+        .btn-success { background: linear-gradient(135deg, #10b981, #059669); color: #fff; }
+        .btn-danger { background: rgba(239, 68, 68, 0.15); color: #fca5a5; border: 1px solid rgba(239, 68, 68, 0.5); }
+        .btn-outline { background: transparent; border: 1px solid rgba(148, 163, 184, 0.6); color: #e5e7eb; }
+        .btn-small { padding: 0.5rem 1rem; font-size: 0.875rem; }
+        .friend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 1.5rem;
+        }
+        .friend-card, .search-result-card, .request-card, .group-card {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.5s ease forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        .friend-card:hover, .search-result-card:hover, .group-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+        @keyframes fadeInUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .friend-info {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+            flex-wrap: wrap; /* For unread badge responsiveness */
+        }
+        .friend-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid rgba(0, 230, 255, 0.3);
+        }
+        .friend-name {
+            font-weight: 700;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .pro-badge {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 600;
+        }
+        .verified-badge {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 2px 6px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            display: flex;
+            align-items: center;
+            gap: 2px;
+        }
+        .friend-username {
+            color: #94a3b8;
+            font-size: 0.9rem;
+            margin-top: 4px;
+        }
+        .friend-status {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #6c757d;
+            margin-left: 8px;
+        }
+        .friend-status.online { background: #10b981; box-shadow: 0 0 5px #10b981; }
+        .friend-status.away { background: #f59e0b; box-shadow: 0 0 5px #f59e0b; animation: pulse 2s infinite; }
+        .friend-status.busy { background: #ef4444; box-shadow: 0 0 5px #ef4444; animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .unread-badge {
+            background: #ef4444;
+            color: white;
+            border-radius: 20px;
+            padding: 2px 8px;
+            font-size: 0.7rem;
+            margin-left: auto;
+            order: 3;
+        }
+        @media (max-width: 480px) {
+            .unread-badge {
+                margin-left: 0;
+                order: initial;
+            }
+        }
+        .request-card { border-left: 4px solid #00e6ff; background: rgba(0, 230, 255, 0.1); }
+        .group-card { border-left: 4px solid #f97316; background: rgba(249, 115, 22, 0.1); }
+        .trending-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .trending-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-bottom: 0.5rem;
+        }
+        .trending-item:hover {
+            background: rgba(0, 230, 255, 0.1);
+            transform: translateX(5px);
+        }
+        .trending-rank {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: white;
+            font-size: 0.875rem;
+        }
+        .trending-rank-1 { background: linear-gradient(135deg, #facc15, #eab308); }
+        .trending-rank-2 { background: linear-gradient(135deg, #e5e7eb, #d1d5db); color: #374151; }
+        .trending-rank-3 { background: linear-gradient(135deg, #f97316, #ea580c); }
+        .loading, .no-results {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem;
+            color: #94a3b8;
+            text-align: center;
+        }
+        .loading i { animation: spin 1s linear infinite; margin-right: 0.5rem; }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        hr {
+            border: none;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(148,163,184,0.5), transparent);
+            margin: 3rem 0;
+        }
+        .error { background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #fca5a5; padding: 1rem; border-radius: 12px; margin: 1rem 0; }
+        .success { background: rgba(34, 197, 94, 0.2); border: 1px solid #22c55e; color: #86efac; padding: 1rem; border-radius: 12px; margin: 1rem 0; }
+        .toast {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            background: #10b981;
+            color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            z-index: 3000;
+            transform: translateX(400px);
+            transition: all 0.3s ease;
+        }
+        .card-actions {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .disclaimer {
+            margin-top: 40px;
+            padding: 20px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            text-align: center;
+            font-size: 0.8em;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+        }
+        #noteModal, #createGroupModal {
+            z-index: 2200;
+        }
+        .modal-content {
+            background: rgba(15, 23, 42, 0.98);
+            backdrop-filter: blur(20px);
+            margin: 10% auto;
+            padding: 2rem;
+            border: 1px solid rgba(0, 230, 255, 0.3);
+            border-radius: 24px;
+            width: 90%;
+            max-width: 500px;
+            color: #fff;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+            animation: modalFadeIn 0.3s;
+        }
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .close-modal {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close-modal:hover { color: #fff; }
+        .profile-social {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            justify-content: center;
+        }
+        .profile-social a {
+            color: #00e6ff;
+            font-size: 1.5rem;
+            transition: transform 0.2s;
+        }
+        .profile-social a:hover { transform: translateY(-3px); }
+        .skeleton-card {
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 20px;
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            min-height: 110px;
+            animation: skeleton-pulse 1.5s infinite;
+        }
+        .skeleton-avatar {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+        }
+        .skeleton-text {
+            flex: 1;
+            height: 60px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+        }
+        @keyframes skeleton-pulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.8; }
+        }
+
+        .group-member-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 1rem 0;
+            border: 1px solid rgba(148,163,184,0.3);
+            border-radius: 12px;
+            background: rgba(15,23,42,0.6);
+        }
+        .member-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            border-bottom: 1px solid rgba(148,163,184,0.2);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .member-item:hover { background: rgba(0,230,255,0.1); }
+        .member-item.selected { background: rgba(0,230,255,0.2); border-left: 3px solid #00e6ff; }
+        .member-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00e6ff, #00b8cc);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .member-name { flex: 1; font-size: 0.9rem; }
+        .selected-members {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(148,163,184,0.3);
+        }
+        .selected-member-tag {
+            background: rgba(0,230,255,0.2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .selected-member-tag i {
+            cursor: pointer;
+            font-size: 0.7rem;
+            transition: transform 0.2s;
+        }
+        .selected-member-tag i:hover { transform: scale(1.2); color: #ef4444; }
+        .group-info-preview {
+            background: rgba(0,230,255,0.05);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        /* Pinned section enhancement */
+        .pinned-section {
+            background: linear-gradient(135deg, rgba(0,230,255,0.08), rgba(0,184,204,0.04));
+            border: 1px solid rgba(0,230,255,0.2);
+            border-radius: 16px;
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .pinned-label {
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #00e6ff;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .pinned-avatars {
+            display: flex;
+            gap: 0.75rem;
+            overflow-x: auto;
+            flex-wrap: nowrap;
+            padding-bottom: 0.5rem;
+            scrollbar-width: thin;
+        }
+        .pinned-avatars::-webkit-scrollbar {
+            height: 3px;
+        }
+        .pinned-chip {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(0,230,255,0.12);
+            border-radius: 20px;
+            padding: 0.3rem 0.9rem 0.3rem 0.4rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            border: 1px solid rgba(0,230,255,0.2);
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+        .pinned-chip:hover { background: rgba(0,230,255,0.2); }
+        .pinned-chip img {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+
+        .progress-wrap { background: rgba(255,255,255,0.08); border-radius: 20px; height: 6px; margin-top: 0.4rem; overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 20px; background: linear-gradient(90deg, #00e6ff, #10b981); transition: width 1s ease; }
+
+        .tab-bar {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(148,163,184,0.2);
+            padding-bottom: 0.5rem;
+            flex-wrap: wrap;
+        }
+        .tab-btn {
+            padding: 0.5rem 1.25rem;
+            border: none;
+            background: transparent;
+            color: #94a3b8;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border-radius: 20px;
+            transition: all 0.2s;
+            position: relative;
+        }
+        .tab-btn::after {
+            content: '';
+            position: absolute;
+            bottom: -0.6rem;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 2px;
+            background: #00e6ff;
+            border-radius: 2px;
+            transition: width 0.2s;
+        }
+        .tab-btn.active { color: #00e6ff; }
+        .tab-btn.active::after { width: 60%; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Fix list view on all screens */
+        .friend-grid.list-view .friend-card {
+            flex-direction: row !important;
+            text-align: left !important;
+            align-items: center !important;
+        }
+        .friend-grid.list-view .friend-info {
+            flex-direction: row !important;
+            text-align: left !important;
+            margin-bottom: 0 !important;
+        }
+        @media (max-width: 768px) {
+            .friend-grid.list-view .friend-card {
+                flex-wrap: wrap;
+            }
+            .friend-grid.list-view .card-actions {
+                margin-top: 0.5rem;
+                width: 100%;
+                justify-content: flex-start;
+            }
+        }
+
+        /* Activity icon fallback */
+        .activity-icon.default { background: rgba(148,163,184,0.2); color: #cbd5e1; }
+
+        /* Back to top mobile adjustment */
+        #backToTop {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: linear-gradient(135deg, #00e6ff, #00b8cc);
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            width: 48px;
+            height: 48px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 999;
+            box-shadow: 0 4px 20px rgba(0,230,255,0.4);
+            transition: all 0.3s ease;
+        }
+        #backToTop:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,230,255,0.5); }
+        #backToTop.visible { display: flex; }
+        @media (max-width: 768px) {
+            #backToTop {
+                bottom: 1rem;
+                right: 1rem;
+                width: 40px;
+                height: 40px;
+                font-size: 1rem;
+            }
+        }
+
+        /* Responsive enhancements */
+        @media (max-width: 768px) {
+            .friends-container { padding: 0 1rem; }
+            h2 { font-size: 1.3rem; margin: 1.5rem 0 0.8rem 0; }
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1rem;
+            }
+            .stat-card { padding: 1rem; }
+            .stat-number { font-size: 1.5rem; }
+            .stat-label { font-size: 0.75rem; }
+            .search-section, .add-friend {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            .search-section input, .add-friend input {
+                padding: 0.8rem 1rem;
+                font-size: 0.9rem;
+            }
+            .btn {
+                justify-content: center;
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+            .filters-row {
+                flex-direction: column;
+                gap: 0.75rem;
+            }
+            .filter-input, .filter-select {
+                width: 100%;
+                min-width: auto;
+            }
+            .friend-grid {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+            .friend-card, .search-result-card, .request-card, .group-card {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 1rem;
+                text-align: center;
+            }
+            .friend-info {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+                gap: 0.5rem;
+                margin-bottom: 1rem;
+            }
+            .friend-avatar {
+                width: 70px;
+                height: 70px;
+                margin: 0 auto;
+            }
+            .friend-name {
+                justify-content: center;
+                font-size: 1.1rem;
+            }
+            .friend-username { font-size: 0.8rem; }
+            .card-actions {
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 0.5rem;
+            }
+            .btn-small {
+                padding: 0.5rem 0.8rem;
+                font-size: 0.75rem;
+            }
+            .trending-item {
+                padding: 0.7rem;
+                gap: 0.5rem;
+            }
+            .trending-rank {
+                width: 28px;
+                height: 28px;
+                font-size: 0.75rem;
+            }
+            .modal-content {
+                width: 95%;
+                margin: 5% auto;
+                padding: 1.5rem;
+            }
+            .member-item { padding: 0.6rem; }
+        }
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .friend-avatar { width: 60px; height: 60px; }
+            .card-actions .btn { flex: 1; min-width: 80px; }
+        }
+
+        .profile-header { text-align: center; margin-bottom: 1rem; }
+        .profile-name { font-size: 1.8rem; font-weight: 700; background: linear-gradient(45deg, #00e6ff, #fff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .profile-bio { background: rgba(255,255,255,0.05); padding: 1rem; border-radius: 16px; margin: 1rem 0; font-size: 0.9rem; line-height: 1.5; }
+        .profile-detail { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; font-size: 0.9rem; }
+        .profile-detail i { width: 24px; color: #00e6ff; }
+        .friend-actions { display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem; }
+        .badge-container { display: flex; justify-content: center; gap: 0.5rem; margin-top: 0.5rem; }
+        .sort-bar {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .sort-bar span { color: #94a3b8; font-size: 0.85rem; }
+        .sort-btn {
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            border: 1px solid rgba(148,163,184,0.4);
+            background: transparent;
+            color: #94a3b8;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Poppins', sans-serif;
+        }
+        .sort-btn.active, .sort-btn:hover {
+            background: rgba(0,230,255,0.15);
+            color: #00e6ff;
+            border-color: rgba(0,230,255,0.5);
+        }
+        .activity-feed {
+            background: rgba(15,23,42,0.8);
+            border-radius: 16px;
+            border: 1px solid rgba(148,163,184,0.3);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid rgba(148,163,184,0.1);
+            transition: background 0.2s;
+            animation: fadeInUp 0.4s ease forwards;
+            opacity: 0;
+        }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-item:hover { background: rgba(0,230,255,0.05); }
+        .activity-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+        .activity-icon.connect { background: rgba(16,185,129,0.2); color: #10b981; }
+        .activity-icon.message { background: rgba(0,230,255,0.2); color: #00e6ff; }
+        .activity-icon.group { background: rgba(249,115,22,0.2); color: #f97316; }
+        .activity-icon.request { background: rgba(245,158,11,0.2); color: #f59e0b; }
+        .activity-text { flex: 1; font-size: 0.88rem; line-height: 1.4; }
+        .activity-time { font-size: 0.75rem; color: #64748b; white-space: nowrap; }
+        .mutual-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: rgba(0,230,255,0.1);
+            border: 1px solid rgba(0,230,255,0.25);
+            border-radius: 20px;
+            padding: 2px 10px;
+            font-size: 0.72rem;
+            color: #00e6ff;
+            margin-top: 4px;
+        }
+        .health-card {
+            background: rgba(15,23,42,0.8);
+            border-radius: 16px;
+            border: 1px solid rgba(148,163,184,0.3);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .health-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.2rem;
+        }
+        .health-score-ring {
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+        .health-score-ring svg { transform: rotate(-90deg); }
+        .health-score-number {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #00e6ff;
+        }
+        .health-tips { list-style: none; }
+        .health-tip {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.5rem 0;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            border-bottom: 1px solid rgba(148,163,184,0.1);
+        }
+        .health-tip:last-child { border-bottom: none; }
+        .health-tip i { color: #00e6ff; width: 16px; }
+        .health-tip.done { color: #10b981; }
+        .health-tip.done i { color: #10b981; }
+        .suggestion-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .suggestion-card {
+            background: rgba(15,23,42,0.8);
+            border-radius: 16px;
+            border: 1px solid rgba(148,163,184,0.3);
+            padding: 1.25rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            animation: fadeInUp 0.5s ease forwards;
+            opacity: 0;
+        }
+        .suggestion-card:hover { transform: translateY(-4px); box-shadow: 0 16px 32px rgba(0,0,0,0.3); }
+        .suggestion-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid rgba(0,230,255,0.3);
+            margin: 0 auto 0.75rem;
+            display: block;
+        }
+        .suggestion-name { font-weight: 600; font-size: 0.95rem; margin-bottom: 0.2rem; }
+        .suggestion-role { color: #94a3b8; font-size: 0.78rem; margin-bottom: 0.75rem; }
+        .suggestion-mutual { font-size: 0.72rem; color: #00e6ff; margin-bottom: 0.75rem; }
+        .friend-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.3rem;
+            margin-top: 0.4rem;
+        }
+        .friend-tag {
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(148,163,184,0.2);
+            border-radius: 10px;
+            padding: 1px 8px;
+            font-size: 0.68rem;
+            color: #94a3b8;
+        }
+        .star-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: #64748b;
+            font-size: 1rem;
+            transition: color 0.2s, transform 0.2s;
+            padding: 4px;
+        }
+        .star-btn.starred { color: #f59e0b; }
+        .star-btn:hover { transform: scale(1.3); }
+        .view-toggle {
+            display: flex;
+            gap: 0.4rem;
+            margin-bottom: 1rem;
+        }
+        .view-toggle-btn {
+            padding: 0.4rem 0.8rem;
+            border-radius: 10px;
+            border: 1px solid rgba(148,163,184,0.4);
+            background: transparent;
+            color: #94a3b8;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Poppins', sans-serif;
+        }
+        .view-toggle-btn.active {
+            background: rgba(0,230,255,0.15);
+            color: #00e6ff;
+            border-color: rgba(0,230,255,0.5);
+        }
+        .export-btn {
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(148,163,184,0.3);
+            border-radius: 20px;
+            color: #94a3b8;
+            padding: 0.4rem 1rem;
+            font-size: 0.8rem;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            transition: all 0.2s;
+            font-family: 'Poppins', sans-serif;
+        }
+        .export-btn:hover { color: #00e6ff; border-color: rgba(0,230,255,0.4); }
+        #noteModal .modal-content { max-width: 420px; }
+        #noteModal textarea {
+            width: 100%;
+            min-height: 100px;
+            background: rgba(255,255,255,0.07);
+            border: 1px solid rgba(148,163,184,0.4);
+            border-radius: 12px;
+            color: #fff;
+            padding: 0.75rem;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            resize: vertical;
+            margin-top: 0.75rem;
+        }
+        .nav-links {
+    z-index: 1100; /* above navbar (1000) and content */
+}
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-brand">
+            <i class="fas fa-shield-alt"></i> Sarveik
+        </div>
+        <ul class="nav-links" id="navLinks">
+            <li><a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li><a href="profile.html"><i class="fas fa-user"></i> Profile</a></li>
+            <li><a href="main.html"><i class="fas fa-rocket"></i> Tools</a></li>
+            <li><a href="friends.html" class="active">
+                <i class="fas fa-users"></i> Network 
+                <span id="totalBadge" class="badge" style="display:none;"></span>
+            </a></li>
+            
+            <li><a href="index.html" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+        <div class="hamburger" id="hamburger">
+            <span></span><span></span><span></span>
+        </div>
+    </nav>
+
+    <div class="friends-container">
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalConnections">0</div>
+                <div style="color: #94a3b8; font-size: 0.9rem;">Connections</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="onlineCount">0</div>
+                <div style="color: #94a3b8; font-size: 0.9rem;">Online Now</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="requestsCount">0</div>
+                <div style="color: #94a3b8; font-size: 0.9rem;">Pending</div>
+            </div>
+        </div>
+
+        <div class="health-card" id="healthCard">
+            <div class="health-header">
+                <div>
+                    <h3 style="font-weight:600; margin-bottom:0.3rem;"><i class="fas fa-heartbeat" style="color:#00e6ff;"></i> Network Health</h3>
+                    <p style="color:#94a3b8; font-size:0.82rem;">Tips to grow your professional network</p>
+                </div>
+                <div class="health-score-ring">
+                    <svg width="80" height="80" viewBox="0 0 80 80">
+                        <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(148,163,184,0.15)" stroke-width="7"/>
+                        <circle id="healthRingFill" cx="40" cy="40" r="34" fill="none" stroke="#00e6ff" stroke-width="7"
+                            stroke-dasharray="213.6" stroke-dashoffset="213.6" stroke-linecap="round"
+                            style="transition: stroke-dashoffset 1.2s ease;"/>
+                    </svg>
+                    <div class="health-score-number" id="healthScoreNum">—</div>
+                </div>
+            </div>
+            <ul class="health-tips" id="healthTips">
+                <li class="health-tip"><i class="fas fa-circle-notch fa-spin"></i> Calculating…</li>
+            </ul>
+        </div>
+
+        <div class="pinned-section" id="pinnedSection" style="display:none;">
+            <div class="pinned-label"><i class="fas fa-star"></i> Favourite Connections</div>
+            <div class="pinned-avatars" id="pinnedAvatars"></div>
+        </div>
+
+        <h2><i class="fas fa-search"></i> Find Professionals</h2>
+        <div class="search-section">
+            <input type="text" id="searchUser" placeholder="Enter username or name to search..." minlength="2">
+            <button id="searchBtn" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
+        </div>
+        <div id="searchResults"></div>
+        <hr>
+
+        <h2><i class="fas fa-user-plus"></i> Add Connection</h2>
+        <div class="add-friend">
+            <input type="text" id="friendUsername" placeholder="Enter exact username">
+            <button id="addFriendBtn" class="btn btn-primary"><i class="fas fa-user-plus"></i> Send Request</button>
+        </div>
+
+        <h2><i class="fas fa-fire"></i> Trending Professionals</h2>
+        <div id="trendingSection" style="background: rgba(15, 23, 42, 0.8); border-radius: 16px; padding: 1.5rem; border: 1px solid rgba(148, 163, 184, 0.3); margin-bottom: 2rem;">
+            <div class="loading"><i class="fas fa-spinner"></i> Loading trending...</div>
+        </div>
+
+        <h2><i class="fas fa-user-astronaut"></i> People You May Know</h2>
+        <div class="suggestion-grid" id="suggestionsGrid">
+            <div class="no-results" style="grid-column:1/-1;">Loading suggestions…</div>
+        </div>
+        
+        <div class="filters-section">
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap:0.5rem;">
+                <h3 style="display: flex; align-items: center; gap: 0.5rem;">
+                    <i class="fas fa-filter"></i> Filters & Search
+                </h3>
+                <div style="display:flex; gap:0.5rem; align-items:center;">
+                    <button class="export-btn" id="exportBtn"><i class="fas fa-download"></i> Export CSV</button>
+                    <button id="refreshBtn" class="btn btn-outline btn-small"><i class="fas fa-sync-alt"></i> Refresh</button>
+                </div>
+            </div>
+            <div class="filters-row" style="margin-top: 1rem;">
+                <select id="statusFilter" class="filter-select">
+                    <option value="">All Status</option>
+                    <option value="online">Online</option>
+                    <option value="away">Away</option>
+                    <option value="busy">Busy</option>
+                    <option value="offline">Offline</option>
+                </select>
+                <input type="text" id="quickSearch" class="filter-input" placeholder="Quick search...">
+                <button id="clearFilters" class="btn btn-outline">Clear</button>
+            </div>
+        </div>
+
+        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.5rem; margin-bottom:0.75rem;">
+            <div class="sort-bar">
+                <span>Sort:</span>
+                <button class="sort-btn active" data-sort="name">Name</button>
+                <button class="sort-btn" data-sort="status">Status</button>
+                <button class="sort-btn" data-sort="starred">Favourites first</button>
+            </div>
+            <div class="view-toggle">
+                <button class="view-toggle-btn active" data-view="grid" title="Grid view"><i class="fas fa-th-large"></i></button>
+                <button class="view-toggle-btn" data-view="list" title="List view"><i class="fas fa-list"></i></button>
+            </div>
+        </div>
+
+        <h2><i class="fas fa-user-friends"></i> Your Network</h2>
+        <div id="friendsList" class="friend-grid"></div>
+
+        <h2 style="margin-top:2.5rem;"><i class="fas fa-clock"></i> Pending Requests</h2>
+        <div id="requestsList"></div>
+
+        <h2><i class="fas fa-users-viewfinder"></i> My Groups</h2>
+        <div id="groupsList" class="friend-grid"></div>
+        <div style="margin: 1rem 0;">
+            <button id="createGroupBtn" class="btn btn-primary"><i class="fas fa-plus"></i> Create New Group</button>
+        </div>
+
+        <h2><i class="fas fa-bolt"></i> Recent Activity</h2>
+        <div class="activity-feed" id="activityFeed">
+            <div class="loading"><i class="fas fa-spinner"></i> Loading activity…</div>
+        </div>
+    </div>
+
+    <div class="disclaimer">
+        <p><strong>Disclaimer:</strong> Sarveik is a directory of third‑party tools. We do not host any content. All trademarks, logos, and brand names are the property of their respective owners. If you believe any link infringes your rights, please <a href="dmca.html" style="color: inherit; text-decoration: underline;">contact us</a> for removal.</p>
+    </div>
+    <button id="backToTop" title="Back to top"><i class="fas fa-arrow-up"></i></button>
+
+    <div id="profileModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <div id="modalProfileContent">Loading...</div>
+        </div>
+    </div>
+
+    <div id="createGroupModal" class="modal">
+        <div class="modal-content" style="max-width: 550px;">
+            <span class="close-modal" id="closeGroupModal">&times;</span>
+            <h3 style="margin-bottom: 1rem;"><i class="fas fa-layer-group"></i> Create New Group</h3>
+            <div class="group-info-preview">
+                <div style="font-size: 0.85rem; opacity: 0.8;">Group information</div>
+                <input type="text" id="groupName" placeholder="Enter group name" style="width:100%; margin-top: 8px; padding: 10px; border-radius: 12px; background: rgba(255,255,255,0.1); border: 1px solid rgba(148,163,184,0.5); color: white; font-size: 1rem;">
+            </div>
+            <label style="font-size: 0.9rem; font-weight: 500;"><i class="fas fa-user-friends"></i> Select members (click to add)</label>
+            <div class="group-member-list" id="memberListContainer">
+                <div class="loading" style="padding: 1rem;"><i class="fas fa-spinner fa-spin"></i> Loading friends...</div>
+            </div>
+            <div id="selectedMembersContainer" class="selected-members">
+                <span style="font-size: 0.75rem; opacity: 0.7;">No members selected yet</span>
+            </div>
+            <button id="confirmCreateGroup" class="btn btn-primary" style="width: 100%; margin-top: 1.5rem;">
+                <i class="fas fa-check-circle"></i> Create Group
+            </button>
+        </div>
+    </div>
+
+    <div id="noteModal" class="modal">
+        <div class="modal-content" style="max-width:420px;">
+            <span class="close-modal" id="closeNoteModal">&times;</span>
+            <h3 style="margin-bottom:0.5rem;"><i class="fas fa-sticky-note" style="color:#00e6ff;"></i> Private Note</h3>
+            <p style="color:#94a3b8; font-size:0.82rem;" id="noteForUser">For @username</p>
+            <textarea id="noteTextarea" placeholder="Add a private note about this connection…"></textarea>
+            <button class="btn btn-primary" id="saveNoteBtn" style="margin-top:1rem; width:100%;"><i class="fas fa-save"></i> Save Note</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script>
+        // ========== CSRF Token Management ==========
+        let csrfToken = null;
+        async function fetchCsrfToken() {
+            try {
+                const res = await fetch('/api/csrf-token', { credentials: 'include' });
+                if (res.ok) {
+                    const data = await res.json();
+                    csrfToken = data.csrfToken;
+                }
+            } catch (err) { console.error('CSRF token fetch failed:', err); }
+        }
+        async function getCsrfHeader() {
+            if (!csrfToken) await fetchCsrfToken();
+            return { 'X-CSRF-Token': csrfToken };
+        }
+        async function apiCall(url, options = {}) {
+            if (options.body && typeof options.body === 'object') {
+                options.body = JSON.stringify(options.body);
+                options.headers = { ...options.headers, 'Content-Type': 'application/json' };
+            }
+            if (options.body && typeof options.body === 'string' && !options.headers?.['Content-Type']) {
+                options.headers = { ...options.headers, 'Content-Type': 'application/json' };
+            }
+            if (options.method && options.method !== 'GET') {
+                const csrfHeader = await getCsrfHeader();
+                options.headers = { ...options.headers, ...csrfHeader };
+            }
+            const res = await fetch(url, { ...options, credentials: 'include' });
+            if (!res.ok) {
+                let errorMsg = await res.text();
+                throw new Error(errorMsg || `Request failed with status ${res.status}`);
+            }
+            const contentType = res.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) return res.json();
+            return res.text();
+        }
+
+        // ========== Existing globals ==========
+        const socket = io({ withCredentials: true });
+        let currentUserId = null;
+        let onlineStatus = new Map();
+        let unreadCounts = new Map();
+        let friendsData = [];
+        let requestsData = [];
+        let trendingData = [];
+        let groupsData = [];
+        let filters = { status: '', search: '' };
+        let allFriendsForModal = [];
+
+        // ========== NEW globals ==========
+        let starredFriends = new Set(JSON.parse(localStorage.getItem('nova_starred') || '[]'));
+        let friendNotes = JSON.parse(localStorage.getItem('nova_notes') || '{}');
+        let currentSort = 'name';
+        let currentView = 'grid';
+        let noteTargetId = null;
+        let activityLog = JSON.parse(localStorage.getItem('nova_activity') || '[]');
+
+        // ========== Utility Functions ==========
+        function escapeHtml(str) {
+            if (!str) return '';
+            const div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
+        }
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.style.background = type === 'error' ? '#ef4444' : type === 'info' ? '#3b82f6' : '#10b981';
+            toast.textContent = message;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.style.transform = 'translateX(0)', 100);
+            setTimeout(() => {
+                toast.style.transform = 'translateX(400px)';
+                setTimeout(() => toast.remove(), 300);
+            }, 4000);
+        }
+        function showSkeleton(container, count = 3) {
+            container.innerHTML = Array(count).fill(`
+                <div class="skeleton-card">
+                    <div class="skeleton-avatar"></div>
+                    <div class="skeleton-text"></div>
+                </div>
+            `).join('');
+        }
+        function timeAgo(ts) {
+            const diff = Date.now() - ts;
+            if (diff < 60000) return 'just now';
+            if (diff < 3600000) return Math.floor(diff/60000) + 'm ago';
+            if (diff < 86400000) return Math.floor(diff/3600000) + 'h ago';
+            return Math.floor(diff/86400000) + 'd ago';
+        }
+        function pushActivity(icon, iconClass, text) {
+            activityLog.unshift({ icon, iconClass: iconClass || 'default', text, ts: Date.now() });
+            if (activityLog.length > 20) activityLog.pop();
+            localStorage.setItem('nova_activity', JSON.stringify(activityLog));
+            renderActivityFeed();
+        }
+
+        // ========== Network Stats ==========
+        async function loadStats() {
+            try {
+                const stats = await apiCall('/api/network/stats');
+                document.getElementById('totalConnections').textContent = stats.total || 0;
+                document.getElementById('onlineCount').textContent = stats.online || 0;
+                document.getElementById('requestsCount').textContent = stats.requests || 0;
+                updateHealthScore(stats);
+            } catch (err) { console.error('Stats error:', err); }
+        }
+
+        async function getCurrentUserId() {
+            try {
+                const user = await apiCall('/profile');
+                currentUserId = user.id;
+            } catch (err) { console.error('Error getting user ID:', err); }
+        }
+
+        async function updateUnreadBadge() {
+            try {
+                const data = await apiCall('/api/unread');
+                const totalUnread = data.unread.reduce((sum, f) => sum + f.count, 0);
+                const totalPending = data.pendingRequests || 0;
+                const total = totalUnread + totalPending;
+                const badgeSpan = document.getElementById('totalBadge');
+                if (total > 0) {
+                    badgeSpan.textContent = total > 99 ? '99+' : total;
+                    badgeSpan.style.display = 'inline-block';
+                } else {
+                    badgeSpan.style.display = 'none';
+                }
+                unreadCounts.clear();
+                data.unread.forEach(f => unreadCounts.set(f.friend_id, f.count));
+                if (friendsData.length) renderFriends(friendsData);
+            } catch (err) { console.error('Error updating unread badge:', err); }
+        }
+
+        // ========== NEW: Network Health Score with dynamic ring ==========
+        function updateHealthScore(stats) {
+            const total = stats.total || 0;
+            const online = stats.online || 0;
+            const pending = stats.requests || 0;
+            const hasGroups = groupsData.length > 0;
+            const hasStarred = starredFriends.size > 0;
+
+            const tips = [
+                { done: total >= 5,   text: 'Have at least 5 connections' },
+                { done: online > 0,   text: 'Someone in your network is online' },
+                { done: pending === 0, text: 'No pending requests waiting' },
+                { done: hasGroups,    text: 'Member of at least one group' },
+                { done: hasStarred,   text: 'Starred a favourite connection' },
+            ];
+            const score = Math.round((tips.filter(t => t.done).length / tips.length) * 100);
+
+            document.getElementById('healthScoreNum').textContent = score + '%';
+            const radius = 34;
+            const circumference = 2 * Math.PI * radius;
+            const ring = document.getElementById('healthRingFill');
+            ring.setAttribute('stroke-dasharray', circumference);
+            const offset = circumference - (score / 100) * circumference;
+            ring.style.strokeDashoffset = offset;
+
+            const tipEl = document.getElementById('healthTips');
+            tipEl.innerHTML = tips.map(t => `
+                <li class="health-tip ${t.done ? 'done' : ''}">
+                    <i class="fas ${t.done ? 'fa-check-circle' : 'fa-circle-dot'}"></i>
+                    ${t.text}
+                </li>
+            `).join('');
+        }
+
+        // ========== Friends ==========
+        async function loadFriends() {
+            const container = document.getElementById('friendsList');
+            showSkeleton(container);
+            try {
+                const params = new URLSearchParams();
+                if (filters.status) params.append('status', filters.status);
+                if (filters.search) params.append('search', filters.search);
+                friendsData = await apiCall(`/api/friends?${params.toString()}`);
+                for (const f of friendsData) {
+                    if (!onlineStatus.has(f.id)) {
+                        onlineStatus.set(f.id, f.status || 'offline');
+                    }
+                }
+                renderFriends(friendsData);
+                renderPinned();
+                renderSuggestions();
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = '<div class="no-results">Error loading network. Please try again.</div>';
+            }
+        }
+
+        function getFriendStatusClass(friend) {
+            let status = onlineStatus.get(friend.id);
+            if (!status) status = friend.status || 'offline';
+            if (status === 'online') return 'online';
+            if (status === 'away') return 'away';
+            if (status === 'busy') return 'busy';
+            return '';
+        }
+
+        function sortedFriends(friends) {
+            const arr = [...friends];
+            if (currentSort === 'starred') {
+                arr.sort((a, b) => {
+                    const aS = starredFriends.has(String(a.id)) ? 0 : 1;
+                    const bS = starredFriends.has(String(b.id)) ? 0 : 1;
+                    return aS - bS;
+                });
+            } else if (currentSort === 'status') {
+                const order = { online: 0, away: 1, busy: 2, offline: 3 };
+                arr.sort((a, b) => {
+                    const sa = order[onlineStatus.get(a.id) || 'offline'] ?? 3;
+                    const sb = order[onlineStatus.get(b.id) || 'offline'] ?? 3;
+                    return sa - sb;
+                });
+            } else {
+                arr.sort((a, b) => (a.display_name || a.username).localeCompare(b.display_name || b.username));
+            }
+            return arr;
+        }
+
+        function renderFriends(friends) {
+            const container = document.getElementById('friendsList');
+            container.className = 'friend-grid' + (currentView === 'list' ? ' list-view' : '');
+            const sorted = sortedFriends(friends);
+            if (sorted.length === 0) {
+                container.innerHTML = '<div class="no-results">No connections yet. Add some professionals!</div>';
+                return;
+            }
+            container.innerHTML = sorted.map(f => {
+                const unread = unreadCounts.get(f.id) || 0;
+                const unreadHtml = unread > 0 ? `<span class="unread-badge">${unread}</span>` : '';
+                const statusClass = getFriendStatusClass(f);
+                const isStarred = starredFriends.has(String(f.id));
+                const note = friendNotes[f.id] ? `<div class="friend-tag" title="${escapeHtml(friendNotes[f.id])}"><i class="fas fa-sticky-note"></i> Note</div>` : '';
+                return `
+                    <div class="friend-card" data-friend-id="${f.id}">
+                        <div class="friend-info">
+                            <img src="${escapeHtml(f.avatar_url || 'https://via.placeholder.com/56?text=👤')}" 
+                                 class="friend-avatar" 
+                                 alt="Avatar"
+                                 onerror="this.src='https://via.placeholder.com/70?text=👤'">
+                            <div style="flex: 1;">
+                                <div class="friend-name">
+                                    ${escapeHtml(f.display_name || f.username)}
+                                    ${f.is_pro ? '<span class="pro-badge">PRO</span>' : ''}
+                                    ${f.is_verified ? '<span class="verified-badge"><i class="fas fa-check"></i></span>' : ''}
+                                    <span class="friend-status ${statusClass}"></span>
+                                </div>
+                                <div class="friend-username">@${escapeHtml(f.username)} • ${f.profession || 'Professional'}</div>
+                                ${unreadHtml}
+                                <div class="friend-tags">${note}</div>
+                            </div>
+                        </div>
+                        <div class="card-actions">
+                            <button class="star-btn ${isStarred ? 'starred' : ''}" data-id="${f.id}" title="${isStarred ? 'Unstar' : 'Star'}" aria-label="Star connection">
+                                <i class="fas fa-star"></i>
+                            </button>
+                            <button class="btn btn-small btn-primary chat-btn" data-id="${f.id}">
+                                <i class="fas fa-comments"></i> Chat
+                            </button>
+                            <button class="btn btn-small btn-outline view-profile-btn" data-id="${f.id}" data-username="${escapeHtml(f.username)}">
+                                <i class="fas fa-user-circle"></i> Profile
+                            </button>
+                            <button class="btn btn-small btn-outline note-btn" data-id="${f.id}" data-username="${escapeHtml(f.username)}" title="Add note">
+                                <i class="fas fa-sticky-note"></i>
+                            </button>
+                            <button class="btn btn-small btn-danger unfriend-btn" data-id="${f.id}">
+                                <i class="fas fa-user-minus"></i> Remove
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            attachFriendEvents();
+        }
+
+        function attachFriendEvents() {
+            document.querySelectorAll('.chat-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const friendId = btn.dataset.id;
+                    await apiCall(`/api/messages/read/${friendId}`, { method: 'POST' });
+                    if (unreadCounts.has(parseInt(friendId))) {
+                        unreadCounts.set(parseInt(friendId), 0);
+                        renderFriends(friendsData);
+                        updateUnreadBadge();
+                    }
+                    window.location.href = `chat.html?friend=${friendId}`;
+                });
+            });
+            document.querySelectorAll('.view-profile-btn').forEach(btn => {
+                btn.addEventListener('click', () => showFriendProfile(btn.dataset.id, btn.dataset.username));
+            });
+            document.querySelectorAll('.unfriend-btn').forEach(btn => {
+                btn.addEventListener('click', () => unfriend(btn.dataset.id));
+            });
+            document.querySelectorAll('.star-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const id = String(btn.dataset.id);
+                    if (starredFriends.has(id)) {
+                        starredFriends.delete(id);
+                        btn.classList.remove('starred');
+                        showToast('Removed from favourites', 'info');
+                    } else {
+                        starredFriends.add(id);
+                        btn.classList.add('starred');
+                        showToast('Added to favourites ⭐', 'success');
+                        pushActivity('fa-star', 'message', 'You starred a connection');
+                    }
+                    localStorage.setItem('nova_starred', JSON.stringify([...starredFriends]));
+                    renderPinned();
+                    updateHealthScore({ total: friendsData.length, online: 0, requests: requestsData.length });
+                });
+            });
+            document.querySelectorAll('.note-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    noteTargetId = btn.dataset.id;
+                    document.getElementById('noteForUser').textContent = '@' + btn.dataset.username;
+                    document.getElementById('noteTextarea').value = friendNotes[noteTargetId] || '';
+                    document.getElementById('noteModal').style.display = 'block';
+                });
+            });
+        }
+
+        async function unfriend(friendId) {
+            if (!confirm('Remove this connection?')) return;
+            const friendCard = document.querySelector(`.friend-card[data-friend-id="${friendId}"]`);
+            const unfriendBtn = friendCard?.querySelector('.unfriend-btn');
+            if (unfriendBtn) {
+                const original = unfriendBtn.innerHTML;
+                unfriendBtn.disabled = true;
+                unfriendBtn.innerHTML = '<i class="fas fa-spinner"></i> Removing...';
+                try {
+                    await apiCall(`/api/friends/${friendId}`, { method: 'DELETE' });
+                    showToast('Connection removed.', 'success');
+                    pushActivity('fa-user-minus', 'request', 'You removed a connection');
+                    friendsData = friendsData.filter(f => f.id !== friendId);
+                    starredFriends.delete(String(friendId));
+                    localStorage.setItem('nova_starred', JSON.stringify([...starredFriends]));
+                    renderFriends(friendsData);
+                    renderPinned();
+                    updateUnreadBadge();
+                    loadStats();
+                } catch (err) {
+                    showToast(err.message || 'Failed to remove', 'error');
+                    unfriendBtn.disabled = false;
+                    unfriendBtn.innerHTML = original;
+                }
+            }
+        }
+
+        function renderPinned() {
+            const section = document.getElementById('pinnedSection');
+            const container = document.getElementById('pinnedAvatars');
+            const pinned = friendsData.filter(f => starredFriends.has(String(f.id)));
+            if (pinned.length === 0) { section.style.display = 'none'; return; }
+            section.style.display = 'block';
+            container.innerHTML = pinned.map(f => `
+                <div class="pinned-chip" onclick="window.location.href='chat.html?friend=${f.id}'">
+                    <img src="${escapeHtml(f.avatar_url || 'https://via.placeholder.com/26?text=👤')}" 
+                         onerror="this.src='https://via.placeholder.com/26?text=👤'" alt="">
+                    ${escapeHtml(f.display_name || f.username)}
+                </div>
+            `).join('');
+        }
+
+        function renderSuggestions() {
+            const container = document.getElementById('suggestionsGrid');
+            const pool = trendingData.filter(t => !friendsData.some(f => f.id === t.id) && t.id !== currentUserId);
+            if (pool.length === 0) {
+                container.innerHTML = '<div class="no-results" style="grid-column:1/-1;">No suggestions right now. Add more connections!</div>';
+                return;
+            }
+            container.innerHTML = pool.slice(0, 6).map((u, i) => `
+                <div class="suggestion-card" style="animation-delay:${i*0.07}s;">
+                    <img src="${escapeHtml(u.avatar_url || 'https://via.placeholder.com/64?text=👤')}" 
+                         class="suggestion-avatar"
+                         onerror="this.src='https://via.placeholder.com/64?text=👤'" alt="">
+                    <div class="suggestion-name">${escapeHtml(u.display_name || u.username)}</div>
+                    <div class="suggestion-role">${escapeHtml(u.profession || 'Professional')}</div>
+                    <div class="suggestion-mutual"><i class="fas fa-user-friends"></i> Suggested for you</div>
+                    <button class="btn btn-small btn-primary suggest-connect-btn" data-username="${escapeHtml(u.username)}" style="width:100%; justify-content:center;">
+                        <i class="fas fa-user-plus"></i> Connect
+                    </button>
+                </div>
+            `).join('');
+            document.querySelectorAll('.suggest-connect-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const uname = btn.dataset.username;
+                    const original = btn.innerHTML;
+                    btn.disabled = true;
+                    btn.innerHTML = '<i class="fas fa-spinner"></i> Sending…';
+                    try {
+                        await apiCall('/api/friends/request', { method: 'POST', body: JSON.stringify({ friendUsername: uname }) });
+                        btn.innerHTML = '<i class="fas fa-check"></i> Sent';
+                        showToast('Request sent!', 'success');
+                        pushActivity('fa-user-plus', 'connect', `You sent a connection request to @${uname}`);
+                    } catch (err) {
+                        showToast(err.message || 'Failed', 'error');
+                        btn.innerHTML = original;
+                        btn.disabled = false;
+                    }
+                });
+            });
+        }
+
+        function renderActivityFeed() {
+            const container = document.getElementById('activityFeed');
+            if (activityLog.length === 0) {
+                container.innerHTML = '<div class="no-results">No recent activity yet.</div>';
+                return;
+            }
+            container.innerHTML = activityLog.slice(0, 10).map((a, i) => `
+                <div class="activity-item" style="animation-delay:${i*0.05}s;">
+                    <div class="activity-icon ${a.iconClass || 'default'}">
+                        <i class="fas ${a.icon}"></i>
+                    </div>
+                    <div class="activity-text">${a.text}</div>
+                    <div class="activity-time">${timeAgo(a.ts)}</div>
+                </div>
+            `).join('');
+        }
+
+        async function loadRequests() {
+            const container = document.getElementById('requestsList');
+            showSkeleton(container, 2);
+            try {
+                requestsData = await apiCall('/api/friends/requests');
+                if (requestsData.length === 0) {
+                    container.innerHTML = '<div class="no-results">No pending requests.</div>';
+                    return;
+                }
+                container.innerHTML = requestsData.map(r => `
+                    <div class="friend-card request-card">
+                        <div class="friend-info">
+                            <img src="${escapeHtml(r.avatar_url || 'https://via.placeholder.com/56?text=👤')}" 
+                                 class="friend-avatar" 
+                                 alt="Avatar"
+                                 onerror="this.src='https://via.placeholder.com/70?text=👤'">
+                            <div>
+                                <div class="friend-name">
+                                    ${escapeHtml(r.display_name || r.username)}
+                                    ${r.is_pro ? '<span class="pro-badge">PRO</span>' : ''}
+                                </div>
+                                <div class="friend-username">@${escapeHtml(r.username)} • ${r.profession || 'Professional'}</div>
+                            </div>
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn btn-small btn-success accept-btn" data-id="${r.id}">
+                                <i class="fas fa-check"></i> Accept
+                            </button>
+                            <button class="btn btn-small btn-outline decline-btn" data-id="${r.id}">
+                                <i class="fas fa-times"></i> Decline
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+                document.querySelectorAll('.accept-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const requestId = btn.dataset.id;
+                        const btnText = btn.innerHTML;
+                        btn.disabled = true;
+                        btn.innerHTML = '<i class="fas fa-spinner"></i> Accepting...';
+                        try {
+                            await apiCall(`/api/friends/accept/${requestId}`, { method: 'PUT' });
+                            showToast('Request accepted!', 'success');
+                            pushActivity('fa-user-check', 'connect', 'You accepted a connection request');
+                            await Promise.all([loadRequests(), loadFriends()]);
+                            updateUnreadBadge();
+                            loadStats();
+                        } catch (err) {
+                            showToast(err.message || 'Failed to accept', 'error');
+                            btn.disabled = false;
+                            btn.innerHTML = btnText;
+                        }
+                    });
+                });
+                document.querySelectorAll('.decline-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const requestId = btn.dataset.id;
+                        const btnText = btn.innerHTML;
+                        btn.disabled = true;
+                        btn.innerHTML = '<i class="fas fa-spinner"></i> Declining...';
+                        try {
+                            await apiCall(`/api/friends/decline/${requestId}`, { method: 'PUT' });
+                            showToast('Request declined.', 'info');
+                            pushActivity('fa-user-times', 'request', 'You declined a connection request');
+                            loadRequests();
+                            updateUnreadBadge();
+                            loadStats();
+                        } catch (err) {
+                            showToast(err.message || 'Failed to decline', 'error');
+                            btn.disabled = false;
+                            btn.innerHTML = btnText;
+                        }
+                    });
+                });
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = '<div class="no-results">Error loading requests.</div>';
+            }
+        }
+
+        document.getElementById('addFriendBtn').addEventListener('click', async () => {
+            const username = document.getElementById('friendUsername').value.trim();
+            if (!username) {
+                showToast('Please enter a username', 'error');
+                return;
+            }
+            const btn = document.getElementById('addFriendBtn');
+            const original = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner"></i> Sending...';
+            try {
+                await apiCall('/api/friends/request', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ friendUsername: username })
+                });
+                document.getElementById('friendUsername').value = '';
+                showToast('Request sent!', 'success');
+                pushActivity('fa-user-plus', 'connect', `You sent a connection request to @${username}`);
+                updateUnreadBadge();
+            } catch (err) {
+                showToast(err.message || 'Failed to send request', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = original;
+            }
+        });
+
+        let searchTimeout;
+        async function searchUsers() {
+            const query = document.getElementById('searchUser').value.trim();
+            const container = document.getElementById('searchResults');
+            if (query.length < 2) {
+                container.innerHTML = '<div class="no-results">Type at least 2 characters to search</div>';
+                return;
+            }
+            container.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i> Searching...</div>';
+            try {
+                const users = await apiCall(`/api/users/search?q=${encodeURIComponent(query)}`);
+                if (users.length === 0) {
+                    container.innerHTML = '<div class="no-results">No professionals found.</div>';
+                    return;
+                }
+                container.innerHTML = users.map(user => `
+                    <div class="search-result-card" data-user-id="${user.id}">
+                        <div class="friend-info">
+                            <img src="${escapeHtml(user.avatar_url || 'https://via.placeholder.com/56?text=👤')}" 
+                                 class="friend-avatar" 
+                                 alt="Avatar"
+                                 onerror="this.src='https://via.placeholder.com/70?text=👤'">
+                            <div>
+                                <div class="friend-name">
+                                    ${escapeHtml(user.display_name || user.username)}
+                                    ${user.is_pro ? '<span class="pro-badge">PRO</span>' : ''}
+                                </div>
+                                <div class="friend-username">@${escapeHtml(user.username)} • ${user.profession || 'Professional'}</div>
+                            </div>
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn btn-small btn-primary send-request-btn" data-username="${escapeHtml(user.username)}">
+                                <i class="fas fa-user-plus"></i> Connect
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+                document.querySelectorAll('.send-request-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const username = btn.dataset.username;
+                        const original = btn.innerHTML;
+                        btn.disabled = true;
+                        btn.innerHTML = '<i class="fas fa-spinner"></i> Sending...';
+                        try {
+                            await apiCall('/api/friends/request', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ friendUsername: username })
+                            });
+                            btn.innerHTML = '<i class="fas fa-check"></i> Sent';
+                            btn.disabled = true;
+                            showToast(`Request sent to ${username}!`, 'success');
+                            pushActivity('fa-user-plus', 'connect', `You sent a connection request to @${username}`);
+                            updateUnreadBadge();
+                        } catch (err) {
+                            showToast(err.message || 'Failed to send request', 'error');
+                            btn.innerHTML = original;
+                            btn.disabled = false;
+                        }
+                    });
+                });
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = '<div class="no-results">Error searching professionals.</div>';
+            }
+        }
+        document.getElementById('searchBtn').addEventListener('click', searchUsers);
+        document.getElementById('searchUser').addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(searchUsers, 300);
+        });
+
+        document.getElementById('statusFilter').addEventListener('change', (e) => {
+            filters.status = e.target.value;
+            loadFriends();
+        });
+        document.getElementById('quickSearch').addEventListener('input', () => {
+            filters.search = document.getElementById('quickSearch').value;
+            loadFriends();
+        });
+        document.getElementById('clearFilters').addEventListener('click', () => {
+            filters = { status: '', search: '' };
+            document.getElementById('statusFilter').value = '';
+            document.getElementById('quickSearch').value = '';
+            loadFriends();
+        });
+        document.getElementById('refreshBtn').addEventListener('click', async () => {
+            showToast('Refreshing...', 'info');
+            await Promise.all([loadFriends(), loadRequests(), loadStats(), loadTrending(), loadGroups()]);
+            await updateUnreadBadge();
+            showToast('Refreshed!', 'success');
+        });
+
+        document.querySelectorAll('.sort-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentSort = btn.dataset.sort;
+                renderFriends(friendsData);
+            });
+        });
+
+        document.querySelectorAll('.view-toggle-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.view-toggle-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                currentView = btn.dataset.view;
+                renderFriends(friendsData);
+            });
+        });
+
+        document.getElementById('exportBtn').addEventListener('click', () => {
+            if (!friendsData.length) { showToast('No connections to export', 'info'); return; }
+            const rows = [['Name', 'Username', 'Profession', 'Status']];
+            friendsData.forEach(f => {
+                rows.push([
+                    f.display_name || f.username,
+                    '@' + f.username,
+                    f.profession || 'Professional',
+                    onlineStatus.get(f.id) || f.status || 'offline'
+                ]);
+            });
+            const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+            const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'nova_network.csv';
+            a.click();
+            showToast('Network exported!', 'success');
+        });
+
+        document.getElementById('closeNoteModal').addEventListener('click', () => {
+            document.getElementById('noteModal').style.display = 'none';
+        });
+        document.getElementById('saveNoteBtn').addEventListener('click', () => {
+            const txt = document.getElementById('noteTextarea').value.trim();
+            if (noteTargetId) {
+                if (txt) {
+                    friendNotes[noteTargetId] = txt;
+                } else {
+                    delete friendNotes[noteTargetId];
+                }
+                localStorage.setItem('nova_notes', JSON.stringify(friendNotes));
+                document.getElementById('noteModal').style.display = 'none';
+                showToast('Note saved!', 'success');
+                renderFriends(friendsData);
+            }
+        });
+
+        async function loadTrending() {
+            const container = document.getElementById('trendingSection');
+            try {
+                trendingData = await apiCall('/api/trending/professionals');
+                container.innerHTML = `
+                    <div class="trending-list">
+                        ${trendingData.slice(0, 5).map((user, index) => {
+                            const rankClass = `trending-rank-${index + 1}`;
+                            return `
+                                <div class="trending-item" data-user-id="${user.id}">
+                                    <div class="trending-rank ${rankClass}">${index + 1}</div>
+                                    <img src="${escapeHtml(user.avatar_url)}" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover;">
+                                    <div style="flex: 1;">
+                                        <div style="font-weight: 600;">${escapeHtml(user.display_name)}</div>
+                                        <div style="color: #94a3b8; font-size: 0.8rem;">${user.profession}</div>
+                                    </div>
+                                    <button class="btn btn-small btn-primary connect-trending" data-username="${escapeHtml(user.username)}">
+                                        Connect
+                                    </button>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+                document.querySelectorAll('.connect-trending').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const username = btn.dataset.username;
+                        btn.disabled = true;
+                        btn.innerHTML = '<i class="fas fa-spinner"></i> Sent';
+                        try {
+                            await apiCall('/api/friends/request', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ friendUsername: username })
+                            });
+                            showToast('Trending connection request sent!', 'success');
+                            pushActivity('fa-user-plus', 'connect', `You connected with trending @${username}`);
+                        } catch (err) {
+                            showToast(err.message || 'Failed to send request', 'error');
+                            btn.disabled = false;
+                            btn.innerHTML = 'Connect';
+                        }
+                    });
+                });
+                renderSuggestions();
+            } catch (err) {
+                container.innerHTML = '<div class="no-results">No trending professionals</div>';
+            }
+        }
+
+        async function loadGroups() {
+            const container = document.getElementById('groupsList');
+            showSkeleton(container);
+            try {
+                const groups = await apiCall('/api/groups');
+                groupsData = groups;
+                if (groupsData.length === 0) {
+                    container.innerHTML = '<div class="no-results">You are not in any groups yet. Create one!</div>';
+                    return;
+                }
+                container.innerHTML = groupsData.map(g => `
+                    <div class="group-card" data-group-id="${g.id}">
+                        <div class="friend-info">
+                            <div class="friend-avatar"><i class="fas fa-users" style="font-size: 2rem;"></i></div>
+                            <div style="flex: 1;">
+                                <div class="friend-name">${escapeHtml(g.name)}</div>
+                                <div class="friend-username">${g.member_count} members</div>
+                            </div>
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn btn-small btn-primary open-group-chat" data-id="${g.id}">
+                                <i class="fas fa-comments"></i> Open
+                            </button>
+                            <button class="btn btn-small btn-outline leave-group" data-id="${g.id}">
+                                <i class="fas fa-sign-out-alt"></i> Leave
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+                document.querySelectorAll('.open-group-chat').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        window.location.href = `chat.html?group=${btn.dataset.id}`;
+                    });
+                });
+                document.querySelectorAll('.leave-group').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const groupId = btn.dataset.id;
+                        if (!confirm('Leave this group? You will no longer see messages.')) return;
+                        try {
+                            await apiCall(`/api/groups/${groupId}/leave`, { method: 'POST' });
+                            showToast('Left group', 'info');
+                            pushActivity('fa-sign-out-alt', 'group', 'You left a group');
+                            loadGroups();
+                        } catch (err) {
+                            showToast(err.message || 'Failed to leave group', 'error');
+                        }
+                    });
+                });
+            } catch (err) {
+                console.error(err);
+                container.innerHTML = '<div class="no-results">Failed to load groups.</div>';
+            }
+        }
+
+        const createGroupBtn = document.getElementById('createGroupBtn');
+        const createGroupModal = document.getElementById('createGroupModal');
+        const closeGroupModalBtn = document.getElementById('closeGroupModal');
+        const confirmCreateGroupBtn = document.getElementById('confirmCreateGroup');
+        const groupNameInput = document.getElementById('groupName');
+        const memberListContainer = document.getElementById('memberListContainer');
+        const selectedMembersContainer = document.getElementById('selectedMembersContainer');
+        let selectedMembers = [];
+
+        async function loadFriendsForModal() {
+            try {
+                const friends = await apiCall('/api/friends');
+                allFriendsForModal = friends.map(f => ({ id: f.id, username: f.username, avatar: f.avatar_url }));
+                renderMemberList(allFriendsForModal);
+            } catch (err) {
+                memberListContainer.innerHTML = '<div class="no-results">Failed to load friends</div>';
+            }
+        }
+        function renderMemberList(friends) {
+            if (friends.length === 0) {
+                memberListContainer.innerHTML = '<div class="no-results">No friends available to add</div>';
+                return;
+            }
+            memberListContainer.innerHTML = friends.map(friend => `
+                <div class="member-item" data-id="${friend.id}" data-username="${escapeHtml(friend.username)}">
+                    <div class="member-avatar">${friend.username.charAt(0).toUpperCase()}</div>
+                    <div class="member-name">${escapeHtml(friend.username)}</div>
+                </div>
+            `).join('');
+            document.querySelectorAll('.member-item').forEach(el => {
+                el.addEventListener('click', () => {
+                    const id = parseInt(el.dataset.id);
+                    const username = el.dataset.username;
+                    if (!selectedMembers.some(m => m.id === id)) {
+                        selectedMembers.push({ id, username });
+                        updateSelectedMembersUI();
+                        el.classList.add('selected');
+                    } else {
+                        selectedMembers = selectedMembers.filter(m => m.id !== id);
+                        updateSelectedMembersUI();
+                        el.classList.remove('selected');
+                    }
+                });
+            });
+        }
+        function updateSelectedMembersUI() {
+            if (selectedMembers.length === 0) {
+                selectedMembersContainer.innerHTML = '<span style="font-size: 0.75rem; opacity: 0.7;">No members selected yet</span>';
+                return;
+            }
+            selectedMembersContainer.innerHTML = selectedMembers.map(m => `
+                <span class="selected-member-tag">
+                    ${escapeHtml(m.username)}
+                    <i class="fas fa-times-circle" data-id="${m.id}"></i>
+                </span>
+            `).join('');
+            document.querySelectorAll('.selected-member-tag i').forEach(icon => {
+                icon.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const id = parseInt(icon.dataset.id);
+                    selectedMembers = selectedMembers.filter(m => m.id !== id);
+                    updateSelectedMembersUI();
+                    const memberItem = document.querySelector(`.member-item[data-id="${id}"]`);
+                    if (memberItem) memberItem.classList.remove('selected');
+                });
+            });
+        }
+        createGroupBtn.addEventListener('click', async () => {
+            selectedMembers = [];
+            groupNameInput.value = '';
+            updateSelectedMembersUI();
+            await loadFriendsForModal();
+            createGroupModal.style.display = 'block';
+        });
+        closeGroupModalBtn.onclick = () => createGroupModal.style.display = 'none';
+        window.onclick = (event) => {
+            if (event.target === createGroupModal) createGroupModal.style.display = 'none';
+            if (event.target === modal) modal.style.display = 'none';
+            if (event.target === document.getElementById('noteModal')) document.getElementById('noteModal').style.display = 'none';
+        };
+        confirmCreateGroupBtn.addEventListener('click', async () => {
+            const groupName = groupNameInput.value.trim();
+            if (!groupName) {
+                showToast('Please enter a group name', 'error');
+                return;
+            }
+            const memberIds = selectedMembers.map(m => m.id);
+            confirmCreateGroupBtn.disabled = true;
+            confirmCreateGroupBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
+            try {
+                await apiCall('/api/groups', {
+                    method: 'POST',
+                    body: JSON.stringify({ name: groupName, members: memberIds })
+                });
+                showToast('Group created successfully!', 'success');
+                pushActivity('fa-layer-group', 'group', `You created group "${groupName}"`);
+                createGroupModal.style.display = 'none';
+                loadGroups();
+            } catch (err) {
+                showToast(err.message || 'Failed to create group', 'error');
+            } finally {
+                confirmCreateGroupBtn.disabled = false;
+                confirmCreateGroupBtn.innerHTML = '<i class="fas fa-check-circle"></i> Create Group';
+            }
+        });
+
+        async function showFriendProfile(userId, username) {
+            const modal = document.getElementById('profileModal');
+            const contentDiv = document.getElementById('modalProfileContent');
+            modal.style.display = 'block';
+            contentDiv.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading profile...</div>';
+            try {
+                let friend = friendsData.find(f => f.id == userId);
+                if (!friend) {
+                    contentDiv.innerHTML = '<div class="no-results">Profile information not available.</div>';
+                    return;
+                }
+                const displayName = friend.display_name || friend.username;
+                const avatar = friend.avatar_url || 'https://via.placeholder.com/100?text=👤';
+                const bio = friend.bio || 'No bio available.';
+                const profession = friend.profession || 'Professional';
+                const location = friend.location || 'Not specified';
+                const github = friend.github || null;
+                const twitter = friend.twitter || null;
+                const linkedin = friend.linkedin || null;
+                let socialHtml = '';
+                if (github || twitter || linkedin) {
+                    socialHtml = `
+                        <div class="profile-social">
+                            ${github ? `<a href="${github}" target="_blank"><i class="fab fa-github"></i></a>` : ''}
+                            ${twitter ? `<a href="${twitter}" target="_blank"><i class="fab fa-twitter"></i></a>` : ''}
+                            ${linkedin ? `<a href="${linkedin}" target="_blank"><i class="fab fa-linkedin"></i></a>` : ''}
+                        </div>
+                    `;
+                } else {
+                    socialHtml = '<div class="profile-social"><span style="font-size:0.8rem; opacity:0.7;">No social links added</span></div>';
+                }
+                let premiumHtml = '';
+                if (friend.is_pro) premiumHtml += '<span class="pro-badge">PRO Member</span> ';
+                if (friend.is_verified) premiumHtml += '<span class="verified-badge"><i class="fas fa-check"></i> Verified</span> ';
+                const noteVal = friendNotes[userId] || '';
+                contentDiv.innerHTML = `
+                    <div class="profile-header">
+                        <img src="${escapeHtml(avatar)}" style="width: 100px; height: 100px; border-radius: 50%; margin-bottom: 1rem; border: 3px solid #00e6ff;">
+                        <div class="profile-name">${escapeHtml(displayName)}</div>
+                        <div class="profile-username">@${escapeHtml(friend.username)}</div>
+                        <div class="badge-container">${premiumHtml}</div>
+                    </div>
+                    <div class="profile-bio">
+                        <i class="fas fa-quote-left" style="margin-right: 0.5rem; opacity: 0.6;"></i>
+                        ${escapeHtml(bio)}
+                    </div>
+                    <div class="profile-detail"><i class="fas fa-briefcase"></i> ${escapeHtml(profession)}</div>
+                    <div class="profile-detail"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(location)}</div>
+                    <div class="profile-detail"><i class="fas fa-calendar-alt"></i> Joined Sarveik Community</div>
+                    ${noteVal ? `<div class="profile-bio" style="border-left:3px solid #00e6ff;"><i class="fas fa-sticky-note" style="margin-right:0.4rem; color:#00e6ff;"></i>${escapeHtml(noteVal)}</div>` : ''}
+                    ${socialHtml}
+                    <div class="friend-actions">
+                        <button class="btn btn-primary chat-modal-btn" data-id="${friend.id}">
+                            <i class="fas fa-comment"></i> Send Message
+                        </button>
+                        <button class="btn btn-secondary close-modal-btn">
+                            <i class="fas fa-times"></i> Close
+                        </button>
+                    </div>
+                `;
+                contentDiv.querySelector('.chat-modal-btn')?.addEventListener('click', () => {
+                    modal.style.display = 'none';
+                    window.location.href = `chat.html?friend=${friend.id}`;
+                });
+                contentDiv.querySelector('.close-modal-btn')?.addEventListener('click', () => {
+                    modal.style.display = 'none';
+                });
+            } catch (err) {
+                console.error('Profile modal error:', err);
+                contentDiv.innerHTML = '<div class="no-results">Failed to load profile. Please try again.</div>';
+            }
+        }
+
+        socket.on('connect', () => {
+            console.log('Socket connected');
+            showToast('Connected to real-time server', 'info');
+        });
+        socket.on('disconnect', () => {
+            console.log('Socket disconnected');
+            showToast('Realtime disconnected – attempting to reconnect...', 'error');
+            setTimeout(() => { if (!socket.connected) socket.connect(); }, 5000);
+        });
+        socket.on('friend_request_notification', (data) => {
+            showToast(`New request from ${data.fromUsername || data.from}!`, 'info');
+            pushActivity('fa-user-clock', 'request', `New connection request from @${data.fromUsername || data.from}`);
+            loadRequests();
+            updateUnreadBadge();
+            loadStats();
+        });
+        socket.on('private_message', (data) => {
+            if (data.from !== currentUserId) {
+                const friendId = data.from;
+                const current = unreadCounts.get(friendId) || 0;
+                unreadCounts.set(friendId, current + 1);
+                updateUnreadBadge();
+                if (friendsData.length) renderFriends(friendsData);
+                showToast(`New message from ${data.fromUsername || 'friend'}`, 'info');
+                pushActivity('fa-comment', 'message', `New message from @${data.fromUsername || 'a connection'}`);
+            }
+        });
+        socket.on('user_status', (data) => {
+            onlineStatus.set(data.userId, data.status);
+            if (friendsData.length) renderFriends(friendsData);
+            loadStats();
+        });
+        socket.on('group_created', () => {
+            loadGroups();
+            showToast('A new group was created!', 'info');
+            pushActivity('fa-users', 'group', 'A new group was created');
+        });
+
+        const backToTopBtn = document.getElementById('backToTop');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 400) backToTopBtn.classList.add('visible');
+            else backToTopBtn.classList.remove('visible');
+        });
+        backToTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+        document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+            e.preventDefault();
+            if (confirm('Are you sure you want to logout?')) {
+                try { await apiCall('/logout', { method: 'POST' }); } catch (err) {}
+                window.location.href = 'index.html';
+            }
+        });
+        document.addEventListener('click', (e) => {
+    if (navLinks.classList.contains('active') && 
+        !navLinks.contains(e.target) && 
+        !hamburger.contains(e.target)) {
+        navLinks.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+});
+        const hamburger = document.getElementById('hamburger');
+        const navLinks = document.getElementById('navLinks');
+        hamburger.addEventListener('click', () => {
+           navLinks.classList.toggle('active');
+           document.body.style.overflow = navLinks.classList.contains('active') ? 'hidden' : '';
+        });
+        document.querySelectorAll('.nav-links a').forEach(link => {
+            link.addEventListener('click', () => navLinks.classList.remove('active'));
+        });
+
+        const modal = document.getElementById('profileModal');
+        const closeModal = document.querySelector('#profileModal .close-modal');
+        if (closeModal) closeModal.onclick = () => modal.style.display = 'none';
+
+        setInterval(() => {
+            if (currentUserId) {
+                updateUnreadBadge();
+                loadStats();
+            }
+        }, 30000);
+
+        (async () => {
+            await fetchCsrfToken();
+            await getCurrentUserId();
+            await Promise.all([loadFriends(), loadRequests(), loadStats(), loadTrending(), loadGroups()]);
+            await updateUnreadBadge();
+            renderActivityFeed();
+        })();
+    </script>
+</body>
+</html>

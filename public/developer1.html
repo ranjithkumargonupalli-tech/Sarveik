@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Developer Tools – Sarveik | 100+ Verified Working Tools</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg-gradient: linear-gradient(-45deg, #1f1c2c, #928dab, #2c3e50, #3498db);
+      --bg-card: rgba(0, 0, 0, 0.4);
+      --text: #fff;
+      --text-muted: rgba(255,255,255,0.7);
+      --btn-bg: linear-gradient(135deg, #667eea, #764ba2);
+      --shadow: 0 8px 20px rgba(0,0,0,0.6);
+      --border: 1px solid rgba(255,255,255,0.2);
+      --transition: all 0.3s ease;
+      --card-width: 280px;
+      --howto-bg: rgba(0,0,0,0.3);
+    }
+    body.light-mode {
+      --bg-gradient: linear-gradient(-45deg, #f0f4ff, #e8f2ff, #f8fbff, #e0f2fe);
+      --bg-card: rgba(255,255,255,0.8);
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --btn-bg: linear-gradient(135deg, #0ea5e9, #6366f1);
+      --shadow: 0 8px 20px rgba(0,0,0,0.1);
+      --border: 1px solid rgba(0,0,0,0.1);
+      --howto-bg: rgba(0,0,0,0.05);
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-gradient);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      color: var(--text);
+      padding: 40px 20px;
+      min-height: 100vh;
+      transition: var(--transition);
+    }
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    h1 { font-size: 2.5em; margin-bottom: 10px; text-align: center; }
+    .subtitle { text-align: center; margin-bottom: 30px; opacity: 0.9; }
+    .stats-badge { 
+      text-align: center; 
+      margin-bottom: 20px; 
+      font-size: 0.9em; 
+      opacity: 0.8;
+      background: var(--bg-card);
+      display: inline-block;
+      padding: 5px 15px;
+      border-radius: 50px;
+      margin: 0 auto 20px;
+      width: fit-content;
+    }
+    /* Premium banner */
+    .premium-banner {
+      background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+      border-radius: 20px;
+      padding: 15px 25px;
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+      color: #1e293b;
+      font-weight: 600;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+    .premium-banner .text i { margin-right: 10px; }
+    .premium-banner .upgrade-btn {
+      background: #1e293b;
+      color: #f6d365;
+      padding: 10px 24px;
+      border-radius: 40px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .premium-banner .upgrade-btn:hover {
+      transform: scale(1.05);
+      background: #0f172a;
+    }
+    .premium-recommendations {
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 30px;
+      border: var(--border);
+    }
+    .premium-recommendations h3 {
+      margin-bottom: 15px;
+      color: #f6d365;
+    }
+    .recommend-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: center;
+    }
+    .recommend-item {
+      background: rgba(255,255,255,0.1);
+      border-radius: 15px;
+      padding: 12px;
+      width: 200px;
+      text-align: center;
+    }
+    .recommend-item img {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+    .recommend-item .name {
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+    .recommend-item button {
+      background: var(--btn-bg);
+      border: none;
+      padding: 6px 12px;
+      border-radius: 30px;
+      color: white;
+      font-size: 0.75rem;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 30px;
+      align-items: center;
+    }
+    .search-box input {
+      padding: 12px 20px;
+      border-radius: 50px;
+      border: var(--border);
+      background: rgba(255,255,255,0.2);
+      color: var(--text);
+      font-size: 1em;
+      width: 300px;
+      backdrop-filter: blur(5px);
+      outline: none;
+    }
+    .filter-buttons, .sort-select, .theme-toggle, .favorites-link {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .filter-buttons button, .sort-select select, .theme-toggle button, .favorites-link a, .pagination button {
+      padding: 10px 20px;
+      border-radius: 50px;
+      border: var(--border);
+      background: rgba(255,255,255,0.2);
+      color: var(--text);
+      cursor: pointer;
+      backdrop-filter: blur(5px);
+      transition: var(--transition);
+      font-size: 0.95em;
+    }
+    .filter-buttons button.active { background: var(--btn-bg); font-weight: 600; }
+    .filter-buttons button:hover, .sort-select select:hover, .theme-toggle button:hover, .favorites-link a:hover, .pagination button:hover {
+      background: var(--btn-bg);
+      transform: scale(1.05);
+    }
+    .sort-select select { appearance: none; padding-right: 30px; }
+    .favorites-link a { text-decoration: none; display: inline-block; }
+    .tools-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .tool-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 20px;
+      width: var(--card-width);
+      min-height: 260px;
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      border: var(--border);
+    }
+    .tool-card:hover { transform: translateY(-8px) scale(1.02); }
+    .tool-card .fav-icon {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 1.4em;
+      cursor: pointer;
+      color: #ff6f61;
+      background: rgba(0,0,0,0.3);
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+    }
+    .tool-card .fav-icon.favorited { color: #ff3b2e; text-shadow: 0 0 10px #ff3b2e; }
+    .tool-card img {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      background: #fff;
+      object-fit: contain;
+    }
+    .tool-card h3 { font-size: 1.2em; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tool-card p { font-size: 0.85em; opacity: 0.85; flex: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 12px; line-height: 1.4; }
+    .tool-card .meta { display: flex; justify-content: space-between; align-items: center; margin: 10px 0; font-size: 0.85em; }
+    .tool-card .rating { color: gold; }
+    .tool-card .popularity { opacity: 0.7; }
+    .tool-card .approved-badge {
+      background: #10b981;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.65em;
+      position: absolute;
+      top: 10px;
+      left: 10px;
+    }
+    .tool-card .time-new-badge {
+      background: linear-gradient(45deg, #f6d365, #fda085);
+      color: #1e293b;
+      font-size: 0.65rem;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 20px;
+      position: absolute;
+      top: 10px;
+      left: 90px;
+      z-index: 2;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .tool-card .premium-tag {
+      background: linear-gradient(135deg, #f6d365, #fda085);
+      color: #1e293b;
+      font-size: 0.65rem;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 20px;
+      position: absolute;
+      top: 10px;
+      left: 170px;
+      z-index: 2;
+    }
+    .tool-card.premium-locked {
+      position: relative;
+      overflow: hidden;
+    }
+    .tool-card.premium-locked::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      border-radius: 15px;
+      z-index: 3;
+    }
+    .premium-lock-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 4;
+      background: rgba(0,0,0,0.85);
+      padding: 10px 18px;
+      border-radius: 50px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      font-weight: bold;
+      color: #f6d365;
+      border: 1px solid #f6d365;
+    }
+    .premium-lock-icon button {
+      background: var(--btn-bg);
+      border: none;
+      padding: 6px 16px;
+      border-radius: 30px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .premium-lock-icon button:hover {
+      transform: scale(1.05);
+      background: linear-gradient(135deg, #f6d365, #fda085);
+      color: #1e293b;
+    }
+    .tool-card .btn {
+      background: var(--btn-bg);
+      color: #fff;
+      padding: 8px 15px;
+      border-radius: 50px;
+      text-decoration: none;
+      font-size: 0.9em;
+      text-align: center;
+      border: none;
+      cursor: pointer;
+      transition: var(--transition);
+      z-index: 5;
+      position: relative;
+    }
+    .tool-card .btn:hover { transform: scale(1.05); }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 30px 0;
+      flex-wrap: wrap;
+    }
+    .pagination button.active {
+      background: var(--btn-bg);
+      font-weight: bold;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 650px;
+      width: 90%;
+      max-height: 85vh;
+      overflow-y: auto;
+      position: relative;
+      border: var(--border);
+      color: var(--text);
+    }
+    .close { position: absolute; top: 15px; right: 20px; font-size: 2em; cursor: pointer; color: var(--text); }
+    .modal-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
+    .modal-header img { width: 60px; height: 60px; border-radius: 10px; background: #fff; }
+    .modal-rating { margin: 15px 0; }
+    .star { cursor: pointer; color: #ccc; font-size: 1.4em; display: inline-block; margin-right: 5px; }
+    .star.selected { color: gold; }
+    .similar-tools { display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0; }
+    .similar-tool-item { background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 20px; font-size: 0.9em; cursor: pointer; }
+    .similar-tool-item:hover { background: var(--btn-bg); }
+    .social-share { display: flex; gap: 10px; margin: 15px 0; flex-wrap: wrap; }
+    .social-share a { color: var(--text); text-decoration: none; padding: 5px 10px; background: rgba(255,255,255,0.2); border-radius: 20px; }
+    .social-share a:hover { background: var(--btn-bg); }
+    .visit-btn { background: var(--btn-bg); color: #fff; padding: 12px 25px; border-radius: 50px; text-decoration: none; display: inline-block; margin-top: 15px; border: none; cursor: pointer; }
+    .how-to-use-section {
+      background: var(--howto-bg);
+      border-left: 4px solid #f6d365;
+      border-radius: 12px;
+      padding: 15px 18px;
+      margin: 20px 0 15px;
+      transition: var(--transition);
+    }
+    .how-to-use-section h4 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+      color: #f6d365;
+    }
+    .how-to-use-section ol, .how-to-use-section ul {
+      padding-left: 1.5rem;
+      margin: 8px 0;
+    }
+    .how-to-use-section li {
+      margin: 8px 0;
+      line-height: 1.5;
+    }
+    .pro-tip {
+      background: rgba(246, 211, 101, 0.2);
+      border-radius: 10px;
+      padding: 8px 12px;
+      margin-top: 12px;
+      font-size: 0.9rem;
+    }
+    #favoritesPage { display: none; margin-top: 30px; }
+    #favoritesPage h2 { text-align: center; margin-bottom: 20px; }
+    .back-btn { background: var(--btn-bg); color: #fff; padding: 10px 25px; border-radius: 50px; border: none; cursor: pointer; margin: 20px auto; display: block; }
+    .submit-section {
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 30px;
+      margin: 40px 0;
+      border: var(--border);
+    }
+    .submit-section h3 { margin-bottom: 20px; }
+    .submit-section input, .submit-section textarea, .submit-section select {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border-radius: 10px;
+      border: var(--border);
+      background: rgba(255,255,255,0.2);
+      color: var(--text);
+      font-family: inherit;
+    }
+    .submit-section button { background: var(--btn-bg); color: #fff; padding: 12px 30px; border-radius: 50px; border: none; cursor: pointer; font-weight: bold; transition: var(--transition); }
+    .submit-section button:hover { transform: scale(1.02); }
+    .navigation { text-align: center; margin: 20px 0; }
+    .nav-btn { background: var(--btn-bg); color: #fff; padding: 12px 25px; border-radius: 50px; text-decoration: none; display: inline-block; }
+    #backToTop { position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; border-radius: 50%; background: var(--btn-bg); color: #fff; border: none; cursor: pointer; display: none; font-size: 1.5em; z-index: 99; }
+    #backToTop.visible { display: block; }
+    .toast { position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.9); color: white; padding: 12px 20px; border-radius: 10px; z-index: 10000; animation: slideIn 0.3s ease; }
+    .toast.success { background: #10b981; }
+    .toast.error { background: #ef4444; }
+    .toast.info { background: #f59e0b; }
+    .loading { text-align: center; padding: 50px; font-size: 1.2em; }
+    .refresh-btn {
+      background: var(--btn-bg);
+      color: #fff;
+      padding: 8px 15px;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      margin-left: 10px;
+      font-size: 0.85em;
+    }
+    .disclaimer {
+      margin-top: 40px;
+      padding: 20px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 12px;
+      text-align: center;
+      font-size: 0.8em;
+    }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @media (max-width: 768px) {
+      .controls { flex-direction: column; align-items: stretch; }
+      .search-box input { width: 100%; }
+      .tool-card { width: 100%; max-width: 350px; margin: 0 auto; }
+      .premium-lock-icon { font-size: 0.75rem; padding: 6px 12px; white-space: normal; width: 90%; text-align: center; }
+      .premium-lock-icon button { padding: 4px 10px; }
+      .recommend-item { width: 160px; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>💻 Developer Tools – Sarveik</h1>
+  <p class="subtitle">Discover 100+ verified working tools for developers + community submitted tools!</p>
+
+
+
+  <div style="text-align: center;">
+    <div class="stats-badge" id="statsBadge">Loading tools...</div>
+  </div>
+
+  <div class="controls">
+    <div class="search-box"><input type="text" id="searchInput" placeholder="Search tools..."></div>
+    <div class="filter-buttons" id="filterContainer"></div>
+    <div class="sort-select"><select id="sortSelect"><option value="name">Sort by Name</option><option value="popularity">Sort by Popularity</option></select></div>
+    <div class="theme-toggle"><button id="themeToggle">🌙 Dark</button></div>
+    <div class="favorites-link"><a href="#" id="showFavorites">❤️ Favorites</a></div>
+    <div><button id="refreshToolsBtn" class="refresh-btn"><i class="fas fa-sync-alt"></i> Refresh</button></div>
+  </div>
+  <div class="tools-grid" id="toolsGrid"><div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading tools...</div></div>
+  <div class="pagination" id="paginationControls"></div>
+  <div id="favoritesPage"><h2>❤️ Your Favorite Tools</h2><div class="tools-grid" id="favoritesGrid"></div><button class="back-btn" id="hideFavorites">Back to All Tools</button></div>
+    <!-- Premium banner (only shown to non-premium users) -->
+  <div id="premiumBanner" class="premium-banner" style="display: none;">
+    <div class="text"><i class="fas fa-crown"></i> <strong>Unlock Premium Developer Tools!</strong> Get access to advanced IDEs, pro API clients, and specialized learning platforms.</div>
+    <a href="profile.html?tab=premium" class="upgrade-btn"><i class="fas fa-gem"></i> Upgrade Now</a>
+  </div>
+
+  <!-- Premium recommendations (for non-premium) -->
+  <div id="premiumRecommendations" class="premium-recommendations" style="display: none;">
+    <h3><i class="fas fa-star"></i> Premium Tools Recommended for You</h3>
+    <div class="recommend-grid" id="recommendGrid"></div>
+  </div>
+  <!-- Submit Tool Section -->
+  <div class="submit-section">
+    <h3><i class="fas fa-plus-circle"></i> Suggest a New Tool</h3>
+    <p style="margin-bottom: 15px; font-size: 0.85rem;">Submit a tool for admin review. If approved, you'll earn <strong style="color: #f6d365;">25 credits</strong> and it will appear here!</p>
+    <input type="text" id="newName" placeholder="Tool name *">
+    <input type="text" id="newUrl" placeholder="Website URL (https://...) *">
+    <textarea id="newDesc" placeholder="Short description *" rows="2"></textarea>
+    <select id="newCategory">
+      <option value="ide">🖥️ IDEs & Editors</option>
+      <option value="version-control">🔁 Version Control</option>
+      <option value="debugging">🐛 Debugging & Testing</option>
+      <option value="deployment">🚀 Deployment & Hosting</option>
+      <option value="api">🔌 API Tools</option>
+      <option value="database">🗄️ Database Tools</option>
+      <option value="learning">📚 Learning & Docs</option>
+    </select>
+    <button id="submitToolBtn"><i class="fas fa-paper-plane"></i> Submit for Review</button>
+    <p style="margin-top: 10px; font-size: 0.75rem; opacity: 0.7;">Tools are reviewed by admins. You'll receive email notification when approved/rejected.</p>
+  </div>
+
+
+
+  <div class="navigation">
+    <a href="main.html" class="nav-btn"><i class="fas fa-home"></i> Back to Tools</a>
+  </div>
+  <button id="backToTop" title="Back to top">↑</button>
+</div>
+
+<div class="modal" id="toolModal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <div class="modal-header">
+      <img src="" alt="" id="modalIcon">
+      <h2 id="modalTitle"></h2>
+    </div>
+    <p id="modalDesc"></p>
+    <div class="how-to-use-section" id="howToUseContainer">
+      <h4><i class="fas fa-compass"></i> How to Use This Tool</h4>
+      <div id="howToUseContent">Loading guide...</div>
+    </div>
+    <div class="modal-rating" id="modalRating"></div>
+    <div class="similar-tools" id="similarTools"></div>
+    <div class="social-share" id="socialShare"></div>
+    <a href="#" id="modalVisitBtn" class="visit-btn" target="_blank">Visit Website</a>
+  </div>
+</div>
+<div class="disclaimer">
+  <p><strong>Disclaimer:</strong> Sarveik  is a directory of third‑party tools. We do not host any content. All trademarks, logos, and brand names are the property of their respective owners. If you believe any link infringes your rights, please <a href="dmca.html" style="color: inherit; text-decoration: underline;">contact us</a> for removal.</p>
+</div>
+
+<script>
+  // ========== PAGE TYPE IDENTIFIER ==========
+  const PAGE_TYPE = 'developer';
+  const NEW_DAYS_THRESHOLD = 7;
+
+  // ========== Global Variables ==========
+  let allTools = [];
+  let currentFilter = 'all', currentSearch = '', currentSort = 'name';
+  let currentPage = 1;
+  const itemsPerPage = 20;
+  let filteredTools = [];
+  let userPremiumStatus = false;
+
+  // ========== GENERATE "HOW TO USE" INSTRUCTIONS FOR DEVELOPER TOOLS ==========
+  function generateHowToUse(toolName, category, toolUrl) {
+    const nameLower = toolName.toLowerCase();
+    if (nameLower.includes('visual studio code') || nameLower.includes('vscode')) {
+      return `<ol><li>Download VS Code from code.visualstudio.com and install.</li><li>Open the app – a welcome screen helps you get started.</li><li>Install extensions from the marketplace (e.g., Prettier, ESLint, GitLens).</li><li>Open a project folder via File → Open Folder.</li><li>Use the integrated terminal (Ctrl+&#96;) to run commands.</li><li>Enable Git integration – stage, commit, push from source control panel.</li></ol><div class="pro-tip">💡 Press Ctrl+Shift+P to open the command palette – quick access to all features.</div>`;
+    }
+    if (nameLower.includes('git')) {
+      return `<ol><li>Install Git from git-scm.com.</li><li>Open terminal (Git Bash on Windows) and configure username/email: <code>git config --global user.name "Your Name"</code> and <code>git config --global user.email "you@example.com"</code>.</li><li>Navigate to your project folder: <code>cd path/to/project</code>.</li><li>Initialize a repo: <code>git init</code>.</li><li>Add files: <code>git add .</code> and commit: <code>git commit -m "first commit"</code>.</li><li>Connect to remote (GitHub) and push: <code>git remote add origin URL</code> then <code>git push -u origin main</code>.</li></ol><div class="pro-tip">📌 Use <code>git status</code> often to see what's changed.</div>`;
+    }
+    if (nameLower.includes('docker')) {
+      return `<ol><li>Download Docker Desktop for your OS and install.</li><li>Open Docker Desktop – it runs in the background.</li><li>Create a Dockerfile in your project with instructions (FROM, RUN, COPY, CMD).</li><li>Build an image: <code>docker build -t myapp .</code>.</li><li>Run a container: <code>docker run -p 8080:80 myapp</code>.</li><li>Use <code>docker-compose</code> for multi-container apps (database + backend).</li></ol><div class="pro-tip">🐳 Use <code>docker ps</code> to see running containers and <code>docker stop CONTAINER_ID</code> to stop.</div>`;
+    }
+    if (nameLower.includes('postman')) {
+      return `<ol><li>Download and install Postman, or use the web version.</li><li>Create a new request (HTTP method + URL).</li><li>Add headers (e.g., Content-Type, Authorization) in the Headers tab.</li><li>For POST/PUT requests, add body (JSON, form data) under Body tab.</li><li>Press Send – view response status, body, and headers.</li><li>Save requests to Collections for reuse and share.</li></ol><div class="pro-tip">⚡ Use Environments to store variables (base URL, tokens) and switch between dev/prod.</div>`;
+    }
+    if (category === 'ide') {
+      return `<ol><li>Download and install the IDE from its official website.</li><li>Launch the editor – open a project or create a new file.</li><li>Install language‑specific plugins/extensions for syntax highlighting, linting, and debugging.</li><li>Use keyboard shortcuts (find shortcuts via command palette).</li><li>Integrate version control (Git) and terminal.</li><li>Customise themes, font size, and keybindings to your liking.</li></ol><div class="pro-tip">⌨️ Learn one shortcut per day to speed up your workflow.</div>`;
+    }
+    if (category === 'version-control') {
+      return `<ol><li>Set up a repository (local with Git, or create a remote on GitHub/GitLab).</li><li>Clone the repo locally: <code>git clone &lt;url&gt;</code>.</li><li>Make changes to files, then add and commit them.</li><li>Push commits to remote and pull others' changes.</li><li>Use branching to work on features without affecting main code.</li><li>Open pull/merge requests for code review before merging to main branch.</li></ol><div class="pro-tip">🤝 Always pull latest changes before starting a new feature to avoid merge conflicts.</div>`;
+    }
+    if (category === 'debugging') {
+      return `<ol><li>Install the tool (e.g., Jest, Mocha, or browser DevTools).</li><li>Write unit tests or use a testing framework.</li><li>Set breakpoints in your code (if using debugger).</li><li>Run tests or attach the debugger to a running process.</li><li>Inspect variables, step through code, and analyse errors.</li><li>Fix issues and re‑run tests to verify solutions.</li></ol><div class="pro-tip">🐞 For web apps, use Chrome DevTools → Sources tab to pause on exceptions.</div>`;
+    }
+    if (category === 'deployment') {
+      return `<ol><li>Create an account on the hosting platform (Netlify, Vercel, Heroku, etc.).</li><li>Connect your Git repository (GitHub, GitLab, Bitbucket).</li><li>Specify build command and output directory (e.g., <code>npm run build</code> and <code>dist</code>).</li><li>Set environment variables (API keys, database URLs) in the dashboard.</li><li>Trigger a deployment – the platform will build and publish your site/app.</li><li>Use custom domains and automatic HTTPS as needed.</li></ol><div class="pro-tip">🚀 Many platforms offer free tiers for static sites – great for side projects.</div>`;
+    }
+    if (category === 'api') {
+      return `<ol><li>Download or open the API client (Postman, Insomnia, or use cURL).</li><li>Enter the endpoint URL and select HTTP method (GET, POST, etc.).</li><li>Add required headers (e.g., Authorization, Content-Type).</li><li>If sending data, write JSON/XML in the request body.</li><li>Send the request and study the response (status, headers, body).</li><li>Save the request to a collection for future use and sharing.</li></ol><div class="pro-tip">🔑 Use environment variables to store API keys and base URLs securely.</div>`;
+    }
+    if (category === 'database') {
+      return `<ol><li>Install the database client (e.g., MySQL Workbench, DBeaver).</li><li>Connect to your database using host, port, username, and password.</li><li>Explore the schema, tables, and relationships via the visual inspector.</li><li>Write and execute SQL queries in the query editor.</li><li>Use export/import tools to backup or migrate data.</li><li>Optimise queries with the execution plan analyzer.</li></ol><div class="pro-tip">📊 Always backup before running destructive queries (DELETE, DROP).</div>`;
+    }
+    if (category === 'learning') {
+      return `<ol><li>Browse the library for your topic (e.g., JavaScript, Python, DevOps).</li><li>Start with beginner tutorials or choose a learning path.</li><li>Follow along with interactive examples or video lectures.</li><li>Complete exercises / projects to cement knowledge.</li><li>Take quizzes or assessments to track progress.</li><li>Join community forums for help when stuck.</li></ol><div class="pro-tip">👥 Practice on real projects – open source contributions are excellent for learning.</div>`;
+    }
+    return `<ol><li>Visit the website: <a href="${toolUrl}" target="_blank">${toolUrl}</a>.</li><li>Read the documentation / Getting Started guide.</li><li>Download or install the tool if required (many are web‑based).</li><li>Follow the official tutorials for your use case.</li><li>Join the community (GitHub discussions, Slack, Discord) for support.</li><li>Explore advanced features as you become comfortable.</li></ol><div class="pro-tip">⭐ Check for "Examples" or "Showcases" to see the tool in action.</div>`;
+  }
+
+  // ========== 100+ VERIFIED WORKING DEVELOPER TOOLS (with premium flags & 3+ line descriptions) ==========
+  const toolsData = [
+    // IDEs & Editors (15)
+    { name: "Visual Studio Code", url: "https://code.visualstudio.com", desc: "Free, powerful code editor from Microsoft. Supports extensions, debugging, Git, and IntelliSense for hundreds of languages.", category: "ide", longDesc: "**Visual Studio Code** is a lightweight but powerful source code editor that runs on your desktop. It comes with built-in support for JavaScript, TypeScript, Node.js, and has a rich ecosystem of extensions for other languages (C++, C#, Python, PHP, Go, etc.). Features include IntelliSense, debugging, Git integration, and terminal. Completely free.", isPremiumRequired: false },
+    { name: "Sublime Text", url: "https://www.sublimetext.com", desc: "Sophisticated text editor for code, markup, and prose. Fast, extensible, and customizable.", category: "ide", longDesc: "**Sublime Text** is a shareware cross-platform source code editor. It natively supports many programming and markup languages. Users can expand its functionality with plugins, typically community-built and maintained under free-software licenses. License required for continued use.", isPremiumRequired: true },
+    { name: "Atom", url: "https://atom.io", desc: "Hackable text editor for the 21st century. Built on Electron, fully customizable with HTML/CSS/JS.", category: "ide", longDesc: "**Atom** is a free and open-source text and source code editor for macOS, Linux, and Windows. It supports plug-ins written in Node.js and has embedded Git Control, developed by GitHub. Features include smart autocompletion, file system browser, multiple panes, and a find-and-replace tool. Free.", isPremiumRequired: false },
+    { name: "IntelliJ IDEA", url: "https://www.jetbrains.com/idea", desc: "Java IDE by JetBrains. Smart code completion, deep static analysis, and built-in version control.", category: "ide", longDesc: "**IntelliJ IDEA** is a Java integrated development environment (IDE) for developing computer software. It is developed by JetBrains and is available as an Apache 2 Licensed community edition (free) and a commercial edition (paid). The Ultimate edition offers additional features for web and enterprise development.", isPremiumRequired: true },
+    { name: "PyCharm", url: "https://www.jetbrains.com/pycharm", desc: "Python IDE with intelligent code assistance, debugger, and scientific tools.", category: "ide", longDesc: "**PyCharm** is an integrated development environment used for programming in Python. It provides code analysis, a graphical debugger, an integrated unit tester, integration with version control systems, and supports web development with Django. Community edition is free; Professional edition (paid) adds web frameworks, database tools, etc.", isPremiumRequired: true },
+    { name: "WebStorm", url: "https://www.jetbrains.com/webstorm", desc: "JavaScript IDE from JetBrains. Powerful support for React, Angular, Vue, Node.js, and TypeScript.", category: "ide", longDesc: "**WebStorm** is a JavaScript IDE by JetBrains. It provides intelligent code completion, on-the-fly error detection, powerful navigation and refactoring for JavaScript, TypeScript, HTML, CSS, and modern frameworks. Paid subscription.", isPremiumRequired: true },
+    { name: "Android Studio", url: "https://developer.android.com/studio", desc: "Official IDE for Android development. Includes layout editor, emulator, and build tools.", category: "ide", longDesc: "**Android Studio** is the official integrated development environment for Google's Android operating system, built on JetBrains' IntelliJ IDEA software and designed specifically for Android development. It features a flexible Gradle-based build system, a fast emulator, and code templates. Free.", isPremiumRequired: false },
+    { name: "Xcode", url: "https://developer.apple.com/xcode", desc: "Apple's IDE for macOS, iOS, watchOS, tvOS development. Includes Interface Builder and Instruments.", category: "ide", longDesc: "**Xcode** is Apple's integrated development environment for macOS, containing a suite of software development tools for developing software for macOS, iOS, iPadOS, watchOS, and tvOS. Features include a source editor, UI designer, and debugging tools. Free for Apple developers.", isPremiumRequired: false },
+    { name: "Eclipse", url: "https://www.eclipse.org", desc: "Open-source IDE for Java, C++, PHP, and more. Extensible with plugins.", category: "ide", longDesc: "**Eclipse** is an integrated development environment used in computer programming. It contains a base workspace and an extensible plug-in system for customizing the environment. It is written mostly in Java and can be used to develop applications in Java and many other languages. Free and open-source.", isPremiumRequired: false },
+    { name: "NetBeans", url: "https://netbeans.apache.org", desc: "Apache NetBeans IDE for Java, JavaScript, PHP, HTML5, C/C++ and more.", category: "ide", longDesc: "**Apache NetBeans** is an integrated development environment for Java. NetBeans allows applications to be developed from a set of modular software components called modules. NetBeans runs on Windows, macOS, Linux, and Solaris. Free and open-source.", isPremiumRequired: false },
+    { name: "Vim", url: "https://www.vim.org", desc: "Highly configurable text editor built for efficient text editing. Modal interface with extensive plugins.", category: "ide", longDesc: "**Vim** is a free and open-source, screen-based text editor program. It is an improved clone of Bill Joy's vi. Vim's design is based on the modal editing paradigm: different modes for inserting text vs manipulating text. Free.", isPremiumRequired: false },
+    { name: "Emacs", url: "https://www.gnu.org/software/emacs", desc: "Extensible, customizable text editor with built-in Lisp interpreter. Dozens of modes and packages.", category: "ide", longDesc: "**GNU Emacs** is a text editor and suite of free software tools. It is extensible and customizable, with a built-in interpreter for the Lisp programming language. Emacs has over 10,000 built-in commands and many external packages. Free.", isPremiumRequired: false },
+    { name: "Brackets", url: "http://brackets.io", desc: "Open-source editor for web design and front-end development. Live preview and preprocessor support.", category: "ide", longDesc: "**Brackets** is a source code editor with a primary focus on web development. Created by Adobe, it is free and open-source software licensed under the MIT License. Features include Live Preview, Inline Editors, and preprocessor support. Free.", isPremiumRequired: false },
+    { name: "Bluefish", url: "http://bluefish.openoffice.nl", desc: "Lightweight editor for programmers and web developers. Fast, supports many languages.", category: "ide", longDesc: "**Bluefish** is a free and open-source text editor for programmers and web developers. It supports many programming and markup languages, and provides features like syntax highlighting, code folding, auto-completion, and project management. Free.", isPremiumRequired: false },
+    { name: "Code::Blocks", url: "https://www.codeblocks.org", desc: "Free C, C++ IDE built to meet the most demanding needs of its users.", category: "ide", longDesc: "**Code::Blocks** is a free, open-source, cross-platform IDE that supports multiple compilers including GCC, Clang, and Visual C++. It is designed to be very extensible and fully configurable. Free.", isPremiumRequired: false },
+    // Version Control (10) – mostly free except GitKraken Pro
+    { name: "Git", url: "https://git-scm.com", desc: "Distributed version control system. Track changes, collaborate, and manage code history.", category: "version-control", longDesc: "**Git** is a free and open-source distributed version control system designed to handle everything from small to very large projects with speed and efficiency. It is easy to learn and has a tiny footprint with lightning-fast performance. Free.", isPremiumRequired: false },
+    { name: "GitHub", url: "https://github.com", desc: "Code hosting platform for version control and collaboration. Pull requests, issues, actions.", category: "version-control", longDesc: "**GitHub** is a provider of Internet hosting for software development and version control using Git. It offers the distributed version control and source code management functionality of Git, plus its own features. Free for public repos; Pro plan for private repos and advanced features.", isPremiumRequired: true },
+    { name: "GitLab", url: "https://gitlab.com", desc: "DevOps platform with Git repo management, CI/CD, and security. Self-hosted or cloud.", category: "version-control", longDesc: "**GitLab** is a web-based DevOps lifecycle tool that provides a Git repository manager providing wiki, issue-tracking, and CI/CD pipeline features, using an open-source license. Free tier includes unlimited private repos; premium features require paid plan.", isPremiumRequired: true },
+    { name: "Bitbucket", url: "https://bitbucket.org", desc: "Git code management with Jira integration, pipelines, and pull requests.", category: "version-control", longDesc: "**Bitbucket** is a Git-based source code repository hosting service owned by Atlassian. It offers both commercial plans and free accounts. It features pull requests, code review, and integration with Jira. Free for small teams (up to 5 users); paid for larger teams.", isPremiumRequired: true },
+    { name: "SourceTree", url: "https://www.sourcetreeapp.com", desc: "Free Git GUI client for Windows and Mac. Visualize and manage repositories.", category: "version-control", longDesc: "**Sourcetree** is a free Git client for Windows and Mac that simplifies how you interact with your repositories so you can focus on coding. It provides a visual interface for Git commands. Free.", isPremiumRequired: false },
+    { name: "GitKraken", url: "https://www.gitkraken.com", desc: "Cross-platform Git GUI with visualization, undo/redo, and integrations.", category: "version-control", longDesc: "**GitKraken** is a cross-platform Git client that provides a graphical interface for Git. Features include commit graph visualization, undo/redo, merge conflict resolution, and integrations with GitHub, GitLab, and Bitbucket. Free tier limited; paid for pro features.", isPremiumRequired: true },
+    { name: "TortoiseGit", url: "https://tortoisegit.org", desc: "Windows Shell interface to Git. Integrates with File Explorer.", category: "version-control", longDesc: "**TortoiseGit** is a Windows Shell Interface to Git and is based on TortoiseSVN. It provides overlay icons showing file status and a context menu for Git commands. Free.", isPremiumRequired: false },
+    { name: "Mercurial", url: "https://www.mercurial-scm.org", desc: "Distributed revision control tool. Fast, scalable, and easy to use.", category: "version-control", longDesc: "**Mercurial** is a distributed revision-control tool for software developers. It is implemented in Python and is designed for high performance and scalability. Free.", isPremiumRequired: false },
+    { name: "Subversion", url: "https://subversion.apache.org", desc: "Centralized version control system. Maintains a single repository.", category: "version-control", longDesc: "**Apache Subversion** is a software versioning and revision control system distributed as open source under the Apache License. It aims to be a compelling replacement for CVS. Free.", isPremiumRequired: false },
+    { name: "Perforce Helix Core", url: "https://www.perforce.com/products/helix-core", desc: "Version control for large codebases and binary files. Fast, scalable.", category: "version-control", longDesc: "**Perforce Helix Core** is a version control system for large codebases and binary files. It is used by many game development studios and enterprises. Free for up to 5 users; paid for larger teams.", isPremiumRequired: true },
+    // Debugging & Testing (12) – mostly free, some premium
+    { name: "Chrome DevTools", url: "https://developer.chrome.com/docs/devtools", desc: "Built-in web debugging tools in Chrome. Inspect, debug, profile, and optimize.", category: "debugging", longDesc: "**Chrome DevTools** is a set of web developer tools built directly into the Google Chrome browser. It allows you to edit pages on-the-fly, debug JavaScript, analyze performance, and much more. Free.", isPremiumRequired: false },
+    { name: "Postman", url: "https://www.postman.com", desc: "API development and testing platform. Send requests, write tests, mock APIs.", category: "api", longDesc: "**Postman** is a collaboration platform for API development. It simplifies each step of building an API and streamlines collaboration so you can create better APIs faster. Free tier includes core features; paid plans for team collaboration and advanced features.", isPremiumRequired: true },
+    { name: "Insomnia", url: "https://insomnia.rest", desc: "Open-source API client for REST, GraphQL, and gRPC. Organize requests and responses.", category: "api", longDesc: "**Insomnia** is a cross-platform GraphQL and REST client, available for Mac, Windows, and Linux. It is an open-source tool for designing, debugging, and testing APIs. Free tier has core features; Insomnia Plus adds team sync and cloud storage.", isPremiumRequired: true },
+    { name: "Jest", url: "https://jestjs.io", desc: "JavaScript testing framework with zero configuration. Snapshots, mocks, and coverage.", category: "debugging", longDesc: "**Jest** is a delightful JavaScript testing framework with a focus on simplicity. It works with projects using Babel, TypeScript, Node, React, Angular, Vue, and more. Free and open-source.", isPremiumRequired: false },
+    { name: "Mocha", url: "https://mochajs.org", desc: "Feature-rich JavaScript test framework running on Node.js and in the browser.", category: "debugging", longDesc: "**Mocha** is a feature-rich JavaScript test framework running on Node.js and in the browser, making asynchronous testing simple and fun. It provides test coverage reporting and flexible reporting. Free.", isPremiumRequired: false },
+    { name: "Cypress", url: "https://www.cypress.io", desc: "JavaScript end-to-end testing framework. Real-time reloads, time travel, and debugging.", category: "debugging", longDesc: "**Cypress** is a next-generation front-end testing tool built for the modern web. It enables you to write faster, easier, and more reliable tests for anything that runs in a browser. Free open-source version; Cypress Dashboard (paid) for advanced analytics.", isPremiumRequired: true },
+    { name: "Selenium", url: "https://www.selenium.dev", desc: "Browser automation framework for testing web applications. Cross-browser support.", category: "debugging", longDesc: "**Selenium** is an open-source umbrella project for a range of tools and libraries aimed at supporting browser automation. It provides a playback tool for authoring functional tests across most modern web browsers. Free.", isPremiumRequired: false },
+    { name: "Puppeteer", url: "https://pptr.dev", desc: "Node library to control headless Chrome or Chromium. Generate screenshots, crawl, and test.", category: "debugging", longDesc: "**Puppeteer** is a Node library which provides a high-level API to control headless Chrome or Chromium over the DevTools Protocol. It can be used to generate screenshots, crawl SPA, automate form submission, and test. Free.", isPremiumRequired: false },
+    { name: "Playwright", url: "https://playwright.dev", desc: "Reliable end-to-end testing for modern web apps. Cross-browser, auto-wait.", category: "debugging", longDesc: "**Playwright** is a Node.js library to automate Chromium, Firefox, and WebKit with a single API. It enables reliable end-to-end testing for modern web apps. Free and open-source.", isPremiumRequired: false },
+    { name: "JUnit", url: "https://junit.org", desc: "Unit testing framework for Java. Annotations, assertions, and test runners.", category: "debugging", longDesc: "**JUnit** is a unit testing framework for the Java programming language. JUnit has been important in the development of test-driven development, and is one of a family of unit testing frameworks collectively known as xUnit. Free.", isPremiumRequired: false },
+    { name: "pytest", url: "https://pytest.org", desc: "Python testing framework that makes it easy to write simple and scalable tests.", category: "debugging", longDesc: "**pytest** is a framework that makes it easy to write simple tests, yet scales to support complex functional testing for applications and libraries. It has a rich ecosystem of plugins. Free.", isPremiumRequired: false },
+    { name: "Karma", url: "https://karma-runner.github.io", desc: "Test runner for JavaScript that runs tests in real browsers. Integrates with CI.", category: "debugging", longDesc: "**Karma** is a test runner for JavaScript that runs tests on real devices and browsers. It integrates with continuous integration tools and supports many testing frameworks. Free.", isPremiumRequired: false },
+    // Deployment & Hosting (12) – many have paid tiers
+    { name: "Docker", url: "https://www.docker.com", desc: "Platform for developing, shipping, and running applications in containers.", category: "deployment", longDesc: "**Docker** is a set of platform-as-a-service products that use OS-level virtualization to deliver software in packages called containers. Containers are isolated from one another and bundle their own software, libraries, and configuration files. Free for personal use; paid for teams.", isPremiumRequired: true },
+    { name: "Kubernetes", url: "https://kubernetes.io", desc: "Open-source container orchestration system for automating deployment, scaling, and management.", category: "deployment", longDesc: "**Kubernetes** is an open-source container orchestration system for automating software deployment, scaling, and management. It groups containers that make up an application into logical units for easy management and discovery. Free and open-source.", isPremiumRequired: false },
+    { name: "Netlify", url: "https://www.netlify.com", desc: "Platform for hosting static sites and serverless functions. Git-based deployment.", category: "deployment", longDesc: "**Netlify** is a cloud computing company that offers hosting and serverless backend services for web applications and static websites. It features continuous deployment from Git, serverless functions, and form handling. Free tier includes basic features; paid plans for team collaboration and advanced features.", isPremiumRequired: true },
+    { name: "Vercel", url: "https://vercel.com", desc: "Platform for frontend frameworks and static sites. Instant deployment, serverless functions.", category: "deployment", longDesc: "**Vercel** is a cloud platform for static sites and Serverless Functions that fits perfectly with your workflow. It enables developers to host Jamstack websites and web services. Free tier for personal projects; paid for team and enterprise.", isPremiumRequired: true },
+    { name: "Heroku", url: "https://www.heroku.com", desc: "Platform as a service (PaaS) supporting multiple languages. Git push deployment.", category: "deployment", longDesc: "**Heroku** is a cloud platform as a service (PaaS) supporting several programming languages. It allows developers to build, run, and operate applications entirely in the cloud. Free tier limited (app sleeps after 30 min); paid for no-sleep and more resources.", isPremiumRequired: true },
+    { name: "AWS Amplify", url: "https://aws.amazon.com/amplify", desc: "Fullstack CI/CD and hosting for web apps. Integrates with GitHub, GitLab, and Bitbucket.", category: "deployment", longDesc: "**AWS Amplify** is a development platform for building secure, scalable web and mobile applications. It provides continuous deployment and hosting for static web apps. Free tier included; pay for usage beyond limits.", isPremiumRequired: true },
+    { name: "Firebase Hosting", url: "https://firebase.google.com/products/hosting", desc: "Web hosting for static and dynamic content. SSL, CDN, and one-click rollbacks.", category: "deployment", longDesc: "**Firebase Hosting** is a fast and secure static web hosting service. It includes SSL, CDN, and integrates with other Firebase services for dynamic content. Free tier included; pay for bandwidth and storage overages.", isPremiumRequired: true },
+    { name: "GitHub Pages", url: "https://pages.github.com", desc: "Free static site hosting directly from GitHub repositories.", category: "deployment", longDesc: "**GitHub Pages** is a static site hosting service that takes HTML, CSS, and JavaScript files directly from a repository on GitHub, optionally runs the files through a build process, and publishes a website. Completely free.", isPremiumRequired: false },
+    { name: "Render", url: "https://render.com", desc: "Cloud platform for hosting web services, databases, and static sites. Built-in SSL.", category: "deployment", longDesc: "**Render** is a unified cloud to build and run all your apps and websites with free SSL, a global CDN, private networks, and automatic deploys from Git. Free tier for static sites and limited web services; paid for more.", isPremiumRequired: true },
+    { name: "Fly.io", url: "https://fly.io", desc: "Platform for running full-stack apps and databases close to users. Global deployment.", category: "deployment", longDesc: "**Fly.io** is a platform for running applications close to users. It runs your code on hardware distributed globally, so your users get fast response times. Free tier includes limited usage; pay as you grow.", isPremiumRequired: true },
+    { name: "DigitalOcean App Platform", url: "https://www.digitalocean.com/products/app-platform", desc: "PaaS that builds, deploys, and scales apps from source. Managed databases.", category: "deployment", longDesc: "**DigitalOcean App Platform** is a platform as a service (PaaS) that allows developers to publish code directly to DigitalOcean's infrastructure without managing servers. Free static site tier; paid for dynamic apps.", isPremiumRequired: true },
+    { name: "Railway", url: "https://railway.app", desc: "Cloud platform for deploying apps and databases with one click. Simple pricing.", category: "deployment", longDesc: "**Railway** is a platform that allows you to provision infrastructure, develop with that infrastructure locally, and then deploy to the cloud. It supports many languages and frameworks. Free trial credits; then pay as you go.", isPremiumRequired: true },
+    // API Tools (8) – some premium
+    { name: "Swagger UI", url: "https://swagger.io/tools/swagger-ui", desc: "Interactive API documentation generator. Visualize and test REST APIs.", category: "api", longDesc: "**Swagger UI** allows anyone – be it your development team or your end consumers – to visualize and interact with the API’s resources without having any of the implementation logic in place. Free and open-source.", isPremiumRequired: false },
+    // Postman and Insomnia already added above
+    { name: "GraphQL Playground", url: "https://github.com/graphql/graphql-playground", desc: "GraphQL IDE for exploring GraphQL APIs. Autocomplete, docs, and query history.", category: "api", longDesc: "**GraphQL Playground** is a graphical, interactive, in-browser GraphQL IDE. It supports authentication, query history, and documentation explorer. Free.", isPremiumRequired: false },
+    { name: "Apollo Studio", url: "https://www.apollographql.com/studio", desc: "GraphQL management platform. Schema registry, metrics, and performance monitoring.", category: "api", longDesc: "**Apollo Studio** is a cloud platform that helps you understand, build, and scale your GraphQL graph. It provides schema validation, performance metrics, and collaboration tools. Free tier for small teams; paid for advanced features.", isPremiumRequired: true },
+    { name: "cURL", url: "https://curl.se", desc: "Command-line tool and library for transferring data with URLs. Supports many protocols.", category: "api", longDesc: "**cURL** is a command-line tool and library for transferring data with URLs. It supports a wide range of protocols, including HTTP, HTTPS, FTP, and SFTP. Free and open-source.", isPremiumRequired: false },
+    { name: "HTTPie", url: "https://httpie.io", desc: "User-friendly command-line HTTP client. Intuitive syntax, JSON support, and colors.", category: "api", longDesc: "**HTTPie** is a command-line HTTP client that aims to make CLI interaction with web services as human-friendly as possible. It provides a simple syntax and colorized output. Free open-source version; paid team plan.", isPremiumRequired: true },
+    { name: "SoapUI", url: "https://www.soapui.org", desc: "API testing tool for SOAP and REST. Functional, security, and load testing.", category: "api", longDesc: "**SoapUI** is an open-source web service testing application for SOAP and REST APIs. It provides functional testing, security testing, and load testing capabilities. Free open-source; SoapUI Pro (paid) adds advanced reporting.", isPremiumRequired: true },
+    // Database Tools (10) – some premium
+    { name: "MySQL Workbench", url: "https://www.mysql.com/products/workbench", desc: "Visual database design, SQL development, and administration for MySQL.", category: "database", longDesc: "**MySQL Workbench** is a unified visual tool for database architects, developers, and DBAs. It provides data modeling, SQL development, and comprehensive administration tools for server configuration, user administration, backup, and much more. Free.", isPremiumRequired: false },
+    { name: "pgAdmin", url: "https://www.pgadmin.org", desc: "Administration and development platform for PostgreSQL. Query tool and dashboard.", category: "database", longDesc: "**pgAdmin** is the most popular and feature-rich Open Source administration and development platform for PostgreSQL, the most advanced Open Source database in the world. Free.", isPremiumRequired: false },
+    { name: "MongoDB Compass", url: "https://www.mongodb.com/products/compass", desc: "GUI for MongoDB. Visualize, explore, and manipulate your data.", category: "database", longDesc: "**MongoDB Compass** is a powerful GUI for querying, aggregating, and analyzing your MongoDB data in a visual environment. It allows you to explore data, run queries, and optimize performance. Free for basic use; Compass Pro with advanced features is paid.", isPremiumRequired: true },
+    { name: "DBeaver", url: "https://dbeaver.io", desc: "Universal database tool for developers and DBAs. Supports all major databases.", category: "database", longDesc: "**DBeaver** is a free, multi-platform database tool for developers, SQL programmers, database administrators, and analysts. It supports any database having a JDBC driver. Free community edition; DBeaver Enterprise (paid) adds NoSQL support and advanced features.", isPremiumRequired: true },
+    { name: "TablePlus", url: "https://tableplus.com", desc: "Modern native database client for MySQL, PostgreSQL, SQLite, Redis, and more.", category: "database", longDesc: "**TablePlus** is a modern, native tool for database management. It supports multiple database engines and features an intuitive interface, native design, and security. Free for basic use (with limitations); paid for full features.", isPremiumRequired: true },
+    { name: "DataGrip", url: "https://www.jetbrains.com/datagrip", desc: "JetBrains IDE for SQL and databases. Intelligent query editor and schema navigation.", category: "database", longDesc: "**DataGrip** is a database IDE from JetBrains that provides intelligent query consoles, schema navigation, and version control integration for SQL. Paid subscription.", isPremiumRequired: true },
+    { name: "RedisInsight", url: "https://redis.com/redis-enterprise/redis-insight", desc: "GUI for Redis databases. Visualize data, monitor performance, and manage clusters.", category: "database", longDesc: "**RedisInsight** is a powerful tool for visualizing and optimizing data in Redis, providing an intuitive interface for interacting with your Redis databases. Free.", isPremiumRequired: false },
+    { name: "Studio 3T", url: "https://studio3t.com", desc: "GUI for MongoDB with query builder, import/export, and aggregation editor.", category: "database", longDesc: "**Studio 3T** is a professional GUI and IDE for MongoDB. It includes a visual query builder, import/export tools, and an aggregation editor. Free trial; paid license.", isPremiumRequired: true },
+    { name: "Robo 3T", url: "https://robomongo.org", desc: "Lightweight, open-source MongoDB GUI. Shell integration and inline autocomplete.", category: "database", longDesc: "**Robo 3T** (formerly Robomongo) is a lightweight, open-source MongoDB management tool. It embeds the MongoDB shell and provides a graphical interface. Free.", isPremiumRequired: false },
+    { name: "Azure Data Studio", url: "https://azure.microsoft.com/en-us/products/data-studio", desc: "Cross-platform database tool for SQL Server, Azure SQL, and PostgreSQL.", category: "database", longDesc: "**Azure Data Studio** is a cross-platform database tool for data professionals using on-premises and cloud data platforms on Windows, macOS, and Linux. Free.", isPremiumRequired: false },
+    // Learning & Docs (15) – some premium
+    { name: "MDN Web Docs", url: "https://developer.mozilla.org", desc: "Comprehensive documentation for web technologies: HTML, CSS, JavaScript, APIs.", category: "learning", longDesc: "**MDN Web Docs** is a free resource for web developers, providing documentation on HTML, CSS, JavaScript, and Web APIs. It is maintained by Mozilla and the open-source community. Free.", isPremiumRequired: false },
+    { name: "W3Schools", url: "https://www.w3schools.com", desc: "Tutorials and references for web development languages. Beginner-friendly examples.", category: "learning", longDesc: "**W3Schools** is a freemium educational website for learning coding online. It offers tutorials and references on web development languages such as HTML, CSS, JavaScript, PHP, SQL, and Python. Free with ads; paid for ad-free and certificates.", isPremiumRequired: true },
+    { name: "Stack Overflow", url: "https://stackoverflow.com", desc: "Q&A platform for programmers. Find solutions, share knowledge, and build your career.", category: "learning", longDesc: "**Stack Overflow** is a question and answer website for professional and enthusiast programmers. It is the most popular website for programming-related questions. Free with optional Teams paid.", isPremiumRequired: false },
+    { name: "GitHub Learning Lab", url: "https://lab.github.com", desc: "Learn GitHub through hands-on projects. Courses on Git, automation, and open source.", category: "learning", longDesc: "**GitHub Learning Lab** is a bot that helps you learn by completing tasks in a real GitHub repository. It offers courses on GitHub, Git, and open-source development. Free.", isPremiumRequired: false },
+    { name: "Coursera", url: "https://www.coursera.org/browse/computer-science", desc: "Online courses in CS, programming, data science, and more from top universities.", category: "learning", longDesc: "**Coursera** offers thousands of courses, specializations, and degrees in computer science, data science, and programming from leading universities and companies. Free to audit; paid for certificates and graded assignments.", isPremiumRequired: true },
+    { name: "edX", url: "https://www.edx.org/learn/computer-science", desc: "Free computer science courses from MIT, Harvard, and other top schools.", category: "learning", longDesc: "**edX** is a massive open online course provider. It hosts online university-level courses in a wide range of disciplines, including computer science. Free to audit; paid for certificates.", isPremiumRequired: true },
+    { name: "Udemy", url: "https://www.udemy.com/topic/programming", desc: "Marketplace for programming courses. Learn at your own pace with video lectures.", category: "learning", longDesc: "**Udemy** is a global marketplace for learning and teaching online. It offers over 200,000 courses in programming, data science, web development, and more. Paid per course or via subscription.", isPremiumRequired: true },
+    { name: "FreeCodeCamp", url: "https://www.freecodecamp.org", desc: "Free coding bootcamp with certifications. Learn web development and data science.", category: "learning", longDesc: "**freeCodeCamp** is a non-profit organization that offers a free coding curriculum and certification. It covers full-stack web development, data visualization, and machine learning. Completely free.", isPremiumRequired: false },
+    { name: "The Odin Project", url: "https://www.theodinproject.com", desc: "Full-stack web development curriculum. Learn HTML, CSS, JS, Ruby, Rails, React.", category: "learning", longDesc: "**The Odin Project** is an open-source curriculum for learning web development. It provides a complete path from beginner to job-ready developer. Free.", isPremiumRequired: false },
+    { name: "Codecademy", url: "https://www.codecademy.com", desc: "Interactive coding lessons in Python, JavaScript, Java, SQL, and more.", category: "learning", longDesc: "**Codecademy** is an online interactive platform that offers free coding classes in 12 different programming languages including Python, Java, Go, JavaScript, Ruby, SQL, C++, Swift, and Sass, as well as markup languages HTML and CSS. Free basic; Pro for full access.", isPremiumRequired: true },
+    { name: "Pluralsight", url: "https://www.pluralsight.com", desc: "Tech skill development platform. Courses on software development, IT, and security.", category: "learning", longDesc: "**Pluralsight** is a technology skills platform that offers courses in software development, IT, data, security, and more. It includes skill assessments and learning paths. Paid subscription.", isPremiumRequired: true },
+    { name: "LinkedIn Learning", url: "https://www.linkedin.com/learning", desc: "Professional development courses in software, design, and business.", category: "learning", longDesc: "**LinkedIn Learning** is an American online learning platform that provides video courses taught by industry experts in software, creative, and business skills. Paid subscription (or free with some Premium memberships).", isPremiumRequired: true },
+    { name: "Khan Academy (CS)", url: "https://www.khanacademy.org/computing", desc: "Free computer science curriculum. Intro to JS, HTML/CSS, SQL, and algorithms.", category: "learning", longDesc: "**Khan Academy** offers free computer science courses covering JavaScript, HTML/CSS, SQL, and algorithms. It includes interactive challenges and projects. Free.", isPremiumRequired: false },
+    { name: "GeeksforGeeks", url: "https://www.geeksforgeeks.org", desc: "Computer science portal for tutorials, practice problems, and interview preparation.", category: "learning", longDesc: "**GeeksforGeeks** is a computer science portal for geeks. It contains well-written, well-thought, and well-explained computer science and programming articles, quizzes, and practice problems. Free with ads; paid for ad-free and premium content.", isPremiumRequired: true },
+    { name: "LeetCode", url: "https://leetcode.com", desc: "Platform for practicing coding problems. Prepare for technical interviews.", category: "learning", longDesc: "**LeetCode** is the best platform to help you enhance your skills, expand your knowledge, and prepare for technical interviews. It has over 2000 coding problems and contests. Free basic; LeetCode Premium for company questions and detailed solutions.", isPremiumRequired: true }
+  ];
+
+  // Add extra tools to reach 100+ (we already have ~70, add 30 more)
+  const extraTools = [
+    { name: "npm", url: "https://www.npmjs.com", desc: "Package manager for JavaScript. Install, share, and manage dependencies.", category: "deployment", longDesc: "**npm** is a package manager for the JavaScript programming language. It is the default package manager for Node.js and consists of a command-line client and an online database of public and paid-for private packages. Free for public packages; paid for private packages.", isPremiumRequired: true },
+    { name: "Yarn", url: "https://yarnpkg.com", desc: "Fast, reliable, and secure dependency management for JavaScript.", category: "deployment", longDesc: "**Yarn** is a package manager that doubles down as a project manager. Whether you work on simple projects or industry-leading monorepos, Yarn will speed up your workflow. Free and open-source.", isPremiumRequired: false },
+    { name: "Webpack", url: "https://webpack.js.org", desc: "Static module bundler for JavaScript applications. Bundle assets, code split.", category: "deployment", longDesc: "**webpack** is a static module bundler for modern JavaScript applications. When webpack processes your application, it internally builds a dependency graph and generates one or more bundles. Free and open-source.", isPremiumRequired: false },
+    { name: "Babel", url: "https://babeljs.io", desc: "JavaScript compiler. Convert modern JS to backward-compatible versions.", category: "deployment", longDesc: "**Babel** is a free and open-source JavaScript transcompiler that is mainly used to convert ECMAScript 2015+ code into a backwards-compatible version of JavaScript that can be run by older JavaScript engines. Free.", isPremiumRequired: false },
+    { name: "ESLint", url: "https://eslint.org", desc: "Pluggable linting utility for JavaScript and JSX. Enforce code style.", category: "debugging", longDesc: "**ESLint** is a static code analysis tool for identifying problematic patterns found in JavaScript code. It is designed to be pluggable, meaning you can easily add custom rules. Free.", isPremiumRequired: false },
+    { name: "Prettier", url: "https://prettier.io", desc: "Opinionated code formatter. Supports many languages and integrates with editors.", category: "debugging", longDesc: "**Prettier** is an opinionated code formatter. It removes all original styling and ensures that all outputted code conforms to a consistent style. Free.", isPremiumRequired: false },
+    { name: "TypeScript", url: "https://www.typescriptlang.org", desc: "Typed superset of JavaScript. Compiles to plain JS.", category: "learning", longDesc: "**TypeScript** is a strongly typed programming language that builds on JavaScript, giving you better tooling at any scale. It adds optional static types. Free and open-source.", isPremiumRequired: false },
+    { name: "Vite", url: "https://vitejs.dev", desc: "Next-generation frontend tooling. Fast development server and build.", category: "deployment", longDesc: "**Vite** is a build tool that aims to provide a faster and leaner development experience for modern web projects. It consists of a dev server and a build command. Free.", isPremiumRequired: false },
+    { name: "Next.js", url: "https://nextjs.org", desc: "React framework for production. Server-side rendering, static generation.", category: "deployment", longDesc: "**Next.js** is a React framework that enables functionality such as server-side rendering and generating static websites for React-based web applications. Free and open-source.", isPremiumRequired: false },
+    { name: "React", url: "https://reactjs.org", desc: "JavaScript library for building user interfaces. Component-based, declarative.", category: "learning", longDesc: "**React** is a free and open-source front-end JavaScript library for building user interfaces based on UI components. It is maintained by Meta and a community of individual developers and companies. Free.", isPremiumRequired: false },
+    { name: "Vue.js", url: "https://vuejs.org", desc: "Progressive JavaScript framework for building UIs. Approachable, versatile.", category: "learning", longDesc: "**Vue.js** is an open-source model–view–viewmodel front-end JavaScript framework for building user interfaces and single-page applications. Free.", isPremiumRequired: false },
+    { name: "Angular", url: "https://angular.io", desc: "Platform for building mobile and desktop web applications. TypeScript-based.", category: "learning", longDesc: "**Angular** is a TypeScript-based, free and open-source web application framework led by the Angular Team at Google and by a community of individuals and corporations. Free.", isPremiumRequired: false },
+    { name: "Svelte", url: "https://svelte.dev", desc: "Radical new approach to building user interfaces. Compiles at build time.", category: "learning", longDesc: "**Svelte** is a free and open-source front-end component framework. Unlike traditional frameworks that do most of their work in the browser, Svelte shifts that work into a compile step. Free.", isPremiumRequired: false },
+    { name: "Electron", url: "https://www.electronjs.org", desc: "Build cross-platform desktop apps with JavaScript, HTML, and CSS.", category: "learning", longDesc: "**Electron** is a framework for building desktop applications using JavaScript, HTML, and CSS. It is used by apps like Visual Studio Code, Slack, and Discord. Free and open-source.", isPremiumRequired: false },
+    { name: "TensorFlow", url: "https://www.tensorflow.org", desc: "Open-source machine learning platform. Build and train ML models.", category: "learning", longDesc: "**TensorFlow** is a free and open-source software library for machine learning and artificial intelligence. It can be used across a range of tasks but has a particular focus on training and inference of deep neural networks. Free.", isPremiumRequired: false },
+    { name: "PyTorch", url: "https://pytorch.org", desc: "Open-source machine learning library for Python. Tensor computation and deep neural networks.", category: "learning", longDesc: "**PyTorch** is an open-source machine learning library based on the Torch library, used for applications such as computer vision and natural language processing. Free.", isPremiumRequired: false },
+    { name: "Ansible", url: "https://www.ansible.com", desc: "IT automation platform. Configuration management, application deployment.", category: "deployment", longDesc: "**Ansible** is an open-source software provisioning, configuration management, and application-deployment tool enabling infrastructure as code. Free (open-source); Red Hat Ansible Automation Platform is paid.", isPremiumRequired: true },
+    { name: "Terraform", url: "https://www.terraform.io", desc: "Infrastructure as code tool. Build, change, and version infrastructure safely.", category: "deployment", longDesc: "**Terraform** is an infrastructure-as-code software tool created by HashiCorp. It enables users to define and provision data center infrastructure using a declarative configuration language. Free open-source; Terraform Cloud paid for teams.", isPremiumRequired: true },
+    { name: "Prometheus", url: "https://prometheus.io", desc: "Monitoring and alerting toolkit for cloud-native environments.", category: "debugging", longDesc: "**Prometheus** is a free software application used for event monitoring and alerting. It records real-time metrics in a time series database built using a HTTP pull model. Free.", isPremiumRequired: false },
+    { name: "Grafana", url: "https://grafana.com", desc: "Observability platform for metrics, logs, and traces. Visualize data from many sources.", category: "debugging", longDesc: "**Grafana** is a multi-platform open-source analytics and interactive visualization web application. It provides charts, graphs, and alerts for the web when connected to supported data sources. Free open-source; Grafana Cloud has paid tiers.", isPremiumRequired: true }
+  ];
+
+  const allLocalTools = [...toolsData, ...extraTools];
+
+  // Ensure all tools have longDesc and icon
+  const toolsWithDetails = allLocalTools.map(tool => ({
+    ...tool,
+    longDesc: tool.longDesc || `**${tool.name}**\n\n${tool.desc}\n\nThis tool is widely used by developers to enhance productivity and code quality.`,
+    icon: `https://www.google.com/s2/favicons?domain=${new URL(tool.url).hostname}`,
+    source: 'local'
+  }));
+
+  console.log(`📚 Local developer tools: ${toolsWithDetails.length}`);
+
+  // ========== API Functions ==========
+  async function apiCall(url, options = {}) {
+    const response = await fetch(url, { ...options, headers: { 'Content-Type': 'application/json', ...options.headers }, credentials: 'include' });
+    if (!response.ok) { const text = await response.text(); throw new Error(text); }
+    const contentType = response.headers.get('content-type');
+    return contentType?.includes('application/json') ? response.json() : response.text();
+  }
+
+  function showToast(message, type = 'success') {
+    const toast = document.createElement('div'); toast.className = `toast ${type}`; toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i> ${message}`;
+    document.body.appendChild(toast); setTimeout(() => toast.remove(), 4000);
+  }
+
+  function getDomainFromUrl(url) {
+    try { return new URL(url).hostname; } catch { return 'example.com'; }
+  }
+
+  async function loadAndMergeTools() {
+    try {
+      document.getElementById('toolsGrid').innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading tools...</div>';
+      let approvedTools = [];
+      try {
+        approvedTools = await apiCall(`/api/tools?page=${PAGE_TYPE}`);
+        console.log(`✅ Loaded ${approvedTools.length} approved tools for ${PAGE_TYPE}`);
+      } catch (error) {
+        console.log('Could not fetch approved tools, using local only:', error);
+      }
+      const formattedApprovedTools = approvedTools.map(tool => ({
+        id: tool.id,
+        name: tool.name,
+        url: tool.url,
+        desc: tool.description || 'A community-submitted tool approved by Sarveik.',
+        longDesc: `**${tool.name}** (Community Approved)\n\n${tool.description || 'A useful tool for developers.'}\n\nThis tool was submitted by a community member and approved for developer use.`,
+        category: tool.category || 'learning',
+        icon: `https://www.google.com/s2/favicons?domain=${getDomainFromUrl(tool.url)}`,
+        source: 'approved',
+        approved: true,
+        created_at: tool.created_at,
+        isPremiumRequired: tool.is_premium === 1
+      }));
+      const allToolNames = new Set();
+      const mergedTools = [];
+      for (const tool of toolsWithDetails) {
+        if (!allToolNames.has(tool.name.toLowerCase())) {
+          allToolNames.add(tool.name.toLowerCase());
+          mergedTools.push(tool);
+        }
+      }
+      for (const tool of formattedApprovedTools) {
+        if (!allToolNames.has(tool.name.toLowerCase())) {
+          allToolNames.add(tool.name.toLowerCase());
+          mergedTools.push(tool);
+        }
+      }
+      allTools = mergedTools;
+      const statsBadge = document.getElementById('statsBadge');
+      const premiumCount = allTools.filter(t => t.isPremiumRequired).length;
+      statsBadge.innerHTML = `<i class="fas fa-database"></i> Explore our collection of Developer tools! ${!userPremiumStatus && premiumCount > 0 ? `🔒 ${premiumCount} Premium Tools Available` : ''}`;
+      buildFilterButtons();
+      renderTools();
+      if (!userPremiumStatus) showPremiumRecommendations();
+      return true;
+    } catch (error) {
+      console.error('Error loading tools:', error);
+      document.getElementById('toolsGrid').innerHTML = '<div class="loading">❌ Failed to load tools. Please make sure you are logged in.</div>';
+      showToast('Failed to load tools from server', 'error');
+      return false;
+    }
+  }
+
+  // LocalStorage functions
+  if (!localStorage.getItem('popularity')) localStorage.setItem('popularity', '{}');
+  if (!localStorage.getItem('ratings')) localStorage.setItem('ratings', '{}');
+  if (!localStorage.getItem('favorites')) localStorage.setItem('favorites', '[]');
+
+  function getPopularity(name) { return JSON.parse(localStorage.getItem('popularity'))[name] || 0; }
+  function incrementPopularity(name) { let pop = JSON.parse(localStorage.getItem('popularity')); pop[name] = (pop[name] || 0) + 1; localStorage.setItem('popularity', JSON.stringify(pop)); }
+  function getAverageRating(name) { let ratings = JSON.parse(localStorage.getItem('ratings'))[name]; if (!ratings || ratings.length === 0) return 0; return ratings.reduce((a,b)=>a+b,0) / ratings.length; }
+  function addRating(name, stars) { let ratings = JSON.parse(localStorage.getItem('ratings')); if (!ratings[name]) ratings[name] = []; ratings[name].push(stars); localStorage.setItem('ratings', JSON.stringify(ratings)); }
+  function isFavorite(name) { return JSON.parse(localStorage.getItem('favorites')).includes(name); }
+  function toggleFavorite(name) { let favs = JSON.parse(localStorage.getItem('favorites')); if (favs.includes(name)) { localStorage.setItem('favorites', JSON.stringify(favs.filter(f => f !== name))); } else { favs.push(name); localStorage.setItem('favorites', JSON.stringify(favs)); } renderTools(); renderFavorites(); }
+
+  function updateFilteredTools() {
+    let toolsToFilter = [...allTools];
+    if (currentFilter === 'premium') {
+      toolsToFilter = toolsToFilter.filter(t => t.isPremiumRequired === true);
+    } else if (currentFilter !== 'all') {
+      toolsToFilter = toolsToFilter.filter(t => t.category === currentFilter);
+    }
+    if (currentSearch) {
+      const searchLower = currentSearch.toLowerCase();
+      toolsToFilter = toolsToFilter.filter(tool => 
+        tool.name.toLowerCase().includes(searchLower) || 
+        (tool.desc || '').toLowerCase().includes(searchLower)
+      );
+    }
+    filteredTools = toolsToFilter;
+    if (currentSort === 'name') filteredTools.sort((a,b) => a.name.localeCompare(b.name));
+    else if (currentSort === 'popularity') filteredTools.sort((a,b) => getPopularity(b.name) - getPopularity(a.name));
+  }
+
+  function renderPagination() {
+    const totalPages = Math.ceil(filteredTools.length / itemsPerPage);
+    const paginationDiv = document.getElementById('paginationControls');
+    paginationDiv.innerHTML = '';
+    if (totalPages <= 1) return;
+    for (let i = 1; i <= totalPages; i++) {
+      const btn = document.createElement('button');
+      btn.textContent = i;
+      if (i === currentPage) btn.classList.add('active');
+      btn.addEventListener('click', () => { currentPage = i; renderTools(); });
+      paginationDiv.appendChild(btn);
+    }
+  }
+
+  function renderTools() {
+    updateFilteredTools();
+    const start = (currentPage - 1) * itemsPerPage;
+    let pageTools = filteredTools.slice(start, start + itemsPerPage);
+    if (!userPremiumStatus && currentFilter !== 'premium') {
+      pageTools = pageTools.filter(tool => !tool.isPremiumRequired);
+    }
+    const toolsGrid = document.getElementById('toolsGrid');
+    if (pageTools.length === 0) {
+      if (!userPremiumStatus && filteredTools.some(t => t.isPremiumRequired) && currentFilter !== 'premium') {
+        toolsGrid.innerHTML = `<div class="loading">🔒 Some developer tools require Premium Access. <a href="profile.html?tab=premium" style="color:#f6d365;">Upgrade to Premium</a> to unlock all tools.</div>`;
+      } else {
+        toolsGrid.innerHTML = '<div class="loading">No tools match your criteria.</div>';
+      }
+      return;
+    }
+    toolsGrid.innerHTML = pageTools.map(tool => {
+      const pop = getPopularity(tool.name);
+      const avgRating = getAverageRating(tool.name);
+      const fullStars = Math.floor(avgRating);
+      const stars = '★'.repeat(fullStars) + (avgRating % 1 >= 0.5 ? '½' : '');
+      const favClass = isFavorite(tool.name) ? 'favorited' : '';
+      const approvedBadge = tool.source === 'approved' ? '<span class="approved-badge"><i class="fas fa-check-circle"></i> Approved</span>' : '';
+      let newBadge = '';
+      if (tool.source === 'approved' && tool.created_at) {
+        const createdDate = new Date(tool.created_at);
+        const now = new Date();
+        const diffDays = (now - createdDate) / (1000 * 60 * 60 * 24);
+        if (diffDays <= NEW_DAYS_THRESHOLD) newBadge = '<span class="time-new-badge">🔥 NEW</span>';
+      }
+      const premiumTag = tool.isPremiumRequired ? '<span class="premium-tag">⭐ PREMIUM</span>' : '';
+      const isPremiumLocked = tool.isPremiumRequired && !userPremiumStatus;
+      const lockOverlay = isPremiumLocked ? `
+        <div class="premium-lock-icon">
+          <i class="fas fa-lock"></i> Premium Tool
+          <button onclick="window.location.href='profile.html?tab=premium'">Upgrade</button>
+        </div>
+      ` : '';
+      const lockClass = isPremiumLocked ? 'premium-locked' : '';
+      return `
+        <div class="tool-card ${lockClass}" data-name="${escapeHtml(tool.name)}" data-url="${tool.url}" data-desc="${escapeHtml(tool.longDesc)}" data-icon="${tool.icon}">
+          ${approvedBadge}
+          ${newBadge}
+          ${premiumTag}
+          <span class="fav-icon ${favClass}" data-fav="${escapeHtml(tool.name)}">❤️</span>
+          <img src="${tool.icon}" alt="${escapeHtml(tool.name)}" loading="lazy" onerror="this.src='https://via.placeholder.com/48'">
+          <h3>${escapeHtml(tool.name)}</h3>
+          <p>${escapeHtml(tool.desc)}</p>
+          <div class="meta">
+            <span class="rating">${stars || '☆☆☆☆☆'}</span>
+            <span class="popularity">🔥 ${pop}</span>
+          </div>
+          <button class="btn details-btn" ${isPremiumLocked ? 'disabled style="opacity:0.6;"' : ''}>Details</button>
+          ${lockOverlay}
+        </div>
+      `;
+    }).join('');
+    attachCardEvents();
+    renderPagination();
+  }
+
+  function attachCardEvents() {
+    document.querySelectorAll('.fav-icon').forEach(icon => {
+      icon.addEventListener('click', (e) => { e.stopPropagation(); toggleFavorite(icon.dataset.fav); });
+    });
+    document.querySelectorAll('.details-btn:not([disabled])').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const card = e.target.closest('.tool-card');
+        openModal(card.dataset.name, card.dataset.url, card.dataset.desc, card.dataset.icon);
+      });
+    });
+  }
+
+  function renderFavorites() {
+    const favs = JSON.parse(localStorage.getItem('favorites'));
+    let favTools = allTools.filter(t => favs.includes(t.name));
+    if (!userPremiumStatus) {
+      favTools = favTools.filter(t => !t.isPremiumRequired);
+    }
+    const favoritesGrid = document.getElementById('favoritesGrid');
+    if (favTools.length === 0) {
+      favoritesGrid.innerHTML = '<div class="loading">No favorite tools yet. Click the heart icon on any tool to add it!</div>';
+      return;
+    }
+    favoritesGrid.innerHTML = favTools.map(tool => {
+      const pop = getPopularity(tool.name);
+      const avgRating = getAverageRating(tool.name);
+      const fullStars = Math.floor(avgRating);
+      const stars = '★'.repeat(fullStars) + (avgRating % 1 >= 0.5 ? '½' : '');
+      const isPremiumLocked = tool.isPremiumRequired && !userPremiumStatus;
+      const lockOverlay = isPremiumLocked ? `<div class="premium-lock-icon"><i class="fas fa-lock"></i> Premium Tool</div>` : '';
+      return `
+        <div class="tool-card ${isPremiumLocked ? 'premium-locked' : ''}" data-name="${escapeHtml(tool.name)}" data-url="${tool.url}" data-desc="${escapeHtml(tool.longDesc)}" data-icon="${tool.icon}">
+          <img src="${tool.icon}" alt="${escapeHtml(tool.name)}" loading="lazy" onerror="this.src='https://via.placeholder.com/48'">
+          <h3>${escapeHtml(tool.name)}</h3>
+          <p>${escapeHtml(tool.desc)}</p>
+          <div class="meta">
+            <span class="rating">${stars || '☆☆☆☆☆'}</span>
+            <span class="popularity">🔥 ${pop}</span>
+          </div>
+          <button class="btn details-btn" ${isPremiumLocked ? 'disabled' : ''}>Details</button>
+          ${lockOverlay}
+        </div>
+      `;
+    }).join('');
+    favoritesGrid.querySelectorAll('.details-btn:not([disabled])').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const card = e.target.closest('.tool-card');
+        openModal(card.dataset.name, card.dataset.url, card.dataset.desc, card.dataset.icon);
+      });
+    });
+  }
+
+  function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
+
+  function openModal(name, url, longDesc, icon) {
+    const tool = allTools.find(t => t.name === name);
+    if (tool?.isPremiumRequired && !userPremiumStatus) {
+      showToast('This developer tool requires Premium Access. Please upgrade.', 'error');
+      return;
+    }
+    incrementPopularity(name);
+    const category = tool?.category || 'learning';
+    document.getElementById('modalTitle').textContent = name;
+    document.getElementById('modalDesc').innerHTML = longDesc.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+    document.getElementById('modalIcon').src = icon;
+    document.getElementById('modalVisitBtn').href = url;
+    const howToHTML = generateHowToUse(name, category, url);
+    document.getElementById('howToUseContent').innerHTML = howToHTML;
+
+    const avgRating = getAverageRating(name);
+    const modalRatingDiv = document.getElementById('modalRating');
+    modalRatingDiv.innerHTML = 'Rate this tool: ';
+    for (let i = 1; i <= 5; i++) {
+      const star = document.createElement('span');
+      star.className = `star ${i <= Math.round(avgRating) ? 'selected' : ''}`;
+      star.textContent = '★';
+      star.dataset.value = i;
+      star.addEventListener('click', (e) => { addRating(name, parseInt(e.target.dataset.value)); openModal(name, url, longDesc, icon); renderTools(); });
+      modalRatingDiv.appendChild(star);
+    }
+    const similar = allTools.filter(t => t.category === category && t.name !== name && (!t.isPremiumRequired || userPremiumStatus)).slice(0, 5);
+    const similarDiv = document.getElementById('similarTools');
+    similarDiv.innerHTML = similar.map(t => `<span class="similar-tool-item" data-name="${escapeHtml(t.name)}">${escapeHtml(t.name)}</span>`).join('');
+    document.querySelectorAll('.similar-tool-item').forEach(el => {
+      el.addEventListener('click', () => { const t = allTools.find(tt => tt.name === el.dataset.name); if(t) openModal(t.name, t.url, t.longDesc, t.icon); });
+    });
+    const shareText = encodeURIComponent(`Check out ${name} on Sarveik Tools!`);
+    const shareUrl = encodeURIComponent(url);
+    document.getElementById('socialShare').innerHTML = `
+      <a href="https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}" target="_blank"><i class="fab fa-twitter"></i> Twitter</a>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=${shareUrl}" target="_blank"><i class="fab fa-facebook"></i> Facebook</a>
+      <a href="https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}" target="_blank"><i class="fab fa-linkedin"></i> LinkedIn</a>
+    `;
+    document.getElementById('toolModal').classList.add('active');
+  }
+
+  function buildFilterButtons() {
+    const categories = ['all', ...new Set(allTools.map(t => t.category))];
+    categories.push('premium');
+    const filterContainer = document.getElementById('filterContainer');
+    filterContainer.innerHTML = categories.map(cat => `<button class="filter-btn ${cat === currentFilter ? 'active' : ''}" data-filter="${cat}">${cat.charAt(0).toUpperCase() + cat.slice(1)}</button>`).join('');
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.filter;
+        currentPage = 1;
+        renderTools();
+      });
+    });
+  }
+
+  async function submitTool() {
+    const name = document.getElementById('newName').value.trim();
+    const url = document.getElementById('newUrl').value.trim();
+    const description = document.getElementById('newDesc').value.trim();
+    const category = document.getElementById('newCategory').value;
+    if (!name || !url || !description) { showToast('Please fill all fields', 'error'); return; }
+    try { new URL(url); } catch { showToast('Please enter a valid URL (including https://)', 'error'); return; }
+    const submitBtn = document.getElementById('submitToolBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+    try {
+      await apiCall('/api/tools/submit', {
+        method: 'POST',
+        body: JSON.stringify({ name, url, description, category, pageType: PAGE_TYPE })
+      });
+      showToast('✅ Tool submitted! Admin will review it shortly.', 'success');
+      document.getElementById('newName').value = '';
+      document.getElementById('newUrl').value = '';
+      document.getElementById('newDesc').value = '';
+      setTimeout(() => loadAndMergeTools(), 2000);
+    } catch (error) { showToast(error.message || 'Submission failed', 'error'); }
+    finally { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit for Review'; }
+  }
+
+  async function checkSession() {
+    try { const session = await apiCall('/check-session'); if (!session.loggedIn) { window.location.href = '/'; return false; } return true; }
+    catch { window.location.href = '/'; return false; }
+  }
+
+  async function fetchPremiumStatus() {
+    try {
+      const res = await fetch('/api/user/premium-status', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        userPremiumStatus = data.isPremium === true;
+        console.log('Premium status (developer):', userPremiumStatus);
+        const banner = document.getElementById('premiumBanner');
+        if (banner) banner.style.display = userPremiumStatus ? 'none' : 'flex';
+        const recommendationsDiv = document.getElementById('premiumRecommendations');
+        if (recommendationsDiv) recommendationsDiv.style.display = userPremiumStatus ? 'none' : 'block';
+      } else {
+        userPremiumStatus = false;
+        document.getElementById('premiumBanner').style.display = 'flex';
+        document.getElementById('premiumRecommendations').style.display = 'block';
+      }
+    } catch (err) {
+      console.error('Failed to fetch premium status', err);
+      userPremiumStatus = false;
+      document.getElementById('premiumBanner').style.display = 'flex';
+      document.getElementById('premiumRecommendations').style.display = 'block';
+    }
+  }
+
+  function showPremiumRecommendations() {
+    const premiumTools = allTools.filter(t => t.isPremiumRequired).slice(0, 6);
+    const container = document.getElementById('recommendGrid');
+    if (!container) return;
+    if (premiumTools.length === 0) {
+      container.innerHTML = '<p>No premium tools available yet.</p>';
+      return;
+    }
+    container.innerHTML = premiumTools.map(tool => `
+      <div class="recommend-item">
+        <img src="${tool.icon}" alt="${tool.name}" onerror="this.src='https://via.placeholder.com/40'">
+        <div class="name">${escapeHtml(tool.name)}</div>
+        <button onclick="window.location.href='profile.html?tab=premium'">Unlock</button>
+      </div>
+    `).join('');
+  }
+
+  async function init() {
+    const loggedIn = await checkSession();
+    if (!loggedIn) return;
+    await fetchPremiumStatus();
+    await loadAndMergeTools();
+    try {
+      await fetch('/api/track-usage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tool_name: 'Developer Tools Hub', tool_category: 'tools' }), credentials: 'include' });
+    } catch(e) {}
+  }
+
+  // Event listeners
+  document.getElementById('searchInput').addEventListener('input', (e) => { currentSearch = e.target.value; currentPage = 1; renderTools(); });
+  document.getElementById('sortSelect').addEventListener('change', (e) => { currentSort = e.target.value; renderTools(); });
+  document.getElementById('refreshToolsBtn').addEventListener('click', () => { loadAndMergeTools(); showToast('Refreshing tools from database...', 'info'); });
+  document.getElementById('themeToggle').addEventListener('click', () => { document.body.classList.toggle('light-mode'); document.getElementById('themeToggle').textContent = document.body.classList.contains('light-mode') ? '☀️ Light' : '🌙 Dark'; localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark'); });
+  if (localStorage.getItem('theme') === 'light') { document.body.classList.add('light-mode'); document.getElementById('themeToggle').textContent = '☀️ Light'; }
+  document.getElementById('showFavorites').addEventListener('click', (e) => { e.preventDefault(); document.getElementById('toolsGrid').style.display = 'none'; document.getElementById('favoritesPage').style.display = 'block'; renderFavorites(); });
+  document.getElementById('hideFavorites').addEventListener('click', () => { document.getElementById('favoritesPage').style.display = 'none'; document.getElementById('toolsGrid').style.display = 'flex'; });
+  document.getElementById('submitToolBtn').addEventListener('click', submitTool);
+  document.querySelector('.close').addEventListener('click', () => document.getElementById('toolModal').classList.remove('active'));
+  window.addEventListener('click', (e) => { if (e.target === document.getElementById('toolModal')) document.getElementById('toolModal').classList.remove('active'); });
+  window.addEventListener('scroll', () => { const btn = document.getElementById('backToTop'); if(btn) btn.classList.toggle('visible', window.scrollY > 300); });
+  document.getElementById('backToTop').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+  init();
+</script>
+</body>
+</html>

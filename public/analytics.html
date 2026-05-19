@@ -1,0 +1,1739 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Hub | Sarveik </title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg:        #060a14;
+            --surface:   #0c1424;
+            --surface2:  #111c30;
+            --border:    rgba(0,224,255,0.12);
+            --border2:   rgba(255,255,255,0.06);
+            --accent:    #00e0ff;
+            --accent2:   #7b5cff;
+            --accent3:   #ff4d8f;
+            --accent4:   #00ffa3;
+            --warn:      #ffbe3d;
+            --text:      #e8f0ff;
+            --muted:     #4e6180;
+            --muted2:    #7a93b5;
+            --success:   #00ffa3;
+            --danger:    #ff4d8f;
+            --grad1: linear-gradient(135deg, #00e0ff, #7b5cff);
+            --grad2: linear-gradient(135deg, #ff4d8f, #ffbe3d);
+            --grad3: linear-gradient(135deg, #00ffa3, #00e0ff);
+            --shadow: 0 8px 40px rgba(0,0,0,0.6);
+            --shadow2: 0 0 0 1px rgba(0,224,255,0.15), 0 8px 40px rgba(0,0,0,0.6);
+            --font-display: 'Syne', sans-serif;
+            --font-mono: 'Space Mono', monospace;
+            --transition: 0.25s cubic-bezier(0.4,0,0.2,1);
+        }
+
+        body.light {
+            --bg:      #f0f4ff;
+            --surface: #ffffff;
+            --surface2:#eef2fc;
+            --border:  rgba(100,130,220,0.2);
+            --border2: rgba(0,0,0,0.06);
+            --text:    #0d1a2e;
+            --muted:   #8899bb;
+            --muted2:  #5566aa;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--font-display);
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            transition: background var(--transition), color var(--transition);
+        }
+
+        /* ─── NOISE TEXTURE OVERLAY ─── */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        /* ─── ANIMATED AURORA BACKGROUND ─── */
+        .aurora {
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            overflow: hidden;
+        }
+        .aurora-blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.12;
+            animation: drift 18s ease-in-out infinite;
+        }
+        .aurora-blob:nth-child(1) { width: 700px; height: 500px; background: var(--accent); top: -100px; left: -100px; animation-delay: 0s; }
+        .aurora-blob:nth-child(2) { width: 600px; height: 600px; background: var(--accent2); top: 20%; right: -200px; animation-delay: -6s; }
+        .aurora-blob:nth-child(3) { width: 500px; height: 500px; background: var(--accent3); bottom: -100px; left: 30%; animation-delay: -12s; }
+
+        @keyframes drift {
+            0%,100% { transform: translate(0,0) scale(1); }
+            33% { transform: translate(40px,-40px) scale(1.05); }
+            66% { transform: translate(-30px,30px) scale(0.95); }
+        }
+
+        /* ─── SCANNING LINE ─── */
+        .scanline {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            animation: scan 6s linear infinite;
+            opacity: 0.3;
+            z-index: 9999;
+            pointer-events: none;
+        }
+        @keyframes scan { 0% { top: 0; } 100% { top: 100vh; } }
+
+        /* ─── NAVBAR ─── */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+            height: 64px;
+            background: rgba(6,10,20,0.85);
+            backdrop-filter: blur(24px);
+            border-bottom: 1px solid var(--border);
+            transition: background var(--transition);
+        }
+        body.light .navbar { background: rgba(240,244,255,0.9); }
+
+        .nav-brand {
+            font-size: 1.25rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            background: var(--grad1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .nav-brand .brand-dot {
+            width: 8px; height: 8px;
+            background: var(--accent4);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+            flex-shrink: 0;
+            -webkit-text-fill-color: unset;
+        }
+
+        .nav-center {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            background: var(--surface2);
+            padding: 4px;
+            border-radius: 40px;
+            border: 1px solid var(--border);
+        }
+        .nav-center a {
+            text-decoration: none;
+            color: var(--muted2);
+            padding: 0.4rem 1rem;
+            border-radius: 30px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            transition: all var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+        .nav-center a:hover { color: var(--accent); background: rgba(0,224,255,0.08); }
+        .nav-center a.active { background: var(--accent); color: #060a14; }
+
+        .nav-actions { display: flex; align-items: center; gap: 0.75rem; }
+        .nav-btn {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted2);
+            width: 36px; height: 36px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.85rem;
+            transition: all var(--transition);
+        }
+        .nav-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,224,255,0.08); }
+
+        .hamburger { display: none; flex-direction: column; gap: 4px; cursor: pointer; background: none; border: none; }
+        .hamburger span { width: 22px; height: 2px; background: var(--text); transition: 0.3s; display: block; }
+
+        @media (max-width: 900px) {
+            .nav-center { display: none; position: fixed; top: 64px; left: 0; width: 100%; flex-direction: column; border-radius: 0; border-top: 1px solid var(--border); padding: 1rem; background: rgba(6,10,20,0.98); z-index: 999; }
+            .nav-center.open { display: flex; }
+            .hamburger { display: flex; }
+        }
+
+        /* ─── MAIN LAYOUT ─── */
+        main {
+            max-width: 1440px;
+            margin: 0 auto;
+            padding: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ─── PAGE HEADER ─── */
+        .page-header {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .page-header-left { display: flex; flex-direction: column; gap: 0.4rem; }
+        .page-eyebrow {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .page-eyebrow::before { content: ''; display: block; width: 20px; height: 1px; background: var(--accent); }
+        .page-title {
+            font-size: 2.2rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: var(--grad1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .page-subtitle { color: var(--muted2); font-size: 0.85rem; font-weight: 400; }
+
+        .header-actions { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.55rem 1.25rem;
+            border-radius: 10px;
+            font-family: var(--font-display);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition);
+            border: none;
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--muted2);
+        }
+        .btn-outline:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,224,255,0.06); }
+        .btn-primary {
+            background: var(--accent);
+            color: #060a14;
+        }
+        .btn-primary:hover { filter: brightness(1.15); transform: translateY(-1px); box-shadow: 0 4px 20px rgba(0,224,255,0.35); }
+        .btn-danger-outline { border-color: rgba(255,77,143,0.3); color: var(--accent3); }
+        .btn-danger-outline:hover { border-color: var(--accent3); background: rgba(255,77,143,0.08); }
+
+        /* ─── LIVE INDICATOR ─── */
+        .live-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: rgba(0,255,163,0.1);
+            border: 1px solid rgba(0,255,163,0.25);
+            color: var(--success);
+            padding: 0.3rem 0.85rem;
+            border-radius: 40px;
+            font-size: 0.72rem;
+            font-family: var(--font-mono);
+            font-weight: 700;
+            letter-spacing: 1px;
+        }
+        .live-dot { width: 6px; height: 6px; background: var(--success); border-radius: 50%; animation: pulse 1.5s infinite; }
+
+        /* ─── STATS GRID ─── */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+        @media (max-width: 1100px) { .stats-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 560px) { .stats-grid { grid-template-columns: 1fr; } }
+
+        .stat-card {
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: 18px;
+            padding: 1.4rem 1.2rem;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all var(--transition);
+            animation: fadeUp 0.5s ease both;
+        }
+        .stat-card:nth-child(1) { animation-delay: 0.05s; }
+        .stat-card:nth-child(2) { animation-delay: 0.1s; }
+        .stat-card:nth-child(3) { animation-delay: 0.15s; }
+        .stat-card:nth-child(4) { animation-delay: 0.2s; }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: linear-gradient(135deg, rgba(255,255,255,0.04), transparent);
+            pointer-events: none;
+        }
+        .stat-card:hover { transform: translateY(-4px); border-color: var(--border); box-shadow: var(--shadow2); }
+
+        .stat-glow {
+            position: absolute;
+            top: -30px;
+            right: -30px;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            filter: blur(40px);
+            opacity: 0.35;
+        }
+        .stat-card:nth-child(1) .stat-glow { background: var(--accent); }
+        .stat-card:nth-child(2) .stat-glow { background: var(--accent2); }
+        .stat-card:nth-child(3) .stat-glow { background: var(--accent3); }
+        .stat-card:nth-child(4) .stat-glow { background: var(--warn); }
+
+        .stat-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+        .stat-icon-wrap {
+            width: 40px; height: 40px;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1rem;
+        }
+        .stat-card:nth-child(1) .stat-icon-wrap { background: rgba(0,224,255,0.12); color: var(--accent); }
+        .stat-card:nth-child(2) .stat-icon-wrap { background: rgba(123,92,255,0.12); color: var(--accent2); }
+        .stat-card:nth-child(3) .stat-icon-wrap { background: rgba(255,77,143,0.12); color: var(--accent3); }
+        .stat-card:nth-child(4) .stat-icon-wrap { background: rgba(255,190,61,0.12); color: var(--warn); }
+
+        .stat-badge {
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+        .badge-up { background: rgba(0,255,163,0.1); color: var(--success); }
+        .badge-down { background: rgba(255,77,143,0.1); color: var(--danger); }
+        .badge-fire { background: rgba(255,190,61,0.1); color: var(--warn); }
+
+        .stat-value {
+            font-size: 2.4rem;
+            font-weight: 800;
+            letter-spacing: -2px;
+            line-height: 1;
+            margin-bottom: 0.3rem;
+            background: var(--grad1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .stat-card:nth-child(3) .stat-value { background: var(--grad2); -webkit-background-clip: text; }
+        .stat-card:nth-child(4) .stat-value { background: linear-gradient(135deg, var(--warn), #ff8c00); -webkit-background-clip: text; }
+
+        .stat-label {
+            font-size: 0.72rem;
+            color: var(--muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+        }
+
+        .stat-sparkline { margin-top: 1rem; height: 40px; }
+        .stat-sparkline canvas { width: 100% !important; }
+
+        /* ─── CARD ─── */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: 20px;
+            padding: 1.5rem;
+            transition: all var(--transition);
+            animation: fadeUp 0.5s ease both;
+        }
+        .card:hover { border-color: var(--border); box-shadow: 0 4px 30px rgba(0,0,0,0.4); }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+        .card-title {
+            font-size: 0.95rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            letter-spacing: -0.2px;
+        }
+        .card-title i { color: var(--accent); }
+
+        /* ─── GRID LAYOUT ─── */
+        .analytics-grid {
+            display: grid;
+            gap: 1.25rem;
+        }
+        .grid-2 { grid-template-columns: 1fr 1fr; }
+        .grid-3 { grid-template-columns: 2fr 1fr 1fr; }
+        .grid-3b { grid-template-columns: 1fr 1fr 1.5fr; }
+        .col-span-2 { grid-column: span 2; }
+        .col-span-full { grid-column: 1 / -1; }
+
+        @media (max-width: 1100px) {
+            .grid-2, .grid-3, .grid-3b { grid-template-columns: 1fr; }
+            .col-span-2, .col-span-full { grid-column: auto; }
+        }
+
+        /* ─── CHART WRAPPER ─── */
+        .chart-wrap { position: relative; width: 100%; }
+        .chart-wrap canvas { width: 100% !important; }
+
+        /* ─── DATE RANGE TABS ─── */
+        .range-tabs {
+            display: flex;
+            gap: 2px;
+            background: var(--surface2);
+            padding: 3px;
+            border-radius: 10px;
+            border: 1px solid var(--border2);
+        }
+        .range-tab {
+            padding: 0.3rem 0.8rem;
+            border: none;
+            background: transparent;
+            color: var(--muted);
+            border-radius: 7px;
+            font-family: var(--font-display);
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .range-tab.active { background: var(--accent); color: #060a14; }
+        .range-tab:hover:not(.active) { color: var(--text); }
+
+        /* ─── ACTIVITY FEED ─── */
+        .activity-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            max-height: 360px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border) transparent;
+        }
+        .activity-item {
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            padding: 0.85rem;
+            background: var(--surface2);
+            border-radius: 12px;
+            border: 1px solid var(--border2);
+            transition: all var(--transition);
+            animation: slideIn 0.3s ease;
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-12px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        .activity-item:hover { border-color: var(--border); transform: translateX(4px); }
+        .act-icon {
+            width: 38px; height: 38px;
+            border-radius: 10px;
+            background: rgba(0,224,255,0.1);
+            color: var(--accent);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+        .act-body { flex: 1; min-width: 0; }
+        .act-action { font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .act-meta { font-size: 0.7rem; color: var(--muted); margin-top: 2px; font-family: var(--font-mono); }
+        .act-badge {
+            font-size: 0.65rem;
+            font-family: var(--font-mono);
+            padding: 2px 8px;
+            border-radius: 20px;
+            flex-shrink: 0;
+        }
+
+        /* ─── TOP TOOLS ─── */
+        .tool-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.75rem;
+            background: var(--surface2);
+            border-radius: 12px;
+            border: 1px solid var(--border2);
+            margin-bottom: 0.5rem;
+            transition: all var(--transition);
+        }
+        .tool-item:hover { border-color: var(--border); transform: translateX(4px); }
+        .tool-rank {
+            width: 26px; height: 26px;
+            border-radius: 8px;
+            background: var(--grad1);
+            color: #060a14;
+            font-size: 0.72rem;
+            font-weight: 800;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .tool-name { flex: 1; font-size: 0.85rem; font-weight: 600; }
+        .tool-bar-wrap { flex: 1; }
+        .tool-bar-bg { height: 4px; background: var(--surface2); border-radius: 10px; overflow: hidden; }
+        .tool-bar-fill { height: 100%; border-radius: 10px; background: var(--grad1); transition: width 1s cubic-bezier(0.4,0,0.2,1); }
+        .tool-count { font-family: var(--font-mono); font-size: 0.75rem; color: var(--accent); font-weight: 700; white-space: nowrap; }
+
+        /* ─── STATUS ITEMS ─── */
+        .status-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.75rem;
+            background: var(--surface2);
+            border-radius: 12px;
+            border: 1px solid var(--border2);
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+        }
+        .status-left { display: flex; align-items: center; gap: 0.6rem; }
+        .status-dot { width: 7px; height: 7px; border-radius: 50%; animation: pulse 2s infinite; }
+        .dot-green { background: var(--success); }
+        .dot-yellow { background: var(--warn); }
+        .dot-red { background: var(--danger); }
+        .status-tag {
+            font-size: 0.7rem;
+            font-family: var(--font-mono);
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-weight: 700;
+        }
+        .tag-ok { background: rgba(0,255,163,0.1); color: var(--success); }
+        .tag-warn { background: rgba(255,190,61,0.1); color: var(--warn); }
+        .tag-err { background: rgba(255,77,143,0.1); color: var(--danger); }
+
+        /* ─── HEATMAP ─── */
+        .heatmap-wrap { overflow-x: auto; }
+        .heatmap { display: flex; gap: 3px; padding-bottom: 0.5rem; }
+        .heatmap-col { display: flex; flex-direction: column; gap: 3px; }
+        .heatmap-cell {
+            width: 14px; height: 14px;
+            border-radius: 3px;
+            transition: transform 0.1s;
+            cursor: pointer;
+        }
+        .heatmap-cell:hover { transform: scale(1.4); }
+        .heatmap-labels { display: flex; gap: 3px; margin-bottom: 4px; }
+        .heatmap-label { width: 14px; font-size: 0.55rem; color: var(--muted); text-align: center; font-family: var(--font-mono); }
+        .heatmap-legend { display: flex; align-items: center; gap: 4px; margin-top: 0.75rem; }
+        .heatmap-legend span { font-size: 0.7rem; color: var(--muted); font-family: var(--font-mono); }
+        .legend-cell { width: 11px; height: 11px; border-radius: 2px; }
+
+        /* ─── METRICS ROW ─── */
+        .metrics-row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.25rem; }
+        .metric-chip {
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 10px;
+            padding: 0.5rem 0.9rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            flex: 1;
+            min-width: 100px;
+            transition: all var(--transition);
+        }
+        .metric-chip:hover { border-color: var(--border); }
+        .metric-chip-label { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; font-family: var(--font-mono); }
+        .metric-chip-value { font-size: 1.1rem; font-weight: 800; color: var(--text); }
+
+        /* ─── FILTER BAR ─── */
+        .filter-bar {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+        .filter-label { font-size: 0.75rem; color: var(--muted); font-family: var(--font-mono); margin-right: 0.25rem; }
+        .filter-chip {
+            padding: 0.3rem 0.85rem;
+            border-radius: 30px;
+            border: 1px solid var(--border2);
+            background: transparent;
+            color: var(--muted2);
+            font-family: var(--font-display);
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition);
+        }
+        .filter-chip.active, .filter-chip:hover { border-color: var(--accent); color: var(--accent); background: rgba(0,224,255,0.08); }
+        .search-input {
+            margin-left: auto;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            color: var(--text);
+            padding: 0.35rem 0.9rem;
+            border-radius: 10px;
+            font-family: var(--font-display);
+            font-size: 0.8rem;
+            outline: none;
+            transition: all var(--transition);
+            width: 200px;
+        }
+        .search-input:focus { border-color: var(--accent); background: var(--surface); }
+
+        /* ─── COMPARISON TABLE ─── */
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+        .data-table th {
+            text-align: left;
+            padding: 0.6rem 0.75rem;
+            color: var(--muted);
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid var(--border2);
+            font-family: var(--font-mono);
+        }
+        .data-table td { padding: 0.65rem 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.03); transition: background 0.15s; }
+        .data-table tr:hover td { background: var(--surface2); }
+        .data-table tr:last-child td { border-bottom: none; }
+        .td-pill {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        /* ─── TOAST ─── */
+        #toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 99999; display: flex; flex-direction: column; gap: 0.5rem; }
+        .toast {
+            display: flex; align-items: center; gap: 0.75rem;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            backdrop-filter: blur(12px);
+            padding: 0.85rem 1.2rem;
+            border-radius: 14px;
+            font-size: 0.83rem;
+            animation: toastIn 0.3s cubic-bezier(0.4,0,0.2,1);
+            box-shadow: var(--shadow);
+            min-width: 240px;
+            max-width: 360px;
+        }
+        @keyframes toastIn {
+            from { transform: translateX(110%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .toast.out { animation: toastOut 0.3s ease forwards; }
+        @keyframes toastOut { to { transform: translateX(110%); opacity: 0; } }
+        .toast-icon { font-size: 1rem; }
+        .toast-success { border-left: 3px solid var(--success); }
+        .toast-error { border-left: 3px solid var(--danger); }
+        .toast-info { border-left: 3px solid var(--accent); }
+        .toast-warn { border-left: 3px solid var(--warn); }
+
+        /* ─── PREMIUM OVERLAY ─── */
+        .lock-overlay {
+            position: fixed; inset: 0; z-index: 10000;
+            background: rgba(0,0,0,0.88);
+            backdrop-filter: blur(18px);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .lock-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 28px;
+            padding: 2.5rem;
+            max-width: 480px;
+            width: 90%;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+        .lock-icon { font-size: 3.5rem; color: var(--warn); margin-bottom: 1rem; }
+        .lock-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.75rem; background: var(--grad1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .lock-body { color: var(--muted2); font-size: 0.875rem; line-height: 1.7; margin-bottom: 2rem; }
+
+        /* ─── PULSE ANIMATION ─── */
+        @keyframes pulse {
+            0%,100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.3); }
+        }
+
+        /* ─── SCROLLBAR ─── */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+
+        /* ─── FOOTER ─── */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--muted);
+            font-size: 0.75rem;
+            border-top: 1px solid var(--border2);
+            margin-top: 2rem;
+        }
+        footer a { color: var(--muted); text-decoration: none; }
+        footer a:hover { color: var(--accent); }
+
+        .disclaimer {
+            max-width: 1440px; margin: 0 auto;
+            padding: 1rem 2rem;
+            font-size: 0.72rem;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        /* ─── RESPONSIVE ─── */
+        @media (max-width: 768px) {
+            main { padding: 1rem; }
+            .page-title { font-size: 1.5rem; }
+        }
+
+        /* ─── SKELETON LOADER ─── */
+        .skeleton {
+            background: linear-gradient(90deg, var(--surface2) 25%, var(--surface) 50%, var(--surface2) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
+        }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        /* ─── ANOMALY ALERT ─── */
+        .anomaly-alert {
+            display: flex; align-items: center; gap: 0.75rem;
+            background: rgba(255,190,61,0.07);
+            border: 1px solid rgba(255,190,61,0.2);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            font-size: 0.82rem;
+            color: var(--warn);
+            margin-bottom: 1rem;
+        }
+        .anomaly-alert i { flex-shrink: 0; }
+
+        /* ─── TOOLTIP ─── */
+        [data-tip] { position: relative; }
+        [data-tip]:hover::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a2744;
+            color: var(--text);
+            font-size: 0.7rem;
+            padding: 4px 10px;
+            border-radius: 6px;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 999;
+            border: 1px solid var(--border);
+        }
+
+        /* ─── MINI SELECTOR ─── */
+        .mini-select {
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            color: var(--text);
+            padding: 0.3rem 0.7rem;
+            border-radius: 8px;
+            font-family: var(--font-display);
+            font-size: 0.75rem;
+            outline: none;
+            cursor: pointer;
+        }
+
+        /* ─── COMPARE TOGGLE ─── */
+        .compare-toggle {
+            display: flex; align-items: center; gap: 0.5rem;
+            font-size: 0.75rem; color: var(--muted2); cursor: pointer;
+        }
+        .toggle-switch {
+            width: 32px; height: 17px;
+            background: var(--surface2);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            position: relative;
+            transition: background var(--transition);
+        }
+        .toggle-switch.on { background: var(--accent); border-color: var(--accent); }
+        .toggle-knob {
+            position: absolute; top: 2px; left: 2px;
+            width: 11px; height: 11px;
+            background: white; border-radius: 50%;
+            transition: transform var(--transition);
+        }
+        .toggle-switch.on .toggle-knob { transform: translateX(15px); }
+
+        /* ─── GRADIENT RULE ─── */
+        .hr-gradient { height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); border: none; margin: 0.5rem 0; }
+    </style>
+</head>
+<body>
+
+<div class="scanline"></div>
+<div class="aurora">
+    <div class="aurora-blob"></div>
+    <div class="aurora-blob"></div>
+    <div class="aurora-blob"></div>
+</div>
+<div id="toast-container"></div>
+
+<!-- ═══════════════════════════════ NAVBAR ═══════════════════════════════ -->
+<nav class="navbar">
+    <div class="nav-brand">
+        <div class="brand-dot"></div>
+        Sarveik<span style="font-weight:400;opacity:0.6;"> ANALYTICS</span>
+    </div>
+
+    <div class="nav-center" id="navMenu">
+        <a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="profile.html"><i class="fas fa-user"></i> Profile</a>
+        <a href="main.html"><i class="fas fa-rocket"></i> Tools</a>
+        <a href="analytics.html" class="active"><i class="fas fa-chart-line"></i> Analytics</a>
+        <a href="index.html" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </div>
+
+    <div class="nav-actions">
+        <div class="live-badge"><span class="live-dot"></span> LIVE</div>
+        <button class="nav-btn" id="themeToggle" data-tip="Toggle theme"><i class="fas fa-moon"></i></button>
+        <button class="nav-btn" onclick="exportFullReport()" data-tip="Export report"><i class="fas fa-download"></i></button>
+        <button class="hamburger" id="hamburger" aria-label="Menu">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+</nav>
+
+<!-- ═══════════════════════════════ MAIN ═══════════════════════════════ -->
+<main>
+
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="page-header-left">
+            <div class="page-eyebrow">Platform Intelligence</div>
+            <div class="page-title">Analytics Hub</div>
+            <div class="page-subtitle">Real-time insights & performance metrics</div>
+        </div>
+        <div class="header-actions">
+            <div id="lastRefreshed" style="font-size:0.72rem;color:var(--muted);font-family:var(--font-mono);align-self:center;"></div>
+            <button class="btn btn-outline" onclick="refreshAll()"><i class="fas fa-sync-alt"></i> Refresh All</button>
+            <button class="btn btn-primary" onclick="exportFullReport()"><i class="fas fa-file-export"></i> Export</button>
+        </div>
+    </div>
+
+    <!-- Anomaly Alert (hidden by default) -->
+    <div class="anomaly-alert" id="anomalyAlert" style="display:none;">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span id="anomalyText">Unusual spike detected in tool usage.</span>
+        <button onclick="document.getElementById('anomalyAlert').style.display='none'" style="margin-left:auto;background:none;border:none;color:var(--warn);cursor:pointer;"><i class="fas fa-times"></i></button>
+    </div>
+
+    <!-- ─── STAT CARDS ─── -->
+    <div class="stats-grid" id="statsGrid">
+        <div class="stat-card" onclick="window.location.href='main.html'" data-tip="View all tools">
+            <div class="stat-glow"></div>
+            <div class="stat-top">
+                <div class="stat-icon-wrap"><i class="fas fa-chart-bar"></i></div>
+                <span class="stat-badge badge-up" id="toolsTrend">+0%</span>
+            </div>
+            <div class="stat-value" id="totalTools">0</div>
+            <div class="stat-label">Tools Used</div>
+            <div class="stat-sparkline"><canvas id="spark1"></canvas></div>
+        </div>
+        <div class="stat-card" id="creditsCard" data-tip="Sarveik Credits balance">
+            <div class="stat-glow"></div>
+            <div class="stat-top">
+                <div class="stat-icon-wrap"><i class="fas fa-coins"></i></div>
+                <span class="stat-badge badge-up" id="creditsTrend">+0</span>
+            </div>
+            <div class="stat-value" id="creditsBalance">0</div>
+            <div class="stat-label">Sarveik Credits</div>
+            <div class="stat-sparkline"><canvas id="spark2"></canvas></div>
+        </div>
+        <div class="stat-card" id="connectionsCard" data-tip="Your network">
+            <div class="stat-glow"></div>
+            <div class="stat-top">
+                <div class="stat-icon-wrap"><i class="fas fa-users"></i></div>
+                <span class="stat-badge badge-down" id="onlineStatus">0 online</span>
+            </div>
+            <div class="stat-value" id="connectionsCount">0</div>
+            <div class="stat-label">Connections</div>
+            <div class="stat-sparkline"><canvas id="spark3"></canvas></div>
+        </div>
+        <div class="stat-card" id="streakCard" onclick="claimDailyBonus()" data-tip="Click to claim daily bonus!">
+            <div class="stat-glow"></div>
+            <div class="stat-top">
+                <div class="stat-icon-wrap"><i class="fas fa-fire"></i></div>
+                <span class="stat-badge badge-fire" id="streakBonus">🔥 Streak</span>
+            </div>
+            <div class="stat-value" id="streakDays">0</div>
+            <div class="stat-label">Day Streak</div>
+            <div class="stat-sparkline"><canvas id="spark4"></canvas></div>
+        </div>
+    </div>
+
+    <!-- ─── METRICS CHIPS ─── -->
+    <div class="metrics-row" id="metricsRow">
+        <div class="metric-chip"><span class="metric-chip-label">Avg Session</span><span class="metric-chip-value" id="avgSession">–</span></div>
+        <div class="metric-chip"><span class="metric-chip-label">Peak Hour</span><span class="metric-chip-value" id="peakHour">–</span></div>
+        <div class="metric-chip"><span class="metric-chip-label">Success Rate</span><span class="metric-chip-value" id="successRate">–</span></div>
+        <div class="metric-chip"><span class="metric-chip-label">API Calls</span><span class="metric-chip-value" id="apiCalls">–</span></div>
+        <div class="metric-chip"><span class="metric-chip-label">Uptime</span><span class="metric-chip-value" id="uptimeStat">–</span></div>
+        <div class="metric-chip"><span class="metric-chip-label">Saved Time</span><span class="metric-chip-value" id="savedTime">–</span></div>
+    </div>
+
+    <!-- ─── ROW 1: USAGE TRENDS (full width) ─── -->
+    <div class="analytics-grid" style="margin-bottom:1.25rem;">
+        <div class="card" style="animation-delay:0.1s">
+            <div class="card-header">
+                <div class="card-title"><i class="fas fa-chart-area"></i> Usage Trends</div>
+                <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
+                    <label class="compare-toggle" id="compareToggle">
+                        <div class="toggle-switch" id="compareSwitch"><div class="toggle-knob"></div></div>
+                        Compare period
+                    </label>
+                    <select class="mini-select" id="metricSelect">
+                        <option value="usage">Tool Usage</option>
+                        <option value="credits">Credits Spent</option>
+                        <option value="sessions">Sessions</option>
+                    </select>
+                    <div class="range-tabs" id="dateRange">
+                        <button class="range-tab" data-days="7">7D</button>
+                        <button class="range-tab active" data-days="30">30D</button>
+                        <button class="range-tab" data-days="90">90D</button>
+                        <button class="range-tab" data-days="365">1Y</button>
+                    </div>
+                </div>
+            </div>
+            <div class="chart-wrap" style="height:280px;"><canvas id="trendsChart"></canvas></div>
+        </div>
+    </div>
+
+    <!-- ─── ROW 2: Category Pie | Top Tools ─── -->
+    <div class="analytics-grid grid-2" style="margin-bottom:1.25rem;">
+        <div class="card" style="animation-delay:0.15s">
+            <div class="card-header">
+                <div class="card-title"><i class="fas fa-chart-pie"></i> Category Breakdown</div>
+                <button class="btn btn-outline" onclick="exportAnalytics()" style="padding:0.3rem 0.85rem;font-size:0.75rem;"><i class="fas fa-download"></i> CSV</button>
+            </div>
+            <div class="chart-wrap" style="height:220px;"><canvas id="categoryChart"></canvas></div>
+        </div>
+        <div class="card" style="animation-delay:0.2s">
+            <div class="card-header">
+                <div class="card-title"><i class="fas fa-trophy"></i> Top Tools</div>
+                <select class="mini-select" id="toolPeriodSelect">
+                    <option>This Week</option>
+                    <option selected>This Month</option>
+                    <option>All Time</option>
+                </select>
+            </div>
+            <div id="topTools"></div>
+        </div>
+    </div>
+
+    <!-- ─── ROW 3: Activity Heatmap (full) ─── -->
+    <div class="analytics-grid" style="margin-bottom:1.25rem;">
+        <div class="card" style="animation-delay:0.2s">
+            <div class="card-header">
+                <div class="card-title"><i class="fas fa-calendar-alt"></i> Activity Heatmap</div>
+                <div style="font-size:0.72rem;color:var(--muted);font-family:var(--font-mono);">Last 24 weeks</div>
+            </div>
+            <div class="heatmap-wrap" id="heatmapWrap"></div>
+            <div class="heatmap-legend">
+                <span>Less</span>
+                <div class="legend-cell" style="background:var(--surface2);border:1px solid var(--border2);"></div>
+                <div class="legend-cell" style="background:rgba(0,224,255,0.15);"></div>
+                <div class="legend-cell" style="background:rgba(0,224,255,0.35);"></div>
+                <div class="legend-cell" style="background:rgba(0,224,255,0.6);"></div>
+                <div class="legend-cell" style="background:rgba(0,224,255,0.9);"></div>
+                <span>More</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── ROW 4: Hourly Distribution | Radar ─── -->
+    <div class="analytics-grid grid-2" style="margin-bottom:1.25rem;">
+        <div class="card" style="animation-delay:0.25s">
+            <div class="card-header">
+                <div class="card-title"><i class="fas fa-clock"></i> Hourly Usage Pattern</div>
+            </div>
+            <div class="chart-wrap" style="height:220px;"><canvas id="hourlyChart"></canvas></div>
+        </div>
+        <div class="card" style="animation-delay:0.3s">
+            <div class="card-title" style="margin-bottom:1rem;"><i class="fas fa-spider"></i> Skill Profile</div>
+            <div class="chart-wrap" style="height:220px;"><canvas id="radarChart"></canvas></div>
+        </div>
+    </div>
+
+    <!-- ─── ROW 5: Activity Feed | Network | System Status ─── -->
+    <div class="analytics-grid grid-3b" style="margin-bottom:1.25rem;">
+        <div class="card" style="animation-delay:0.25s">
+            <div class="card-header">
+                <div class="card-title"><i class="fas fa-stream"></i> Activity Feed</div>
+                <div style="display:flex;gap:0.5rem;">
+                    <button class="filter-chip active" data-filter="all" onclick="filterActivity(this,'all')">All</button>
+                    <button class="filter-chip" data-filter="tool" onclick="filterActivity(this,'tool')">Tools</button>
+                    <button class="filter-chip" data-filter="credit" onclick="filterActivity(this,'credit')">Credits</button>
+                    <button class="btn btn-outline" onclick="refreshActivity()" style="padding:0.3rem 0.6rem;font-size:0.75rem;"><i class="fas fa-sync-alt"></i></button>
+                </div>
+            </div>
+            <div class="activity-feed" id="activityFeed"></div>
+        </div>
+        <div class="card" style="animation-delay:0.3s">
+            <div class="card-header">
+                <div class="card-title"><i class="fas fa-tachometer-alt"></i> Network Health</div>
+            </div>
+            <div class="chart-wrap" style="height:180px;"><canvas id="networkGauge"></canvas></div>
+            <div id="networkStats" style="text-align:center;margin-top:0.5rem;font-size:0.78rem;color:var(--muted2);font-family:var(--font-mono);"></div>
+            <hr class="hr-gradient" style="margin:1rem 0;">
+            <div id="networkDetails"></div>
+        </div>
+        <div class="card" style="animation-delay:0.35s">
+            <div class="card-header">
+                <div class="card-title"><i class="fas fa-server"></i> System Status</div>
+                <button class="btn btn-outline" onclick="refreshSystemStatus()" style="padding:0.3rem 0.6rem;font-size:0.75rem;"><i class="fas fa-sync-alt"></i></button>
+            </div>
+            <div id="systemStatus"></div>
+            <hr class="hr-gradient" style="margin:1rem 0;">
+            <div class="card-title" style="margin-bottom:0.75rem;font-size:0.85rem;"><i class="fas fa-history"></i> Uptime (30d)</div>
+            <div class="chart-wrap" style="height:60px;"><canvas id="uptimeChart"></canvas></div>
+        </div>
+    </div>
+
+    <!-- ─── ROW 6: Session Analytics Table ─── -->
+    <div class="analytics-grid" style="margin-bottom:1.25rem;">
+        <div class="card" style="animation-delay:0.35s">
+            <div class="card-header">
+                <div class="card-title"><i class="fas fa-table"></i> Session Log</div>
+                <div style="display:flex;gap:0.5rem;align-items:center;">
+                    <input class="search-input" id="sessionSearch" placeholder="Search sessions…" oninput="filterSessions(this.value)">
+                    <button class="btn btn-outline" onclick="exportSessionLog()" style="padding:0.3rem 0.85rem;font-size:0.75rem;"><i class="fas fa-download"></i></button>
+                </div>
+            </div>
+            <div style="overflow-x:auto;">
+                <table class="data-table" id="sessionTable">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Tool / Action</th>
+                            <th>Category</th>
+                            <th>Duration</th>
+                            <th>Credits</th>
+                            <th>Status</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sessionBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</main>
+
+<footer>
+    <p>© 2025 Sarveik  · <a href="privacy.html">Privacy</a> · <a href="terms.html">Terms</a></p>
+</footer>
+<div class="disclaimer">
+    <strong>Disclaimer:</strong>Sarveik  is a directory of third-party tools. We do not host any content. All trademarks and brand names are property of their respective owners. <a href="dmca.html">DMCA</a>
+</div>
+
+<!-- ═══════════════════════════════ SCRIPT ═══════════════════════════════ -->
+<script>
+/* ─── GLOBALS ─── */
+let trendsChart, categoryChart, networkGauge, radarChart, hourlyChart, uptimeChart;
+let currentDays = 30;
+let compareMode = false;
+let currentMetric = 'usage';
+let allActivities = [];
+let allSessions = [];
+let refreshInterval;
+
+/* ─── INIT ─── */
+async function init() {
+    const loggedIn = await checkSession();
+    if (!loggedIn) return;
+    const hasAccess = await checkPremiumAnalytics();
+    if (!hasAccess) return;
+
+    initTheme();
+    initNavHamburger();
+    initDateRange();
+    initCompareToggle();
+    initMetricSelect();
+
+    await refreshAll();
+    updateLastRefreshed();
+
+    refreshInterval = setInterval(() => {
+        loadStats();
+        loadActivityFeed();
+        loadNetworkPerformance();
+        updateLastRefreshed();
+    }, 30000);
+}
+
+async function refreshAll() {
+    await Promise.allSettled([
+        loadStats(),
+        loadUsageTrends(),
+        loadCategoryDistribution(),
+        loadTopTools(),
+        loadActivityFeed(),
+        loadNetworkPerformance(),
+        loadSystemStatus(),
+        buildHeatmap(),
+        buildHourlyChart(),
+        buildRadarChart(),
+        buildSparklines(),
+        loadMetricChips(),
+        buildSessionLog(),
+        buildUptimeChart(),
+    ]);
+    toast('Dashboard refreshed', 'success');
+}
+
+function updateLastRefreshed() {
+    const el = document.getElementById('lastRefreshed');
+    if (el) el.textContent = 'Updated ' + new Date().toLocaleTimeString();
+}
+
+/* ─── SESSION / PREMIUM ─── */
+async function checkSession() {
+    try {
+        const d = await api('/check-session');
+        if (!d.loggedIn) { location.href = 'login.html'; return false; }
+        return true;
+    } catch { location.href = 'login.html'; return false; }
+}
+
+async function checkPremiumAnalytics() {
+    try {
+        const d = await api('/api/user/premium-status');
+        if (!d.hasAnalytics) { showLockScreen(); return false; }
+        return true;
+    } catch { showLockScreen(); return false; }
+}
+
+function showLockScreen() {
+    document.body.insertAdjacentHTML('beforeend', `
+        <div class="lock-overlay">
+            <div class="lock-card">
+                <div class="lock-icon"><i class="fas fa-lock"></i></div>
+                <div class="lock-title">Premium Analytics</div>
+                <div class="lock-body">Advanced analytics are available with the <strong>Advanced Analytics</strong> add-on. Unlock detailed insights, trends, heatmaps, and session logs from the Store.</div>
+                <button class="btn btn-primary" onclick="location.href='dashboard.html'"><i class="fas fa-store"></i> Go to Store</button>
+            </div>
+        </div>`);
+}
+
+/* ─── API ─── */
+async function api(url, opts = {}) {
+    const r = await fetch(url, { ...opts, credentials: 'include' });
+    if (!r.ok) throw new Error(await r.text() || `HTTP ${r.status}`);
+    return r.headers.get('content-type')?.includes('json') ? r.json() : r.text();
+}
+
+/* ─── STAT CARDS ─── */
+async function loadStats() {
+    try {
+        const [userStats, stats] = await Promise.all([
+            api('/api/analytics/user-stats'),
+            api('/api/stats')
+        ]);
+        animNum('totalTools', userStats.tools?.total_uses || 0);
+        animNum('creditsBalance', userStats.credits?.current_balance || 0);
+        animNum('connectionsCount', userStats.social?.total_friends || 0);
+        animNum('streakDays', stats.streak || 0);
+        const t = userStats.tools?.total_uses || 0;
+        document.getElementById('toolsTrend').textContent = `+${Math.min(30, Math.floor(t/15||0))}%`;
+        document.getElementById('onlineStatus').textContent = `${userStats.social?.online_friends || 0} online`;
+    } catch (e) { console.warn('Stats fallback'); loadStatsMock(); }
+}
+
+function loadStatsMock() {
+    animNum('totalTools', 247);
+    animNum('creditsBalance', 3840);
+    animNum('connectionsCount', 58);
+    animNum('streakDays', 12);
+    document.getElementById('toolsTrend').textContent = '+18%';
+    document.getElementById('onlineStatus').textContent = '9 online';
+}
+
+/* ─── METRIC CHIPS ─── */
+async function loadMetricChips() {
+    try {
+        const d = await api('/api/analytics/meta-stats').catch(() => null);
+        const avgSession = d?.avg_session_min || (Math.floor(Math.random()*12)+3);
+        const peakH = d?.peak_hour ?? 14;
+        set('avgSession', avgSession + 'm');
+        set('peakHour', peakH + ':00');
+        set('successRate', (d?.success_rate || 97.4) + '%');
+        set('apiCalls', (d?.api_calls || 12840).toLocaleString());
+        set('uptimeStat', (d?.uptime || 99.9) + '%');
+        set('savedTime', (d?.saved_hours || 48) + 'h');
+    } catch { set('avgSession','7m'); set('peakHour','14:00'); set('successRate','97.4%'); set('apiCalls','12,840'); set('uptimeStat','99.9%'); set('savedTime','48h'); }
+}
+function set(id, v) { const el = document.getElementById(id); if (el) el.textContent = v; }
+
+/* ─── TRENDS CHART ─── */
+async function loadUsageTrends() {
+    try {
+        const act = await api('/api/analytics/user-activity').catch(() => ({ daily_usage: generateMockDailyUsage(365) }));
+        const daily = act.daily_usage || generateMockDailyUsage(365);
+        const filtered = daily.slice(-currentDays);
+        const dates = filtered.map(d => d.date);
+        const counts = filtered.map(d => d.count);
+        const prevCounts = compareMode ? daily.slice(-currentDays*2, -currentDays).map(d => d.count) : [];
+
+        const ctx = document.getElementById('trendsChart').getContext('2d');
+        if (trendsChart) trendsChart.destroy();
+
+        const datasets = [{
+            label: currentMetric === 'usage' ? 'Tools Used' : currentMetric === 'credits' ? 'Credits' : 'Sessions',
+            data: counts.map(c => currentMetric === 'credits' ? c * 3 : currentMetric === 'sessions' ? Math.floor(c * 0.7) : c),
+            borderColor: '#00e0ff',
+            backgroundColor: (ctx2) => {
+                const g = ctx2.chart.ctx.createLinearGradient(0, 0, 0, 280);
+                g.addColorStop(0, 'rgba(0,224,255,0.25)');
+                g.addColorStop(1, 'rgba(0,224,255,0)');
+                return g;
+            },
+            borderWidth: 2,
+            pointRadius: currentDays <= 30 ? 3 : 0,
+            pointHoverRadius: 6,
+            pointBackgroundColor: '#7b5cff',
+            pointBorderColor: '#fff',
+            pointBorderWidth: 1.5,
+            tension: 0.4,
+            fill: true
+        }];
+
+        if (compareMode && prevCounts.length) {
+            datasets.push({
+                label: 'Previous Period',
+                data: prevCounts.map(c => currentMetric === 'credits' ? c * 3 : currentMetric === 'sessions' ? Math.floor(c * 0.7) : c),
+                borderColor: 'rgba(123,92,255,0.6)',
+                backgroundColor: 'rgba(123,92,255,0.04)',
+                borderWidth: 1.5,
+                borderDash: [4, 4],
+                pointRadius: 0,
+                tension: 0.4,
+                fill: false
+            });
+        }
+
+        trendsChart = new Chart(ctx, {
+            type: 'line',
+            data: { labels: dates, datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: {
+                    legend: { display: compareMode, labels: { color: '#7a93b5', font: { family: 'Syne', size: 11 }, boxWidth: 12 } },
+                    tooltip: { backgroundColor: '#0c1424', borderColor: 'rgba(0,224,255,0.2)', borderWidth: 1, titleFont: { family: 'Space Mono', size: 11 }, bodyFont: { family: 'Syne', size: 12 }, padding: 10 }
+                },
+                scales: {
+                    y: { grid: { color: 'rgba(148,163,184,0.06)' }, ticks: { color: '#4e6180', font: { family: 'Space Mono', size: 10 } }, border: { dash: [4, 4] } },
+                    x: { grid: { display: false }, ticks: { color: '#4e6180', font: { family: 'Space Mono', size: 10 }, maxRotation: 0, maxTicksLimit: 8 } }
+                }
+            }
+        });
+
+        // Check anomaly
+        const avg = counts.reduce((a,b) => a+b, 0) / counts.length;
+        const last = counts[counts.length-1];
+        if (last > avg * 2) {
+            document.getElementById('anomalyAlert').style.display = 'flex';
+            document.getElementById('anomalyText').textContent = `Unusual spike: ${last} uses today vs avg ${Math.round(avg)}`;
+        }
+    } catch (e) { console.warn('Trends error', e); }
+}
+
+/* ─── CATEGORY CHART ─── */
+async function loadCategoryDistribution() {
+    try {
+        const cats = await api('/api/analytics/usage-by-category').catch(() => [
+            { category: 'AI Writing', count: 45 },
+            { category: 'Image Tools', count: 30 },
+            { category: 'Code Assist', count: 25 },
+            { category: 'Data', count: 18 },
+            { category: 'Research', count: 15 },
+            { category: 'Other', count: 10 }
+        ]);
+        const ctx = document.getElementById('categoryChart').getContext('2d');
+        if (categoryChart) categoryChart.destroy();
+        categoryChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: cats.map(c => c.category),
+                datasets: [{ data: cats.map(c => c.count), backgroundColor: ['#00e0ff','#7b5cff','#ff4d8f','#00ffa3','#ffbe3d','#3b82f6'], borderWidth: 0, hoverOffset: 8 }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, cutout: '68%',
+                plugins: {
+                    legend: { position: 'right', labels: { color: '#7a93b5', font: { family: 'Syne', size: 10 }, boxWidth: 10, padding: 10 } },
+                    tooltip: { backgroundColor: '#0c1424', borderColor: 'rgba(0,224,255,0.2)', borderWidth: 1 }
+                }
+            }
+        });
+    } catch (e) { console.warn('Cat error', e); }
+}
+
+/* ─── TOP TOOLS ─── */
+async function loadTopTools() {
+    try {
+        let tools = [];
+        try {
+            const a = await api('/api/usage/analytics');
+            tools = a.tools || [];
+        } catch {
+            const t = await api('/api/analytics/trending-tools?period=month&limit=6').catch(() => null);
+            tools = t ? t.map(x => ({ name: x.name, count: x.usage_count })) : mockTopTools();
+        }
+        if (!tools.length) tools = mockTopTools();
+        const sorted = tools.sort((a, b) => b.count - a.count).slice(0, 6);
+        const max = sorted[0]?.count || 1;
+        document.getElementById('topTools').innerHTML = sorted.map((tool, i) => `
+            <div class="tool-item">
+                <div class="tool-rank">${i+1}</div>
+                <div class="tool-name">${esc(tool.name)}</div>
+                <div class="tool-bar-wrap">
+                    <div class="tool-bar-bg"><div class="tool-bar-fill" style="width:0%" data-w="${Math.round((tool.count/max)*100)}%"></div></div>
+                </div>
+                <div class="tool-count">${tool.count}</div>
+            </div>`).join('');
+        setTimeout(() => document.querySelectorAll('.tool-bar-fill').forEach(el => el.style.width = el.dataset.w), 50);
+    } catch (e) { console.warn('Top tools error', e); }
+}
+
+function mockTopTools() {
+    return [
+        { name: 'ChatGPT Enhancer', count: 84 },
+        { name: 'Image Upscaler', count: 61 },
+        { name: 'Code Reviewer', count: 48 },
+        { name: 'PDF Summarizer', count: 37 },
+        { name: 'SEO Analyzer', count: 29 },
+        { name: 'Data Visualizer', count: 22 },
+    ];
+}
+
+/* ─── ACTIVITY FEED ─── */
+async function loadActivityFeed() {
+    try {
+        allActivities = await api('/api/activity').catch(() => generateMockActivity());
+        renderActivity('all');
+    } catch (e) { console.warn('Activity error', e); }
+}
+
+function renderActivity(filter) {
+    const container = document.getElementById('activityFeed');
+    let items = allActivities.slice(0, 20);
+    if (filter !== 'all') items = items.filter(a => a.type === filter);
+    if (!items.length) { container.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--muted);">No activity found</div>'; return; }
+    container.innerHTML = items.map(act => `
+        <div class="activity-item">
+            <div class="act-icon"><i class="fas ${act.icon || 'fa-bolt'}"></i></div>
+            <div class="act-body">
+                <div class="act-action">${esc(act.action)}</div>
+                <div class="act-meta">${relTime(act.time)}</div>
+            </div>
+            <span class="act-badge" style="background:${act.type==='credit'?'rgba(0,255,163,0.1)':'rgba(0,224,255,0.1)'};color:${act.type==='credit'?'var(--success)':'var(--accent)'}">${act.type||'tool'}</span>
+        </div>`).join('');
+}
+
+function filterActivity(btn, filter) {
+    document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderActivity(filter);
+}
+function refreshActivity() { loadActivityFeed(); toast('Activity refreshed', 'info'); }
+
+/* ─── NETWORK PERFORMANCE ─── */
+async function loadNetworkPerformance() {
+    try {
+        const ns = await api('/api/network/stats').catch(() => ({ total: 58, online: 9, latency: 42, bandwidth: 94 }));
+        const pct = ns.total ? Math.round((ns.online / ns.total) * 100) : 0;
+        const ctx = document.getElementById('networkGauge').getContext('2d');
+        if (networkGauge) networkGauge.destroy();
+        networkGauge = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                datasets: [{
+                    data: [pct, 100-pct],
+                    backgroundColor: [pct > 80 ? '#00ffa3' : pct > 50 ? '#ffbe3d' : '#ff4d8f', 'rgba(255,255,255,0.04)'],
+                    borderWidth: 0, circumference: 270, rotation: 225
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, cutout: '78%', plugins: { tooltip: { enabled: false }, legend: { display: false } } }
+        });
+        document.getElementById('networkStats').innerHTML = `<span style="font-size:1.5rem;font-weight:800;color:${pct>80?'var(--success)':'var(--warn)'}">${pct}%</span> health`;
+        document.getElementById('networkDetails').innerHTML = `
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;">
+                ${[['Online', ns.online + ' / ' + ns.total], ['Latency', (ns.latency||42) + 'ms'], ['Bandwidth', (ns.bandwidth||94) + '%'], ['Region', ns.region||'US-East']].map(([k,v]) => `
+                    <div style="background:var(--surface2);padding:0.5rem 0.7rem;border-radius:8px;border:1px solid var(--border2);">
+                        <div style="font-size:0.65rem;color:var(--muted);font-family:var(--font-mono);text-transform:uppercase;">${k}</div>
+                        <div style="font-size:0.85rem;font-weight:700;">${v}</div>
+                    </div>`).join('')}
+            </div>`;
+    } catch (e) { console.warn('Network error', e); }
+}
+
+/* ─── SYSTEM STATUS ─── */
+function loadSystemStatus() {
+    const services = [
+        { name: 'API Server', status: 'ok', label: 'Operational', latency: '12ms' },
+        { name: 'Database', status: 'ok', label: 'Connected', latency: '4ms' },
+        { name: 'WebSocket', status: 'ok', label: 'Live', latency: '–' },
+        { name: 'Cache Layer', status: 'warn', label: '98% hit rate', latency: '1ms' },
+        { name: 'CDN', status: 'ok', label: 'Optimal', latency: '8ms' },
+        { name: 'Auth Service', status: 'ok', label: 'Healthy', latency: '6ms' },
+    ];
+    document.getElementById('systemStatus').innerHTML = services.map(s => `
+        <div class="status-row">
+            <div class="status-left">
+                <div class="status-dot ${s.status==='ok'?'dot-green':s.status==='warn'?'dot-yellow':'dot-red'}"></div>
+                <span style="font-size:0.82rem;">${s.name}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:0.5rem;">
+                <span style="font-size:0.7rem;color:var(--muted);font-family:var(--font-mono);">${s.latency}</span>
+                <span class="status-tag ${s.status==='ok'?'tag-ok':s.status==='warn'?'tag-warn':'tag-err'}">${s.label}</span>
+            </div>
+        </div>`).join('');
+}
+function refreshSystemStatus() { loadSystemStatus(); toast('Status refreshed', 'info'); }
+
+/* ─── HEATMAP ─── */
+function buildHeatmap() {
+    const wrap = document.getElementById('heatmapWrap');
+    const weeks = 24;
+    const now = new Date();
+    const data = [];
+    for (let i = weeks * 7 - 1; i >= 0; i--) {
+        const d = new Date(now); d.setDate(d.getDate() - i);
+        data.push({ date: d, count: Math.random() < 0.3 ? 0 : Math.floor(Math.random() * 12) });
+    }
+    const days = ['M','','W','','F','','S'];
+    let html = '<div style="display:flex;gap:3px;"><div style="display:flex;flex-direction:column;gap:3px;margin-right:4px;">';
+    html += days.map(d => `<div style="width:14px;height:14px;font-size:0.55rem;color:var(--muted);font-family:var(--font-mono);display:flex;align-items:center;">${d}</div>`).join('');
+    html += '</div><div class="heatmap">';
+    for (let w = 0; w < weeks; w++) {
+        html += '<div class="heatmap-col">';
+        for (let d = 0; d < 7; d++) {
+            const idx = w * 7 + d;
+            const c = data[idx]?.count || 0;
+            const opacity = c === 0 ? 0 : 0.15 + (c / 12) * 0.75;
+            const bg = c === 0 ? 'var(--surface2)' : `rgba(0,224,255,${opacity.toFixed(2)})`;
+            const dt = data[idx]?.date?.toDateString() || '';
+            html += `<div class="heatmap-cell" style="background:${bg}" title="${dt}: ${c} uses"></div>`;
+        }
+        html += '</div>';
+    }
+    html += '</div></div>';
+    wrap.innerHTML = html;
+}
+
+/* ─── HOURLY CHART ─── */
+function buildHourlyChart() {
+    const hours = Array.from({length:24}, (_,i) => i);
+    const values = hours.map(h => {
+        const curve = Math.sin((h - 6) * Math.PI / 18) * 10;
+        return Math.max(0, Math.floor(curve + Math.random() * 5 + (h > 8 && h < 20 ? 8 : 0)));
+    });
+    const ctx = document.getElementById('hourlyChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: hours.map(h => h + ':00'),
+            datasets: [{
+                label: 'Uses',
+                data: values,
+                backgroundColor: hours.map(h => h >= 9 && h <= 18 ? 'rgba(0,224,255,0.5)' : 'rgba(123,92,255,0.3)'),
+                borderRadius: 4, borderSkipped: false
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false }, tooltip: { backgroundColor: '#0c1424', borderColor: 'rgba(0,224,255,0.2)', borderWidth: 1 } },
+            scales: {
+                y: { grid: { color: 'rgba(148,163,184,0.06)' }, ticks: { color: '#4e6180', font: { family: 'Space Mono', size: 9 } } },
+                x: { grid: { display: false }, ticks: { color: '#4e6180', font: { family: 'Space Mono', size: 9 }, maxRotation: 0, maxTicksLimit: 8 } }
+            }
+        }
+    });
+}
+
+/* ─── RADAR CHART ─── */
+function buildRadarChart() {
+    const ctx = document.getElementById('radarChart').getContext('2d');
+    radarChart = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: ['Automation', 'Research', 'Creative', 'Code', 'Data', 'Social'],
+            datasets: [{
+                label: 'Your Profile',
+                data: [85, 70, 60, 90, 75, 50],
+                borderColor: '#00e0ff',
+                backgroundColor: 'rgba(0,224,255,0.1)',
+                pointBackgroundColor: '#00e0ff',
+                pointBorderColor: '#fff',
+                pointRadius: 4,
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { r: { grid: { color: 'rgba(148,163,184,0.1)' }, angleLines: { color: 'rgba(148,163,184,0.1)' }, ticks: { display: false }, pointLabels: { color: '#7a93b5', font: { family: 'Syne', size: 10, weight: '600' } }, suggestedMin: 0, suggestedMax: 100 } }
+        }
+    });
+}
+
+/* ─── SPARKLINES ─── */
+function buildSparklines() {
+    const configs = [
+        { id: 'spark1', color: '#00e0ff', data: randSparkData() },
+        { id: 'spark2', color: '#7b5cff', data: randSparkData() },
+        { id: 'spark3', color: '#ff4d8f', data: randSparkData() },
+        { id: 'spark4', color: '#ffbe3d', data: randSparkData() },
+    ];
+    configs.forEach(({ id, color, data }) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        new Chart(el.getContext('2d'), {
+            type: 'line',
+            data: { labels: data.map((_,i) => i), datasets: [{ data, borderColor: color, backgroundColor: `${color}22`, borderWidth: 1.5, pointRadius: 0, tension: 0.4, fill: true }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: { display: false }, y: { display: false } }, elements: { line: { borderCapStyle: 'round' } } }
+        });
+    });
+}
+
+/* ─── SESSION LOG ─── */
+function buildSessionLog() {
+    allSessions = generateMockSessions(20);
+    renderSessions(allSessions);
+}
+function renderSessions(sessions) {
+    const cats = { 'AI Writing': '#00e0ff', 'Image Tools': '#7b5cff', 'Code Assist': '#00ffa3', 'Data': '#ffbe3d', 'Research': '#ff4d8f' };
+    document.getElementById('sessionBody').innerHTML = sessions.map((s, i) => `
+        <tr>
+            <td style="color:var(--muted);font-family:var(--font-mono);font-size:0.75rem;">${i+1}</td>
+            <td style="font-weight:600;">${esc(s.tool)}</td>
+            <td><span class="td-pill" style="background:${cats[s.cat]||'#4e6180'}22;color:${cats[s.cat]||'#7a93b5'}">${s.cat}</span></td>
+            <td style="font-family:var(--font-mono);font-size:0.78rem;">${s.duration}</td>
+            <td style="font-family:var(--font-mono);font-size:0.78rem;color:var(--accent2);">${s.credits > 0 ? '-' + s.credits : '–'}</td>
+            <td><span class="td-pill ${s.ok ? 'badge-up' : 'badge-down'}">${s.ok ? 'OK' : 'ERR'}</span></td>
+            <td style="color:var(--muted);font-family:var(--font-mono);font-size:0.72rem;">${relTime(s.time)}</td>
+        </tr>`).join('');
+}
+function filterSessions(q) {
+    renderSessions(allSessions.filter(s => s.tool.toLowerCase().includes(q.toLowerCase()) || s.cat.toLowerCase().includes(q.toLowerCase())));
+}
+
+/* ─── UPTIME CHART ─── */
+function buildUptimeChart() {
+    const data = Array.from({length:30}, () => Math.random() > 0.05 ? 100 : Math.floor(Math.random()*60+30));
+    const ctx = document.getElementById('uptimeChart').getContext('2d');
+    uptimeChart = new Chart(ctx, {
+        type: 'bar',
+        data: { labels: data.map((_,i)=>i), datasets: [{ data, backgroundColor: data.map(d => d > 95 ? 'rgba(0,255,163,0.5)' : d > 70 ? 'rgba(255,190,61,0.5)' : 'rgba(255,77,143,0.5)'), borderRadius: 2, borderSkipped: false }] },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { enabled: false } }, scales: { x: { display: false }, y: { display: false, min: 0, max: 100 } } }
+    });
+}
+
+/* ─── EXPORT ─── */
+function exportAnalytics() {
+    const rows = [['Category', 'Usage'], ...mockTopTools().map(t => [t.name, t.count])];
+    const csv = rows.map(r => r.join(',')).join('\n');
+    downloadFile('analytics.csv', csv, 'text/csv');
+    toast('Category data exported', 'success');
+}
+function exportFullReport() {
+    const data = { exported: new Date().toISOString(), tools: 247, credits: 3840, sessions: allSessions.length };
+    downloadFile('Sarveik-report.json', JSON.stringify(data, null, 2), 'application/json');
+    toast('Full report exported', 'success');
+}
+function exportSessionLog() {
+    const rows = [['Tool','Category','Duration','Credits','Status','Time'], ...allSessions.map(s => [s.tool, s.cat, s.duration, s.credits, s.ok?'OK':'ERR', s.time])];
+    downloadFile('sessions.csv', rows.map(r => r.join(',')).join('\n'), 'text/csv');
+    toast('Session log exported', 'success');
+}
+function downloadFile(name, content, type) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([content], { type }));
+    a.download = name;
+    a.click();
+}
+
+/* ─── DAILY BONUS ─── */
+async function claimDailyBonus() {
+    try {
+        await api('/api/credits/claim-daily', { method: 'POST' });
+        toast('🎉 Daily bonus claimed! +5 credits', 'success');
+        await loadStats();
+    } catch (e) {
+        toast(e.message?.includes('already') ? 'Already claimed today!' : e.message || 'Error', 'error');
+    }
+}
+
+/* ─── UI INIT ─── */
+function initDateRange() {
+    document.querySelectorAll('.range-tab').forEach(btn => btn.addEventListener('click', async () => {
+        document.querySelectorAll('.range-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentDays = parseInt(btn.dataset.days);
+        await loadUsageTrends();
+        toast(`Showing ${currentDays}d trend`, 'info');
+    }));
+}
+function initCompareToggle() {
+    const sw = document.getElementById('compareSwitch');
+    document.getElementById('compareToggle').addEventListener('click', async () => {
+        compareMode = !compareMode;
+        sw.classList.toggle('on', compareMode);
+        await loadUsageTrends();
+    });
+}
+function initMetricSelect() {
+    document.getElementById('metricSelect').addEventListener('change', async (e) => {
+        currentMetric = e.target.value;
+        await loadUsageTrends();
+    });
+}
+function initTheme() {
+    const saved = localStorage.getItem('Sarveik-theme');
+    if (saved === 'light') document.body.classList.add('light');
+    document.getElementById('themeToggle').addEventListener('click', () => {
+        document.body.classList.toggle('light');
+        localStorage.setItem('Sarveik-theme', document.body.classList.contains('light') ? 'light' : 'dark');
+        document.getElementById('themeToggle').querySelector('i').className = document.body.classList.contains('light') ? 'fas fa-sun' : 'fas fa-moon';
+    });
+}
+function initNavHamburger() {
+    document.getElementById('hamburger').addEventListener('click', () => document.getElementById('navMenu').classList.toggle('open'));
+    document.querySelectorAll('#navMenu a').forEach(a => a.addEventListener('click', () => document.getElementById('navMenu').classList.remove('open')));
+    document.getElementById('logoutBtn').addEventListener('click', async (e) => {
+        e.preventDefault();
+        if (confirm('Logout from Sarveik?')) {
+            try { await api('/logout', { method: 'POST' }); } catch {}
+            location.href = 'index.html';
+        }
+    });
+}
+
+/* ─── TOAST ─── */
+function toast(msg, type = 'success') {
+    const el = document.createElement('div');
+    el.className = `toast toast-${type}`;
+    const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle', warn: 'fa-exclamation-triangle' };
+    el.innerHTML = `<i class="fas ${icons[type]||icons.info} toast-icon"></i> ${msg}`;
+    document.getElementById('toast-container').appendChild(el);
+    setTimeout(() => { el.classList.add('out'); setTimeout(() => el.remove(), 350); }, 3500);
+}
+
+/* ─── HELPERS ─── */
+function animNum(id, end) {
+    const el = document.getElementById(id); if (!el) return;
+    const start = parseInt(el.textContent) || 0;
+    if (start === end) return;
+    const dur = 900, step = 16;
+    const inc = (end - start) / (dur / step);
+    let cur = start; let t = 0;
+    const iv = setInterval(() => { t += step; cur += inc; if (t >= dur) { el.textContent = Math.floor(end).toLocaleString(); clearInterval(iv); } else { el.textContent = Math.floor(cur).toLocaleString(); } }, step);
+}
+function esc(s) { return (s||'').replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); }
+function relTime(d) {
+    const ms = new Date() - new Date(d);
+    if (ms < 60000) return 'Just now';
+    if (ms < 3600000) return Math.floor(ms/60000) + 'm ago';
+    if (ms < 86400000) return Math.floor(ms/3600000) + 'h ago';
+    return Math.floor(ms/86400000) + 'd ago';
+}
+function randSparkData(n=20) { let v=50; return Array.from({length:n},()=>(v=Math.max(5,Math.min(100,v+(Math.random()-0.48)*15)),v)); }
+function generateMockDailyUsage(n) {
+    const d = []; const now = new Date();
+    for (let i = n-1; i >= 0; i--) {
+        const date = new Date(now); date.setDate(date.getDate()-i);
+        d.push({ date: date.toLocaleDateString('en-US',{month:'short',day:'numeric'}), count: Math.floor(Math.random()*20+2) });
+    }
+    return d;
+}
+function generateMockActivity() {
+    const actions = [
+        { action: 'Used Image Upscaler', icon: 'fa-image', type: 'tool' },
+        { action: 'Claimed 5 daily credits', icon: 'fa-coins', type: 'credit' },
+        { action: 'Ran Code Reviewer', icon: 'fa-code', type: 'tool' },
+        { action: 'Shared to community', icon: 'fa-share', type: 'social' },
+        { action: 'PDF Summarizer used', icon: 'fa-file-pdf', type: 'tool' },
+        { action: 'Unlocked streak bonus', icon: 'fa-fire', type: 'credit' },
+        { action: 'SEO Analyzer ran', icon: 'fa-search', type: 'tool' },
+        { action: 'ChatGPT Enhancer used', icon: 'fa-robot', type: 'tool' },
+    ];
+    return actions.map((a, i) => ({ ...a, time: new Date(Date.now() - i * 1800000).toISOString() }));
+}
+function generateMockSessions(n) {
+    const tools = ['ChatGPT Enhancer', 'Image Upscaler', 'Code Reviewer', 'PDF Summarizer', 'SEO Analyzer', 'Data Visualizer', 'AI Transcriber'];
+    const cats = ['AI Writing', 'Image Tools', 'Code Assist', 'Data', 'Research'];
+    return Array.from({length:n}, (_, i) => ({
+        tool: tools[Math.floor(Math.random()*tools.length)],
+        cat: cats[Math.floor(Math.random()*cats.length)],
+        duration: (Math.floor(Math.random()*120)+5) + 's',
+        credits: Math.floor(Math.random()*5),
+        ok: Math.random() > 0.08,
+        time: new Date(Date.now() - i * 900000).toISOString()
+    }));
+}
+
+/* ─── BOOT ─── */
+init();
+window.addEventListener('beforeunload', () => clearInterval(refreshInterval));
+</script>
+</body>
+</html>

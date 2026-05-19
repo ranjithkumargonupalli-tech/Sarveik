@@ -1,0 +1,1787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Sarveik – AI Hub</title>
+  <meta name="description" content="AI-powered tools for students, teachers, developers & more.">
+  <meta name="theme-color" content="#00e6ff">
+
+  <!-- Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+
+  <style>
+    /* =============================================
+       Sarveik — MAXIMUM ENHANCEMENT v3.0
+       Aesthetic: Dark Cosmic / Glassmorphic Premium
+       Typography: Syne (display) + DM Sans (body)
+    ============================================= */
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; text-decoration: none; }
+
+    /* ───── CSS VARIABLES ───── */
+    :root {
+      --bg-base: #07091a;
+      --bg-secondary: #0d1030;
+      --bg-card: rgba(13, 18, 52, 0.85);
+      --bg-glass: rgba(255,255,255,0.04);
+      --text-primary: #e8eeff;
+      --text-secondary: #7b88c2;
+      --text-muted: #4a5580;
+      --border: rgba(100, 120, 255, 0.12);
+      --border-bright: rgba(100, 180, 255, 0.3);
+      --cyan: #00e6ff;
+      --violet: #7c3aed;
+      --pink: #ff3fa4;
+      --gold: #ffc857;
+      --green: #00ffa3;
+      --gradient-main: linear-gradient(135deg, #00e6ff 0%, #7c3aed 50%, #ff3fa4 100%);
+      --gradient-card1: linear-gradient(145deg, #6366f1, #8b5cf6);
+      --gradient-card2: linear-gradient(145deg, #ec4899, #f43f5e);
+      --gradient-card3: linear-gradient(145deg, #06b6d4, #0284c7);
+      --gradient-card4: linear-gradient(145deg, #10b981, #059669);
+      --gradient-card5: linear-gradient(145deg, #f59e0b, #ef4444);
+      --gradient-card6: linear-gradient(145deg, #a78bfa, #60a5fa);
+      --gradient-card7: linear-gradient(145deg, #fb7185, #f9a8d4);
+      --gradient-card8: linear-gradient(145deg, #fbbf24, #f97316);
+      --gradient-card9: linear-gradient(145deg, #ef4444, #dc2626);
+      --gradient-card10: linear-gradient(145deg, #00e6ff, #7c3aed);
+      --gradient-card11: linear-gradient(145deg, #8b5cf6, #c026d3);
+      --gradient-card12: linear-gradient(145deg, #14b8a6, #059669);
+      --gradient-card13: linear-gradient(145deg, #1d4ed8, #2563eb);
+      --gradient-card14: linear-gradient(145deg, #9333ea, #7e22ce);
+      --glow-cyan: rgba(0, 230, 255, 0.35);
+      --glow-violet: rgba(124, 58, 237, 0.35);
+      --shadow-card: 0 25px 60px rgba(0, 0, 0, 0.5);
+      --radius-card: 28px;
+      --radius-modal: 28px;
+    }
+
+    /* LIGHT MODE */
+    body.light-mode {
+      --bg-base: #f0f4ff;
+      --bg-secondary: #ffffff;
+      --bg-card: rgba(255, 255, 255, 0.9);
+      --bg-glass: rgba(0,0,0,0.03);
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --border: rgba(100, 120, 255, 0.15);
+      --border-bright: rgba(100, 140, 255, 0.35);
+      --cyan: #0284c7;
+      --violet: #6366f1;
+      --pink: #e11d48;
+      --gradient-main: linear-gradient(135deg, #0284c7 0%, #6366f1 50%, #e11d48 100%);
+      --glow-cyan: rgba(2, 132, 199, 0.2);
+      --shadow-card: 0 20px 50px rgba(0, 0, 0, 0.12);
+    }
+
+    /* ───── BASE ───── */
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'DM Sans', sans-serif;
+      background: var(--bg-base);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      transition: background 0.4s, color 0.4s;
+    }
+
+    /* ───── ANIMATED MESH BACKGROUND ───── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 20% 20%, rgba(0,230,255,0.07) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 80% 80%, rgba(124,58,237,0.09) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 60% at 50% 50%, rgba(255,63,164,0.05) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Moving star-field */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        radial-gradient(1px 1px at 10% 15%, rgba(255,255,255,0.18) 0%, transparent 100%),
+        radial-gradient(1px 1px at 35% 40%, rgba(0,230,255,0.2) 0%, transparent 100%),
+        radial-gradient(2px 2px at 60% 25%, rgba(255,255,255,0.12) 0%, transparent 100%),
+        radial-gradient(1px 1px at 80% 70%, rgba(124,58,237,0.25) 0%, transparent 100%),
+        radial-gradient(1px 1px at 90% 10%, rgba(255,255,255,0.15) 0%, transparent 100%),
+        radial-gradient(1px 1px at 50% 90%, rgba(0,230,255,0.18) 0%, transparent 100%),
+        radial-gradient(2px 2px at 25% 75%, rgba(255,255,255,0.1) 0%, transparent 100%);
+      animation: drift 60s linear infinite;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.7;
+    }
+
+    body.light-mode::before, body.light-mode::after { display: none; }
+
+    @keyframes drift { from { transform: translateY(0); } to { transform: translateY(-200px); } }
+
+    /* ───── SCROLLBAR ───── */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(0, 230, 255, 0.3); border-radius: 10px; transition: background 0.3s; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(0, 230, 255, 0.7); }
+
+    /* ───── LOADING SCREEN ───── */
+    .loading-screen {
+      position: fixed;
+      inset: 0;
+      background: var(--bg-base);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      transition: opacity 0.6s ease, visibility 0.6s ease;
+    }
+    .loading-screen.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+
+    .loader-logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 800;
+      background: var(--gradient-main);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 2rem;
+      animation: pulse-logo 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse-logo { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.7; transform: scale(0.97); } }
+
+    .loader-bar {
+      width: 200px;
+      height: 3px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .loader-fill {
+      height: 100%;
+      background: var(--gradient-main);
+      border-radius: 2px;
+      animation: load-fill 1.2s ease forwards;
+    }
+    @keyframes load-fill { from { width: 0; } to { width: 100%; } }
+
+    /* ───── NAVBAR ───── */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.9rem 2rem;
+      background: rgba(7, 9, 26, 0.85);
+      backdrop-filter: blur(24px) saturate(180%);
+      -webkit-backdrop-filter: blur(24px) saturate(180%);
+      border-bottom: 1px solid var(--border);
+      transition: background 0.4s;
+    }
+
+    body.light-mode .navbar {
+      background: rgba(240, 244, 255, 0.88);
+    }
+
+    .navbar-left { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      font-family: 'Syne', sans-serif;
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      letter-spacing: -0.03em;
+      white-space: nowrap;
+    }
+    .nav-brand .brand-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--gradient-main);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      color: white;
+      box-shadow: 0 0 16px var(--glow-cyan);
+      flex-shrink: 0;
+    }
+    .nav-brand span { background: var(--gradient-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+    .nav-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 14px;
+      border-radius: 40px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border-bright);
+      background: var(--bg-glass);
+      color: var(--text-primary);
+      backdrop-filter: blur(12px);
+      transition: all 0.25s ease;
+      white-space: nowrap;
+    }
+    .nav-pill:hover {
+      background: var(--gradient-main);
+      color: white;
+      border-color: transparent;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px var(--glow-cyan);
+    }
+    .nav-pill.announce { border-color: rgba(0, 230, 255, 0.4); }
+    .nav-pill.review { border-color: rgba(255, 199, 0, 0.4); }
+    .nav-pill i { font-size: 0.8rem; }
+
+    .nav-links {
+      display: flex;
+      list-style: none;
+      gap: 0.25rem;
+      align-items: center;
+    }
+    .nav-links a {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.5rem 0.9rem;
+      border-radius: 40px;
+      transition: all 0.25s ease;
+    }
+    .nav-links a:hover, .nav-links a.active {
+      color: var(--text-primary);
+      background: var(--bg-glass);
+    }
+    .nav-links a i { font-size: 0.85rem; opacity: 0.7; }
+
+    .nav-right { display: flex; align-items: center; gap: 0.5rem; }
+
+    .theme-toggle {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+      color: var(--text-secondary);
+      transition: all 0.3s;
+    }
+    .theme-toggle:hover { background: var(--gradient-main); color: white; border-color: transparent; transform: rotate(20deg); }
+
+    .hamburger {
+      display: none;
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 5px;
+      transition: background 0.3s;
+    }
+    .hamburger span {
+      display: block;
+      width: 18px;
+      height: 2px;
+      background: var(--text-primary);
+      border-radius: 2px;
+      transition: all 0.3s;
+    }
+
+    /* ───── MOBILE DRAWER ───── */
+    .mobile-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(8px);
+      z-index: 1001;
+    }
+    .mobile-overlay.open { display: block; }
+    .mobile-drawer {
+      position: fixed;
+      top: 0;
+      right: -320px;
+      width: 300px;
+      height: 100%;
+      background: var(--bg-secondary);
+      border-left: 1px solid var(--border);
+      z-index: 1002;
+      transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      overflow-y: auto;
+    }
+    .mobile-drawer.open { right: 0; }
+    .drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .drawer-close {
+      width: 34px;
+      height: 34px;
+      border-radius: 8px;
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      transition: 0.2s;
+    }
+    .drawer-close:hover { color: var(--pink); }
+    .drawer-nav {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+    .drawer-nav a {
+      color: var(--text-primary);
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+    .drawer-nav a:hover, .drawer-nav a.active { background: rgba(0,230,255,0.1); color: var(--cyan); }
+    .drawer-nav a i { width: 18px; text-align: center; opacity: 0.7; }
+    .drawer-actions { display: flex; flex-direction: column; gap: 0.75rem; margin-top: auto; }
+    .drawer-btn {
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--bg-glass);
+      color: var(--text-primary);
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: 600;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      transition: all 0.3s;
+    }
+    .drawer-btn:hover { background: var(--gradient-main); color: white; border-color: transparent; }
+
+    /* ───── HERO ───── */
+    #mainPage {
+      position: relative;
+      z-index: 1;
+      padding: 0 1.5rem 5rem;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 5rem 1rem 3rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 16px;
+      border-radius: 40px;
+      background: rgba(0, 230, 255, 0.08);
+      border: 1px solid rgba(0, 230, 255, 0.25);
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--cyan);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+      animation: fadeUp 0.6s ease both;
+    }
+    .hero-badge .dot { width: 7px; height: 7px; background: var(--cyan); border-radius: 50%; animation: blink 1.5s ease-in-out infinite; }
+    @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+    .hero-title {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2.5rem, 7vw, 1.0rem);
+      font-weight: 800;
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+      margin-bottom: 1.25rem;
+      animation: fadeUp 0.7s 0.1s ease both;
+    }
+    .hero-title .word-gradient {
+      background: var(--gradient-main);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-size: 200%;
+      animation: shimmer 4s linear infinite;
+    }
+    @keyframes shimmer { 0% { background-position: 0% 50%; } 100% { background-position: 200% 50%; } }
+
+    .hero-subtitle {
+      font-size: 1.15rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 2.5rem;
+      font-weight: 400;
+      max-width: 560px;
+      margin-left: auto;
+      margin-right: auto;
+      animation: fadeUp 0.7s 0.2s ease both;
+    }
+
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* ───── SEARCH BAR ───── */
+    .search-wrap {
+      max-width: 520px;
+      margin: 0 auto 2rem;
+      position: relative;
+      animation: fadeUp 0.7s 0.3s ease both;
+    }
+    .search-input {
+      width: 100%;
+      padding: 0.9rem 3.5rem 0.9rem 1.25rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border-bright);
+      border-radius: 50px;
+      color: var(--text-primary);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.95rem;
+      outline: none;
+      backdrop-filter: blur(12px);
+      transition: border-color 0.3s, box-shadow 0.3s;
+    }
+    .search-input:focus {
+      border-color: var(--cyan);
+      box-shadow: 0 0 0 3px rgba(0, 230, 255, 0.12);
+    }
+    .search-input::placeholder { color: var(--text-muted); }
+    .search-icon {
+      position: absolute;
+      right: 1.1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      pointer-events: none;
+    }
+
+    /* ───── STATS ───── */
+    .stats-bar {
+      display: flex;
+      justify-content: center;
+      gap: 3rem;
+      margin: 2rem auto;
+      flex-wrap: wrap;
+      max-width: 700px;
+      animation: fadeUp 0.7s 0.35s ease both;
+    }
+    .stat { text-align: center; }
+    .stat-number {
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      background: var(--gradient-main);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+    .stat-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      margin-top: 3px;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    /* ───── SECTION HEADER ───── */
+    .section-header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 0.5rem;
+    }
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.75rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+    }
+
+    /* ───── TOOLS GRID ───── */
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 1.25rem;
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+
+    .tool-card {
+      position: relative;
+      border-radius: var(--radius-card);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.35s ease;
+      box-shadow: var(--shadow-card);
+      display: flex;
+      flex-direction: column;
+      padding: 1.75rem 1.5rem 1.5rem;
+      min-height: 270px;
+      text-decoration: none;
+      isolation: isolate;
+    }
+
+    /* Card backgrounds by index */
+    .tool-card:nth-child(1) { background: var(--gradient-card1); }
+    .tool-card:nth-child(2) { background: var(--gradient-card2); }
+    .tool-card:nth-child(3) { background: var(--gradient-card3); }
+    .tool-card:nth-child(4) { background: var(--gradient-card4); }
+    .tool-card:nth-child(5) { background: var(--gradient-card5); }
+    .tool-card:nth-child(6) { background: var(--gradient-card6); }
+    .tool-card:nth-child(7) { background: var(--gradient-card7); }
+    .tool-card:nth-child(8) { background: var(--gradient-card8); }
+    .tool-card:nth-child(9) { background: var(--gradient-card9); }
+    .tool-card:nth-child(10) { background: var(--gradient-card10); }
+    .tool-card:nth-child(11) { background: var(--gradient-card11); }
+    .tool-card:nth-child(12) { background: var(--gradient-card12); }
+    .tool-card:nth-child(13) { background: var(--gradient-card13); }
+    .tool-card:nth-child(14) { background: var(--gradient-card14); }
+
+    /* Shimmer sweep overlay */
+    .tool-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.22) 50%, transparent 70%);
+      transform: translateX(-100%) skewX(-10deg);
+      transition: transform 0.6s ease;
+      z-index: 1;
+    }
+    .tool-card:hover::before { transform: translateX(200%) skewX(-10deg); }
+
+    /* Bottom noise texture */
+    .tool-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E") center/cover;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .tool-card:hover {
+      transform: translateY(-10px) scale(1.02);
+      box-shadow: 0 40px 80px rgba(0,0,0,0.55);
+    }
+
+    .tool-icon-wrap {
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+      background: rgba(255,255,255,0.18);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.8rem;
+      margin-bottom: 1.25rem;
+      transition: transform 0.35s ease, background 0.35s ease;
+      position: relative;
+      z-index: 2;
+      flex-shrink: 0;
+    }
+    .tool-card:hover .tool-icon-wrap { transform: scale(1.12) rotate(-3deg); background: rgba(255,255,255,0.28); }
+
+    .tool-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+      position: relative;
+      z-index: 2;
+    }
+    .tool-desc {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.82);
+      line-height: 1.55;
+      position: relative;
+      z-index: 2;
+      flex: 1;
+    }
+
+    .tool-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 1.2rem;
+      position: relative;
+      z-index: 2;
+    }
+    .card-arrow {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      color: white;
+      transition: background 0.25s, transform 0.25s;
+    }
+    .tool-card:hover .card-arrow { background: rgba(255,255,255,0.4); transform: translate(2px, -2px); }
+
+    .card-tag {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.6);
+    }
+
+    .new-badge {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.35);
+      color: white;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.66rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      z-index: 3;
+      animation: badge-glow 2s ease-in-out infinite;
+    }
+    @keyframes badge-glow { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.3); } 50% { box-shadow: 0 0 12px 3px rgba(255,255,255,0.3); } }
+
+    /* stagger animation */
+    .tool-card { animation: fadeUp 0.5s ease both; }
+    .tool-card:nth-child(1) { animation-delay: 0.05s; }
+    .tool-card:nth-child(2) { animation-delay: 0.10s; }
+    .tool-card:nth-child(3) { animation-delay: 0.15s; }
+    .tool-card:nth-child(4) { animation-delay: 0.20s; }
+    .tool-card:nth-child(5) { animation-delay: 0.25s; }
+    .tool-card:nth-child(6) { animation-delay: 0.30s; }
+    .tool-card:nth-child(7) { animation-delay: 0.35s; }
+    .tool-card:nth-child(8) { animation-delay: 0.40s; }
+    .tool-card:nth-child(9) { animation-delay: 0.45s; }
+    .tool-card:nth-child(10) { animation-delay: 0.50s; }
+    .tool-card:nth-child(11) { animation-delay: 0.55s; }
+    .tool-card:nth-child(12) { animation-delay: 0.60s; }
+    .tool-card:nth-child(13) { animation-delay: 0.65s; }
+    .tool-card:nth-child(14) { animation-delay: 0.70s; }
+
+    /* HIDDEN CLASS for search filter */
+    .tool-card.hidden { display: none; }
+
+    /* ───── FABs ───── */
+    .fab-container {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      z-index: 500;
+    }
+    .fab {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      cursor: pointer;
+      border: none;
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s;
+      color: white;
+      position: relative;
+    }
+    .fab::after {
+      content: attr(data-tip);
+      position: absolute;
+      right: calc(100% + 12px);
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0,0,0,0.85);
+      color: white;
+      padding: 5px 12px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s;
+    }
+    .fab:hover::after { opacity: 1; }
+    .fab:hover { transform: scale(1.12) translateY(-3px); }
+    .fab-voice { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 8px 24px rgba(16,185,129,0.4); }
+    .fab-chat { width: 60px; height: 60px; font-size: 1.3rem; background: var(--gradient-main); box-shadow: 0 8px 28px var(--glow-cyan); }
+    .fab-voice:hover { box-shadow: 0 12px 32px rgba(16,185,129,0.6); }
+    .fab-chat:hover { box-shadow: 0 12px 36px var(--glow-cyan); }
+    .fab.recording { animation: mic-pulse 1s ease-in-out infinite; }
+    @keyframes mic-pulse { 0%, 100% { box-shadow: 0 8px 24px rgba(239,68,68,0.4); } 50% { box-shadow: 0 8px 36px rgba(239,68,68,0.8), 0 0 0 8px rgba(239,68,68,0.15); } }
+
+    .feedback-fab {
+      position: fixed;
+      bottom: 2rem;
+      left: 2rem;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: var(--gradient-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      color: white;
+      cursor: pointer;
+      box-shadow: 0 8px 24px var(--glow-violet);
+      transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.3s;
+      z-index: 500;
+    }
+    .feedback-fab:hover { transform: scale(1.12) translateY(-3px); box-shadow: 0 12px 36px var(--glow-violet); }
+
+    /* Back to top */
+    #backToTop {
+      position: fixed;
+      bottom: 6rem;
+      left: 2rem;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s;
+      z-index: 500;
+    }
+    #backToTop.visible { opacity: 1; pointer-events: auto; }
+    #backToTop:hover { background: var(--gradient-main); color: white; border-color: transparent; transform: translateY(-3px); }
+
+    /* ───── MODAL BASE ───── */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(16px);
+      z-index: 9000;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal-box {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-bright);
+      border-radius: var(--radius-modal);
+      width: 100%;
+      max-width: 520px;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 2rem;
+      position: relative;
+      animation: modal-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+    }
+    @keyframes modal-in { from { transform: scale(0.88) translateY(20px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
+
+    .modal-wide { max-width: 700px; }
+
+    .modal-close {
+      position: absolute;
+      top: 1.25rem;
+      right: 1.25rem;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+    }
+    .modal-close:hover { color: var(--pink); background: rgba(255,63,164,0.1); border-color: rgba(255,63,164,0.3); }
+
+    .modal-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.35rem;
+      background: var(--gradient-main);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .modal-sub { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1.5rem; }
+
+    /* Stars */
+    .star-row { display: flex; gap: 8px; margin: 1rem 0; }
+    .star-row i {
+      font-size: 1.75rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: color 0.2s, transform 0.2s;
+    }
+    .star-row i:hover, .star-row i.active { color: var(--gold); transform: scale(1.15); }
+
+    .modal-select, .modal-textarea {
+      width: 100%;
+      padding: 0.8rem 1rem;
+      border-radius: 14px;
+      background: var(--bg-glass);
+      border: 1px solid var(--border-bright);
+      color: var(--text-primary);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.3s;
+    }
+    .modal-select:focus, .modal-textarea:focus { border-color: var(--cyan); }
+    .modal-select { margin-bottom: 1rem; }
+    .modal-select option { background: var(--bg-secondary); }
+    .modal-textarea { resize: vertical; margin-bottom: 1rem; }
+
+    .modal-actions { display: flex; gap: 0.75rem; }
+    .btn-primary {
+      flex: 1;
+      padding: 0.8rem;
+      border-radius: 50px;
+      background: var(--gradient-main);
+      border: none;
+      color: white;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: transform 0.25s, box-shadow 0.25s;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 20px var(--glow-cyan); }
+    .btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+    .btn-ghost {
+      padding: 0.8rem 1.25rem;
+      border-radius: 50px;
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.25s;
+    }
+    .btn-ghost:hover { background: rgba(255,255,255,0.08); color: var(--text-primary); }
+
+    /* Announcement items */
+    .announcement-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .announcement-item {
+      padding: 1.1rem 1.25rem;
+      border-radius: 16px;
+      background: var(--bg-glass);
+      border: 1px solid var(--border);
+      transition: background 0.2s, transform 0.2s;
+    }
+    .announcement-item:hover { background: rgba(0,230,255,0.04); transform: translateX(4px); }
+    .ann-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.4rem; color: var(--cyan); }
+    .ann-body { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.55; margin-bottom: 0.5rem; }
+    .ann-date { font-size: 0.72rem; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
+
+    /* ───── NOTIFICATIONS ───── */
+    #notifContainer {
+      position: fixed;
+      top: 80px;
+      right: 1.25rem;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      max-width: 340px;
+    }
+    .notif {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 0.9rem 1.1rem;
+      border-radius: 14px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+      transform: translateX(380px);
+      transition: transform 0.4s cubic-bezier(0.4,0,0.2,1), opacity 0.4s;
+      opacity: 0;
+    }
+    .notif.show { transform: translateX(0); opacity: 1; }
+    .notif.success { border-left: 3px solid #10b981; }
+    .notif.error { border-left: 3px solid #ef4444; }
+    .notif.info { border-left: 3px solid var(--cyan); }
+    .notif.warning { border-left: 3px solid var(--gold); }
+    .notif-icon { font-size: 1rem; margin-top: 1px; flex-shrink: 0; }
+    .notif.success .notif-icon { color: #10b981; }
+    .notif.error .notif-icon { color: #ef4444; }
+    .notif.info .notif-icon { color: var(--cyan); }
+    .notif.warning .notif-icon { color: var(--gold); }
+    .notif-title { font-weight: 700; font-size: 0.82rem; margin-bottom: 2px; }
+    .notif-msg { font-size: 0.78rem; color: var(--text-secondary); line-height: 1.4; }
+
+    /* ───── FOOTER ───── */
+    footer {
+      text-align: center;
+      padding: 2.5rem 1.5rem 1.5rem;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      border-top: 1px solid var(--border);
+      position: relative;
+      z-index: 1;
+    }
+    footer a { color: var(--cyan); transition: opacity 0.2s; }
+    footer a:hover { opacity: 0.7; }
+    .footer-inner { max-width: 900px; margin: 0 auto; }
+    .footer-links { display: flex; justify-content: center; gap: 1.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+
+    .disclaimer {
+      margin: 1rem auto 0;
+      max-width: 800px;
+      padding: 1rem 1.25rem;
+      background: var(--bg-glass);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+    }
+
+    /* ───── RESPONSIVE ───── */
+    @media (max-width: 992px) {
+      .nav-links { display: none; }
+      .hamburger { display: flex; }
+    }
+    @media (max-width: 700px) {
+      .hero { padding: 3rem 0.5rem 2rem; }
+      .hero-title { font-size: clamp(2.2rem, 9vw, 3.5rem); }
+      .tools-grid { grid-template-columns: repeat(2, 1fr); gap: 0.9rem; }
+      .tool-card { min-height: 220px; padding: 1.25rem; }
+      .tool-icon-wrap { width: 52px; height: 52px; font-size: 1.4rem; margin-bottom: 0.9rem; }
+      .tool-title { font-size: 1rem; }
+      .tool-desc { font-size: 0.76rem; }
+      .stats-bar { gap: 1.5rem; }
+      .nav-pill { padding: 5px 10px; font-size: 0.7rem; }
+      .fab-container { bottom: 1.25rem; right: 1.25rem; }
+      .feedback-fab { bottom: 1.25rem; left: 1.25rem; }
+    }
+    @media (max-width: 420px) {
+      .tools-grid { grid-template-columns: 1fr; max-width: 300px; margin-left: auto; margin-right: auto; }
+      .navbar { padding: 0.7rem 1rem; }
+      .nav-brand { font-size: 1.1rem; }
+    }
+
+    /* ───── EMPTY STATE ───── */
+    .no-results {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-muted);
+      font-size: 1rem;
+      display: none;
+    }
+    .no-results i { font-size: 2.5rem; display: block; margin-bottom: 1rem; opacity: 0.5; }
+    .no-results.visible { display: block; }
+  .nav-links {
+  margin-left: auto;
+  gap: 0.5rem; /* already defined */
+  }
+  /* Additional gradient for Researcher card (15th child) */
+.tool-card:nth-child(15) {
+  background: linear-gradient(145deg, #0f766e, #14b8a6);
+}
+
+/* If you prefer a more "research‑themed" gradient, use this instead:
+.tool-card:nth-child(15) {
+  background: linear-gradient(145deg, #1e3a8a, #3b82f6);
+}
+*/
+
+/* Ensure the card respects the same hover transform, shimmer, and icon effects */
+.tool-card:nth-child(15)::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.22) 50%, transparent 70%);
+  transform: translateX(-100%) skewX(-10deg);
+  transition: transform 0.6s ease;
+  z-index: 1;
+}
+.tool-card:nth-child(15):hover::before {
+  transform: translateX(200%) skewX(-10deg);
+}
+
+/* Keep the icon wrap style consistent */
+.tool-card:nth-child(15) .tool-icon-wrap {
+  background: rgba(255,255,255,0.18);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.3);
+}
+
+/* Hover effect on icon */
+.tool-card:nth-child(15):hover .tool-icon-wrap {
+  transform: scale(1.12) rotate(-3deg);
+  background: rgba(255,255,255,0.28);
+}
+
+/* Ensure card hover translate/scale matches others */
+.tool-card:nth-child(15):hover {
+  transform: translateY(-10px) scale(1.02);
+  box-shadow: 0 40px 80px rgba(0,0,0,0.55);
+}
+  </style>
+</head>
+<body class="dark-mode">
+
+  <!-- Loading Screen -->
+  <div id="loadingScreen" class="loading-screen">
+    <div class="loader-logo">Sarveik</div>
+    <div class="loader-bar"><div class="loader-fill"></div></div>
+  </div>
+
+  <!-- ───── NAVBAR ───── -->
+  <nav class="navbar">
+    <div class="navbar-left">
+      <a href="dashboard.html" class="nav-brand">
+        <div class="brand-icon"><i class="fas fa-shield-alt"></i></div>
+        <span>Sarveik</span>
+      </a>
+      <button id="announcementBtn" class="nav-pill announce">
+        <i class="fas fa-bullhorn"></i> Announcements
+      </button>
+      <button id="reviewBtn" class="nav-pill review">
+        <i class="fas fa-star"></i> Write a Review
+      </button>
+    </div>
+    <ul class="nav-links">
+      <li><a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a></li>
+      <li><a href="profile.html"><i class="fas fa-user"></i> Profile</a></li>
+      <li><a href="main.html" class="active"><i class="fas fa-rocket"></i> Tools</a></li>
+      <li><a href="friends.html"><i class="fas fa-users"></i> Friends</a></li>
+      <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+    </ul>
+    <div class="nav-right">
+      <button class="theme-toggle" id="themeToggle" title="Toggle theme"><i class="fas fa-moon"></i></button>
+      <div class="hamburger" id="hamburgerBtn">
+        <span></span><span></span><span></span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Mobile Drawer -->
+  <div class="mobile-overlay" id="mobileOverlay"></div>
+  <div class="mobile-drawer" id="mobileDrawer">
+    <div class="drawer-header">
+      <div class="nav-brand">
+        <div class="brand-icon"><i class="fas fa-shield-alt"></i></div>
+        <span>Sarveik</span>
+      </div>
+      <div class="drawer-close" id="drawerClose">&times;</div>
+    </div>
+    <ul class="drawer-nav">
+      <li><a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a></li>
+      <li><a href="profile.html"><i class="fas fa-user"></i> Profile</a></li>
+      <li><a href="main.html" class="active"><i class="fas fa-rocket"></i> Tools</a></li>
+      <li><a href="friends.html"><i class="fas fa-users"></i> Friends</a></li>
+    </ul>
+    <div class="drawer-actions">
+      <button class="drawer-btn" id="mobileThemeBtn"><i class="fas fa-moon"></i> Dark Mode</button>
+      <button class="drawer-btn" id="mobileLogoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
+    </div>
+  </div>
+
+  <!-- ───── MAIN PAGE ───── -->
+  <div id="mainPage">
+
+    <!-- Hero -->
+    <div class="hero">
+      <div class="hero-badge">
+        <div class="dot"></div>
+        Powered by Advanced AI
+      </div>
+      <h1 class="hero-title">
+        Your <span class="word-gradient">AI PORTAL</span><br>for Everything
+      </h1>
+      <p class="hero-subtitle">Explore curated AI tools for students, teachers, developers, gamers & more — all in one place.</p>
+
+      <!-- Search -->
+      <div class="search-wrap">
+        <input class="search-input" type="text" id="toolSearch" placeholder="Search tools... (e.g. student, music)" autocomplete="off">
+        <i class="fas fa-search search-icon"></i>
+      </div>
+
+      <!-- Stats -->
+      <div class="stats-bar">
+        <div class="stat">
+          <div class="stat-number" data-count="14">0</div>
+          <div class="stat-label">Tool Hubs</div>
+        </div>
+        <div class="stat">
+          <div class="stat-number" data-count="1500">0</div>
+          <div class="stat-label">Free Tools</div>
+        </div>
+
+        <div class="stat">
+          <div class="stat-number" data-count="99">0</div>
+          <div class="stat-label">% Free</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section Header -->
+    <div class="section-header">
+      <div class="section-label"><i class="fas fa-grid-2"></i> &nbsp;Explore</div>
+      <h2 class="section-title">Choose Your Tool Hub</h2>
+    </div>
+
+    <!-- Tools Grid -->
+    <div class="tools-grid" id="toolsGrid">
+      <a href="student1.html" class="tool-card" data-search="student study homework grade learning">
+        <div class="tool-icon-wrap">🎓</div>
+        <div class="tool-title">Student Tools</div>
+        <div class="tool-desc">Study aids, homework help & grade trackers</div>
+        <div class="tool-card-footer">
+          <span class="card-tag">Learning</span>
+          <div class="card-arrow"><i class="fas fa-arrow-right"></i></div>
+        </div>
+      </a>
+
+      <a href="teacher1.html" class="tool-card" data-search="teacher lesson plan grade student management">
+        <div class="tool-icon-wrap">👨‍🏫</div>
+        <div class="tool-title">Teacher Tools</div>
+        <div class="tool-desc">Lesson plans, grading & student management</div>
+        <div class="tool-card-footer">
+          <span class="card-tag">Education</span>
+          <div class="card-arrow"><i class="fas fa-arrow-right"></i></div>
+        </div>
+      </a>
+
+      <a href="developer1.html" class="tool-card" data-search="developer code debug api programming tech">
+        <div class="tool-icon-wrap">💻</div>
+        <div class="tool-title">Developer Tools</div>
+        <div class="tool-desc">Code assistant, debugging & API docs</div>
+        <div class="tool-card-footer">
+          <span class="card-tag">Tech</span>
+          <div class="card-arrow"><i class="fas fa-arrow-right"></i></div>
+        </div>
+      </a>
+
+      <a href="gamer1.html" class="tool-card" data-search="gamer game guide stats tips gaming">
+        <div class="tool-icon-wrap">🎮</div>
+        <div class="tool-title">Gamer Tools</div>
+        <div class="tool-desc">Game guides, stat trackers & pro tips</div>
+        <div class="tool-card-footer">
+          <span class="card-tag">Gaming</span>
+          <div class="card-arrow"><i class="fas fa-arrow-right"></i></div>
+        </div>
+      </a>
+
+      <a href="entertainment1.html" class="tool-card" data-search="entertainment movie music fun content discover">
+        <div class="tool-icon-wrap">🎬</div>
+        <div class="tool-title">Entertainment</div>
+        <div class="tool-desc">Movies, music & fun content discovery</div>
+        <div class="tool-card-footer">
+          <span class="card-tag">Fun</span>
+          <div class="card-arrow"><i class="fas fa-arrow-right"></i></div>
+        </div>
+      </a>
+
+      <a href="cartoons1.html" class="tool-card" data-search="cartoon animation character fan content">
+        <div class="tool-icon-wrap">🦸‍♂️</div>
+        <div class="tool-title">Cartoons Tools</div>
+        <div class="tool-desc">Animation, characters & fan content</div>
+        <div class="tool-card-footer">
+          <span class="card-tag">Creative</span>
+          <div class="card-arrow"><i class="fas fa-arrow-right"></i></div>
+        </div>
+      </a>
+
+      <a href="music-mega.html" class="tool-card" data-search="music streaming ai production compose">
+        <div class="tool-icon-wrap">🎵</div>
+        <div class="tool-title">Music Tools</div>
+        <div class="tool-desc">Streaming, AI music & production tools</div>
+        <div class="tool-card-footer">
+          <span class="card-tag">Audio</span>
+          <div class="card-arrow"><i class="fas fa-arrow-right"></i></div>
+        </div>
+      </a>
+
+      <a href="shopping.html" class="tool-card" data-search="shopping india fashion electronics grocery">
+        <div class="tool-icon-wrap">🛍️</div>
+        <div class="tool-title">Shopping Directory</div>
+        <div class="tool-desc">250+ Indian shopping sites – fashion, electronics & more</div>
+        <div class="tool-card-footer">
+          <span class="card-tag">India</span>
+          <div class="card-arrow"><i class="fas fa-arrow-right"></i></div>
+        </div>
+      </a>
+
+      <a href="custom1.html" class="tool-card" data-search="custom personalized workflow automation">
+        <div class="tool-icon-wrap">⚙️</div>
+        <div class="tool-title">Custom Tools</div>
+        <div class="tool-desc">Personalized AI tools & workflows</div>
+        <div class="tool-card-footer">
+          <span class="card-tag">Personal</span>
+          <div class="card-arrow"><i class="fas fa-arrow-right"></i></div>
+        </div>
+      </a>
+
+      <a href="editing.html" class="tool-card" data-search="editing video audio graphic design photo">
+        <div class="tool-icon-wrap">🎬</div>
+        <div class="tool-title">Editing Hub</div>
+        <div class="tool-desc">Video • Audio • AI Tools • Graphics – 75+ free editing tools</div>
+        <div class="tool-card-footer">
+          <span class="card-tag">Creative</span>
+          <div class="card-arrow"><i class="fas fa-arrow-right"></i></div>
+        </div>
+      </a>
+
+      <a href="essentials.html" class="tool-card" data-search="essentials food travel housing budget life">
+        <div class="tool-icon-wrap">🏠</div>
+        <div class="tool-title">Life Essentials</div>
+        <div class="tool-desc">Food • Travel • Housing – budget tips & free resources</div>
+        <div class="tool-card-footer">
+          <span class="card-tag">Lifestyle</span>
+          <div class="card-arrow"><i class="fas fa-arrow-right"></i></div>
+        </div>
+      </a>
+
+      <a href="examkit.html" class="tool-card" data-search="exam neet jee eamcet study competitive 6th 12th">
+        <div class="tool-icon-wrap">📚</div>
+        <div class="tool-title">ExamKit</div>
+        <div class="tool-desc">6th–12th & Competitive Exams (NEET, JEE, EAMCET) – Free AI Materials</div>
+        <div class="tool-card-footer">
+          <span class="card-tag">Exams</span>
+          <div class="card-arrow"><i class="fas fa-arrow-right"></i></div>
+        </div>
+      </a>
+
+      <a href="career.html" class="tool-card" data-search="career job government private scholarship portal">
+        <div class="tool-icon-wrap">🎯</div>
+        <div class="tool-title">Career Gateway</div>
+        <div class="tool-desc">Govt Jobs • Private Jobs • Scholarships • Career Resources</div>
+        <div class="tool-card-footer">
+          <span class="card-tag">Career</span>
+          <div class="card-arrow"><i class="fas fa-arrow-right"></i></div>
+        </div>
+      </a>
+
+      <a href="researcher.html" class="tool-card" data-search="research paper journal ai citation reference">
+        <div class="tool-icon-wrap">🔬</div>
+        <div class="tool-title">Researcher Tools</div>
+        <div class="tool-desc">Literature search • Reference managers • AI research assistants • Paper writing & presentations</div>
+        <div class="tool-card-footer">
+         <span class="card-tag">Research</span>
+         <div class="card-arrow"><i class="fas fa-arrow-right"></i></div>
+       </div>
+     </a>
+
+      <a href="newtools.html" class="tool-card" data-search="new latest tools community submission pending">
+        <span class="new-badge">✦ NEW</span>
+        <div class="tool-icon-wrap">✨</div>
+        <div class="tool-title">New Tools</div>
+        <div class="tool-desc">Latest community submissions & pending approvals</div>
+        <div class="tool-card-footer">
+          <span class="card-tag">Fresh</span>
+          <div class="card-arrow"><i class="fas fa-arrow-right"></i></div>
+        </div>
+      </a>
+
+      <div class="no-results" id="noResults">
+        <i class="fas fa-search-minus"></i>
+        No tools match "<strong id="searchTerm"></strong>"
+      </div>
+    </div>
+  </div>
+
+  <!-- ───── FABs ───── -->
+  <div class="fab-container">
+    <button class="fab fab-voice" id="voiceBtn" data-tip="Voice Control" title="Voice Control">
+      <i class="fas fa-microphone"></i>
+    </button>
+    <a href="tool.html" class="fab fab-chat" data-tip="Sarveik AI Assistant" title="Sarveik AI Assistant">
+      <i class="fas fa-robot"></i>
+    </a>
+  </div>
+  <div class="feedback-fab" id="feedbackFab" title="Leave Feedback">
+    <i class="fas fa-comment-dots"></i>
+  </div>
+  <button id="backToTop" title="Back to top"><i class="fas fa-chevron-up"></i></button>
+
+  <!-- ───── FEEDBACK MODAL ───── -->
+  <div id="feedbackModal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-close" id="closeFeedback">&times;</div>
+      <div class="modal-title">Share Feedback</div>
+      <p class="modal-sub">How's your Sarveik experience?</p>
+      <div class="star-row" id="feedbackStars">
+        <i class="far fa-star" data-r="1"></i>
+        <i class="far fa-star" data-r="2"></i>
+        <i class="far fa-star" data-r="3"></i>
+        <i class="far fa-star" data-r="4"></i>
+        <i class="far fa-star" data-r="5"></i>
+      </div>
+      <textarea class="modal-textarea" id="feedbackText" rows="4" placeholder="Tell us what you think... (optional)"></textarea>
+      <div class="modal-actions">
+        <button class="btn-primary" id="submitFeedback">Submit Feedback</button>
+        <button class="btn-ghost" id="cancelFeedback">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───── REVIEW MODAL ───── -->
+  <div id="reviewModal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-close" id="closeReview">&times;</div>
+      <div class="modal-title">Write a Review</div>
+      <p class="modal-sub">Rate a tool & help the community</p>
+      <select class="modal-select" id="toolSelect"><option value="">Loading tools...</option></select>
+      <div class="star-row" id="reviewStars">
+        <i class="far fa-star" data-r="1"></i>
+        <i class="far fa-star" data-r="2"></i>
+        <i class="far fa-star" data-r="3"></i>
+        <i class="far fa-star" data-r="4"></i>
+        <i class="far fa-star" data-r="5"></i>
+      </div>
+      <textarea class="modal-textarea" id="reviewText" rows="4" placeholder="Write your review... (optional)"></textarea>
+      <div class="modal-actions">
+        <button class="btn-primary" id="submitReview">Submit Review</button>
+        <button class="btn-ghost" id="cancelReview">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ───── ANNOUNCEMENT MODAL ───── -->
+  <div id="announcementModal" class="modal-overlay">
+    <div class="modal-box modal-wide">
+      <div class="modal-close" id="closeAnnouncement">&times;</div>
+      <div class="modal-title"><i class="fas fa-bullhorn"></i> &nbsp;Announcements</div>
+      <p class="modal-sub">Latest updates from the Sarveik team</p>
+      <div class="announcement-list" id="announcementsList">
+        <div style="text-align:center;padding:2rem;color:var(--text-muted);">
+          <i class="fas fa-spinner fa-spin"></i> &nbsp;Loading...
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Container -->
+  <div id="notifContainer"></div>
+
+  <!-- ───── FOOTER ───── -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-links">
+        <a href="/privacy.html">Privacy Policy</a>
+        <a href="terms.html">Terms of Service</a>
+        <a href="dmca.html">DMCA</a>
+      </div>
+      <p>&copy; 2024 Sarveik. All rights reserved.</p>
+    </div>
+    <div class="disclaimer">
+      <strong>Disclaimer:</strong> Sarveik is a directory of third-party tools. We do not host any content. All trademarks, logos, and brand names are the property of their respective owners. If you believe any link infringes your rights, please <a href="dmca.html">contact us</a> for removal.
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+  <script>
+    // ═══════════════════════════════════════════════
+    //   Sarveik – ENHANCED SCRIPT v3.0
+    // ═══════════════════════════════════════════════
+
+    // ── LOADING ──
+    window.addEventListener('load', () => {
+      setTimeout(() => document.getElementById('loadingScreen').classList.add('hidden'), 1100);
+    });
+
+    // ── THEME ──
+    const themeToggle = document.getElementById('themeToggle');
+    const mobileThemeBtn = document.getElementById('mobileThemeBtn');
+
+    function applyTheme(isDark) {
+      document.body.classList.toggle('dark-mode', isDark);
+      document.body.classList.toggle('light-mode', !isDark);
+      const icon = isDark ? 'fa-moon' : 'fa-sun';
+      if (themeToggle) themeToggle.innerHTML = `<i class="fas ${icon}"></i>`;
+      if (mobileThemeBtn) mobileThemeBtn.innerHTML = `<i class="fas ${icon}"></i> ${isDark ? 'Dark' : 'Light'} Mode`;
+      localStorage.setItem('nova_theme', isDark ? 'dark' : 'light');
+    }
+
+    const savedTheme = localStorage.getItem('nova_theme') || 'dark';
+    applyTheme(savedTheme !== 'light');
+
+    themeToggle?.addEventListener('click', () => applyTheme(!document.body.classList.contains('dark-mode')));
+    mobileThemeBtn?.addEventListener('click', () => applyTheme(!document.body.classList.contains('dark-mode')));
+
+    // ── MOBILE DRAWER ──
+    const hamburger = document.getElementById('hamburgerBtn');
+    const mobileOverlay = document.getElementById('mobileOverlay');
+    const mobileDrawer = document.getElementById('mobileDrawer');
+    const drawerClose = document.getElementById('drawerClose');
+
+    function openDrawer() { mobileDrawer.classList.add('open'); mobileOverlay.classList.add('open'); document.body.style.overflow = 'hidden'; }
+    function closeDrawer() { mobileDrawer.classList.remove('open'); mobileOverlay.classList.remove('open'); document.body.style.overflow = ''; }
+
+    hamburger?.addEventListener('click', openDrawer);
+    drawerClose?.addEventListener('click', closeDrawer);
+    mobileOverlay?.addEventListener('click', closeDrawer);
+    document.querySelectorAll('.drawer-nav a').forEach(a => a.addEventListener('click', closeDrawer));
+
+    // ── NOTIFICATIONS ──
+    function notify(msg, type = 'success') {
+      const c = document.getElementById('notifContainer');
+      const el = document.createElement('div');
+      el.className = `notif ${type}`;
+      const icons = { success: 'check-circle', error: 'exclamation-circle', info: 'info-circle', warning: 'exclamation-triangle' };
+      el.innerHTML = `<i class="fas fa-${icons[type] || 'info-circle'} notif-icon"></i>
+        <div><div class="notif-title">${type[0].toUpperCase() + type.slice(1)}</div>
+        <div class="notif-msg">${msg}</div></div>`;
+      c.appendChild(el);
+      requestAnimationFrame(() => { requestAnimationFrame(() => el.classList.add('show')); });
+      setTimeout(() => {
+        el.classList.remove('show');
+        setTimeout(() => el.remove(), 400);
+      }, 5000);
+    }
+
+    // ── STATS COUNTER ──
+    function animateCount(el, target, duration = 1800) {
+      const suffix = target >= 1000 ? 'K+' : (target === 99 ? '%' : '+');
+      const displayVal = target >= 1000 ? Math.round(target / 1000) : target;
+      let start = null;
+      function step(ts) {
+        if (!start) start = ts;
+        const p = Math.min((ts - start) / duration, 1);
+        const ease = 1 - Math.pow(1 - p, 3);
+        const val = target >= 1000 ? Math.round(ease * displayVal) : Math.round(ease * target);
+        el.textContent = val + (p < 1 ? '' : suffix);
+        if (p < 1) requestAnimationFrame(step);
+        else el.textContent = displayVal + suffix;
+      }
+      requestAnimationFrame(step);
+    }
+
+    const statsObserver = new IntersectionObserver((entries) => {
+      entries.forEach(e => {
+        if (e.isIntersecting) {
+          const els = e.target.querySelectorAll('[data-count]');
+          els.forEach(el => animateCount(el, parseInt(el.dataset.count)));
+          statsObserver.unobserve(e.target);
+        }
+      });
+    }, { threshold: 0.3 });
+    statsObserver.observe(document.querySelector('.stats-bar'));
+
+    // ── SEARCH ──
+    const searchInput = document.getElementById('toolSearch');
+    const noResults = document.getElementById('noResults');
+    const searchTermEl = document.getElementById('searchTerm');
+
+    searchInput?.addEventListener('input', () => {
+      const q = searchInput.value.toLowerCase().trim();
+      let visible = 0;
+      document.querySelectorAll('.tool-card[data-search]').forEach(card => {
+        const matches = !q || card.dataset.search.includes(q) || card.querySelector('.tool-title').textContent.toLowerCase().includes(q);
+        card.classList.toggle('hidden', !matches);
+        if (matches) visible++;
+      });
+      if (noResults && searchTermEl) {
+        searchTermEl.textContent = q;
+        noResults.classList.toggle('visible', visible === 0 && q.length > 0);
+      }
+    });
+
+    // Keyboard shortcut: / to focus search
+    document.addEventListener('keydown', e => {
+      if (e.key === '/' && e.target !== searchInput) {
+        e.preventDefault();
+        searchInput?.focus();
+      }
+    });
+
+    // ── BACK TO TOP ──
+    const btt = document.getElementById('backToTop');
+    window.addEventListener('scroll', () => btt?.classList.toggle('visible', window.scrollY > 400));
+    btt?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+    // ── MODAL HELPERS ──
+    function openModal(id) { document.getElementById(id).classList.add('open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+    window.addEventListener('click', e => {
+      ['feedbackModal', 'reviewModal', 'announcementModal'].forEach(id => {
+        if (e.target === document.getElementById(id)) closeModal(id);
+      });
+    });
+
+    // ── STAR RATING BUILDER ──
+    function buildStarRating(rowId) {
+      let selected = 0;
+      const stars = document.querySelectorAll(`#${rowId} i`);
+      stars.forEach(star => {
+        star.addEventListener('click', () => {
+          selected = parseInt(star.dataset.r);
+          stars.forEach(s => {
+            const v = parseInt(s.dataset.r);
+            s.classList.toggle('fas', v <= selected);
+            s.classList.toggle('far', v > selected);
+            s.classList.toggle('active', v <= selected);
+          });
+        });
+      });
+      return { getVal: () => selected, reset: () => {
+        selected = 0;
+        stars.forEach(s => { s.classList.replace('fas', 'far'); s.classList.remove('active'); });
+      }};
+    }
+
+    const feedbackRating = buildStarRating('feedbackStars');
+    const reviewRating = buildStarRating('reviewStars');
+
+    // ── FEEDBACK MODAL ──
+    document.getElementById('feedbackFab')?.addEventListener('click', () => openModal('feedbackModal'));
+    document.getElementById('closeFeedback')?.addEventListener('click', () => closeModal('feedbackModal'));
+    document.getElementById('cancelFeedback')?.addEventListener('click', () => closeModal('feedbackModal'));
+
+    document.getElementById('submitFeedback')?.addEventListener('click', async () => {
+      const r = feedbackRating.getVal();
+      if (!r) { notify('Please select a rating!', 'error'); return; }
+      const comment = document.getElementById('feedbackText').value.trim();
+      const btn = document.getElementById('submitFeedback');
+      btn.disabled = true; btn.textContent = 'Submitting...';
+      try {
+        const res = await fetch('/api/feedback', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rating: r, comment: comment || null }),
+          credentials: 'include'
+        });
+        const data = await res.json();
+        if (res.ok) {
+          notify(data.message || 'Thank you for your feedback! 🎉', 'success');
+          closeModal('feedbackModal');
+          feedbackRating.reset();
+          document.getElementById('feedbackText').value = '';
+        } else {
+          notify(data.error || 'Failed to submit.', 'error');
+        }
+      } catch { notify('Network error. Please try again.', 'error'); }
+      finally { btn.disabled = false; btn.textContent = 'Submit Feedback'; }
+    });
+
+    // ── REVIEW MODAL ──
+    async function loadTools() {
+      const sel = document.getElementById('toolSelect');
+      sel.innerHTML = '<option value="">Loading...</option>';
+      try {
+        const res = await fetch('/api/tools?page=student&premium=false', { credentials: 'include' });
+        if (!res.ok) throw new Error();
+        const tools = await res.json();
+        sel.innerHTML = tools?.length
+          ? '<option value="">Select a tool...</option>' + tools.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('')
+          : '<option value="">No tools available</option>';
+      } catch { sel.innerHTML = '<option value="">Error loading tools</option>'; }
+    }
+
+    function esc(s) { return s?.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])) ?? ''; }
+
+    document.getElementById('reviewBtn')?.addEventListener('click', () => { loadTools(); openModal('reviewModal'); });
+    document.getElementById('closeReview')?.addEventListener('click', () => closeModal('reviewModal'));
+    document.getElementById('cancelReview')?.addEventListener('click', () => closeModal('reviewModal'));
+
+    document.getElementById('submitReview')?.addEventListener('click', async () => {
+      const toolId = document.getElementById('toolSelect').value;
+      const r = reviewRating.getVal();
+      if (!toolId) { notify('Please select a tool!', 'error'); return; }
+      if (!r) { notify('Please select a rating!', 'error'); return; }
+      const comment = document.getElementById('reviewText').value.trim();
+      const btn = document.getElementById('submitReview');
+      btn.disabled = true; btn.textContent = 'Submitting...';
+      try {
+        const res = await fetch(`/api/tools/${toolId}/review`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ rating: r, comment: comment || null }),
+          credentials: 'include'
+        });
+        const data = await res.json();
+        if (res.ok) {
+          notify(data.message || 'Review submitted! +10 XP 🎉', 'success');
+          closeModal('reviewModal');
+          reviewRating.reset();
+          document.getElementById('reviewText').value = '';
+        } else {
+          notify(data.error || 'Failed to submit review.', 'error');
+        }
+      } catch { notify('Network error. Please try again.', 'error'); }
+      finally { btn.disabled = false; btn.textContent = 'Submit Review'; }
+    });
+
+    // ── ANNOUNCEMENTS ──
+    async function loadAnnouncements() {
+      const list = document.getElementById('announcementsList');
+      list.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted)"><i class="fas fa-spinner fa-spin"></i></div>';
+      try {
+        const res = await fetch('/api/announcements', { credentials: 'include' });
+        if (!res.ok) throw new Error();
+        const items = await res.json();
+        if (!items?.length) {
+          list.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted)"><i class="fas fa-newspaper" style="font-size:2rem;opacity:0.4;display:block;margin-bottom:0.75rem"></i>No announcements yet.</div>';
+          return;
+        }
+        list.innerHTML = items.map(a => `
+          <div class="announcement-item">
+            <div class="ann-title">${esc(a.title)}</div>
+            <div class="ann-body">${esc(a.content)}</div>
+            <div class="ann-date"><i class="fas fa-clock"></i> ${new Date(a.created_at).toLocaleString()}</div>
+          </div>`).join('');
+      } catch {
+        list.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted)"><i class="fas fa-exclamation-triangle"></i> Failed to load.</div>';
+      }
+    }
+
+    document.getElementById('announcementBtn')?.addEventListener('click', () => { loadAnnouncements(); openModal('announcementModal'); });
+    document.getElementById('closeAnnouncement')?.addEventListener('click', () => closeModal('announcementModal'));
+
+    // ── VOICE CONTROL ──
+    const voiceBtn = document.getElementById('voiceBtn');
+    const SpeechAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (voiceBtn && SpeechAPI) {
+      const recognition = new SpeechAPI();
+      recognition.lang = 'en-US';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      voiceBtn.addEventListener('click', () => {
+        voiceBtn.classList.add('recording');
+        voiceBtn.innerHTML = '<i class="fas fa-microphone-slash"></i>';
+        recognition.start();
+        notify('Listening... Speak a tool name!', 'info');
+      });
+
+      const cmds = {
+        'student': 'student1.html', 'teacher': 'teacher1.html',
+        'developer': 'developer1.html', 'dev': 'developer1.html',
+        'gamer': 'gamer1.html', 'music': 'music-mega.html',
+        'shopping': 'shopping.html', 'chat': 'tool.html',
+        'assistant': 'tool.html', 'new': 'newtools.html',
+        'exam': 'examkit.html', 'career': 'career.html',
+        'editing': 'editing.html', 'essentials': 'essentials.html',
+      };
+
+      recognition.onresult = e => {
+        const cmd = e.results[0][0].transcript.toLowerCase();
+        voiceBtn.classList.remove('recording');
+        voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+        for (const [k, url] of Object.entries(cmds)) {
+          if (cmd.includes(k)) {
+            notify(`Opening ${k} tools...`, 'success');
+            setTimeout(() => window.location.href = url, 600);
+            return;
+          }
+        }
+        notify(`"${cmd}" — Try: student, developer, music, exam, career...`, 'warning');
+      };
+
+      recognition.onend = () => {
+        voiceBtn.classList.remove('recording');
+        voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+      };
+
+      recognition.onerror = () => {
+        voiceBtn.classList.remove('recording');
+        voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
+        notify('Voice recognition unavailable.', 'error');
+      };
+    } else if (voiceBtn) {
+      voiceBtn.style.display = 'none';
+    }
+
+    // ── LOGOUT ──
+    async function logoutUser() {
+      await fetch('/logout', { method: 'POST', credentials: 'include' });
+      window.location.href = '/';
+    }
+    document.getElementById('logoutBtn')?.addEventListener('click', e => { e.preventDefault(); logoutUser(); });
+    document.getElementById('mobileLogoutBtn')?.addEventListener('click', e => { e.preventDefault(); logoutUser(); });
+
+    // ── PWA ──
+    window.addEventListener('beforeinstallprompt', e => {
+      e.preventDefault();
+      notify('Install Sarveik as an app! Tap the install icon in your address bar.', 'info');
+    });
+
+    // ── SERVICE WORKER ──
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+
+    // ── WELCOME ──
+    setTimeout(() => notify('Welcome to Sarveik! 🚀 Press / to search tools.', 'success'), 1300);
+  </script>
+</body>
+</html>

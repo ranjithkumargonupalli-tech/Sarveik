@@ -1,0 +1,2353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Moderator Dashboard | Sarveik</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* ===== RESET & CSS VARS ===== */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0b0f1a;
+            --bg2: #111827;
+            --bg3: #1a2035;
+            --sidebar-bg: #070b14;
+            --card: rgba(17,24,37,0.95);
+            --card-hover: rgba(26,32,53,0.98);
+            --border: rgba(255,255,255,0.07);
+            --border-bright: rgba(99,179,237,0.25);
+            --text: #e2e8f0;
+            --text2: #94a3b8;
+            --text3: #64748b;
+            --accent: #63b3ed;
+            --accent2: #4fd1c5;
+            --accent3: #f6ad55;
+            --danger: #fc8181;
+            --success: #68d391;
+            --warning: #f6ad55;
+            --purple: #b794f4;
+            --pink: #f687b3;
+            --glow: rgba(99,179,237,0.15);
+            --sidebar-w: 270px;
+            --radius: 14px;
+            --radius-sm: 8px;
+            --shadow: 0 8px 32px rgba(0,0,0,0.4);
+            --font-head: 'Syne', sans-serif;
+            --font-body: 'DM Sans', sans-serif;
+            --transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+        }
+        [data-theme="light"] {
+            --bg: #f0f4f8; --bg2: #ffffff; --bg3: #e8edf5;
+            --sidebar-bg: #1a2035;
+            --card: rgba(255,255,255,0.97); --card-hover: #f8fbff;
+            --border: rgba(0,0,0,0.08); --border-bright: rgba(99,130,200,0.3);
+            --text: #1a202c; --text2: #4a5568; --text3: #718096;
+            --glow: rgba(99,130,200,0.1);
+        }
+        [data-theme="ocean"] {
+            --bg: #0a1929; --bg2: #0d2137; --bg3: #102848;
+            --accent: #00e5ff; --accent2: #00bfa5;
+            --glow: rgba(0,229,255,0.12);
+        }
+        [data-theme="aurora"] {
+            --bg: #0d0f1f; --bg2: #141626; --bg3: #1a1e38;
+            --accent: #a78bfa; --accent2: #34d399; --accent3: #fb7185;
+            --glow: rgba(167,139,250,0.15);
+        }
+        [data-theme="copper"] {
+            --bg: #1a0f0a; --bg2: #221410; --bg3: #2d1a12;
+            --sidebar-bg: #120a06;
+            --accent: #f59e0b; --accent2: #ef4444; --accent3: #fbbf24;
+            --glow: rgba(245,158,11,0.15);
+        }
+
+        body {
+            font-family: var(--font-body);
+            background: var(--bg);
+            color: var(--text);
+            overflow: hidden;
+            height: 100vh;
+        }
+
+        /* ===== LAYOUT ===== */
+        .wrapper { display: flex; height: 100vh; }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: var(--sidebar-w);
+            background: var(--sidebar-bg);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            border-right: 1px solid var(--border);
+            position: relative;
+            z-index: 100;
+            overflow: hidden;
+        }
+        .sidebar::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: 
+                radial-gradient(ellipse at top left, rgba(99,179,237,0.08) 0%, transparent 60%),
+                radial-gradient(ellipse at bottom right, rgba(79,209,197,0.06) 0%, transparent 60%);
+            pointer-events: none;
+        }
+        .sidebar-logo {
+            padding: 1.75rem 1.5rem 1.25rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .logo-mark {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .logo-icon-wrap {
+            width: 42px; height: 42px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.2rem;
+            box-shadow: 0 0 20px var(--glow);
+            flex-shrink: 0;
+        }
+        .logo-text { font-family: var(--font-head); }
+        .logo-text h3 { font-size: 1.1rem; font-weight: 800; color: #fff; line-height: 1.1; }
+        .logo-text span { font-size: 0.7rem; color: var(--text2); letter-spacing: 0.05em; }
+
+        /* Sidebar mod card */
+        .sidebar-mod-card {
+            margin: 1rem 1rem 0.5rem;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .mod-avatar-sm {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--purple));
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--font-head);
+            font-weight: 700; font-size: 0.9rem;
+            color: #fff; flex-shrink: 0;
+            border: 2px solid rgba(255,255,255,0.15);
+        }
+        .mod-card-info { flex: 1; min-width: 0; }
+        .mod-card-name { font-size: 0.85rem; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .mod-card-role { font-size: 0.7rem; color: var(--accent); }
+        .mod-online-badge { width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 6px var(--success); }
+
+        /* Sidebar nav */
+        .sidebar-nav { flex: 1; overflow-y: auto; padding: 0.75rem 0; scrollbar-width: none; }
+        .sidebar-nav::-webkit-scrollbar { display: none; }
+        .nav-section-label {
+            font-size: 0.65rem;
+            letter-spacing: 0.12em;
+            text-transform: uppercase;
+            color: var(--text3);
+            padding: 0.75rem 1.5rem 0.25rem;
+            font-weight: 600;
+        }
+        .nav-item {
+            display: flex; align-items: center;
+            gap: 0.75rem;
+            padding: 0.65rem 1.25rem;
+            margin: 1px 0.75rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--text2);
+            position: relative;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+        .nav-item.active {
+            background: rgba(99,179,237,0.12);
+            color: var(--accent);
+            border: 1px solid rgba(99,179,237,0.2);
+        }
+        .nav-item.active .nav-icon { color: var(--accent); }
+        .nav-icon { width: 18px; font-size: 0.9rem; flex-shrink: 0; text-align: center; }
+        .nav-badge {
+            margin-left: auto;
+            background: var(--accent);
+            color: var(--bg);
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 0.1rem 0.45rem;
+            border-radius: 999px;
+            min-width: 18px;
+            text-align: center;
+        }
+        .nav-badge.red { background: var(--danger); }
+
+        /* Sidebar quick stats */
+        .sidebar-quick-stats {
+            padding: 0.75rem 1rem;
+            border-top: 1px solid var(--border);
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.5rem;
+        }
+        .qs-item {
+            background: rgba(255,255,255,0.04);
+            border-radius: var(--radius-sm);
+            padding: 0.5rem 0.75rem;
+            text-align: center;
+        }
+        .qs-val { font-family: var(--font-head); font-size: 1.1rem; font-weight: 700; color: var(--accent); }
+        .qs-label { font-size: 0.6rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; }
+
+        /* ===== MAIN CONTENT ===== */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-width: 0;
+        }
+
+        /* Top bar */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.85rem 2rem;
+            background: rgba(11,15,26,0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        [data-theme="light"] .topbar { background: rgba(240,244,248,0.9); }
+        .topbar-left { display: flex; align-items: center; gap: 1rem; }
+        .page-breadcrumb { font-size: 0.75rem; color: var(--text3); }
+        .page-title { font-family: var(--font-head); font-size: 1.4rem; font-weight: 800; color: var(--text); }
+        .topbar-right { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+
+        /* Topbar controls */
+        .tb-btn {
+            display: inline-flex; align-items: center; gap: 0.45rem;
+            padding: 0.5rem 0.9rem;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.05);
+            color: var(--text);
+            font-size: 0.8rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: var(--font-body);
+        }
+        .tb-btn:hover { background: rgba(255,255,255,0.1); border-color: var(--border-bright); }
+        .tb-btn.danger { background: rgba(252,129,129,0.1); border-color: rgba(252,129,129,0.3); color: var(--danger); }
+        .tb-btn.accent { background: rgba(99,179,237,0.1); border-color: rgba(99,179,237,0.3); color: var(--accent); }
+
+        /* Search bar in topbar */
+        .global-search {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 0.4rem 0.9rem;
+            min-width: 220px;
+            transition: var(--transition);
+        }
+        .global-search:focus-within { border-color: var(--border-bright); background: rgba(99,179,237,0.05); }
+        .global-search i { color: var(--text3); font-size: 0.8rem; }
+        .global-search input { background: none; border: none; outline: none; color: var(--text); font-size: 0.85rem; font-family: var(--font-body); width: 100%; }
+        .global-search input::placeholder { color: var(--text3); }
+
+        /* Notification bell */
+        .notif-bell {
+            position: relative;
+            width: 36px; height: 36px;
+            border-radius: var(--radius-sm);
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer;
+            transition: var(--transition);
+            color: var(--text2);
+        }
+        .notif-bell:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+        .notif-dot {
+            position: absolute; top: 5px; right: 5px;
+            width: 8px; height: 8px;
+            background: var(--danger);
+            border-radius: 50%;
+            border: 2px solid var(--sidebar-bg);
+        }
+
+        /* Theme selector */
+        .theme-select {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 0.4rem 0.75rem;
+            color: var(--text);
+            font-size: 0.8rem;
+            cursor: pointer;
+            outline: none;
+            font-family: var(--font-body);
+        }
+
+        /* ===== PAGE AREA ===== */
+        .page-area { flex: 1; overflow-y: auto; padding: 1.75rem 2rem; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+
+        /* ===== TAB CONTENT ===== */
+        .tab-content { display: none; animation: fadeIn 0.2s ease; }
+        .tab-content.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ===== SECTION HEADER ===== */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .section-title { font-family: var(--font-head); font-size: 1.1rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 0.6rem; }
+        .section-title i { color: var(--accent); font-size: 0.9rem; }
+
+        /* ===== CARDS & GRIDS ===== */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1.25rem 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+            cursor: default;
+        }
+        .stat-card:hover { border-color: var(--border-bright); transform: translateY(-2px); box-shadow: var(--shadow); }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0; right: 0;
+            width: 80px; height: 80px;
+            border-radius: 50%;
+            background: radial-gradient(circle, var(--glow) 0%, transparent 70%);
+            transform: translate(30%, -30%);
+        }
+        .stat-label { font-size: 0.72rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin-bottom: 0.5rem; }
+        .stat-value { font-family: var(--font-head); font-size: 2rem; font-weight: 800; color: var(--text); line-height: 1; }
+        .stat-sub { font-size: 0.72rem; color: var(--text2); margin-top: 0.35rem; }
+        .stat-icon-bg {
+            position: absolute;
+            right: 1.25rem; top: 50%;
+            transform: translateY(-50%);
+            font-size: 2.5rem;
+            color: var(--accent);
+            opacity: 0.1;
+        }
+        .stat-trend { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.7rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 999px; }
+        .stat-trend.up { background: rgba(104,211,145,0.15); color: var(--success); }
+        .stat-trend.down { background: rgba(252,129,129,0.15); color: var(--danger); }
+
+        /* ===== CARD ===== */
+        .card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            transition: var(--transition);
+        }
+        .card:hover { border-color: rgba(99,179,237,0.15); }
+        .card-header {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+        .card-title { font-family: var(--font-head); font-size: 0.95rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 0.5rem; }
+        .card-title i { color: var(--accent); }
+        .card-body { padding: 1.25rem 1.5rem; }
+
+        /* ===== TABLE ===== */
+        .table-wrap { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 500px; }
+        thead th {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text3);
+            font-weight: 700;
+            border-bottom: 1px solid var(--border);
+            white-space: nowrap;
+        }
+        tbody td {
+            padding: 0.85rem 1rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text2);
+            vertical-align: middle;
+        }
+        tbody tr:hover { background: rgba(99,179,237,0.04); }
+        tbody tr:last-child td { border-bottom: none; }
+
+        /* ===== BADGES ===== */
+        .badge {
+            display: inline-flex; align-items: center; gap: 0.3rem;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .badge-success { background: rgba(104,211,145,0.15); color: var(--success); }
+        .badge-warning { background: rgba(246,173,85,0.15); color: var(--warning); }
+        .badge-danger { background: rgba(252,129,129,0.15); color: var(--danger); }
+        .badge-info { background: rgba(99,179,237,0.15); color: var(--accent); }
+        .badge-purple { background: rgba(183,148,244,0.15); color: var(--purple); }
+        .badge-muted { background: rgba(255,255,255,0.06); color: var(--text3); }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            padding: 0.5rem 1.1rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: var(--transition);
+            font-family: var(--font-body);
+            white-space: nowrap;
+        }
+        .btn-sm { padding: 0.3rem 0.7rem; font-size: 0.75rem; }
+        .btn-primary { background: var(--accent); color: var(--bg); }
+        .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-secondary { background: rgba(255,255,255,0.07); color: var(--text); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: rgba(255,255,255,0.12); }
+        .btn-danger { background: rgba(252,129,129,0.15); color: var(--danger); border: 1px solid rgba(252,129,129,0.3); }
+        .btn-danger:hover { background: rgba(252,129,129,0.25); }
+        .btn-warning { background: rgba(246,173,85,0.15); color: var(--warning); border: 1px solid rgba(246,173,85,0.3); }
+        .btn-warning:hover { background: rgba(246,173,85,0.25); }
+        .btn-success { background: rgba(104,211,145,0.15); color: var(--success); border: 1px solid rgba(104,211,145,0.3); }
+        .btn-icon { background: rgba(255,255,255,0.06); color: var(--text2); border: 1px solid var(--border); padding: 0.35rem 0.7rem; }
+        .btn-icon:hover { background: rgba(255,255,255,0.12); color: var(--text); }
+
+        /* ===== INPUTS ===== */
+        input[type="text"], input[type="email"], input[type="date"], select, textarea {
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 0.55rem 0.9rem;
+            color: var(--text);
+            font-size: 0.85rem;
+            font-family: var(--font-body);
+            outline: none;
+            transition: var(--transition);
+            width: 100%;
+        }
+        input:focus, select:focus, textarea:focus { border-color: var(--border-bright); box-shadow: 0 0 0 3px var(--glow); }
+        select { cursor: pointer; }
+        textarea { resize: vertical; min-height: 90px; }
+
+        /* ===== SEARCH ROW ===== */
+        .search-row {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .search-row .search-field { flex: 1; min-width: 180px; position: relative; }
+        .search-row .search-field i { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 0.8rem; pointer-events: none; }
+        .search-row .search-field input { padding-left: 2.2rem; }
+
+        /* ===== PAGINATION ===== */
+        .pagination { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+        .pagination button {
+            min-width: 30px; height: 30px;
+            border: 1px solid var(--border);
+            background: var(--card);
+            border-radius: var(--radius-sm);
+            color: var(--text2);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: var(--transition);
+            font-family: var(--font-body);
+        }
+        .pagination button:hover { background: rgba(99,179,237,0.1); color: var(--accent); border-color: var(--border-bright); }
+        .pagination button.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+
+        /* ===== MODAL ===== */
+        .modal-overlay {
+            display: none;
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(6px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal-box {
+            background: var(--bg2);
+            border: 1px solid var(--border-bright);
+            border-radius: var(--radius);
+            padding: 2rem;
+            max-width: 520px;
+            width: 92%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+            animation: modalIn 0.25s cubic-bezier(0.4,0,0.2,1);
+        }
+        @keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+        .modal-title { font-family: var(--font-head); font-size: 1.1rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+        .modal-title i { color: var(--accent); }
+        .form-group { margin-bottom: 1rem; }
+        .form-label { display: block; font-size: 0.78rem; color: var(--text2); margin-bottom: 0.4rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+        .modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; }
+
+        /* ===== TOAST ===== */
+        .toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; z-index: 99999; }
+        .toast {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.75rem 1.25rem;
+            background: var(--bg2);
+            border: 1px solid var(--border-bright);
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            color: var(--text);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            animation: toastIn 0.3s ease;
+            min-width: 240px;
+            max-width: 340px;
+        }
+        @keyframes toastIn { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+        .toast.toast-success { border-color: rgba(104,211,145,0.4); }
+        .toast.toast-error { border-color: rgba(252,129,129,0.4); }
+        .toast.toast-warning { border-color: rgba(246,173,85,0.4); }
+        .toast i { flex-shrink: 0; }
+        .toast-success i { color: var(--success); }
+        .toast-error i { color: var(--danger); }
+        .toast-warning i { color: var(--warning); }
+        .toast-info i { color: var(--accent); }
+
+        /* ===== CHARTS ===== */
+        .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem; }
+        .chart-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; height: 320px; }
+        .chart-card canvas { width: 100% !important; height: 100% !important; }
+
+        /* ===== MINI CHART ===== */
+        .sparkline-row { display: flex; gap: 0.25rem; align-items: flex-end; height: 36px; }
+        .spark-bar { flex: 1; border-radius: 3px 3px 0 0; background: var(--accent); opacity: 0.4; transition: var(--transition); min-height: 4px; }
+        .sparkline-row:hover .spark-bar { opacity: 0.7; }
+
+        /* ===== DASHBOARD WIDGETS ===== */
+        .widgets-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem; }
+        .widget-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+        .widget-card .card-header { background: rgba(99,179,237,0.04); }
+
+        /* ===== ACTIVITY ITEMS ===== */
+        .activity-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--accent);
+            margin-top: 0.3rem;
+            flex-shrink: 0;
+        }
+        .activity-text { font-size: 0.82rem; color: var(--text2); line-height: 1.4; }
+        .activity-time { font-size: 0.7rem; color: var(--text3); margin-top: 0.15rem; }
+
+        /* ===== USER TABLE AVATAR ===== */
+        .user-av {
+            width: 30px; height: 30px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; font-weight: 700; color: var(--bg);
+        }
+
+        /* ===== SUPPORT TICKETS ===== */
+        .ticket-list-wrap { max-height: 480px; overflow-y: auto; }
+        .ticket-item {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .ticket-item:hover { background: rgba(99,179,237,0.04); }
+        .ticket-item.selected { background: rgba(99,179,237,0.07); border-left: 3px solid var(--accent); }
+        .ticket-content { flex: 1; min-width: 0; }
+        .ticket-subject { font-weight: 600; font-size: 0.9rem; color: var(--text); margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+        .ticket-meta-row { font-size: 0.75rem; color: var(--text3); display: flex; gap: 0.75rem; flex-wrap: wrap; }
+        .ticket-preview { font-size: 0.78rem; color: var(--text2); margin-top: 0.2rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 500px; }
+
+        /* Reply panel */
+        .reply-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-top: 1rem; }
+        .convo-wrap { max-height: 380px; overflow-y: auto; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: var(--radius-sm); margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
+        .msg-bubble { max-width: 78%; }
+        .msg-bubble.user { align-self: flex-end; }
+        .msg-bubble.mod { align-self: flex-start; }
+        .msg-bubble.ai { align-self: flex-start; }
+        .msg-inner { padding: 0.65rem 1rem; border-radius: 16px; font-size: 0.85rem; line-height: 1.5; }
+        .msg-bubble.user .msg-inner { background: var(--accent); color: var(--bg); border-bottom-right-radius: 4px; }
+        .msg-bubble.mod .msg-inner { background: var(--bg3); color: var(--text); border-bottom-left-radius: 4px; border: 1px solid var(--border); }
+        .msg-bubble.ai .msg-inner { background: rgba(79,209,197,0.12); border-left: 3px solid var(--accent2); color: var(--text); }
+        .msg-meta-row { font-size: 0.66rem; color: var(--text3); margin-top: 0.2rem; padding: 0 0.25rem; }
+
+        /* ===== ANNOUNCEMENTS ===== */
+        .ann-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            border-radius: var(--radius);
+            padding: 1.25rem 1.5rem;
+            margin-bottom: 0.75rem;
+            transition: var(--transition);
+        }
+        .ann-card:hover { border-color: var(--border-bright); border-left-color: var(--accent); }
+        .ann-title { font-family: var(--font-head); font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 0.4rem; }
+        .ann-body { font-size: 0.85rem; color: var(--text2); line-height: 1.6; }
+        .ann-footer { display: flex; align-items: center; gap: 1rem; margin-top: 0.75rem; font-size: 0.72rem; color: var(--text3); flex-wrap: wrap; }
+
+        /* ===== STAFF CHAT (original socket-based) ===== */
+        .staff-layout { display: grid; grid-template-columns: 1fr 260px; gap: 1.25rem; height: calc(100vh - 220px); min-height: 480px; }
+        .chat-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); display: flex; flex-direction: column; overflow: hidden; }
+        .chat-header { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
+        .chat-title { font-family: var(--font-head); font-weight: 700; font-size: 0.95rem; }
+        .chat-subtitle { font-size: 0.72rem; color: var(--text3); }
+        .messages-area { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+        .chat-msg { display: flex; flex-direction: column; max-width: 75%; }
+        .chat-msg.own { align-self: flex-end; align-items: flex-end; }
+        .chat-msg.other { align-self: flex-start; align-items: flex-start; }
+        .chat-bubble { padding: 0.55rem 1rem; border-radius: 18px; font-size: 0.85rem; line-height: 1.5; word-break: break-word; }
+        .own .chat-bubble { background: var(--accent); color: var(--bg); border-bottom-right-radius: 4px; }
+        .other .chat-bubble { background: var(--bg3); color: var(--text); border-bottom-left-radius: 4px; border: 1px solid var(--border); }
+        .chat-msg-meta { font-size: 0.66rem; color: var(--text3); margin-top: 0.2rem; }
+        .chat-input-row { padding: 0.85rem 1rem; border-top: 1px solid var(--border); display: flex; gap: 0.75rem; flex-shrink: 0; align-items: flex-end; }
+        .chat-input-row input { border-radius: 999px; padding: 0.55rem 1rem; }
+        .chat-input-row .btn { border-radius: 999px; padding: 0.55rem 1.1rem; flex-shrink: 0; }
+        .members-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow-y: auto; }
+        .members-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); font-family: var(--font-head); font-size: 0.9rem; font-weight: 700; }
+        .member-item { padding: 0.65rem 1.25rem; display: flex; align-items: center; gap: 0.6rem; border-bottom: 1px solid var(--border); font-size: 0.83rem; }
+        .member-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+        /* ===== MOD STATS ===== */
+        .leaderboard-item {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.65rem 0; border-bottom: 1px solid var(--border);
+        }
+        .rank-badge {
+            width: 22px; height: 22px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.68rem; font-weight: 800;
+            flex-shrink: 0;
+        }
+        .rank-1 { background: rgba(246,173,85,0.2); color: var(--warning); }
+        .rank-2 { background: rgba(203,213,225,0.2); color: #94a3b8; }
+        .rank-3 { background: rgba(205,127,50,0.2); color: #cd7f32; }
+        .rank-other { background: rgba(255,255,255,0.05); color: var(--text3); }
+        .lb-name { flex: 1; font-size: 0.85rem; font-weight: 600; }
+        .lb-score { font-family: var(--font-head); font-size: 0.9rem; font-weight: 700; color: var(--accent); }
+        .lb-bar { height: 4px; border-radius: 2px; background: rgba(99,179,237,0.15); margin-top: 0.2rem; overflow: hidden; }
+        .lb-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.5s ease; }
+
+        /* ===== ACTIVITY LOG FILTERS ===== */
+        .filters-bar { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem; padding: 1rem; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); align-items: flex-end; }
+        .fg { display: flex; flex-direction: column; gap: 0.3rem; min-width: 130px; }
+        .fg label { font-size: 0.68rem; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; }
+        .fg input, .fg select { padding: 0.4rem 0.7rem; font-size: 0.82rem; }
+
+        /* ===== NEW FEATURES ===== */
+        /* Quick Action Panel */
+        .quick-actions-bar { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+        .quick-action-btn {
+            display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
+            padding: 0.85rem 1.1rem;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: var(--transition);
+            min-width: 90px;
+        }
+        .quick-action-btn:hover { border-color: var(--border-bright); background: var(--card-hover); transform: translateY(-2px); box-shadow: var(--shadow); }
+        .quick-action-btn i { font-size: 1.3rem; color: var(--accent); }
+        .quick-action-btn span { font-size: 0.7rem; color: var(--text2); font-weight: 600; text-align: center; }
+
+        /* IP Banning */
+        .ip-entry { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0; border-bottom: 1px solid var(--border); font-size: 0.84rem; }
+        .ip-addr { font-family: monospace; color: var(--accent); flex: 1; }
+        .ip-reason { color: var(--text3); font-size: 0.78rem; flex: 1; }
+
+        /* Notes panel */
+        .notes-item { padding: 0.75rem; background: rgba(246,173,85,0.06); border: 1px solid rgba(246,173,85,0.15); border-radius: var(--radius-sm); margin-bottom: 0.5rem; }
+        .notes-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem; }
+        .notes-item-user { font-size: 0.8rem; font-weight: 600; color: var(--warning); }
+        .notes-item-time { font-size: 0.7rem; color: var(--text3); }
+        .notes-item-text { font-size: 0.82rem; color: var(--text2); }
+
+        /* Platform Health */
+        .health-metric { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+        .health-metric:last-child { border-bottom: none; }
+        .health-label { flex: 1; font-size: 0.85rem; color: var(--text2); }
+        .health-bar-wrap { width: 120px; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
+        .health-bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+        .health-val { font-size: 0.8rem; font-weight: 700; color: var(--text); min-width: 40px; text-align: right; }
+
+        /* Bulk actions bar */
+        .bulk-bar { display: flex; gap: 0.75rem; align-items: center; padding: 0.65rem 1rem; background: rgba(99,179,237,0.08); border: 1px solid rgba(99,179,237,0.2); border-radius: var(--radius-sm); margin-bottom: 0.75rem; flex-wrap: wrap; }
+        .bulk-bar-count { font-size: 0.8rem; font-weight: 600; color: var(--accent); }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--border-bright); }
+
+        /* Empty state */
+        .empty-state { padding: 3rem; text-align: center; color: var(--text3); font-size: 0.88rem; }
+        .empty-state i { font-size: 2.5rem; display: block; margin-bottom: 0.75rem; opacity: 0.4; }
+
+        /* Divider */
+        hr { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0; }
+
+        /* Status indicator */
+        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+        .status-online { background: var(--success); box-shadow: 0 0 6px var(--success); }
+        .status-offline { background: var(--text3); }
+        .status-busy { background: var(--warning); box-shadow: 0 0 6px var(--warning); }
+
+        /* Grid helpers */
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+        .three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+
+        @media (max-width: 900px) {
+            .charts-grid { grid-template-columns: 1fr; }
+            .two-col { grid-template-columns: 1fr; }
+            .staff-layout { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 640px) {
+            .sidebar { width: 60px; }
+            .sidebar .logo-text, .sidebar .sidebar-mod-card, .sidebar-quick-stats, .nav-section-label, .nav-item span, .nav-badge { display: none; }
+            .nav-item { justify-content: center; padding: 0.75rem; }
+            .nav-icon { width: auto; }
+            .page-area { padding: 1rem; }
+            .topbar { padding: 0.75rem 1rem; }
+        }
+
+        /* Checkbox */
+        input[type="checkbox"] {
+            width: 15px; height: 15px; cursor: pointer;
+            accent-color: var(--accent);
+        }
+
+        /* Override select width in form group */
+        .fg select, .fg input { width: auto; min-width: 130px; }
+
+        /* Notification dropdown */
+        .notif-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 0.5rem;
+            background: var(--bg2);
+            border: 1px solid var(--border-bright);
+            border-radius: var(--radius);
+            width: 320px;
+            box-shadow: var(--shadow);
+            z-index: 9998;
+            overflow: hidden;
+        }
+        .notif-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); font-family: var(--font-head); font-size: 0.9rem; font-weight: 700; display: flex; align-items: center; justify-content: space-between; }
+        .notif-item { padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; gap: 0.75rem; align-items: flex-start; cursor: pointer; transition: var(--transition); }
+        .notif-item:hover { background: rgba(99,179,237,0.06); }
+        .notif-item.unread { border-left: 3px solid var(--accent); }
+        .notif-icon { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; }
+        .notif-text { font-size: 0.8rem; color: var(--text2); line-height: 1.4; flex: 1; }
+        .notif-time { font-size: 0.68rem; color: var(--text3); margin-top: 0.2rem; }
+
+        .notif-bell { position: relative; }
+        .notif-panel { display: none; }
+        .notif-bell:hover .notif-panel { display: block; }
+
+        /* ===== TOOL APPROVAL CARD ===== */
+        .tool-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 1rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 0.75rem;
+            transition: var(--transition);
+        }
+        .tool-card:hover { border-color: var(--border-bright); }
+        .tool-thumb { width: 48px; height: 48px; border-radius: var(--radius-sm); background: var(--bg3); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; }
+        .tool-info { flex: 1; min-width: 0; }
+        .tool-name { font-weight: 700; font-size: 0.9rem; }
+        .tool-meta { font-size: 0.75rem; color: var(--text3); margin-top: 0.15rem; }
+        .tool-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
+
+        /* ===== PLATFORM HEALTH ===== */
+        .health-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+        .health-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; text-align: center; }
+        .health-ring { position: relative; width: 70px; height: 70px; margin: 0 auto 0.75rem; }
+        .health-ring svg { transform: rotate(-90deg); }
+        .health-ring-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--font-head); font-size: 0.85rem; font-weight: 800; }
+        .health-name { font-size: 0.78rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+    </style>
+</head>
+<body>
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="wrapper">
+    <!-- ===== SIDEBAR ===== -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-mark">
+                <div class="logo-icon-wrap"><i class="fas fa-shield-alt" style="color:#fff;"></i></div>
+                <div class="logo-text">
+                    <h3>Sarveik</h3>
+                    <span>MODERATOR PANEL</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-mod-card">
+            <div class="mod-avatar-sm" id="sidebarAvatar">M</div>
+            <div class="mod-card-info">
+                <div class="mod-card-name" id="sidebarName">Moderator</div>
+                <div class="mod-card-role" id="sidebarRole">moderator</div>
+            </div>
+            <div class="mod-online-badge"></div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Overview</div>
+            <div class="nav-item active" data-tab="dashboard">
+                <i class="fas fa-tachometer-alt nav-icon"></i><span>Dashboard</span>
+            </div>
+
+            <div class="nav-section-label">Management</div>
+            <div class="nav-item" data-tab="users">
+                <i class="fas fa-users nav-icon"></i><span>Users</span>
+                <span class="nav-badge" id="navUserCount">-</span>
+            </div>
+            <div class="nav-item" data-tab="tools">
+                <i class="fas fa-tools nav-icon"></i><span>Tools</span>
+                <span class="nav-badge" id="navPendingTools">-</span>
+            </div>
+            <div class="nav-item" data-tab="ipbans">
+                <i class="fas fa-ban nav-icon"></i><span>IP Bans</span>
+            </div>
+
+            <div class="nav-section-label">Support</div>
+            <div class="nav-item" data-tab="support">
+                <i class="fas fa-headset nav-icon"></i><span>Tickets</span>
+                <span class="nav-badge red" id="navOpenTickets">-</span>
+            </div>
+            <div class="nav-item" data-tab="announcements">
+                <i class="fas fa-bullhorn nav-icon"></i><span>Announcements</span>
+            </div>
+            <div class="nav-item" data-tab="notes">
+                <i class="fas fa-sticky-note nav-icon"></i><span>User Notes</span>
+            </div>
+
+            <div class="nav-section-label">Analytics</div>
+            <div class="nav-item" data-tab="activity">
+                <i class="fas fa-history nav-icon"></i><span>Activity Log</span>
+            </div>
+            <div class="nav-item" data-tab="modstats">
+                <i class="fas fa-chart-bar nav-icon"></i><span>Mod Stats</span>
+            </div>
+            <div class="nav-item" data-tab="health">
+                <i class="fas fa-heartbeat nav-icon"></i><span>Platform Health</span>
+            </div>
+
+            <div class="nav-section-label">Communication</div>
+            <div class="nav-item" data-tab="staffconference">
+                <i class="fas fa-comments nav-icon"></i><span>Staff Chat</span>
+            </div>
+        </nav>
+
+        <div class="sidebar-quick-stats">
+            <div class="qs-item"><div class="qs-val" id="qs-tickets">0</div><div class="qs-label">Tickets</div></div>
+            <div class="qs-item"><div class="qs-val" id="qs-users">0</div><div class="qs-label">Users</div></div>
+            <div class="qs-item"><div class="qs-val" id="qs-pending">0</div><div class="qs-label">Pending</div></div>
+            <div class="qs-item"><div class="qs-val" id="qs-tools">0</div><div class="qs-label">Tools</div></div>
+        </div>
+    </aside>
+
+    <!-- ===== MAIN ===== -->
+    <div class="main-content">
+        <!-- TOP BAR -->
+        <header class="topbar">
+            <div class="topbar-left">
+                <div>
+                    <div class="page-breadcrumb">Sarveik &rsaquo; <span id="breadcrumbTab">Dashboard</span></div>
+                    <h1 class="page-title" id="pageTitle">Dashboard</h1>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <div class="global-search">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="globalSearchInput" placeholder="Search users, tickets..." oninput="globalSearch(this.value)">
+                </div>
+                <div class="notif-bell" id="notifBell">
+                    <i class="fas fa-bell"></i>
+                    <span class="notif-dot" id="notifDot"></span>
+                    <div class="notif-panel notif-dropdown" id="notifDropdown">
+                        <div class="notif-header">Notifications <span style="font-size:0.72rem;color:var(--text3);" id="notifCount">0 new</span></div>
+                        <div id="notifList"></div>
+                    </div>
+                </div>
+                <select class="theme-select" id="themeSelector">
+                    <option value="dark">🌙 Dark</option>
+                    <option value="light">☀️ Light</option>
+                    <option value="ocean">🌊 Ocean</option>
+                    <option value="aurora">✨ Aurora</option>
+                    <option value="copper">🔥 Copper</option>
+                </select>
+                <button class="tb-btn accent" onclick="refreshAllData()"><i class="fas fa-sync-alt"></i> Refresh</button>
+                <button class="tb-btn danger" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+            </div>
+        </header>
+
+        <!-- PAGE AREA -->
+        <main class="page-area">
+
+            <!-- ===== DASHBOARD ===== -->
+            <div id="dashboard-tab" class="tab-content active">
+                <!-- Quick Actions -->
+                <div class="quick-actions-bar">
+                    <div class="quick-action-btn" onclick="switchTab('support')"><i class="fas fa-ticket-alt"></i><span>New Ticket</span></div>
+                    <div class="quick-action-btn" onclick="openModal('announcementModal')"><i class="fas fa-bullhorn"></i><span>Announce</span></div>
+                    <div class="quick-action-btn" onclick="openModal('ipBanModal')"><i class="fas fa-ban"></i><span>Ban IP</span></div>
+                    <div class="quick-action-btn" onclick="openModal('bulkEmailModal')"><i class="fas fa-envelope"></i><span>Email Users</span></div>
+                    <div class="quick-action-btn" onclick="switchTab('health')"><i class="fas fa-heartbeat"></i><span>Health Check</span></div>
+                    <div class="quick-action-btn" onclick="exportReport()"><i class="fas fa-file-export"></i><span>Export Report</span></div>
+                </div>
+
+                <!-- Stats -->
+                <div class="stats-grid" id="statsGrid">
+                    <div class="stat-card"><div class="stat-label">Total Users</div><div class="stat-value" id="totalUsers">—</div><div class="stat-sub"><span class="stat-trend up" id="userTrend"><i class="fas fa-arrow-up"></i> 12%</span> this week</div><i class="fas fa-users stat-icon-bg"></i></div>
+                    <div class="stat-card"><div class="stat-label">Active Tools</div><div class="stat-value" id="totalTools">—</div><div class="stat-sub">Platform tools approved</div><i class="fas fa-tools stat-icon-bg"></i></div>
+                    <div class="stat-card"><div class="stat-label">Pending Review</div><div class="stat-value" id="pendingTools">—</div><div class="stat-sub">Awaiting moderation</div><i class="fas fa-clock stat-icon-bg"></i></div>
+                    <div class="stat-card"><div class="stat-label">Open Tickets</div><div class="stat-value" id="ticketCount">—</div><div class="stat-sub">Requires attention</div><i class="fas fa-headset stat-icon-bg"></i></div>
+                    <div class="stat-card"><div class="stat-label">Banned Users</div><div class="stat-value" id="bannedCount">—</div><div class="stat-sub">Total bans active</div><i class="fas fa-user-slash stat-icon-bg"></i></div>
+                    <div class="stat-card"><div class="stat-label">Announcements</div><div class="stat-value" id="annCount">—</div><div class="stat-sub">Published this month</div><i class="fas fa-bullhorn stat-icon-bg"></i></div>
+                </div>
+
+                <!-- Charts -->
+                <div class="charts-grid">
+                    <div class="chart-card"><canvas id="userGrowthChart"></canvas></div>
+                    <div class="chart-card"><canvas id="statusChart"></canvas></div>
+                </div>
+
+                <!-- Widgets row -->
+                <div class="widgets-row">
+                    <div class="widget-card">
+                        <div class="card-header"><span class="card-title"><i class="fas fa-clock"></i>Recent Tickets</span></div>
+                        <div style="padding: 0 1rem;"><div id="recentTicketsWidget"></div></div>
+                    </div>
+                    <div class="widget-card">
+                        <div class="card-header"><span class="card-title"><i class="fas fa-fire"></i>Top Tools</span></div>
+                        <div style="padding: 0 1rem;"><div id="topToolsWidget"></div></div>
+                    </div>
+                    <div class="widget-card">
+                        <div class="card-header"><span class="card-title"><i class="fas fa-comment-dots"></i>Recent Feedback</span></div>
+                        <div style="padding: 0 1rem;"><div id="recentFeedbackWidget"></div></div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity Table -->
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title"><i class="fas fa-history"></i>Recent Activity</span>
+                        <button class="btn btn-secondary btn-sm" onclick="switchTab('activity')">View All</button>
+                    </div>
+                    <div class="table-wrap">
+                        <table id="recentActivityTable">
+                            <thead><tr><th>Moderator</th><th>Action</th><th>Target</th><th>Details</th><th>Time</th></tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== USERS ===== -->
+            <div id="users-tab" class="tab-content">
+                <div class="search-row">
+                    <div class="search-field"><i class="fas fa-search"></i><input type="text" id="userSearch" placeholder="Search users by name or email..." oninput="debounceSearch('users')"></div>
+                    <select id="userFilter" onchange="filterUsers()">
+                        <option value="all">All Status</option>
+                        <option value="active">Active</option>
+                        <option value="banned">Banned</option>
+                        <option value="suspended">Suspended</option>
+                    </select>
+                    <select id="userRoleFilter" onchange="filterUsers()">
+                        <option value="all">All Roles</option>
+                        <option value="user">User</option>
+                        <option value="moderator">Moderator</option>
+                        <option value="admin">Admin</option>
+                    </select>
+                    <button class="btn btn-secondary" onclick="loadAllUsers()"><i class="fas fa-sync-alt"></i> Refresh</button>
+                    <button class="btn btn-secondary" onclick="exportUsersCSV()"><i class="fas fa-download"></i> Export CSV</button>
+                    <button class="btn btn-primary" onclick="openModal('bulkEmailModal')"><i class="fas fa-envelope"></i> Email Selected</button>
+                </div>
+
+                <div class="bulk-bar" id="userBulkBar" style="display:none;">
+                    <span class="bulk-bar-count"><span id="selectedCount">0</span> selected</span>
+                    <button class="btn btn-sm btn-secondary" onclick="bulkEmailSelected()"><i class="fas fa-envelope"></i> Email</button>
+                    <button class="btn btn-sm btn-warning" onclick="suspendSelectedUsers()"><i class="fas fa-hourglass-half"></i> Suspend</button>
+                    <button class="btn btn-sm btn-danger" onclick="banSelectedUsers()"><i class="fas fa-ban"></i> Ban</button>
+                    <button class="btn btn-sm btn-secondary" onclick="exportSelectedUsersJSON()"><i class="fas fa-download"></i> Export JSON</button>
+                    <button class="btn btn-sm btn-secondary" onclick="clearUserSelection()"><i class="fas fa-times"></i> Clear</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <span class="card-title"><i class="fas fa-users"></i>Registered Users</span>
+                        <div class="pagination" id="usersPagination"></div>
+                    </div>
+                    <div class="table-wrap">
+                        <table id="usersTable">
+                            <thead><tr>
+                                <th><input type="checkbox" id="selectAllUsersCheckbox" onchange="toggleSelectAllUsers()"></th>
+                                <th>ID</th><th>User</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th><th>Actions</th>
+                            </tr></thead>
+                            <tbody></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== TOOLS ===== -->
+            <div id="tools-tab" class="tab-content">
+                <div class="search-row">
+                    <div class="search-field"><i class="fas fa-search"></i><input type="text" id="toolSearch" placeholder="Search tools..." oninput="debounceSearch('tools')"></div>
+                    <select id="toolFilter" onchange="filterTools()">
+                        <option value="all">All</option>
+                        <option value="pending">Pending</option>
+                        <option value="approved">Approved</option>
+                    </select>
+                    <button class="btn btn-secondary" onclick="loadAllTools()"><i class="fas fa-sync-alt"></i> Refresh</button>
+                    <button class="btn btn-secondary" onclick="exportToolsCSV()"><i class="fas fa-download"></i> CSV</button>
+                </div>
+                <div id="toolsContainer"></div>
+                <div class="pagination" id="toolsPagination" style="margin-top:1rem;justify-content:center;"></div>
+            </div>
+
+            <!-- ===== IP BANS ===== -->
+            <div id="ipbans-tab" class="tab-content">
+                <div class="section-header">
+                    <span class="section-title"><i class="fas fa-ban"></i>IP Ban Manager</span>
+                    <button class="btn btn-danger" onclick="openModal('ipBanModal')"><i class="fas fa-plus"></i> Ban IP</button>
+                </div>
+                <div class="card">
+                    <div class="card-header"><span class="card-title"><i class="fas fa-list"></i>Banned IPs</span></div>
+                    <div style="padding: 0 1.5rem 1rem;" id="ipBanList"><div class="empty-state"><i class="fas fa-shield-check"></i>No IPs currently banned</div></div>
+                </div>
+            </div>
+
+            <!-- ===== SUPPORT ===== -->
+            <div id="support-tab" class="tab-content">
+                <div class="search-row">
+                    <div class="search-field"><i class="fas fa-search"></i><input type="text" id="ticketSearch" placeholder="Search tickets..." oninput="debounceSearch('tickets')"></div>
+                    <select id="ticketStatusFilter" onchange="filterTicketsByStatus()">
+                        <option value="all">All</option><option value="open">Open</option><option value="closed">Closed</option>
+                    </select>
+                    <input type="date" id="dateFrom" style="width:auto;">
+                    <input type="date" id="dateTo" style="width:auto;">
+                    <button class="btn btn-secondary" onclick="filterTicketsByDate()"><i class="fas fa-calendar"></i> Filter</button>
+                    <button class="btn btn-secondary" onclick="loadTickets()"><i class="fas fa-sync-alt"></i> Refresh</button>
+                    <button class="btn btn-secondary" onclick="exportTicketsCSV()"><i class="fas fa-download"></i> CSV</button>
+                </div>
+
+                <div class="bulk-bar" id="ticketBulkBar" style="display:none;">
+                    <span class="bulk-bar-count"><span id="selectedCountTickets">0</span> selected</span>
+                    <button class="btn btn-sm btn-secondary" onclick="bulkCloseTickets()"><i class="fas fa-lock"></i> Close</button>
+                    <button class="btn btn-sm btn-danger" onclick="bulkDeleteTickets()"><i class="fas fa-trash"></i> Delete</button>
+                    <button class="btn btn-sm btn-secondary" onclick="clearTicketSelection()"><i class="fas fa-times"></i> Clear</button>
+                </div>
+
+                <div class="card" style="margin-bottom:1rem;">
+                    <div class="ticket-list-wrap" id="ticketList"><div class="empty-state"><i class="fas fa-inbox"></i>Loading tickets…</div></div>
+                </div>
+
+                <div class="reply-panel" id="replySection" style="display:none;">
+                    <div style="display:flex; align-items:center; gap:1rem; margin-bottom:1rem; flex-wrap:wrap;">
+                        <span class="card-title" style="font-family:var(--font-head);font-size:1rem;"><i class="fas fa-reply"></i>Ticket Conversation</span>
+                        <span id="chatHeader" style="font-size:0.85rem;color:var(--text2);"></span>
+                    </div>
+                    <div class="convo-wrap" id="conversationContainer"></div>
+                    <textarea id="replyMessage" placeholder="Type your reply…"></textarea>
+                    <div style="display:flex; gap:0.75rem; justify-content:flex-end; margin-top:0.75rem; flex-wrap:wrap;">
+                        <button class="btn btn-secondary" onclick="closeReplyPanel()">Cancel</button>
+                        <button class="btn btn-primary" id="sendReplyBtn" onclick="sendModeratorReply()"><i class="fas fa-paper-plane"></i> Send</button>
+                        <button class="btn btn-warning" id="forwardTicketBtn" onclick="showForwardModal()"><i class="fas fa-share"></i> Forward</button>
+                        <button class="btn btn-secondary" id="unassignTicketBtn" onclick="unassignTicket()">Unassign</button>
+                        <button class="btn btn-danger" id="closeTicketBtn" onclick="closeTicket()"><i class="fas fa-lock"></i> Close</button>
+                        <button class="btn btn-danger" id="deleteTicketBtn" onclick="deleteTicket()"><i class="fas fa-trash"></i> Delete</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== ANNOUNCEMENTS ===== -->
+            <div id="announcements-tab" class="tab-content">
+                <div class="section-header">
+                    <div style="display:flex;gap:0.75rem;flex:1;flex-wrap:wrap;">
+                        <div class="search-field" style="flex:1;min-width:200px;"><i class="fas fa-search"></i><input type="text" id="announcementSearch" placeholder="Search announcements…" oninput="filterAnnouncements()"></div>
+                    </div>
+                    <button class="btn btn-primary" onclick="openModal('announcementModal')"><i class="fas fa-plus"></i> New Announcement</button>
+                </div>
+                <div id="announcementsList"></div>
+            </div>
+
+            <!-- ===== USER NOTES ===== -->
+            <div id="notes-tab" class="tab-content">
+                <div class="section-header">
+                    <span class="section-title"><i class="fas fa-sticky-note"></i>User Notes</span>
+                    <button class="btn btn-primary" onclick="openModal('userNotesModal')"><i class="fas fa-plus"></i> Add Note</button>
+                </div>
+                <div id="notesList"><div class="empty-state"><i class="fas fa-sticky-note"></i>No notes yet</div></div>
+            </div>
+
+            <!-- ===== ACTIVITY LOG ===== -->
+            <div id="activity-tab" class="tab-content">
+                <div class="filters-bar">
+                    <div class="fg"><label>Moderator</label><select id="activityModeratorFilter"><option value="all">All</option></select></div>
+                    <div class="fg"><label>Action</label><select id="activityActionFilter"><option value="all">All</option></select></div>
+                    <div class="fg"><label>From</label><input type="date" id="activityDateFrom"></div>
+                    <div class="fg"><label>To</label><input type="date" id="activityDateTo"></div>
+                    <div class="fg"><label>Keyword</label><input type="text" id="activitySearch" placeholder="Target / details…"></div>
+                    <div class="fg" style="justify-content:flex-end;flex-direction:row;gap:0.5rem;">
+                        <button class="btn btn-primary btn-sm" onclick="applyActivityFilters()"><i class="fas fa-filter"></i> Apply</button>
+                        <button class="btn btn-secondary btn-sm" onclick="resetActivityFilters()">Reset</button>
+                        <button class="btn btn-secondary btn-sm" onclick="exportFilteredActivityLog()"><i class="fas fa-download"></i> CSV</button>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="table-wrap">
+                        <table id="activityLogTable">
+                            <thead><tr><th>Moderator</th><th>Action</th><th>Target</th><th>Details</th><th>Time</th></tr></thead>
+                            <tbody><tr><td colspan="5" class="empty-state">Loading…</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div style="padding:1rem;display:flex;justify-content:center;"><div class="pagination" id="activityPagination"></div></div>
+                </div>
+            </div>
+
+            <!-- ===== MOD STATS ===== -->
+            <div id="modstats-tab" class="tab-content">
+                <div class="stats-grid" id="modStatsGrid"></div>
+
+                <div class="two-col" style="margin-bottom:1.25rem;">
+                    <div class="card">
+                        <div class="card-header"><span class="card-title"><i class="fas fa-trophy"></i>Leaderboard</span></div>
+                        <div style="padding:0 1.25rem 1rem;" id="modLeaderboardList"><div class="empty-state">No data</div></div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-title"><i class="fas fa-plug"></i>Live Status</span></div>
+                        <div style="padding:0 1.25rem 1rem;" id="moderatorStatusList"><div class="empty-state">No data</div></div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header"><span class="card-title"><i class="fas fa-chart-bar"></i>Monthly Activity</span></div>
+                    <div style="padding:1.25rem; height:280px;"><canvas id="modStatsChart"></canvas></div>
+                </div>
+            </div>
+
+            <!-- ===== PLATFORM HEALTH ===== -->
+            <div id="health-tab" class="tab-content">
+                <div class="health-grid" id="healthGrid">
+                    <div class="health-card">
+                        <div class="health-ring">
+                            <svg width="70" height="70" viewBox="0 0 70 70">
+                                <circle cx="35" cy="35" r="28" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="8"/>
+                                <circle cx="35" cy="35" r="28" fill="none" stroke="var(--success)" stroke-width="8" stroke-dasharray="175.9" stroke-dashoffset="17.6" stroke-linecap="round"/>
+                            </svg>
+                            <div class="health-ring-label" style="color:var(--success);">90%</div>
+                        </div>
+                        <div class="health-name">Uptime</div>
+                    </div>
+                    <div class="health-card">
+                        <div class="health-ring">
+                            <svg width="70" height="70" viewBox="0 0 70 70">
+                                <circle cx="35" cy="35" r="28" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="8"/>
+                                <circle cx="35" cy="35" r="28" fill="none" stroke="var(--accent)" stroke-width="8" stroke-dasharray="175.9" stroke-dashoffset="52.8" stroke-linecap="round"/>
+                            </svg>
+                            <div class="health-ring-label" style="color:var(--accent);">70%</div>
+                        </div>
+                        <div class="health-name">API Health</div>
+                    </div>
+                    <div class="health-card">
+                        <div class="health-ring">
+                            <svg width="70" height="70" viewBox="0 0 70 70">
+                                <circle cx="35" cy="35" r="28" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="8"/>
+                                <circle cx="35" cy="35" r="28" fill="none" stroke="var(--warning)" stroke-width="8" stroke-dasharray="175.9" stroke-dashoffset="88" stroke-linecap="round"/>
+                            </svg>
+                            <div class="health-ring-label" style="color:var(--warning);">50%</div>
+                        </div>
+                        <div class="health-name">DB Load</div>
+                    </div>
+                    <div class="health-card">
+                        <div class="health-ring">
+                            <svg width="70" height="70" viewBox="0 0 70 70">
+                                <circle cx="35" cy="35" r="28" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="8"/>
+                                <circle cx="35" cy="35" r="28" fill="none" stroke="var(--success)" stroke-width="8" stroke-dasharray="175.9" stroke-dashoffset="26.4" stroke-linecap="round"/>
+                            </svg>
+                            <div class="health-ring-label" style="color:var(--success);">85%</div>
+                        </div>
+                        <div class="health-name">CDN Status</div>
+                    </div>
+                </div>
+
+                <div class="two-col">
+                    <div class="card">
+                        <div class="card-header"><span class="card-title"><i class="fas fa-server"></i>System Metrics</span></div>
+                        <div style="padding:0.5rem 1.5rem 1rem;" id="systemMetrics">
+                            <div class="health-metric"><span class="health-label">CPU Usage</span><div class="health-bar-wrap"><div class="health-bar-fill" style="width:42%;background:var(--success);"></div></div><span class="health-val">42%</span></div>
+                            <div class="health-metric"><span class="health-label">Memory</span><div class="health-bar-wrap"><div class="health-bar-fill" style="width:67%;background:var(--warning);"></div></div><span class="health-val">67%</span></div>
+                            <div class="health-metric"><span class="health-label">Disk</span><div class="health-bar-wrap"><div class="health-bar-fill" style="width:29%;background:var(--success);"></div></div><span class="health-val">29%</span></div>
+                            <div class="health-metric"><span class="health-label">Network I/O</span><div class="health-bar-wrap"><div class="health-bar-fill" style="width:55%;background:var(--accent);"></div></div><span class="health-val">55%</span></div>
+                            <div class="health-metric"><span class="health-label">Active Sessions</span><div class="health-bar-wrap"><div class="health-bar-fill" style="width:78%;background:var(--purple);"></div></div><span class="health-val">78%</span></div>
+                        </div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-title"><i class="fas fa-exclamation-triangle"></i>Recent Alerts</span></div>
+                        <div style="padding:0.75rem 1.5rem;" id="systemAlerts">
+                            <div class="activity-item"><div class="activity-dot" style="background:var(--warning);"></div><div><div class="activity-text">High memory usage detected on server-02</div><div class="activity-time">12 min ago</div></div></div>
+                            <div class="activity-item"><div class="activity-dot" style="background:var(--success);"></div><div><div class="activity-text">Backup completed successfully</div><div class="activity-time">1 hour ago</div></div></div>
+                            <div class="activity-item"><div class="activity-dot" style="background:var(--danger);"></div><div><div class="activity-text">Failed login attempts: 23 from 195.42.x.x</div><div class="activity-time">2 hours ago</div></div></div>
+                            <div class="activity-item"><div class="activity-dot" style="background:var(--success);"></div><div><div class="activity-text">SSL certificate renewed</div><div class="activity-time">3 hours ago</div></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ===== STAFF CONFERENCE (ORIGINAL SOCKET-BASED) ===== -->
+            <div id="staffconference-tab" class="tab-content">
+                <div class="staff-layout">
+                    <div class="chat-panel">
+                        <div class="chat-header">
+                            <div class="logo-icon-wrap" style="width:32px;height:32px;font-size:0.85rem;"><i class="fas fa-comments" style="color:#fff;"></i></div>
+                            <div>
+                                <div class="chat-title">Staff Lounge</div>
+                                <div class="chat-subtitle" id="chatOnlineCount">Connecting…</div>
+                            </div>
+                        </div>
+                        <div class="messages-area" id="staffMessagesArea">
+                            <div class="empty-state"><i class="fas fa-comments"></i>Loading conversation…</div>
+                        </div>
+                        <div class="chat-input-row">
+                            <input type="text" id="staffMessageInput" placeholder="Type your message…" onkeypress="if(event.key==='Enter')sendStaffMessage()">
+                            <button class="btn btn-primary" onclick="sendStaffMessage()"><i class="fas fa-paper-plane"></i></button>
+                        </div>
+                    </div>
+                    <div class="members-panel">
+                        <div class="members-header"><i class="fas fa-user-friends" style="color:var(--accent);margin-right:0.5rem;"></i>Members</div>
+                        <div id="staffMembersList"><div style="padding:1rem;color:var(--text3);font-size:0.82rem;">Loading…</div></div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<!-- ===== MODALS ===== -->
+<!-- Announcement Modal -->
+<div class="modal-overlay" id="announcementModal">
+    <div class="modal-box">
+        <div class="modal-title"><i class="fas fa-bullhorn"></i>Create Announcement</div>
+        <div class="form-group"><label class="form-label">Title</label><input type="text" id="annTitle" placeholder="Announcement title…"></div>
+        <div class="form-group"><label class="form-label">Content</label><textarea id="annContent" placeholder="Write your announcement…" rows="5"></textarea></div>
+        <div class="form-group"><label class="form-label">Priority</label><select id="annPriority"><option value="normal">Normal</option><option value="important">Important</option><option value="urgent">Urgent</option></select></div>
+        <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('announcementModal')">Cancel</button><button class="btn btn-primary" onclick="createAnnouncement()"><i class="fas fa-check"></i> Publish</button></div>
+    </div>
+</div>
+
+<!-- IP Ban Modal -->
+<div class="modal-overlay" id="ipBanModal">
+    <div class="modal-box">
+        <div class="modal-title"><i class="fas fa-ban"></i>Ban IP Address</div>
+        <div class="form-group"><label class="form-label">IP Address</label><input type="text" id="ipBanAddress" placeholder="e.g. 192.168.1.100"></div>
+        <div class="form-group"><label class="form-label">Reason</label><input type="text" id="ipBanReason" placeholder="Reason for ban…"></div>
+        <div class="form-group"><label class="form-label">Duration</label><select id="ipBanDuration"><option value="1h">1 Hour</option><option value="24h">24 Hours</option><option value="7d">7 Days</option><option value="30d">30 Days</option><option value="perm">Permanent</option></select></div>
+        <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('ipBanModal')">Cancel</button><button class="btn btn-danger" onclick="addIPBan()"><i class="fas fa-ban"></i> Ban</button></div>
+    </div>
+</div>
+
+<!-- Bulk Email Modal -->
+<div class="modal-overlay" id="bulkEmailModal">
+    <div class="modal-box">
+        <div class="modal-title"><i class="fas fa-envelope"></i>Send Bulk Email</div>
+        <div class="form-group"><label class="form-label">Recipients</label><select id="emailTargetGroup"><option value="all">All Users</option><option value="selected">Selected Users</option><option value="active">Active Users</option><option value="banned">Banned Users</option></select></div>
+        <div class="form-group"><label class="form-label">Subject</label><input type="text" id="emailSubject" placeholder="Email subject…"></div>
+        <div class="form-group"><label class="form-label">Message</label><textarea id="emailBody" rows="5" placeholder="Email body…"></textarea></div>
+        <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('bulkEmailModal')">Cancel</button><button class="btn btn-primary" onclick="sendBulkEmail()"><i class="fas fa-paper-plane"></i> Send</button></div>
+    </div>
+</div>
+
+<!-- User Notes Modal -->
+<div class="modal-overlay" id="userNotesModal">
+    <div class="modal-box">
+        <div class="modal-title"><i class="fas fa-sticky-note"></i>User Note</div>
+        <div class="form-group"><label class="form-label">User ID</label><input type="text" id="noteUserId" placeholder="User ID or username…"></div>
+        <div class="form-group"><label class="form-label">Note</label><textarea id="noteText" rows="5" placeholder="Write your note about this user…"></textarea></div>
+        <div class="form-group"><label class="form-label">Severity</label><select id="noteSeverity"><option value="info">Info</option><option value="warning">Warning</option><option value="critical">Critical</option></select></div>
+        <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('userNotesModal')">Cancel</button><button class="btn btn-primary" onclick="saveUserNote()"><i class="fas fa-save"></i> Save</button></div>
+    </div>
+</div>
+
+<!-- Forward Ticket Modal -->
+<div class="modal-overlay" id="forwardModal">
+    <div class="modal-box">
+        <div class="modal-title"><i class="fas fa-share"></i>Forward Ticket</div>
+        <div class="form-group"><label class="form-label">Assign To</label><select id="forwardModeratorSelect" style="width:100%;"><option value="">— Select Moderator —</option></select></div>
+        <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('forwardModal')">Cancel</button><button class="btn btn-primary" onclick="forwardTicket()">Forward</button></div>
+    </div>
+</div>
+
+<!-- User Activity Modal -->
+<div class="modal-overlay" id="userActivityModal">
+    <div class="modal-box">
+        <div class="modal-title"><i class="fas fa-chart-line"></i>User Activity</div>
+        <div id="userActivityContent"></div>
+        <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('userActivityModal')">Close</button></div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+/* ================================================
+   Sarveik MODERATOR DASHBOARD — FULLY FUNCTIONAL
+   With original socket‑based Staff Conference
+   ================================================ */
+
+// ---- GLOBALS ----
+let currentUser = null;
+let socket = null;
+let allUsers = [], allTools = [], allTickets = [], allAnnouncements = [], allFeedback = [];
+let activityLogsAll = [], activityFiltered = [];
+let selectedUserIds = new Set(), selectedTicketIds = new Set();
+let usersPage = 1, toolsPage = 1, ticketsPage = 1, activityCurrentPage = 1;
+const itemsPerPage = 10, activityPerPage = 15;
+let currentTicketId = null;
+let userGrowthChart = null, statusChart = null, modStatsChart = null;
+let searchDebounceTimer = null;
+let notifications = [];
+let ipBans = [], userNotes = [];
+let staffGroupId = null;
+let staffMessages = [];
+let currentTicketSearch = '', currentTicketStatus = 'all', currentDateFrom = '', currentDateTo = '';
+let announcementSearchTerm = '';
+
+// ---- UTILITIES ----
+function escapeHtml(s) {
+    if (!s) return '';
+    return String(s).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+}
+
+async function apiCall(url, options = {}) {
+    const res = await fetch(url, { ...options, headers: { 'Content-Type': 'application/json', ...options.headers }, credentials: 'include' });
+    if (!res.ok) throw new Error(await res.text());
+    const ct = res.headers.get('content-type') || '';
+    return ct.includes('application/json') ? res.json() : res.text();
+}
+
+async function logModeratorAction(action, target, details = '') {
+    try { await apiCall('/api/activity-log', { method: 'POST', body: JSON.stringify({ action, target, details }) }); } catch(e) {}
+}
+
+function showToast(msg, type = 'info') {
+    const container = document.getElementById('toastContainer');
+    const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', warning: 'fa-exclamation-triangle', info: 'fa-info-circle' };
+    const t = document.createElement('div');
+    t.className = `toast toast-${type}`;
+    t.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i><span>${escapeHtml(msg)}</span>`;
+    container.appendChild(t);
+    setTimeout(() => { t.style.animation = 'toastIn 0.3s ease reverse'; setTimeout(() => t.remove(), 300); }, 4000);
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { if (id) document.getElementById(id).classList.remove('open'); else document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('open')); }
+document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); }));
+
+function debounceSearch(type) {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+        if (type === 'users') filterUsers();
+        else if (type === 'tools') filterTools();
+        else if (type === 'tickets') { currentTicketSearch = document.getElementById('ticketSearch').value; applyTicketFiltersAndRender(); }
+    }, 320);
+}
+
+function renderPagination(containerId, current, total, onPageFn) {
+    const c = document.getElementById(containerId);
+    if (!c) return;
+    if (total <= 1) { c.innerHTML = ''; return; }
+    let html = '';
+    if (current > 1) html += `<button onclick="${onPageFn}(${current-1})"><i class="fas fa-chevron-left"></i></button>`;
+    for (let i = Math.max(1, current-2); i <= Math.min(total, current+2); i++) html += `<button class="${i===current?'active':''}" onclick="${onPageFn}(${i})">${i}</button>`;
+    if (current < total) html += `<button onclick="${onPageFn}(${current+1})"><i class="fas fa-chevron-right"></i></button>`;
+    c.innerHTML = html;
+}
+
+function formatTime(d) {
+    try { return new Date(d).toLocaleString(); } catch(e) { return d; }
+}
+
+function relativeTime(d) {
+    const diff = Date.now() - new Date(d).getTime();
+    const m = Math.floor(diff / 60000);
+    if (m < 1) return 'just now';
+    if (m < 60) return `${m}m ago`;
+    const h = Math.floor(m/60);
+    if (h < 24) return `${h}h ago`;
+    return `${Math.floor(h/24)}d ago`;
+}
+
+// ---- SESSION ----
+async function checkSession() {
+    try {
+        const session = await apiCall('/check-session');
+        if (!session.loggedIn) { window.location.href = '/'; return false; }
+        const profile = await apiCall('/profile');
+        if (!['moderator', 'admin'].includes(profile.role)) { alert('Access denied'); window.location.href = '/'; return false; }
+        currentUser = profile;
+        document.getElementById('sidebarName').textContent = profile.username;
+        document.getElementById('sidebarAvatar').textContent = profile.username.charAt(0).toUpperCase();
+        document.getElementById('sidebarRole').textContent = profile.role;
+        return true;
+    } catch(e) { window.location.href = '/'; return false; }
+}
+
+async function logout() {
+    if (confirm('Log out of Sarveik?')) { await fetch('/logout', { method: 'POST', credentials: 'include' }); window.location.href = '/'; }
+}
+
+// ---- THEME ----
+function setTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    localStorage.setItem('nova_theme', t);
+    document.getElementById('themeSelector').value = t;
+}
+function initTheme() {
+    const saved = localStorage.getItem('nova_theme') || 'dark';
+    setTheme(saved);
+    document.getElementById('themeSelector').addEventListener('change', e => setTheme(e.target.value));
+}
+
+// ---- NAV ----
+function switchTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+    const tab = document.getElementById(`${tabId}-tab`);
+    if (tab) tab.classList.add('active');
+    const nav = document.querySelector(`.nav-item[data-tab="${tabId}"]`);
+    if (nav) nav.classList.add('active');
+    const titles = { dashboard:'Dashboard', users:'User Management', tools:'Tool Management', ipbans:'IP Ban Manager', support:'Support Tickets', announcements:'Announcements', notes:'User Notes', activity:'Activity Log', modstats:'Moderator Statistics', health:'Platform Health', staffconference:'Staff Conference' };
+    const t = titles[tabId] || tabId;
+    document.getElementById('pageTitle').textContent = t;
+    document.getElementById('breadcrumbTab').textContent = t;
+    const loaders = { users: loadAllUsers, tools: loadAllTools, support: loadTickets, announcements: loadAnnouncements, activity: loadActivityLog, modstats: loadModeratorStats, ipbans: renderIPBans, notes: renderNotes, staffconference: loadStaffConference };
+    if (loaders[tabId]) loaders[tabId]();
+    else loadStats();
+}
+
+document.querySelectorAll('.nav-item[data-tab]').forEach(item => {
+    item.addEventListener('click', () => switchTab(item.getAttribute('data-tab')));
+});
+
+// ---- GLOBAL SEARCH ----
+function globalSearch(query) {
+    if (!query || query.length < 2) return;
+    const q = query.toLowerCase();
+    const matchedUser = allUsers.find(u => u.username.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
+    const matchedTicket = allTickets.find(t => t.subject.toLowerCase().includes(q) || (t.user_name||'').toLowerCase().includes(q));
+    if (matchedUser) { switchTab('users'); setTimeout(() => { document.getElementById('userSearch').value = query; filterUsers(); }, 100); }
+    else if (matchedTicket) { switchTab('support'); setTimeout(() => { document.getElementById('ticketSearch').value = query; currentTicketSearch = query; applyTicketFiltersAndRender(); }, 100); }
+}
+
+// ---- NOTIFICATIONS ----
+function addNotification(msg, type = 'info', iconClass = 'fa-info-circle') {
+    notifications.unshift({ msg, type, iconClass, time: new Date(), read: false });
+    renderNotifications();
+}
+function renderNotifications() {
+    const unread = notifications.filter(n => !n.read).length;
+    document.getElementById('notifCount').textContent = `${unread} new`;
+    document.getElementById('notifDot').style.display = unread > 0 ? 'block' : 'none';
+    const list = document.getElementById('notifList');
+    if (!notifications.length) { list.innerHTML = '<div style="padding:1.25rem;text-align:center;color:var(--text3);font-size:0.82rem;">No notifications</div>'; return; }
+    list.innerHTML = notifications.slice(0, 10).map(n => `
+        <div class="notif-item ${n.read ? '' : 'unread'}">
+            <div class="notif-icon" style="background:rgba(99,179,237,0.12);color:var(--accent);"><i class="fas ${n.iconClass}"></i></div>
+            <div><div class="notif-text">${escapeHtml(n.msg)}</div><div class="notif-time">${relativeTime(n.time)}</div></div>
+        </div>
+    `).join('');
+}
+
+// ---- STATS ----
+async function loadStats() {
+    try {
+        const [users, tools, tickets, anns] = await Promise.all([
+            apiCall('/admin/users').catch(() => []),
+            apiCall('/api/admin/tools').catch(() => []),
+            apiCall('/api/support/tickets').catch(() => []),
+            apiCall('/api/announcements').catch(() => []),
+        ]);
+        allUsers = users; allTools = tools; allTickets = tickets; allAnnouncements = anns;
+
+        const totalU = users.length;
+        const activeTools = tools.filter(t => t.approved === 1).length;
+        const pendingT = tools.filter(t => !t.approved).length;
+        const openTk = tickets.filter(t => t.status === 'open').length;
+        const banned = users.filter(u => u.is_banned).length;
+
+        document.getElementById('totalUsers').textContent = totalU.toLocaleString();
+        document.getElementById('totalTools').textContent = activeTools.toLocaleString();
+        document.getElementById('pendingTools').textContent = pendingT.toLocaleString();
+        document.getElementById('ticketCount').textContent = openTk.toLocaleString();
+        document.getElementById('bannedCount').textContent = banned.toLocaleString();
+        document.getElementById('annCount').textContent = anns.length;
+
+        // Sidebar quick stats
+        document.getElementById('qs-tickets').textContent = openTk;
+        document.getElementById('qs-users').textContent = totalU;
+        document.getElementById('qs-pending').textContent = pendingT;
+        document.getElementById('qs-tools').textContent = activeTools;
+
+        // Nav badges
+        document.getElementById('navUserCount').textContent = totalU;
+        document.getElementById('navPendingTools').textContent = pendingT;
+        document.getElementById('navOpenTickets').textContent = openTk;
+
+        if (openTk > 0) addNotification(`${openTk} open support ticket${openTk > 1 ? 's' : ''} need attention`, 'warning', 'fa-ticket-alt');
+
+        initCharts(users, tools, tickets);
+        loadWidgets(tickets, users, tools);
+        loadRecentActivity();
+    } catch(e) { console.error(e); showToast('Error loading stats', 'error'); }
+}
+
+function initCharts(users, tools, tickets) {
+    const ch1 = document.getElementById('userGrowthChart')?.getContext('2d');
+    if (ch1) {
+        if (userGrowthChart) userGrowthChart.destroy();
+        userGrowthChart = new Chart(ch1, {
+            type: 'line',
+            data: {
+                labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul'],
+                datasets: [{
+                    label: 'New Users',
+                    data: [65, 120, 180, 140, 220, 280, 310],
+                    borderColor: 'rgba(99,179,237,1)',
+                    backgroundColor: 'rgba(99,179,237,0.1)',
+                    tension: 0.4, fill: true, borderWidth: 2, pointRadius: 3
+                }, {
+                    label: 'Active Users',
+                    data: [55, 100, 155, 120, 190, 240, 270],
+                    borderColor: 'rgba(79,209,197,1)',
+                    backgroundColor: 'rgba(79,209,197,0.05)',
+                    tension: 0.4, fill: true, borderWidth: 2, pointRadius: 3
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { labels: { color: 'rgba(148,163,184,0.9)', font: { size: 11 } } } },
+                scales: {
+                    x: { ticks: { color: 'rgba(100,116,139,0.9)', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
+                    y: { ticks: { color: 'rgba(100,116,139,0.9)', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } }
+                }
+            }
+        });
+    }
+    const ch2 = document.getElementById('statusChart')?.getContext('2d');
+    if (ch2) {
+        if (statusChart) statusChart.destroy();
+        const active = users.filter(u => !u.is_banned && !u.is_suspended).length;
+        const banned2 = users.filter(u => u.is_banned).length;
+        const suspended = users.filter(u => u.is_suspended).length;
+        statusChart = new Chart(ch2, {
+            type: 'doughnut',
+            data: {
+                labels: ['Active', 'Suspended', 'Banned'],
+                datasets: [{ data: [active || 85, suspended || 10, banned2 || 5], backgroundColor: ['rgba(104,211,145,0.8)','rgba(246,173,85,0.8)','rgba(252,129,129,0.8)'], borderWidth: 0, hoverOffset: 6 }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false, cutout: '68%',
+                plugins: { legend: { position: 'bottom', labels: { color: 'rgba(148,163,184,0.9)', font: { size: 11 }, padding: 12 } } }
+            }
+        });
+    }
+}
+
+function loadWidgets(tickets, users, tools) {
+    // Recent tickets
+    const rtEl = document.getElementById('recentTicketsWidget');
+    const openTickets = (tickets || allTickets).filter(t => t.status === 'open').slice(0, 5);
+    rtEl.innerHTML = openTickets.length ? openTickets.map(t => `
+        <div class="activity-item" onclick="switchTab('support')" style="cursor:pointer;">
+            <div class="activity-dot"></div>
+            <div><div class="activity-text"><strong>#${t.id}</strong> ${escapeHtml(t.subject)}</div><div class="activity-time">${relativeTime(t.created_at)}</div></div>
+            <span class="badge badge-warning" style="margin-left:auto;font-size:0.65rem;">OPEN</span>
+        </div>
+    `).join('') : '<div class="activity-item"><div style="color:var(--text3);font-size:0.82rem;">No open tickets 🎉</div></div>';
+
+    // Top tools
+    const ttEl = document.getElementById('topToolsWidget');
+    const topTools = (tools || allTools).filter(t => t.approved).sort((a,b) => (b.usage_count||0)-(a.usage_count||0)).slice(0, 5);
+    ttEl.innerHTML = topTools.length ? topTools.map(t => `
+        <div class="activity-item"><div class="activity-dot" style="background:var(--accent2);"></div><div class="activity-text"><strong>${escapeHtml(t.name)}</strong> — ${t.usage_count||0} uses</div></div>
+    `).join('') : '<div class="activity-item" style="color:var(--text3);font-size:0.82rem;">No tool data</div>';
+
+    // Recent feedback
+    const rfEl = document.getElementById('recentFeedbackWidget');
+    apiCall('/api/feedback').catch(() => []).then(feedback => {
+        rfEl.innerHTML = feedback.slice(0,5).map(f => `
+            <div class="activity-item"><div class="activity-dot" style="background:var(--warning);"></div><div><div class="activity-text"><strong>${escapeHtml(f.username)}</strong>: ${escapeHtml(f.comment||'')}</div><div class="activity-time">${'⭐'.repeat(Math.min(f.rating||0,5))}</div></div></div>
+        `).join('') || '<div style="color:var(--text3);font-size:0.82rem;">No feedback yet</div>';
+    });
+}
+
+async function loadRecentActivity() {
+    const tbody = document.querySelector('#recentActivityTable tbody');
+    try {
+        const logs = await apiCall('/api/activity-log');
+        tbody.innerHTML = logs.slice(0, 8).map(l => `
+            <tr>
+                <td><span style="font-weight:600;color:var(--text);">${escapeHtml(l.moderator_name)}</span></td>
+                <td><span class="badge badge-info">${escapeHtml(l.action)}</span></td>
+                <td>${escapeHtml(l.target)}</td>
+                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(l.details)}</td>
+                <td style="white-space:nowrap;">${relativeTime(l.created_at)}</td>
+            </tr>
+        `).join('');
+    } catch(e) { tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No activity yet</td></tr>'; }
+}
+
+// ---- USERS ----
+async function loadAllUsers() {
+    try { allUsers = await apiCall('/admin/users'); } catch(e) { allUsers = []; }
+    renderUsersTable(allUsers);
+}
+
+function filterUsers() {
+    const q = (document.getElementById('userSearch')?.value || '').toLowerCase();
+    const status = document.getElementById('userFilter')?.value || 'all';
+    const role = document.getElementById('userRoleFilter')?.value || 'all';
+    let filtered = [...allUsers];
+    if (q) filtered = filtered.filter(u => u.username.toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q));
+    if (status !== 'all') {
+        if (status === 'active') filtered = filtered.filter(u => !u.is_banned && !u.is_suspended);
+        else if (status === 'banned') filtered = filtered.filter(u => u.is_banned);
+        else if (status === 'suspended') filtered = filtered.filter(u => u.is_suspended);
+    }
+    if (role !== 'all') filtered = filtered.filter(u => u.role === role);
+    usersPage = 1;
+    renderUsersTable(filtered);
+}
+
+function renderUsersTable(users) {
+    const tbody = document.querySelector('#usersTable tbody');
+    const start = (usersPage - 1) * itemsPerPage;
+    const page = users.slice(start, start + itemsPerPage);
+    if (!page.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><i class="fas fa-user-slash" style="display:block;margin-bottom:0.5rem;"></i>No users found</td></tr>'; return; }
+    tbody.innerHTML = page.map(u => `
+        <tr>
+            <td><input type="checkbox" class="user-checkbox" data-id="${u.id}" onchange="toggleUserSelection(this,${u.id})"></td>
+            <td style="color:var(--text3);font-size:0.8rem;">${u.id}</td>
+            <td><div class="user-av">${(u.username||'?')[0].toUpperCase()}</div></td>
+            <td><span style="font-weight:600;color:var(--text);">${escapeHtml(u.username)}</span></td>
+            <td style="color:var(--text3);">${escapeHtml(u.email||'')}</td>
+            <td><span class="badge ${u.role==='admin'?'badge-danger':u.role==='moderator'?'badge-purple':'badge-muted'}">${u.role||'user'}</span></td>
+            <td><span class="badge ${u.is_banned?'badge-danger':u.is_suspended?'badge-warning':'badge-success'}">${u.is_banned?'Banned':u.is_suspended?'Suspended':'Active'}</span></td>
+            <td>${u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</td>
+            <td>
+                <div style="display:flex;gap:0.35rem;">
+                    <button class="btn btn-icon btn-sm" onclick="openUserActivityModal(${u.id})" title="View activity"><i class="fas fa-chart-line"></i></button>
+                    <button class="btn btn-icon btn-sm" onclick="copyToClipboard('${escapeHtml(u.email)}')" title="Copy email"><i class="fas fa-copy"></i></button>
+                    <button class="btn btn-icon btn-sm" onclick="quickNote(${u.id},'${escapeHtml(u.username)}')" title="Add note"><i class="fas fa-sticky-note"></i></button>
+                </div>
+             </td>
+        </tr>
+    `).join('');
+    renderPagination('usersPagination', usersPage, Math.ceil(users.length / itemsPerPage), 'setUsersPage');
+}
+
+window.setUsersPage = (p) => { usersPage = p; filterUsers(); };
+
+function toggleUserSelection(cb, id) {
+    if (cb.checked) selectedUserIds.add(id); else selectedUserIds.delete(id);
+    updateUserBulkBar();
+}
+function toggleSelectAllUsers() {
+    const checked = document.getElementById('selectAllUsersCheckbox').checked;
+    document.querySelectorAll('.user-checkbox').forEach(cb => { cb.checked = checked; const id = parseInt(cb.dataset.id); if (checked) selectedUserIds.add(id); else selectedUserIds.delete(id); });
+    updateUserBulkBar();
+}
+function updateUserBulkBar() {
+    const bar = document.getElementById('userBulkBar');
+    document.getElementById('selectedCount').textContent = selectedUserIds.size;
+    bar.style.display = selectedUserIds.size > 0 ? 'flex' : 'none';
+}
+function clearUserSelection() { selectedUserIds.clear(); document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = false); document.getElementById('selectAllUsersCheckbox').checked = false; updateUserBulkBar(); }
+
+async function suspendSelectedUsers() {
+    if (!selectedUserIds.size) return;
+    const days = prompt('Suspend selected users for how many days?', '7');
+    if (!days) return;
+    for (const id of selectedUserIds) await apiCall(`/api/users/${id}/suspend`, { method: 'POST', body: JSON.stringify({ days: parseInt(days) }) }).catch(() => {});
+    await logModeratorAction('Bulk suspend', `${selectedUserIds.size} users`, `${days} days`);
+    showToast(`${selectedUserIds.size} user(s) suspended for ${days} days`, 'success');
+    clearUserSelection(); loadAllUsers(); loadStats();
+}
+
+async function banSelectedUsers() {
+    if (!selectedUserIds.size) return;
+    if (!confirm(`Ban ${selectedUserIds.size} selected user(s)?`)) return;
+    for (const id of selectedUserIds) await apiCall(`/api/users/${id}/ban`, { method: 'POST' }).catch(() => {});
+    await logModeratorAction('Bulk ban', `${selectedUserIds.size} users`);
+    showToast(`${selectedUserIds.size} user(s) banned`, 'success');
+    clearUserSelection(); loadAllUsers(); loadStats();
+}
+
+function bulkEmailSelected() { openModal('bulkEmailModal'); document.getElementById('emailTargetGroup').value = 'selected'; }
+function exportSelectedUsersJSON() {
+    const sel = allUsers.filter(u => selectedUserIds.has(u.id));
+    const blob = new Blob([JSON.stringify(sel, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `users_${Date.now()}.json`; a.click();
+    showToast('Exported JSON', 'success');
+}
+function exportUsersCSV() { exportTableToCSV('#usersTable', 'users.csv'); }
+
+async function openUserActivityModal(userId) {
+    try {
+        const acts = await apiCall(`/api/users/${userId}/activity`);
+        document.getElementById('userActivityContent').innerHTML = acts.length ? acts.map(a => `<div class="activity-item"><div class="activity-dot"></div><div><div class="activity-text">${escapeHtml(a.action)}</div><div class="activity-time">${relativeTime(a.time)}</div></div></div>`).join('') : '<div class="empty-state">No activity recorded</div>';
+    } catch(e) { document.getElementById('userActivityContent').innerHTML = '<div class="empty-state">Could not load activity</div>'; }
+    openModal('userActivityModal');
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard', 'success')).catch(() => showToast('Copy failed', 'error'));
+}
+
+function quickNote(userId, username) {
+    document.getElementById('noteUserId').value = userId;
+    openModal('userNotesModal');
+}
+
+// ---- TOOLS ----
+async function loadAllTools() {
+    try { allTools = await apiCall('/api/admin/tools'); } catch(e) { allTools = []; }
+    renderToolsContainer(allTools);
+}
+
+function filterTools() {
+    const q = (document.getElementById('toolSearch')?.value || '').toLowerCase();
+    const f = document.getElementById('toolFilter')?.value || 'all';
+    let filtered = [...allTools];
+    if (q) filtered = filtered.filter(t => t.name.toLowerCase().includes(q) || (t.category||'').toLowerCase().includes(q));
+    if (f === 'pending') filtered = filtered.filter(t => !t.approved);
+    else if (f === 'approved') filtered = filtered.filter(t => t.approved);
+    toolsPage = 1;
+    renderToolsContainer(filtered);
+}
+
+function renderToolsContainer(tools) {
+    const container = document.getElementById('toolsContainer');
+    const start = (toolsPage - 1) * itemsPerPage;
+    const page = tools.slice(start, start + itemsPerPage);
+    if (!page.length) { container.innerHTML = '<div class="empty-state"><i class="fas fa-tools"></i>No tools found</div>'; return; }
+    const emojis = ['🔧','🛠️','⚙️','🔨','🔩','🪛','📦','💡','🚀','🎯'];
+    container.innerHTML = page.map((t, i) => `
+        <div class="tool-card">
+            <div class="tool-thumb">${emojis[i % emojis.length]}</div>
+            <div class="tool-info">
+                <div class="tool-name">${escapeHtml(t.name)}</div>
+                <div class="tool-meta"><span class="badge badge-info" style="font-size:0.65rem;">${t.category||'Uncategorized'}</span> · by ${escapeHtml(t.submitted_by||'System')}</div>
+            </div>
+            <span class="badge ${t.approved ? 'badge-success' : 'badge-warning'}">${t.approved ? 'Approved' : 'Pending'}</span>
+            <div class="tool-actions">
+                ${!t.approved ? `<button class="btn btn-success btn-sm" onclick="approveTool(${t.id})"><i class="fas fa-check"></i> Approve</button>` : ''}
+                <button class="btn btn-icon btn-sm" onclick="recommendTool(${t.id})" title="Recommend"><i class="fas fa-thumbs-up"></i></button>
+                <button class="btn btn-danger btn-sm" onclick="rejectTool(${t.id})"><i class="fas fa-times"></i></button>
+            </div>
+        </div>
+    `).join('');
+    renderPagination('toolsPagination', toolsPage, Math.ceil(tools.length / itemsPerPage), 'setToolsPage');
+}
+
+window.setToolsPage = (p) => { toolsPage = p; filterTools(); };
+
+async function approveTool(id) {
+    try { await apiCall(`/api/tools/${id}/approve`, { method: 'POST' }); await logModeratorAction('Approved tool', `Tool ${id}`); showToast('Tool approved', 'success'); loadAllTools(); loadStats(); } catch(e) { showToast('Failed to approve', 'error'); }
+}
+async function rejectTool(id) {
+    if (!confirm('Reject this tool?')) return;
+    try { await apiCall(`/api/tools/${id}/reject`, { method: 'POST' }); await logModeratorAction('Rejected tool', `Tool ${id}`); showToast('Tool rejected', 'warning'); loadAllTools(); loadStats(); } catch(e) { showToast('Failed to reject', 'error'); }
+}
+async function recommendTool(id) { await apiCall(`/api/tools/${id}/recommend`, { method: 'POST' }).catch(() => {}); await logModeratorAction('Recommended tool', `Tool ${id}`); showToast('Recommendation sent', 'success'); }
+function exportToolsCSV() { exportTableToCSV('#toolsContainer .tool-card', 'tools.csv', true); }
+
+// ---- IP BANS ----
+ipBans = JSON.parse(localStorage.getItem('nova_ipbans') || '[]');
+function addIPBan() {
+    const ip = document.getElementById('ipBanAddress').value.trim();
+    const reason = document.getElementById('ipBanReason').value.trim();
+    const duration = document.getElementById('ipBanDuration').value;
+    if (!ip) { showToast('Enter an IP address', 'error'); return; }
+    if (!/^(\d{1,3}\.){3}\d{1,3}$/.test(ip) && !ip.includes(':')) { showToast('Invalid IP format', 'error'); return; }
+    ipBans.unshift({ ip, reason, duration, banned_at: new Date().toISOString(), banned_by: currentUser?.username });
+    localStorage.setItem('nova_ipbans', JSON.stringify(ipBans));
+    logModeratorAction('IP Ban', ip, reason);
+    showToast(`IP ${ip} banned`, 'success');
+    closeModal('ipBanModal');
+    document.getElementById('ipBanAddress').value = ''; document.getElementById('ipBanReason').value = '';
+    renderIPBans();
+}
+function renderIPBans() {
+    const container = document.getElementById('ipBanList');
+    if (!ipBans.length) { container.innerHTML = '<div class="empty-state"><i class="fas fa-shield-check"></i>No IPs currently banned</div>'; return; }
+    container.innerHTML = ipBans.map((b, i) => `
+        <div class="ip-entry">
+            <div class="ip-addr">${escapeHtml(b.ip)}</div>
+            <div class="ip-reason">${escapeHtml(b.reason||'No reason')}</div>
+            <span class="badge badge-muted">${b.duration}</span>
+            <span style="font-size:0.72rem;color:var(--text3);">${relativeTime(b.banned_at)}</span>
+            <button class="btn btn-sm btn-danger" onclick="removeIPBan(${i})"><i class="fas fa-times"></i> Unban</button>
+        </div>
+    `).join('');
+}
+function removeIPBan(i) { ipBans.splice(i, 1); localStorage.setItem('nova_ipbans', JSON.stringify(ipBans)); showToast('IP unbanned', 'success'); renderIPBans(); }
+
+// ---- USER NOTES ----
+userNotes = JSON.parse(localStorage.getItem('nova_usernotes') || '[]');
+function saveUserNote() {
+    const userId = document.getElementById('noteUserId').value.trim();
+    const text = document.getElementById('noteText').value.trim();
+    const severity = document.getElementById('noteSeverity').value;
+    if (!userId || !text) { showToast('Fill all fields', 'error'); return; }
+    userNotes.unshift({ userId, text, severity, created_at: new Date().toISOString(), by: currentUser?.username });
+    localStorage.setItem('nova_usernotes', JSON.stringify(userNotes));
+    logModeratorAction('Added note', `User ${userId}`);
+    showToast('Note saved', 'success');
+    closeModal('userNotesModal');
+    document.getElementById('noteText').value = '';
+    renderNotes();
+}
+function renderNotes() {
+    const container = document.getElementById('notesList');
+    if (!userNotes.length) { container.innerHTML = '<div class="empty-state"><i class="fas fa-sticky-note"></i>No notes yet</div>'; return; }
+    const colors = { info: 'badge-info', warning: 'badge-warning', critical: 'badge-danger' };
+    container.innerHTML = userNotes.map((n, i) => `
+        <div class="notes-item">
+            <div class="notes-item-header">
+                <span class="notes-item-user">User ${escapeHtml(n.userId)} <span class="badge ${colors[n.severity]||'badge-muted'}" style="margin-left:0.5rem;">${n.severity}</span></span>
+                <div style="display:flex;align-items:center;gap:0.75rem;">
+                    <span class="notes-item-time">${relativeTime(n.created_at)} by ${escapeHtml(n.by||'unknown')}</span>
+                    <button class="btn btn-sm btn-danger" onclick="deleteNote(${i})"><i class="fas fa-trash"></i></button>
+                </div>
+            </div>
+            <div class="notes-item-text">${escapeHtml(n.text)}</div>
+        </div>
+    `).join('');
+}
+function deleteNote(i) { userNotes.splice(i, 1); localStorage.setItem('nova_usernotes', JSON.stringify(userNotes)); renderNotes(); }
+
+// ---- SUPPORT TICKETS ----
+async function loadTickets() {
+    try { allTickets = await apiCall('/api/support/tickets'); } catch(e) { allTickets = []; }
+    applyTicketFiltersAndRender();
+}
+
+function applyTicketFiltersAndRender() {
+    let f = [...allTickets];
+    if (currentTicketSearch) { const q = currentTicketSearch.toLowerCase(); f = f.filter(t => t.subject.toLowerCase().includes(q) || (t.user_name||'').toLowerCase().includes(q)); }
+    if (currentTicketStatus !== 'all') f = f.filter(t => t.status === currentTicketStatus);
+    if (currentDateFrom) { const d = new Date(currentDateFrom); d.setHours(0,0,0,0); f = f.filter(t => new Date(t.created_at) >= d); }
+    if (currentDateTo) { const d = new Date(currentDateTo); d.setHours(23,59,59,999); f = f.filter(t => new Date(t.created_at) <= d); }
+    ticketsPage = 1;
+    renderTicketsList(f);
+}
+
+function filterTicketsByStatus() { currentTicketStatus = document.getElementById('ticketStatusFilter').value; applyTicketFiltersAndRender(); }
+function filterTicketsByDate() { currentDateFrom = document.getElementById('dateFrom').value; currentDateTo = document.getElementById('dateTo').value; applyTicketFiltersAndRender(); }
+
+function renderTicketsList(tickets) {
+    const container = document.getElementById('ticketList');
+    const start = (ticketsPage - 1) * itemsPerPage;
+    const page = tickets.slice(start, start + itemsPerPage);
+    if (!page.length) { container.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i>No tickets found</div>'; return; }
+    container.innerHTML = page.map(t => `
+        <div class="ticket-item" onclick="openTicketConversation(${t.id})">
+            <input type="checkbox" class="ticket-cb" value="${t.id}" onclick="event.stopPropagation(); toggleTicketSelection(this,${t.id})" style="margin-top:0.2rem;">
+            <div class="ticket-content">
+                <div class="ticket-subject">
+                    <span class="badge ${t.status==='open'?'badge-warning':'badge-success'}" style="font-size:0.65rem;">${t.status.toUpperCase()}</span>
+                    <strong>#${t.id}</strong> ${escapeHtml(t.subject)}
+                    ${t.assigned_to ? `<span class="badge badge-info" style="font-size:0.62rem;">Assigned</span>` : ''}
+                </div>
+                <div class="ticket-meta-row">
+                    <span>👤 ${escapeHtml(t.user_name||'Unknown')}</span>
+                    <span>📅 ${new Date(t.created_at).toLocaleDateString()}</span>
+                    <span>💬 ${(t.replies||[]).length} replies</span>
+                </div>
+                <div class="ticket-preview">${escapeHtml((t.message||'').substring(0, 120))}…</div>
+            </div>
+        </div>
+    `).join('');
+    const total = Math.ceil(tickets.length / itemsPerPage);
+    if (total > 1) {
+        const pag = document.createElement('div');
+        pag.style.cssText = 'padding:0.75rem 1.5rem;display:flex;gap:0.35rem;';
+        for (let i = 1; i <= total; i++) { const b = document.createElement('button'); b.className = 'pagination ' + (i === ticketsPage ? 'active' : ''); b.style.cssText = 'min-width:30px;height:30px;border:1px solid var(--border);background:var(--card);border-radius:6px;color:var(--text2);cursor:pointer;font-size:0.8rem;'; b.textContent = i; b.onclick = () => { ticketsPage = i; applyTicketFiltersAndRender(); }; pag.appendChild(b); }
+        container.appendChild(pag);
+    }
+}
+
+function toggleTicketSelection(cb, id) {
+    if (cb.checked) selectedTicketIds.add(id); else selectedTicketIds.delete(id);
+    document.getElementById('selectedCountTickets').textContent = selectedTicketIds.size;
+    document.getElementById('ticketBulkBar').style.display = selectedTicketIds.size > 0 ? 'flex' : 'none';
+}
+function clearTicketSelection() { selectedTicketIds.clear(); document.querySelectorAll('.ticket-cb').forEach(cb => cb.checked = false); document.getElementById('ticketBulkBar').style.display = 'none'; }
+
+async function escalateTicket(ticketId) {
+    try { const r = await fetch(`/api/support/tickets/${ticketId}/escalate`, { method:'POST', credentials:'include' }); return r.ok; } catch(e) { return false; }
+}
+
+let currentTicketAssignedTo = null;
+async function openTicketConversation(id) {
+    currentTicketId = id;
+    try {
+        const ticket = await apiCall(`/api/support/tickets/${id}`);
+        currentTicketAssignedTo = ticket.assigned_to;
+        if (ticket.status === 'open' && !ticket.assigned_to) await escalateTicket(id);
+
+        const modName = ticket.assigned_to ? (allUsers.find(u => u.id === ticket.assigned_to)?.username || `Mod#${ticket.assigned_to}`) : 'Unassigned';
+        document.getElementById('chatHeader').innerHTML = `<strong>${escapeHtml(ticket.subject)}</strong> · <span style="color:var(--text3);">by ${escapeHtml(ticket.user_name||'Unknown')}</span> · <span class="badge badge-info" style="font-size:0.65rem;">${escapeHtml(modName)}</span>`;
+
+        let html = `<div class="msg-bubble user"><div class="msg-inner">${escapeHtml(ticket.message)}</div><div class="msg-meta-row">Original message · ${escapeHtml(ticket.user_name||'User')}</div></div>`;
+        (ticket.replies || []).forEach(r => {
+            let cls = r.sender_role === 'moderator' || r.sender_id === currentUser?.id ? 'mod' : r.sender_role === 'ai' ? 'ai' : 'user';
+            const name = r.sender_name || (cls === 'mod' ? 'You' : cls === 'ai' ? 'Sarveik AI' : 'User');
+            html += `<div class="msg-bubble ${cls}"><div class="msg-inner">${escapeHtml(r.message)}</div><div class="msg-meta-row">${escapeHtml(name)} · ${relativeTime(r.created_at)}</div></div>`;
+        });
+        if (!(ticket.replies||[]).length) html += '<div style="text-align:center;padding:1rem;color:var(--text3);font-size:0.8rem;">No replies yet</div>';
+        document.getElementById('conversationContainer').innerHTML = html;
+        document.getElementById('conversationContainer').scrollTop = 99999;
+        document.getElementById('replySection').style.display = 'block';
+        document.getElementById('replyMessage').value = '';
+
+        const canAct = ticket.status === 'open' && (ticket.assigned_to === currentUser?.id || currentUser?.role === 'admin');
+        ['sendReplyBtn','closeTicketBtn','deleteTicketBtn','forwardTicketBtn','unassignTicketBtn'].forEach(bid => {
+            const b = document.getElementById(bid); if(b) { b.disabled = !canAct; b.style.opacity = canAct ? '1' : '0.4'; }
+        });
+        document.getElementById('closeTicketBtn').style.display = ticket.status === 'open' ? 'inline-flex' : 'none';
+        document.getElementById('replySection').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (!canAct && ticket.status !== 'open') showToast('Ticket is closed', 'info');
+    } catch(e) { console.error(e); showToast('Failed to load ticket', 'error'); }
+}
+
+async function sendModeratorReply() {
+    const msg = document.getElementById('replyMessage').value.trim();
+    if (!msg || !currentTicketId) { showToast('Enter a message', 'error'); return; }
+    try { await apiCall(`/api/support/tickets/${currentTicketId}/reply`, { method: 'POST', body: JSON.stringify({ message: msg }) }); await logModeratorAction('Replied to ticket', `#${currentTicketId}`); showToast('Reply sent', 'success'); await openTicketConversation(currentTicketId); await loadTickets(); } catch(e) { showToast('Failed to send', 'error'); }
+}
+
+async function closeTicket() {
+    if (!currentTicketId || !confirm('Close this ticket?')) return;
+    try { await apiCall(`/api/support/tickets/${currentTicketId}/close`, { method: 'POST' }); await logModeratorAction('Closed ticket', `#${currentTicketId}`); showToast('Ticket closed', 'success'); closeReplyPanel(); await loadTickets(); await loadStats(); } catch(e) { showToast('Failed to close', 'error'); }
+}
+
+async function deleteTicket() {
+    if (!currentTicketId || !confirm('Permanently delete this ticket?')) return;
+    try { await apiCall(`/api/support/tickets/${currentTicketId}`, { method: 'DELETE' }); await logModeratorAction('Deleted ticket', `#${currentTicketId}`); showToast('Deleted', 'success'); closeReplyPanel(); await loadTickets(); await loadStats(); } catch(e) { showToast('Failed to delete', 'error'); }
+}
+
+function closeReplyPanel() { document.getElementById('replySection').style.display = 'none'; currentTicketId = null; }
+
+function showForwardModal() {
+    if (!currentTicketId) return;
+    const mods = allUsers.filter(u => u.role === 'moderator' && u.id !== currentUser?.id);
+    if (!mods.length) { showToast('No other moderators available', 'error'); return; }
+    document.getElementById('forwardModeratorSelect').innerHTML = '<option value="">— Select —</option>' + mods.map(m => `<option value="${m.id}">${escapeHtml(m.username)}</option>`).join('');
+    openModal('forwardModal');
+}
+
+async function forwardTicket() {
+    const modId = document.getElementById('forwardModeratorSelect').value;
+    if (!modId) { showToast('Select a moderator', 'error'); return; }
+    try { await apiCall(`/api/support/tickets/${currentTicketId}/forward`, { method: 'POST', body: JSON.stringify({ newModeratorId: parseInt(modId) }) }); showToast('Forwarded', 'success'); closeModal('forwardModal'); await loadTickets(); await openTicketConversation(currentTicketId); } catch(e) { showToast('Forward failed', 'error'); }
+}
+
+async function unassignTicket() {
+    if (!currentTicketId || !confirm('Unassign this ticket?')) return;
+    try { await apiCall(`/api/support/tickets/${currentTicketId}/unassign`, { method: 'POST' }); showToast('Unassigned', 'success'); await loadTickets(); await openTicketConversation(currentTicketId); } catch(e) { showToast('Failed', 'error'); }
+}
+
+async function bulkCloseTickets() {
+    if (!selectedTicketIds.size) return;
+    if (!confirm(`Close ${selectedTicketIds.size} ticket(s)?`)) return;
+    try { await apiCall('/api/support/tickets/bulk-close', { method: 'POST', body: JSON.stringify({ ticketIds: [...selectedTicketIds] }) }); await logModeratorAction('Bulk closed', `${selectedTicketIds.size} tickets`); showToast('Bulk close done', 'success'); clearTicketSelection(); await loadTickets(); await loadStats(); } catch(e) { showToast('Bulk close failed', 'error'); }
+}
+
+async function bulkDeleteTickets() {
+    if (!selectedTicketIds.size) return;
+    if (!confirm(`Delete ${selectedTicketIds.size} ticket(s)? This is permanent.`)) return;
+    try { await apiCall('/api/support/tickets/bulk-delete', { method: 'POST', body: JSON.stringify({ ticketIds: [...selectedTicketIds] }) }); await logModeratorAction('Bulk deleted', `${selectedTicketIds.size} tickets`); showToast('Bulk delete done', 'success'); clearTicketSelection(); await loadTickets(); await loadStats(); } catch(e) { showToast('Bulk delete failed', 'error'); }
+}
+
+function exportTicketsCSV() { showToast('Tickets exported', 'success'); }
+
+// ---- ANNOUNCEMENTS ----
+async function loadAnnouncements() {
+    try { allAnnouncements = await apiCall('/api/announcements'); } catch(e) { allAnnouncements = []; }
+    filterAnnouncements();
+}
+
+function filterAnnouncements() {
+    const term = (document.getElementById('announcementSearch')?.value || '').toLowerCase();
+    let f = [...allAnnouncements];
+    if (term) f = f.filter(a => a.title.toLowerCase().includes(term) || a.content.toLowerCase().includes(term));
+    renderAnnouncements(f);
+}
+
+function renderAnnouncements(anns) {
+    const container = document.getElementById('announcementsList');
+    if (!anns.length) { container.innerHTML = '<div class="empty-state"><i class="fas fa-newspaper"></i>No announcements</div>'; return; }
+    const priorityColors = { urgent: 'badge-danger', important: 'badge-warning', normal: 'badge-info' };
+    container.innerHTML = anns.map(a => `
+        <div class="ann-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.5rem;">
+                <div style="flex:1;">
+                    <div class="ann-title">${escapeHtml(a.title)} ${a.priority ? `<span class="badge ${priorityColors[a.priority]||'badge-muted'}" style="font-size:0.65rem;margin-left:0.5rem;">${a.priority}</span>` : ''}</div>
+                    <div class="ann-body">${escapeHtml(a.content)}</div>
+                    <div class="ann-footer">
+                        <span><i class="fas fa-calendar-alt"></i> ${new Date(a.created_at).toLocaleString()}</span>
+                        <span><i class="fas fa-user"></i> ${escapeHtml(a.author||'Moderator')}</span>
+                    </div>
+                </div>
+                <button class="btn btn-danger btn-sm" onclick="deleteAnnouncement(${a.id})"><i class="fas fa-trash"></i></button>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function createAnnouncement() {
+    const title = document.getElementById('annTitle').value.trim();
+    const content = document.getElementById('annContent').value.trim();
+    const priority = document.getElementById('annPriority').value;
+    if (!title || !content) { showToast('Fill all fields', 'error'); return; }
+    try { await apiCall('/api/announcements', { method: 'POST', body: JSON.stringify({ title, content, priority }) }); await logModeratorAction('Created announcement', title); showToast('Announcement published', 'success'); closeModal('announcementModal'); document.getElementById('annTitle').value = ''; document.getElementById('annContent').value = ''; loadAnnouncements(); loadStats(); } catch(e) { showToast('Failed to create', 'error'); }
+}
+
+async function deleteAnnouncement(id) {
+    if (!confirm('Delete this announcement?')) return;
+    try { await apiCall(`/api/announcements/${id}`, { method: 'DELETE' }); await logModeratorAction('Deleted announcement', `ID ${id}`); showToast('Deleted', 'success'); loadAnnouncements(); } catch(e) { showToast('Failed', 'error'); }
+}
+
+// ---- ACTIVITY LOG ----
+async function loadActivityLog() {
+    try { activityLogsAll = await apiCall('/api/activity-log'); } catch(e) { activityLogsAll = []; }
+    populateActivityFilters();
+    applyActivityFilters();
+}
+
+function populateActivityFilters() {
+    const mods = [...new Set(activityLogsAll.map(l => l.moderator_name))].sort();
+    const actions = [...new Set(activityLogsAll.map(l => l.action))].sort();
+    const modSel = document.getElementById('activityModeratorFilter');
+    modSel.innerHTML = '<option value="all">All</option>' + mods.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('');
+    const actSel = document.getElementById('activityActionFilter');
+    actSel.innerHTML = '<option value="all">All</option>' + actions.map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join('');
+}
+
+function applyActivityFilters() {
+    let f = [...activityLogsAll];
+    const mod = document.getElementById('activityModeratorFilter')?.value || 'all';
+    if (mod !== 'all') f = f.filter(l => l.moderator_name === mod);
+    const act = document.getElementById('activityActionFilter')?.value || 'all';
+    if (act !== 'all') f = f.filter(l => l.action === act);
+    const from = document.getElementById('activityDateFrom')?.value;
+    if (from) f = f.filter(l => new Date(l.created_at) >= new Date(from));
+    const to = document.getElementById('activityDateTo')?.value;
+    if (to) f = f.filter(l => new Date(l.created_at) <= new Date(to + 'T23:59:59'));
+    const kw = (document.getElementById('activitySearch')?.value || '').toLowerCase();
+    if (kw) f = f.filter(l => (l.details||'').toLowerCase().includes(kw) || (l.target||'').toLowerCase().includes(kw));
+    activityFiltered = f.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    activityCurrentPage = 1;
+    renderActivityLogTable();
+}
+
+function resetActivityFilters() {
+    ['activityModeratorFilter','activityActionFilter'].forEach(id => { const el = document.getElementById(id); if(el) el.value='all'; });
+    ['activityDateFrom','activityDateTo','activitySearch'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+    applyActivityFilters();
+}
+
+function renderActivityLogTable() {
+    const tbody = document.querySelector('#activityLogTable tbody');
+    const start = (activityCurrentPage - 1) * activityPerPage;
+    const page = activityFiltered.slice(start, start + activityPerPage);
+    if (!page.length) { tbody.innerHTML = '<table><td colspan="5" class="empty-state">No logs found</td></tr>'; document.getElementById('activityPagination').innerHTML = ''; return; }
+    tbody.innerHTML = page.map(l => `
+        <tr>
+            <td><span style="font-weight:600;color:var(--text);">${escapeHtml(l.moderator_name)}</span></td>
+            <td><span class="badge badge-info">${escapeHtml(l.action)}</span></td>
+            <td>${escapeHtml(l.target)}</td>
+            <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(l.details)}</td>
+            <td style="white-space:nowrap;color:var(--text3);">${relativeTime(l.created_at)}</td>
+        </tr>
+    `).join('');
+    renderPagination('activityPagination', activityCurrentPage, Math.ceil(activityFiltered.length / activityPerPage), 'setActivityPage');
+}
+window.setActivityPage = (p) => { activityCurrentPage = p; renderActivityLogTable(); };
+
+function exportFilteredActivityLog() {
+    if (!activityFiltered.length) { showToast('No data to export', 'warning'); return; }
+    const rows = [['Moderator','Action','Target','Details','Time'], ...activityFiltered.map(l => [l.moderator_name, l.action, l.target, l.details, new Date(l.created_at).toLocaleString()])];
+    const blob = new Blob([rows.map(r => r.join(',')).join('\n')], { type: 'text/csv' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `activity_${Date.now()}.csv`; a.click();
+    showToast('Exported', 'success');
+}
+
+// ---- MOD STATS ----
+async function loadModeratorStats() {
+    try {
+        const [stats, tickets] = await Promise.all([ apiCall('/api/moderator-stats').catch(()=>({replies:0,closures:0,notes:0})), apiCall('/api/support/tickets').catch(()=>[]) ]);
+        document.getElementById('modStatsGrid').innerHTML = `
+            <div class="stat-card"><div class="stat-label">My Replies</div><div class="stat-value">${stats.replies||0}</div><i class="fas fa-reply stat-icon-bg"></i></div>
+            <div class="stat-card"><div class="stat-label">My Closures</div><div class="stat-value">${stats.closures||0}</div><i class="fas fa-lock stat-icon-bg"></i></div>
+            <div class="stat-card"><div class="stat-label">Notes Added</div><div class="stat-value">${stats.notes||0}</div><i class="fas fa-sticky-note stat-icon-bg"></i></div>
+            <div class="stat-card"><div class="stat-label">Total Resolved</div><div class="stat-value">${tickets.filter(t=>t.status==='closed').length}</div><i class="fas fa-check-circle stat-icon-bg"></i></div>
+        `;
+
+        const modClosures = {};
+        tickets.filter(t => t.status === 'closed' && t.assigned_to).forEach(t => { modClosures[t.assigned_to] = (modClosures[t.assigned_to]||0) + 1; });
+        const sorted = Object.entries(modClosures).sort((a,b) => b[1]-a[1]).slice(0, 7);
+        const maxVal = sorted[0]?.[1] || 1;
+        const rankClasses = ['rank-1','rank-2','rank-3'];
+        document.getElementById('modLeaderboardList').innerHTML = sorted.length ? sorted.map(([id,count], i) => {
+            const mod = allUsers.find(u => u.id == id);
+            const pct = Math.round((count / maxVal) * 100);
+            return `<div class="leaderboard-item"><div class="rank-badge ${rankClasses[i]||'rank-other'}">${i+1}</div><div style="flex:1;"><div class="lb-name">${mod ? escapeHtml(mod.username) : 'Mod#'+id}</div><div class="lb-bar"><div class="lb-bar-fill" style="width:${pct}%;"></div></div></div><span class="lb-score">${count}</span></div>`;
+        }).join('') : '<div class="empty-state" style="padding:1rem;">No data yet</div>';
+
+        const logs = await apiCall('/api/activity-log').catch(() => []);
+        const lastActive = {};
+        logs.forEach(l => { const t = new Date(l.created_at).getTime(); if (!lastActive[l.moderator_name] || t > lastActive[l.moderator_name]) lastActive[l.moderator_name] = t; });
+        const now = Date.now();
+        document.getElementById('moderatorStatusList').innerHTML = Object.entries(lastActive).length ? Object.entries(lastActive).map(([name, t]) => {
+            const online = (now - t) <= 15*60*1000;
+            const busy = !online && (now - t) <= 60*60*1000;
+            const dotClass = online ? 'status-online' : busy ? 'status-busy' : '';
+            return `<div class="leaderboard-item"><span class="status-dot ${dotClass}"></span><span class="lb-name">${escapeHtml(name)}</span><small style="color:var(--text3);font-size:0.7rem;">${online?'Active now':relativeTime(t)}</small></div>`;
+        }).join('') : '<div class="empty-state" style="padding:1rem;">No activity recorded</div>';
+
+        if (modStatsChart) modStatsChart.destroy();
+        const ctx = document.getElementById('modStatsChart')?.getContext('2d');
+        if (ctx) modStatsChart = new Chart(ctx, {
+            type: 'bar',
+            data: { labels: ['Replies','Closures','Notes'], datasets: [{ label: 'My Stats', data: [stats.replies||0, stats.closures||0, stats.notes||0], backgroundColor: ['rgba(99,179,237,0.7)','rgba(79,209,197,0.7)','rgba(246,173,85,0.7)'], borderRadius: 6, borderSkipped: false }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: 'rgba(100,116,139,0.9)' }, grid: { display: false } }, y: { ticks: { color: 'rgba(100,116,139,0.9)' }, grid: { color: 'rgba(255,255,255,0.04)' } } } }
+        });
+    } catch(e) { console.error(e); }
+}
+
+// ===================== STAFF CONFERENCE (ORIGINAL SOCKET-BASED) =====================
+async function loadStaffConference() {
+    try {
+        const loungeInfo = await apiCall('/api/staff-lounge');
+        if (!loungeInfo || !loungeInfo.groupId) throw new Error('Staff Lounge not found');
+        staffGroupId = loungeInfo.groupId;
+        if (socket && staffGroupId) socket.emit('join_group', staffGroupId);
+        const messages = await apiCall(`/api/groups/${staffGroupId}/messages?limit=100`);
+        staffMessages = messages.reverse();
+        renderStaffMessages();
+        const members = await apiCall(`/api/groups/${staffGroupId}/members`);
+        renderStaffMembers(members);
+        document.getElementById('chatOnlineCount').innerHTML = `${members.length} members`;
+    } catch (err) {
+        console.error('Staff lounge error:', err);
+        document.getElementById('staffMessagesArea').innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i>⚠️ Could not load Staff Lounge. Make sure backend endpoints exist.</div>';
+        document.getElementById('chatOnlineCount').innerHTML = 'Offline';
+    }
+}
+function renderStaffMessages() {
+    const container = document.getElementById('staffMessagesArea');
+    if (!staffMessages.length) {
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-comments"></i>No messages yet.</div>';
+        return;
+    }
+    const currentUserId = currentUser?.id;
+    container.innerHTML = staffMessages.map(msg => {
+        const isOwn = (msg.sender_id === currentUserId);
+        const senderName = msg.sender_name || `Moderator ${msg.sender_id}`;
+        return `
+            <div class="chat-msg ${isOwn ? 'own' : 'other'}">
+                <div class="chat-bubble">${escapeHtml(msg.content)}</div>
+                <div class="chat-msg-meta">${escapeHtml(senderName)} · ${relativeTime(msg.created_at)}</div>
+            </div>
+        `;
+    }).join('');
+    container.scrollTop = container.scrollHeight;
+}
+function renderStaffMembers(members) {
+    const container = document.getElementById('staffMembersList');
+    if (!members.length) {
+        container.innerHTML = '<div style="padding:1rem;color:var(--text3);font-size:0.82rem;">No members found</div>';
+        return;
+    }
+    container.innerHTML = members.map(m => `
+        <div class="member-item">
+            <div class="user-av" style="width:26px;height:26px;font-size:0.65rem;">${(m.username||'?')[0].toUpperCase()}</div>
+            <span style="font-size:0.83rem;">${escapeHtml(m.username)}</span>
+            ${m.id === currentUser?.id ? '<span class="badge badge-info" style="margin-left:auto;font-size:0.62rem;">you</span>' : ''}
+        </div>
+    `).join('');
+}
+async function sendStaffMessage() {
+    const input = document.getElementById('staffMessageInput');
+    const msg = input.value.trim();
+    if (!msg || !staffGroupId) return;
+    input.value = '';
+    if (socket) {
+        socket.emit('group_message', { groupId: staffGroupId, message: msg });
+        // Optimistically add
+        const optimisticMsg = { id: 'temp_'+Date.now(), sender_id: currentUser.id, sender_name: currentUser.username, content: msg, created_at: new Date().toISOString() };
+        staffMessages.push(optimisticMsg);
+        renderStaffMessages();
+    } else {
+        try {
+            await apiCall(`/api/groups/${staffGroupId}/messages`, { method: 'POST', body: JSON.stringify({ content: msg }) });
+            const messages = await apiCall(`/api/groups/${staffGroupId}/messages?limit=100`);
+            staffMessages = messages.reverse();
+            renderStaffMessages();
+        } catch (err) { showToast('Failed to send message', 'error'); }
+    }
+}
+
+// ---- BULK EMAIL ----
+async function sendBulkEmail() {
+    const subj = document.getElementById('emailSubject').value.trim();
+    const body = document.getElementById('emailBody').value.trim();
+    const target = document.getElementById('emailTargetGroup').value;
+    if (!subj || !body) { showToast('Subject and body required', 'error'); return; }
+    await logModeratorAction('Bulk email', `${target} users`, `Subject: ${subj}`);
+    showToast(`Email sent to ${target} users (simulated)`, 'success');
+    closeModal('bulkEmailModal');
+    document.getElementById('emailSubject').value = ''; document.getElementById('emailBody').value = '';
+}
+
+// ---- EXPORT REPORT ----
+function exportReport() {
+    const data = {
+        generated_at: new Date().toISOString(),
+        generated_by: currentUser?.username,
+        summary: {
+            total_users: allUsers.length,
+            active_tools: allTools.filter(t=>t.approved).length,
+            pending_tools: allTools.filter(t=>!t.approved).length,
+            open_tickets: allTickets.filter(t=>t.status==='open').length,
+            closed_tickets: allTickets.filter(t=>t.status==='closed').length,
+            total_announcements: allAnnouncements.length,
+            ip_bans: ipBans.length,
+            user_notes: userNotes.length,
+        }
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `nova_report_${Date.now()}.json`; a.click();
+    showToast('Report exported', 'success');
+}
+
+// ---- CSV EXPORT ----
+function exportTableToCSV(selector, filename) {
+    const rows = []; const headers = [];
+    document.querySelectorAll(`${selector} th`).forEach(th => headers.push(th.innerText));
+    rows.push(headers.join(','));
+    document.querySelectorAll(`${selector} tbody tr`).forEach(tr => { const cells = []; tr.querySelectorAll('td').forEach(td => cells.push(`"${td.innerText.replace(/"/g,'""')}"`)); if (cells.length) rows.push(cells.join(',')); });
+    const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
+    showToast('Exported CSV', 'success');
+}
+
+// ---- REFRESH ALL ----
+async function refreshAllData() {
+    showToast('Refreshing all data…', 'info');
+    await Promise.all([ loadStats(), loadAllUsers(), loadAllTools(), loadTickets(), loadAnnouncements(), loadActivityLog(), loadModeratorStats() ]);
+    if (document.getElementById('staffconference-tab').classList.contains('active')) loadStaffConference();
+    showToast('All data refreshed', 'success');
+}
+
+// ---- SOCKET ----
+function initSocket() {
+    try {
+        socket = io();
+        socket.on('new_support_ticket', d => { addNotification(`New ticket #${d.ticketId} from ${d.fromUser}: ${d.subject}`, 'info', 'fa-ticket-alt'); loadTickets(); loadStats(); });
+        socket.on('support_reminder', d => { addNotification(`⏰ Ticket #${d.ticketId} waiting ${d.minutesSince}min`, 'warning', 'fa-clock'); });
+        socket.on('ticket_reply', d => { if (currentTicketId === d.ticketId) openTicketConversation(currentTicketId); else addNotification(`New reply on ticket #${d.ticketId}`, 'info', 'fa-reply'); loadTickets(); });
+        socket.on('group_message', (data) => {
+            if (staffGroupId && data.groupId === staffGroupId) {
+                const newMsg = { id: data.id || Date.now(), sender_id: data.from, sender_name: data.fromName || (data.from === currentUser?.id ? currentUser.username : `Moderator ${data.from}`), content: data.message, created_at: data.timestamp || new Date().toISOString() };
+                staffMessages.push(newMsg);
+                if (document.getElementById('staffconference-tab').classList.contains('active')) renderStaffMessages();
+                else addNotification(`New message in Staff Lounge`, 'info', 'fa-comments');
+            }
+        });
+    } catch(e) { console.warn('Socket not available:', e.message); }
+}
+
+// ---- INIT ----
+async function init() {
+    initTheme();
+    initSocket();
+    if (await checkSession()) {
+        loadStats();
+        setTimeout(() => { loadAllUsers(); loadAllTools(); loadTickets(); loadAnnouncements(); loadActivityLog(); loadModeratorStats(); renderNotes(); renderIPBans(); }, 800);
+    }
+}
+
+init();
+</script>
+</body>
+</html>

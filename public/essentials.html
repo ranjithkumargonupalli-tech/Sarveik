@@ -1,0 +1,1155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Life Nexus – Free Tools for Food, Travel, Housing & Car | 80+ Verified Websites</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg-gradient: linear-gradient(-45deg, #1f1c2c, #928dab, #2c3e50, #3498db);
+      --bg-card: rgba(0, 0, 0, 0.4);
+      --text: #fff;
+      --text-muted: rgba(255,255,255,0.7);
+      --btn-bg: linear-gradient(135deg, #667eea, #764ba2);
+      --shadow: 0 8px 20px rgba(0,0,0,0.6);
+      --border: 1px solid rgba(255,255,255,0.2);
+      --transition: all 0.3s ease;
+      --card-width: 280px;
+      --howto-bg: rgba(0,0,0,0.3);
+    }
+    body.light-mode {
+      --bg-gradient: linear-gradient(-45deg, #f0f4ff, #e8f2ff, #f8fbff, #e0f2fe);
+      --bg-card: rgba(255,255,255,0.8);
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --btn-bg: linear-gradient(135deg, #0ea5e9, #6366f1);
+      --shadow: 0 8px 20px rgba(0,0,0,0.1);
+      --border: 1px solid rgba(0,0,0,0.1);
+      --howto-bg: rgba(0,0,0,0.05);
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-gradient);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      color: var(--text);
+      padding: 40px 20px;
+      min-height: 100vh;
+      transition: var(--transition);
+    }
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    h1 { font-size: 2.5em; margin-bottom: 10px; text-align: center; }
+    .subtitle { text-align: center; margin-bottom: 30px; opacity: 0.9; }
+    .stats-badge { 
+      text-align: center; 
+      margin-bottom: 20px; 
+      font-size: 0.9em; 
+      opacity: 0.8;
+      background: var(--bg-card);
+      display: inline-block;
+      padding: 5px 15px;
+      border-radius: 50px;
+      margin: 0 auto 20px;
+      width: fit-content;
+    }
+    /* Premium banner */
+    .premium-banner {
+      background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+      border-radius: 20px;
+      padding: 15px 25px;
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+      color: #1e293b;
+      font-weight: 600;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+    .premium-banner .text i { margin-right: 10px; }
+    .premium-banner .upgrade-btn {
+      background: #1e293b;
+      color: #f6d365;
+      padding: 10px 24px;
+      border-radius: 40px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .premium-banner .upgrade-btn:hover {
+      transform: scale(1.05);
+      background: #0f172a;
+    }
+    .premium-recommendations {
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 30px;
+      border: var(--border);
+    }
+    .premium-recommendations h3 {
+      margin-bottom: 15px;
+      color: #f6d365;
+    }
+    .recommend-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: center;
+    }
+    .recommend-item {
+      background: rgba(255,255,255,0.1);
+      border-radius: 15px;
+      padding: 12px;
+      width: 200px;
+      text-align: center;
+    }
+    .recommend-item img {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+    .recommend-item .name {
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+    .recommend-item button {
+      background: var(--btn-bg);
+      border: none;
+      padding: 6px 12px;
+      border-radius: 30px;
+      color: white;
+      font-size: 0.75rem;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 30px;
+      align-items: center;
+    }
+    .search-box input {
+      padding: 12px 20px;
+      border-radius: 50px;
+      border: var(--border);
+      background: rgba(255,255,255,0.2);
+      color: var(--text);
+      font-size: 1em;
+      width: 300px;
+      backdrop-filter: blur(5px);
+      outline: none;
+    }
+    .filter-buttons, .sort-select, .theme-toggle, .favorites-link {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .filter-buttons button, .sort-select select, .theme-toggle button, .favorites-link a, .pagination button {
+      padding: 10px 20px;
+      border-radius: 50px;
+      border: var(--border);
+      background: rgba(255,255,255,0.2);
+      color: var(--text);
+      cursor: pointer;
+      backdrop-filter: blur(5px);
+      transition: var(--transition);
+      font-size: 0.95em;
+    }
+    .filter-buttons button.active { background: var(--btn-bg); font-weight: 600; }
+    .filter-buttons button:hover, .sort-select select:hover, .theme-toggle button:hover, .favorites-link a:hover, .pagination button:hover {
+      background: var(--btn-bg);
+      transform: scale(1.05);
+    }
+    .sort-select select { appearance: none; padding-right: 30px; }
+    .favorites-link a { text-decoration: none; display: inline-block; }
+    .tools-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .tool-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 20px;
+      width: var(--card-width);
+      min-height: 260px;
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      border: var(--border);
+    }
+    .tool-card:hover { transform: translateY(-8px) scale(1.02); }
+    .tool-card .fav-icon {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 1.4em;
+      cursor: pointer;
+      color: #ff6f61;
+      background: rgba(0,0,0,0.3);
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+    }
+    .tool-card .fav-icon.favorited { color: #ff3b2e; text-shadow: 0 0 10px #ff3b2e; }
+    .tool-card img {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      background: #fff;
+      object-fit: contain;
+    }
+    .tool-card h3 { font-size: 1.2em; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tool-card p { font-size: 0.85em; opacity: 0.85; flex: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 12px; line-height: 1.4; }
+    .tool-card .meta { display: flex; justify-content: space-between; align-items: center; margin: 10px 0; font-size: 0.85em; }
+    .tool-card .rating { color: gold; }
+    .tool-card .popularity { opacity: 0.7; }
+    .tool-card .approved-badge {
+      background: #10b981;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.65em;
+      position: absolute;
+      top: 10px;
+      left: 10px;
+    }
+    .tool-card .time-new-badge {
+      background: linear-gradient(45deg, #f6d365, #fda085);
+      color: #1e293b;
+      font-size: 0.65rem;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 20px;
+      position: absolute;
+      top: 10px;
+      left: 90px;
+      z-index: 2;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .tool-card .premium-tag {
+      background: linear-gradient(135deg, #f6d365, #fda085);
+      color: #1e293b;
+      font-size: 0.65rem;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 20px;
+      position: absolute;
+      top: 10px;
+      left: 170px;
+      z-index: 2;
+    }
+    .tool-card.premium-locked {
+      position: relative;
+      overflow: hidden;
+    }
+    .tool-card.premium-locked::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      border-radius: 15px;
+      z-index: 3;
+    }
+    .premium-lock-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 4;
+      background: rgba(0,0,0,0.85);
+      padding: 10px 18px;
+      border-radius: 50px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      font-weight: bold;
+      color: #f6d365;
+      border: 1px solid #f6d365;
+    }
+    .premium-lock-icon button {
+      background: var(--btn-bg);
+      border: none;
+      padding: 6px 16px;
+      border-radius: 30px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .premium-lock-icon button:hover {
+      transform: scale(1.05);
+      background: linear-gradient(135deg, #f6d365, #fda085);
+      color: #1e293b;
+    }
+    .tool-card .btn {
+      background: var(--btn-bg);
+      color: #fff;
+      padding: 8px 15px;
+      border-radius: 50px;
+      text-decoration: none;
+      font-size: 0.9em;
+      text-align: center;
+      border: none;
+      cursor: pointer;
+      transition: var(--transition);
+      z-index: 5;
+      position: relative;
+    }
+    .tool-card .btn:hover { transform: scale(1.05); }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 30px 0;
+      flex-wrap: wrap;
+    }
+    .pagination button.active {
+      background: var(--btn-bg);
+      font-weight: bold;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 650px;
+      width: 90%;
+      max-height: 85vh;
+      overflow-y: auto;
+      position: relative;
+      border: var(--border);
+      color: var(--text);
+    }
+    .close { position: absolute; top: 15px; right: 20px; font-size: 2em; cursor: pointer; color: var(--text); }
+    .modal-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
+    .modal-header img { width: 60px; height: 60px; border-radius: 10px; background: #fff; }
+    .modal-rating { margin: 15px 0; }
+    .star { cursor: pointer; color: #ccc; font-size: 1.4em; display: inline-block; margin-right: 5px; }
+    .star.selected { color: gold; }
+    .similar-tools { display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0; }
+    .similar-tool-item { background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 20px; font-size: 0.9em; cursor: pointer; }
+    .similar-tool-item:hover { background: var(--btn-bg); }
+    .social-share { display: flex; gap: 10px; margin: 15px 0; flex-wrap: wrap; }
+    .social-share a { color: var(--text); text-decoration: none; padding: 5px 10px; background: rgba(255,255,255,0.2); border-radius: 20px; }
+    .social-share a:hover { background: var(--btn-bg); }
+    .visit-btn { background: var(--btn-bg); color: #fff; padding: 12px 25px; border-radius: 50px; text-decoration: none; display: inline-block; margin-top: 15px; border: none; cursor: pointer; }
+    .how-to-use-section {
+      background: var(--howto-bg);
+      border-left: 4px solid #f6d365;
+      border-radius: 12px;
+      padding: 15px 18px;
+      margin: 20px 0 15px;
+      transition: var(--transition);
+    }
+    .how-to-use-section h4 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+      color: #f6d365;
+    }
+    .how-to-use-section ol, .how-to-use-section ul {
+      padding-left: 1.5rem;
+      margin: 8px 0;
+    }
+    .how-to-use-section li {
+      margin: 8px 0;
+      line-height: 1.5;
+    }
+    .pro-tip {
+      background: rgba(246, 211, 101, 0.2);
+      border-radius: 10px;
+      padding: 8px 12px;
+      margin-top: 12px;
+      font-size: 0.9rem;
+    }
+    #favoritesPage { display: none; margin-top: 30px; }
+    #favoritesPage h2 { text-align: center; margin-bottom: 20px; }
+    .back-btn { background: var(--btn-bg); color: #fff; padding: 10px 25px; border-radius: 50px; border: none; cursor: pointer; margin: 20px auto; display: block; }
+    .submit-section {
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 30px;
+      margin: 40px 0;
+      border: var(--border);
+    }
+    .submit-section h3 { margin-bottom: 20px; }
+    .submit-section input, .submit-section textarea, .submit-section select {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border-radius: 10px;
+      border: var(--border);
+      background: rgba(255,255,255,0.2);
+      color: var(--text);
+      font-family: inherit;
+    }
+    .submit-section button { background: var(--btn-bg); color: #fff; padding: 12px 30px; border-radius: 50px; border: none; cursor: pointer; font-weight: bold; transition: var(--transition); }
+    .submit-section button:hover { transform: scale(1.02); }
+    .navigation { text-align: center; margin: 20px 0; }
+    .nav-btn { background: var(--btn-bg); color: #fff; padding: 12px 25px; border-radius: 50px; text-decoration: none; display: inline-block; }
+    #backToTop { position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; border-radius: 50%; background: var(--btn-bg); color: #fff; border: none; cursor: pointer; display: none; font-size: 1.5em; z-index: 99; }
+    #backToTop.visible { display: block; }
+    .toast { position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.9); color: white; padding: 12px 20px; border-radius: 10px; z-index: 10000; animation: slideIn 0.3s ease; }
+    .toast.success { background: #10b981; }
+    .toast.error { background: #ef4444; }
+    .toast.info { background: #f59e0b; }
+    .loading { text-align: center; padding: 50px; font-size: 1.2em; }
+    .refresh-btn {
+      background: var(--btn-bg);
+      color: #fff;
+      padding: 8px 15px;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      margin-left: 10px;
+      font-size: 0.85em;
+    }
+    .disclaimer {
+      margin-top: 40px;
+      padding: 20px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 12px;
+      text-align: center;
+      font-size: 0.8em;
+    }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @media (max-width: 768px) {
+      .controls { flex-direction: column; align-items: stretch; }
+      .search-box input { width: 100%; }
+      .tool-card { width: 100%; max-width: 350px; margin: 0 auto; }
+      .premium-lock-icon { font-size: 0.75rem; padding: 6px 12px; white-space: normal; width: 90%; text-align: center; }
+      .premium-lock-icon button { padding: 4px 10px; }
+      .recommend-item { width: 160px; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>🍔 Life Nexus – Smart Living Tools</h1>
+  <p class="subtitle">Free websites & resources for 🍕 Food | ✈️ Travel | 🏠 Housing | 🚗 Car & Auto | 🚑 Health & Medicine | 🎟️ Ticket Booking | 140+ verified tools</p>
+  
+
+
+  <div style="text-align: center;">
+    <div class="stats-badge" id="statsBadge">Loading life tools...</div>
+  </div>
+
+  <div class="controls">
+    <div class="search-box"><input type="text" id="searchInput" placeholder="Search tools..."></div>
+    <div class="filter-buttons" id="filterContainer"></div>
+    <div class="sort-select"><select id="sortSelect"><option value="name">Sort by Name</option><option value="popularity">Sort by Popularity</option></select></div>
+    <div class="theme-toggle"><button id="themeToggle">🌙 Dark</button></div>
+    <div class="favorites-link"><a href="#" id="showFavorites">❤️ Favorites</a></div>
+    <div><button id="refreshToolsBtn" class="refresh-btn"><i class="fas fa-sync-alt"></i> Refresh</button></div>
+  </div>
+  <div class="tools-grid" id="toolsGrid"><div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading tools...</div></div>
+  <div class="pagination" id="paginationControls"></div>
+  <div id="favoritesPage"><h2>❤️ Your Favorite Tools</h2><div class="tools-grid" id="favoritesGrid"></div><button class="back-btn" id="hideFavorites">Back to All Tools</button></div>
+      <!-- Premium banner (only shown to non-premium users) -->
+  <div id="premiumBanner" class="premium-banner" style="display: none;">
+    <div class="text"><i class="fas fa-crown"></i> <strong>Unlock Premium Life Tools!</strong> Get access to exclusive deals, priority support, and advanced features.</div>
+    <a href="profile.html?tab=premium" class="upgrade-btn"><i class="fas fa-gem"></i> Upgrade Now</a>
+  </div>
+
+  <!-- Premium recommendations (for non-premium) -->
+  <div id="premiumRecommendations" class="premium-recommendations" style="display: none;">
+    <h3><i class="fas fa-star"></i> Premium Tools Recommended for You</h3>
+    <div class="recommend-grid" id="recommendGrid"></div>
+  </div>
+  <!-- Submit Tool Section -->
+  <div class="submit-section">
+    <h3><i class="fas fa-plus-circle"></i> Suggest a New Tool</h3>
+    <p style="margin-bottom: 15px; font-size: 0.85rem;">Submit a free website or app for food discounts, travel hacks, housing rentals, car maintenance, or health services.</p>
+    <input type="text" id="newName" placeholder="Tool name *">
+    <input type="text" id="newUrl" placeholder="Website URL (https://...) *">
+    <textarea id="newDesc" placeholder="Short description (what it offers – deals, booking, guides) *" rows="2"></textarea>
+    <select id="newCategory">
+      <option value="food">🍕 Food & Recipes</option>
+      <option value="travel">✈️ Travel & Flights</option>
+      <option value="housing">🏠 Housing & Rentals</option>
+      <option value="car">🚗 Car & Automotive</option>
+      <option value="health">🚑 Health & Medicine</option>
+    </select>
+    <button id="submitToolBtn"><i class="fas fa-paper-plane"></i> Submit for Review</button>
+    <p style="margin-top: 10px; font-size: 0.75rem; opacity: 0.7;">Tools are reviewed by admins. You'll receive credits when approved.</p>
+  </div>
+
+  <div class="navigation">
+    <a href="main.html" class="nav-btn"><i class="fas fa-home"></i> Back to Main Hub</a>
+  </div>
+  <button id="backToTop" title="Back to top">↑</button>
+</div>
+
+<div class="modal" id="toolModal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <div class="modal-header">
+      <img src="" alt="" id="modalIcon">
+      <h2 id="modalTitle"></h2>
+    </div>
+    <p id="modalDesc"></p>
+    <div class="how-to-use-section" id="howToUseContainer">
+      <h4><i class="fas fa-compass"></i> How to Use This Tool</h4>
+      <div id="howToUseContent">Loading guide...</div>
+    </div>
+    <div class="modal-rating" id="modalRating"></div>
+    <div class="similar-tools" id="similarTools"></div>
+    <div class="social-share" id="socialShare"></div>
+    <a href="#" id="modalVisitBtn" class="visit-btn" target="_blank">Visit Website</a>
+  </div>
+</div>
+<div class="disclaimer">
+  <p><strong>Disclaimer:</strong> Life Nexus is a directory of third‑party tools. We do not host any content. All trademarks belong to their respective owners.</p>
+</div>
+
+<script>
+  // ========== PAGE TYPE IDENTIFIER ==========
+  const PAGE_TYPE = 'life';
+  const NEW_DAYS_THRESHOLD = 7;
+
+  // ========== Global Variables ==========
+  let allTools = [];
+  let currentFilter = 'all', currentSearch = '', currentSort = 'name';
+  let currentPage = 1;
+  const itemsPerPage = 20;
+  let filteredTools = [];
+  let userPremiumStatus = false;
+
+  // ========== GENERATE "HOW TO USE" INSTRUCTIONS FOR LIFE TOOLS ==========
+  function generateHowToUse(toolName, category, toolUrl) {
+    const nameLower = toolName.toLowerCase();
+    if (nameLower.includes('uber') || nameLower.includes('ola')) {
+      return `<ol><li>Download the app from your app store and sign up with phone number.</li><li>Set your pickup location (or allow GPS).</li><li>Enter your destination in the "Where to?" box.</li><li>Select ride type (UberGo, Auto, Premier, etc.).</li><li>Confirm your ride – driver details and ETA appear.</li><li>Pay via card, UPI, or cash after the trip.</li></ol><div class="pro-tip">🚖 Split fare with friends using the "Share trip" feature.</div>`;
+    }
+    if (nameLower.includes('doordash') || nameLower.includes('ubereats') || nameLower.includes('swiggy') || nameLower.includes('zomato')) {
+      return `<ol><li>Open the app or website and sign up / log in.</li><li>Enter your delivery address.</li><li>Browse restaurants or search for specific cuisine.</li><li>Add items to cart and view delivery fees.</li><li>Apply promo codes (often available on the homepage).</li><li>Pay online and track your order live on the map.</li></ol><div class="pro-tip">🍕 Check "Pickup" to save delivery fees and avoid surge charges.</div>`;
+    }
+    if (nameLower.includes('airbnb') || nameLower.includes('couchsurfing')) {
+      return `<ol><li>Create a free account and complete your profile (add photo and bio).</li><li>Search by destination, dates, and number of guests.</li><li>Filter by price, amenities, room type (entire place / private room).</li><li>Read reviews from previous guests before booking.</li><li>Message the host to ask questions before reserving.</li><li>Book and pay securely through the platform.</li></ol><div class="pro-tip">🏡 For Couchsurfing, send personalised requests explaining why you want to stay.</div>`;
+    }
+    if (nameLower.includes('zillow') || nameLower.includes('apartment list') || nameLower.includes('padmapper')) {
+      return `<ol><li>Enter your desired city or neighborhood in the search bar.</li><li>Use filters: price range, bedrooms, bathrooms, pet‑friendly, etc.</li><li>View listings on map or list mode.</li><li>Click on a listing to see photos, description, and contact info.</li><li>Schedule a virtual tour or request a showing.</li><li>Contact the landlord or property manager directly.</li></ol><div class="pro-tip">📱 Set up email alerts for new listings that match your criteria.</div>`;
+    }
+    if (nameLower.includes('kelly blue book') || nameLower.includes('edmunds') || nameLower.includes('cargurus')) {
+      return `<ol><li>Go to the website and select "Used" or "New" cars.</li><li>Enter make, model, year, and mileage (for used).</li><li>View the estimated market value (private party, trade‑in, dealer).</li><li>Use the "Price Analysis" tool to see if a deal is good.</li><li>Read expert and user reviews for reliability.</li><li>Use the "Find cars for sale" tab to see local listings.</li></ol><div class="pro-tip">🔧 Check "True Cost to Own" for maintenance and fuel estimates.</div>`;
+    }
+    if (nameLower.includes('practo') || nameLower.includes('1mg') || nameLower.includes('netmeds')) {
+      return `<ol><li>Sign up with your mobile number / email.</li><li>For medicines: upload prescription or search by name.</li><li>Compare prices across generic vs. branded options.</li><li>Add to cart and proceed to checkout.</li><li>Enter delivery address and pay online / COD.</li><li>Track order status in "My Orders".</li></ol><div class="pro-tip">💊 Use "Doctor Consultation" for online chat with verified physicians.</div>`;
+    }
+    if (nameLower.includes('skyscanner') || nameLower.includes('google flights') || nameLower.includes('kayak')) {
+      return `<ol><li>Enter departure and destination cities.</li><li>Pick travel dates or select "Flexible dates" for cheapest options.</li><li>Click search – price calendar shows cheapest days.</li><li>Filter by airline, number of stops, departure time.</li><li>Click through to the airline or booking site to complete purchase.</li><li>Set price alerts to get notifications when fares drop.</li></ol><div class="pro-tip">✈️ Use "Everywhere" as destination to find cheapest flights from your city.</div>`;
+    }
+    if (category === 'food') {
+      return `<ol><li>Open the site/app and create an account (or continue as guest).</li><li>Use the search bar to find recipes by ingredient, cuisine, or meal type.</li><li>Filter by dietary preferences (vegetarian, gluten‑free, low‑carb).</li><li>Select a recipe and view ingredients, steps, and cooking time.</li><li>Save favourites to your recipe box or grocery list.</li><li>Rate recipes after trying them to help others.</li></ol><div class="pro-tip">🍳 Use "Ingredient search" (e.g., chicken, rice, spinach) to use up leftovers.</div>`;
+    }
+    if (category === 'travel') {
+      return `<ol><li>Enter departure and arrival locations (cities, airports, or addresses).</li><li>Choose dates and number of travellers.</li><li>Compare prices across airlines, trains, buses, or car rentals.</li><li>Read cancellation policies before booking.</li><li>Complete booking with payment or redirect to partner site.</li><li>Download tickets or save confirmation email.</li></ol><div class="pro-tip">🗺️ Use incognito mode to prevent price hikes from cookies.</div>`;
+    }
+    if (category === 'housing') {
+      return `<ol><li>Sign up for an account (free) to save favourite listings.</li><li>Search by city, neighbourhood, or ZIP code.</li><li>Apply filters: max rent, beds, baths, pet policy.</li><li>View photos, virtual tours, and read descriptions carefully.</li><li>Contact landlord via message, email, or phone.</li><li>Arrange a viewing before paying any deposit.</li></ol><div class="pro-tip">🧾 Avoid paying fees before seeing the property in person – scams are common.</div>`;
+    }
+    if (category === 'car') {
+      return `<ol><li>Enter the make, model, year of a car (or use VIN).</li><li>Choose what you want: value estimate, repair cost, fuel economy, or listings.</li><li>Use price guides to negotiate with dealers or private sellers.</li><li>For repairs, input your location to see local shop estimates.</li><li>Check vehicle history (Carfax) using VIN before buying used.</li><li>Bookmark or print reports for reference.</li></ol><div class="pro-tip">⛽ Use GasBuddy to find the cheapest fuel near your route.</div>`;
+    }
+    if (category === 'health') {
+      return `<ol><li>Create a profile (optional for medicine ordering).</li><li>Search for doctors by specialty, city, or condition.</li><li>Book an appointment or use e‑consultation for video/chat.</li><li>For medicines: upload a prescription or search over‑the‑counter products.</li><li>Add to cart and choose delivery slot.</li><li>Make payment or select COD.</li></ol><div class="pro-tip">🩺 Use "Lab test booking" for home sample collection and discount packages.</div>`;
+    }
+    return `<ol><li>Visit the website: <a href="${toolUrl}" target="_blank">${toolUrl}</a>.</li><li>Explore the main menu to understand what the tool offers (recipes, bookings, estimates).</li><li>Register or log in to save preferences (optional).</li><li>Use search or filter options to narrow down results.</li><li>Read descriptions, ratings, and terms of use.</li><li>Follow the on‑screen prompts to complete your task (order, book, calculate).</li></ol><div class="pro-tip">⭐ Check user reviews and ratings to ensure quality.</div>`;
+  }
+
+  // ========== ORIGINAL 80+ TOOLS + EXTRA 60+ NEW (with premium flags) ==========
+  const toolsData = [
+    // ---------- EXISTING TOOLS (preserved, some marked premium) ----------
+    { name: "Allrecipes", url: "https://www.allrecipes.com", desc: "Millions of free recipes, cooking tips.", category: "food", longDesc: "World's largest community-driven recipe site. Search by ingredient, diet, or cuisine.", isPremiumRequired: false },
+    { name: "Budget Bytes", url: "https://www.budgetbytes.com", desc: "Delicious low-cost recipes with cost breakdown.", category: "food", longDesc: "Step-by-step photos, cheap meal prep ideas for students.", isPremiumRequired: false },
+    { name: "Tasty (BuzzFeed)", url: "https://tasty.co", desc: "Quick video recipes for all skill levels.", category: "food", longDesc: "Popular, easy-to-follow recipes and cooking hacks.", isPremiumRequired: false },
+    { name: "Food Network", url: "https://www.foodnetwork.com", desc: "Free recipes from famous chefs.", category: "food", longDesc: "Healthy, dessert, dinner ideas with ratings.", isPremiumRequired: false },
+    { name: "Epicurious", url: "https://www.epicurious.com", desc: "Gourmet recipes & cooking guides.", category: "food", longDesc: "Professional techniques and ingredient deep dives.", isPremiumRequired: false },
+    { name: "Simply Recipes", url: "https://www.simplyrecipes.com", desc: "Family-friendly recipes with clear instructions.", category: "food", longDesc: "Trusted since 2003, seasonal ideas.", isPremiumRequired: false },
+    { name: "Love and Lemons", url: "https://www.loveandlemons.com", desc: "Vegetarian and vegan recipes.", category: "food", longDesc: "Fresh, healthy meals with beautiful photography.", isPremiumRequired: false },
+    { name: "Minimalist Baker", url: "https://minimalistbaker.com", desc: "10-ingredient, 1-bowl, 30-min recipes.", category: "food", longDesc: "Perfect for quick and simple cooking.", isPremiumRequired: false },
+    { name: "BBC Good Food", url: "https://www.bbcgoodfood.com", desc: "UK's favourite recipe collection.", category: "food", longDesc: "User reviews, nutritional info, meal planners.", isPremiumRequired: false },
+    { name: "Smitten Kitchen", url: "https://smittenkitchen.com", desc: "Home cooking with a personal touch.", category: "food", longDesc: "Inventive, well-tested recipes.", isPremiumRequired: false },
+    { name: "Supercook", url: "https://www.supercook.com", desc: "Recipe search by ingredients you have.", category: "food", longDesc: "Zero waste cooking – enter available items and get recipes.", isPremiumRequired: false },
+    { name: "MyFridgeFood", url: "https://www.myfridgefood.com", desc: "What can I make with what's in my fridge?", category: "food", longDesc: "AI-like ingredient matcher.", isPremiumRequired: false },
+    { name: "Yummly", url: "https://www.yummly.com", desc: "Personalized recipe recommendations.", category: "food", longDesc: "Dietary filters, smart shopping list.", isPremiumRequired: false },
+    { name: "Food Republic", url: "https://www.foodrepublic.com", desc: "Trendy food & drink culture.", category: "food", longDesc: "Restaurant-quality recipes at home.", isPremiumRequired: false },
+    { name: "Chowhound", url: "https://www.chowhound.com", desc: "Food forums & regional specialties.", category: "food", longDesc: "Community driven advice.", isPremiumRequired: false },
+    { name: "The Kitchn", url: "https://www.thekitchn.com", desc: "Recipes, kitchen hacks, meal prep.", category: "food", longDesc: "Apartment-friendly cooking tips.", isPremiumRequired: false },
+    { name: "Serious Eats", url: "https://www.seriouseats.com", desc: "Science-based cooking techniques.", category: "food", longDesc: "For foodies who want to understand why recipes work.", isPremiumRequired: false },
+    { name: "Cookie and Kate", url: "https://cookieandkate.com", desc: "Whole foods, vegetarian recipes.", category: "food", longDesc: "Free, wholesome, and tested.", isPremiumRequired: false },
+    { name: "Damn Delicious", url: "https://damndelicious.net", desc: "Quick & easy Asian-fusion recipes.", category: "food", longDesc: "High-quality step-by-step photos.", isPremiumRequired: false },
+    { name: "Spruce Eats", url: "https://www.thespruceeats.com", desc: "Recipes and cooking basics.", category: "food", longDesc: "Beginner-friendly, meal planning tools.", isPremiumRequired: false },
+    { name: "Forkly", url: "https://www.forkly.com", desc: "Social recipe sharing platform.", category: "food", longDesc: "Discover trending dishes.", isPremiumRequired: false },
+    { name: "Skyscanner", url: "https://www.skyscanner.net", desc: "Compare cheap flights, hotels, car hire.", category: "travel", longDesc: "Free travel search engine – best for budget travelers.", isPremiumRequired: false },
+    { name: "Google Flights", url: "https://www.google.com/travel/flights", desc: "Flight price tracker & explore map.", category: "travel", longDesc: "Find cheapest dates, flexible destination search.", isPremiumRequired: false },
+    { name: "Kayak", url: "https://www.kayak.com", desc: "Meta-search for flights, hotels, rental cars.", category: "travel", longDesc: "Price alerts and travel hacks.", isPremiumRequired: false },
+    { name: "Momondo", url: "https://www.momondo.com", desc: "Flight comparison with 'anywhere' feature.", category: "travel", longDesc: "Discover cheap destinations from your city.", isPremiumRequired: false },
+    { name: "Rome2rio", url: "https://www.rome2rio.com", desc: "Door-to-door travel planning, all transport modes.", category: "travel", longDesc: "Shows trains, buses, ferries, flights.", isPremiumRequired: false },
+    { name: "Omio", url: "https://www.omio.com", desc: "Trains, buses, flights across Europe & US.", category: "travel", longDesc: "Compare tickets and booking.", isPremiumRequired: false },
+    { name: "FlixBus", url: "https://www.flixbus.com", desc: "Affordable intercity bus travel.", category: "travel", longDesc: "Low-cost coach services across 30+ countries.", isPremiumRequired: false },
+    { name: "Airbnb", url: "https://www.airbnb.com", desc: "Find unique homes and experiences.", category: "travel", longDesc: "Often cheaper than hotels for longer stays.", isPremiumRequired: true },
+    { name: "Couchsurfing", url: "https://www.couchsurfing.com", desc: "Free accommodation with locals.", category: "travel", longDesc: "Community of hosts – great for budget travelers.", isPremiumRequired: false },
+    { name: "Hostelworld", url: "https://www.hostelworld.com", desc: "Budget hostels worldwide.", category: "travel", longDesc: "Reviews, maps, and social atmosphere.", isPremiumRequired: false },
+    { name: "Booking.com", url: "https://www.booking.com", desc: "Hotels, apartments, free cancellation options.", category: "travel", longDesc: "Price match guarantee. Some features require Genius level (premium).", isPremiumRequired: true },
+    { name: "Agoda", url: "https://www.agoda.com", desc: "Best rates for Asia and global hotels.", category: "travel", longDesc: "Secret deals for members.", isPremiumRequired: true },
+    { name: "Tripadvisor", url: "https://www.tripadvisor.com", desc: "Reviews of hotels, restaurants, attractions.", category: "travel", longDesc: "User-generated travel advice.", isPremiumRequired: false },
+    { name: "Lonely Planet", url: "https://www.lonelyplanet.com", desc: "Travel guides, forums, itineraries.", category: "travel", longDesc: "Expert tips for every destination.", isPremiumRequired: false },
+    { name: "Atlas Obscura", url: "https://www.atlasobscura.com", desc: "Hidden wonders & quirky places.", category: "travel", longDesc: "Off-the-beaten-path travel inspiration.", isPremiumRequired: false },
+    { name: "Roadtrippers", url: "https://roadtrippers.com", desc: "Plan road trips with points of interest.", category: "travel", longDesc: "Calculate fuel costs and discover stops.", isPremiumRequired: false },
+    { name: "Trainline", url: "https://www.thetrainline.com", desc: "Train & bus tickets across Europe.", category: "travel", longDesc: "Real-time times and best fares.", isPremiumRequired: false },
+    { name: "Seat61", url: "https://www.seat61.com", desc: "Train travel guides worldwide.", category: "travel", longDesc: "Everything about train journeys, no ads.", isPremiumRequired: false },
+    { name: "Workaway", url: "https://www.workaway.info", desc: "Volunteer exchange for free accom & meals.", category: "travel", longDesc: "Cultural exchange, low-cost travel.", isPremiumRequired: false },
+    { name: "TrustedHousesitters", url: "https://www.trustedhousesitters.com", desc: "Free pet sitting for accommodation.", category: "travel", longDesc: "Stay for free in exchange for pet care.", isPremiumRequired: true },
+    { name: "Zillow", url: "https://www.zillow.com", desc: "Home values, rentals, mortgage rates.", category: "housing", longDesc: "Largest US real estate marketplace.", isPremiumRequired: false },
+    { name: "Realtor.com", url: "https://www.realtor.com", desc: "Official listings, for-sale & rental.", category: "housing", longDesc: "Trusted property data.", isPremiumRequired: false },
+    { name: "Redfin", url: "https://www.redfin.com", desc: "Buy, rent, sell with low fees.", category: "housing", longDesc: "Free home valuation tools.", isPremiumRequired: false },
+    { name: "Apartment List", url: "https://www.apartmentlist.com", desc: "Personalized rental search.", category: "housing", longDesc: "Income-based filters, pet-friendly options.", isPremiumRequired: false },
+    { name: "Rent.com", url: "https://www.rent.com", desc: "Rentals across all budgets.", category: "housing", longDesc: "Verified listings and virtual tours.", isPremiumRequired: false },
+    { name: "PadMapper", url: "https://www.padmapper.com", desc: "Map-based apartment search.", category: "housing", longDesc: "Aggregates from Craigslist, Zillow, etc.", isPremiumRequired: false },
+    { name: "HotPads", url: "https://hotpads.com", desc: "Rentals and sublets, map view.", category: "housing", longDesc: "Good for short-term and roommates.", isPremiumRequired: false },
+    { name: "Spareroom", url: "https://www.spareroom.com", desc: "Find flatmates & rooms for rent.", category: "housing", longDesc: "Popular in UK, US, Australia.", isPremiumRequired: false },
+    { name: "Roomster", url: "https://www.roomster.com", desc: "Roommate matching & rooms.", category: "housing", longDesc: "Background checks available.", isPremiumRequired: false },
+    { name: "Facebook Marketplace", url: "https://www.facebook.com/marketplace", desc: "Local rentals, sublets, housing groups.", category: "housing", longDesc: "Free to list, often less formal.", isPremiumRequired: false },
+    { name: "Craigslist Housing", url: "https://www.craigslist.org", desc: "For sale by owner rentals & sublets.", category: "housing", longDesc: "Check for scams – but many deals.", isPremiumRequired: false },
+    { name: "Trulia", url: "https://www.trulia.com", desc: "Neighborhood insights & rentals.", category: "housing", longDesc: "Crime maps, school ratings.", isPremiumRequired: false },
+    { name: "Nestpick", url: "https://www.nestpick.com", desc: "Mid to long-term rentals globally.", category: "housing", longDesc: "Fully furnished apartments.", isPremiumRequired: false },
+    { name: "Spotahome", url: "https://www.spotahome.com", desc: "Verified rentals for students & professionals.", category: "housing", longDesc: "Video tours, online booking.", isPremiumRequired: false },
+    { name: "HousingAnywhere", url: "https://www.housinganywhere.com", desc: "International student accommodation.", category: "housing", longDesc: "Safe payment and contracts.", isPremiumRequired: false },
+    { name: "Uniplaces", url: "https://www.uniplaces.com", desc: "Student housing across Europe.", category: "housing", longDesc: "Designed for university students.", isPremiumRequired: false },
+    { name: "Zumper", url: "https://www.zumper.com", desc: "Rentals with free credit scores.", category: "housing", longDesc: "Apply online directly.", isPremiumRequired: false },
+    { name: "PropertyGuru", url: "https://www.propertyguru.com", desc: "Asia's leading property site.", category: "housing", longDesc: "For Singapore, Malaysia, Thailand, etc.", isPremiumRequired: false },
+    { name: "Gumtree", url: "https://www.gumtree.com", desc: "Classifieds – houses, flatshares (UK/AU).", category: "housing", longDesc: "Popular for budget rentals.", isPremiumRequired: false },
+    { name: "Idealista", url: "https://www.idealista.com", desc: "Real estate in Spain, Italy, Portugal.", category: "housing", longDesc: "Extensive listings in Europe.", isPremiumRequired: false },
+    { name: "Kelley Blue Book", url: "https://www.kbb.com", desc: "Car values, reviews, and pricing.", category: "car", longDesc: "Used car valuation – trusted nationwide.", isPremiumRequired: false },
+    { name: "Edmunds", url: "https://www.edmunds.com", desc: "Car comparisons, loan calculator.", category: "car", longDesc: "Expert ratings and true cost to own.", isPremiumRequired: false },
+    { name: "Cars.com", url: "https://www.cars.com", desc: "New/used car listings & reviews.", category: "car", longDesc: "Large inventory with vehicle history.", isPremiumRequired: false },
+    { name: "Autotrader", url: "https://www.autotrader.com", desc: "Buy/sell used or new cars.", category: "car", longDesc: "Advanced filters, dealer reviews.", isPremiumRequired: false },
+    { name: "CarGurus", url: "https://www.cargurus.com", desc: "Instant market value analysis.", category: "car", longDesc: "Great deals from dealer listings.", isPremiumRequired: false },
+    { name: "TrueCar", url: "https://www.truecar.com", desc: "Price certificate – see what others paid.", category: "car", longDesc: "No-haggle pricing, dealer partners.", isPremiumRequired: false },
+    { name: "Bring a Trailer", url: "https://bringatrailer.com", desc: "Auction site for classic & enthusiast cars.", category: "car", longDesc: "Curated auctions, community comments.", isPremiumRequired: false },
+    { name: "Carfax", url: "https://www.carfax.com", desc: "Vehicle history reports (free basic).", category: "car", longDesc: "Check for accidents, odometer rollback.", isPremiumRequired: false },
+    { name: "RepairPal", url: "https://repairpal.com", desc: "Estimated car repair costs.", category: "car", longDesc: "Fair price estimator for maintenance.", isPremiumRequired: false },
+    { name: "YourMechanic", url: "https://www.yourmechanic.com", desc: "Mobile car repair quotes.", category: "car", longDesc: "Compare repair prices before visiting shop.", isPremiumRequired: false },
+    { name: "FuelEconomy.gov", url: "https://www.fueleconomy.gov", desc: "Official MPG ratings & gas savings.", category: "car", longDesc: "Compare fuel efficiency, tax credits.", isPremiumRequired: false },
+    { name: "GasBuddy", url: "https://www.gasbuddy.com", desc: "Find cheapest gas stations nearby.", category: "car", longDesc: "Community-reported prices, trip cost calculator.", isPremiumRequired: false },
+    { name: "Openbay", url: "https://www.openbay.com", desc: "Compare auto repair quotes & book.", category: "car", longDesc: "Over 2000 certified shops.", isPremiumRequired: false },
+    { name: "CarComplaints", url: "https://www.carcomplaints.com", desc: "User-reported car problems by model.", category: "car", longDesc: "Find unreliable models before buying.", isPremiumRequired: false },
+    { name: "Driving-Tests.org", url: "https://driving-tests.org", desc: "Free DMV permit practice tests.", category: "car", longDesc: "All 50 states, car and motorcycle.", isPremiumRequired: false },
+    { name: "Tire Rack", url: "https://www.tirerack.com", desc: "Tire reviews, tests, and installation.", category: "car", longDesc: "Compare prices on tires and wheels.", isPremiumRequired: false },
+    { name: "CarID", url: "https://www.carid.com", desc: "Auto parts, accessories & fit guides.", category: "car", longDesc: "Huge catalog with DIY installation help.", isPremiumRequired: false },
+    { name: "RockAuto", url: "https://www.rockauto.com", desc: "Discount auto parts & repair info.", category: "car", longDesc: "Great for DIY mechanics – exploded diagrams.", isPremiumRequired: false },
+    { name: "YouTube – ChrisFix", url: "https://www.youtube.com/c/ChrisFix", desc: "Free DIY car repair tutorials.", category: "car", longDesc: "Step-by-step, beginner friendly.", isPremiumRequired: false },
+    { name: "YouTube – Scotty Kilmer", url: "https://www.youtube.com/user/scottykilmer", desc: "Car advice, common issues & fixes.", category: "car", longDesc: "Honest, no-fluff mechanic.", isPremiumRequired: false },
+    { name: "AutoZone Repair Help", url: "https://www.autozone.com/repairinfo", desc: "Free repair guides & how-to videos.", category: "car", longDesc: "Maintenance schedules and code lookup.", isPremiumRequired: false },
+    
+    // ========== EXTRA 60+ NEW WORKING TOOLS (Food delivery, ride hailing, ticket booking, hospital & medicine finders) ==========
+    { name: "Zomato", url: "https://www.zomato.com", desc: "Restaurant discovery, food delivery & dining out.", category: "food", longDesc: "Order food online, read menus, user ratings, and reviews.", isPremiumRequired: false },
+    { name: "Swiggy", url: "https://www.swiggy.com", desc: "Fastest food delivery & grocery in India.", category: "food", longDesc: "Track orders, Swiggy Instamart for daily needs.", isPremiumRequired: false },
+    { name: "Uber Eats", url: "https://www.ubereats.com", desc: "Local food delivery from favorite restaurants.", category: "food", longDesc: "Global platform, no-contact delivery. Some premium features.", isPremiumRequired: true },
+    { name: "DoorDash", url: "https://www.doordash.com", desc: "Food delivery from thousands of restaurants.", category: "food", longDesc: "DashPass savings, real-time tracking. Premium subscription available.", isPremiumRequired: true },
+    { name: "Just Eat", url: "https://www.just-eat.com", desc: "Takeaway ordering across Europe & Canada.", category: "food", longDesc: "Verified restaurants, contactless delivery.", isPremiumRequired: false },
+    { name: "Deliveroo", url: "https://deliveroo.com", desc: "Restaurant delivery, groceries, essentials.", category: "food", longDesc: "Premium service, branded partners.", isPremiumRequired: true },
+    { name: "Rapido", url: "https://www.rapido.bike", desc: "Bike taxi, auto, and cab services.", category: "travel", longDesc: "Affordable intra-city commute, quick pickups.", isPremiumRequired: false },
+    { name: "Ola Cabs", url: "https://www.olacabs.com", desc: "Ride hailing, outstation cabs, auto rentals.", category: "travel", longDesc: "India's largest mobility platform.", isPremiumRequired: false },
+    { name: "Uber", url: "https://www.uber.com", desc: "Ride-sharing, bike, auto, and food delivery.", category: "travel", longDesc: "Global transport, safety features. Uber One membership.", isPremiumRequired: true },
+    { name: "Lyft", url: "https://www.lyft.com", desc: "Ride-sharing, bikes, scooters in US/Canada.", category: "travel", longDesc: "Affordable rides, rental cars. Lyft Pink membership.", isPremiumRequired: true },
+    { name: "BlaBlaCar", url: "https://www.blablacar.com", desc: "Carpooling & bus tickets for long trips.", category: "travel", longDesc: "Shared rides, cost-effective travel.", isPremiumRequired: false },
+    { name: "IRCTC", url: "https://www.irctc.co.in", desc: "Official Indian Railways ticket booking.", category: "travel", longDesc: "Train reservation, PNR status, Tatkal booking.", isPremiumRequired: false },
+    { name: "RedBus", url: "https://www.redbus.in", desc: "Bus ticket booking across India & international.", category: "travel", longDesc: "Compare operators, live tracking, m-tickets.", isPremiumRequired: false },
+    { name: "MakeMyTrip", url: "https://www.makemytrip.com", desc: "Flights, hotels, trains, buses, holiday packages.", category: "travel", longDesc: "India's leading travel aggregator. Premium memberships.", isPremiumRequired: true },
+    { name: "Goibibo", url: "https://www.goibibo.com", desc: "Cheap flight, hotel, bus, train bookings.", category: "travel", longDesc: "Cashback deals and instant refunds.", isPremiumRequired: true },
+    { name: "Yatra", url: "https://www.yatra.com", desc: "Domestic & international flight tickets.", category: "travel", longDesc: "Corporate travel, holiday packages.", isPremiumRequired: false },
+    { name: "ClearTrip", url: "https://www.cleartrip.com", desc: "Flights, trains, buses, hotels & activities.", category: "travel", longDesc: "Easy cancellation, zero convenience fee.", isPremiumRequired: false },
+    { name: "AbhiBus", url: "https://www.abhibus.com", desc: "Bus ticket booking for 2500+ operators.", category: "travel", longDesc: "Seat selection, live bus tracking.", isPremiumRequired: false },
+    { name: "EaseMyTrip", url: "https://www.easemytrip.com", desc: "Flight, hotel, railway, and bus booking.", category: "travel", longDesc: "No convenience fee on domestic flights.", isPremiumRequired: false },
+    { name: "Ixigo", url: "https://www.ixigo.com", desc: "Train, flight, bus search & price comparison.", category: "travel", longDesc: "AI-based travel planning.", isPremiumRequired: false },
+    { name: "Busbud", url: "https://www.busbud.com", desc: "Intercity bus tickets worldwide.", category: "travel", longDesc: "Compare bus schedules and prices.", isPremiumRequired: false },
+    { name: "12Go", url: "https://12go.asia", desc: "Tickets for trains, buses, ferries in Asia.", category: "travel", longDesc: "Easy booking for Southeast Asia routes.", isPremiumRequired: false },
+    { name: "Omio (train/bus)", url: "https://www.omio.com", desc: "European train, bus, flight bookings.", category: "travel", longDesc: "Mobile tickets, route planner.", isPremiumRequired: false },
+    { name: "Practo", url: "https://www.practo.com", desc: "Find doctors, book appointments, order medicines.", category: "health", longDesc: "Verified practitioners, patient reviews, digital health records. Premium consultations.", isPremiumRequired: true },
+    { name: "Tata 1mg", url: "https://www.1mg.com", desc: "Order medicines online, lab tests, health information.", category: "health", longDesc: "Medicine price compare, free delivery. Gold membership.", isPremiumRequired: true },
+    { name: "Netmeds", url: "https://www.netmeds.com", desc: "Prescription medicines and wellness products.", category: "health", longDesc: "Authentic generics, health blogs.", isPremiumRequired: false },
+    { name: "PharmEasy", url: "https://www.pharmeasy.in", desc: "Online medicine delivery & diagnostic tests.", category: "health", longDesc: "Discounts on healthcare products.", isPremiumRequired: false },
+    { name: "Apollo 24/7", url: "https://www.apollo247.com", desc: "E-consultation, medicine delivery, lab tests.", category: "health", longDesc: "Integrated with Apollo Hospitals.", isPremiumRequired: false },
+    { name: "MedPlus", url: "https://www.medplusmart.com", desc: "Generic medicines & healthcare essentials.", category: "health", longDesc: "Offline & online pharmacy chain.", isPremiumRequired: false },
+    { name: "Lybrate", url: "https://www.lybrate.com", desc: "Online doctor consultation & health tips.", category: "health", longDesc: "Ask a doctor free, private chat.", isPremiumRequired: false },
+    { name: "DoctorC", url: "https://www.doctorc.in", desc: "Find doctors, clinics, and hospitals.", category: "health", longDesc: "Verified contact info, appointment booking.", isPremiumRequired: false },
+    { name: "MediBuddy", url: "https://www.medibuddy.in", desc: "Doctor consultations, health checkups, medicines.", category: "health", longDesc: "Corporate health benefits integrations.", isPremiumRequired: false },
+    { name: "MFine", url: "https://www.mfine.co", desc: "AI-driven doctor consultations & health packages.", category: "health", longDesc: "Instant chat with doctors, lab tests.", isPremiumRequired: true },
+    { name: "HealthKart", url: "https://www.healthkart.com", desc: "Supplements, nutrition, and fitness products.", category: "health", longDesc: "MuscleBlaze, HK Vitals brands.", isPremiumRequired: false },
+    { name: "Cure.fit (Cult.fit)", url: "https://www.cult.fit", desc: "Fitness, mental wellness, healthy meals.", category: "health", longDesc: "Live workouts, meditation, doctor teleconsult. Paid membership.", isPremiumRequired: true },
+    { name: "Justdial Health", url: "https://www.justdial.com/Health", desc: "Local hospital, clinic, pharmacy finder.", category: "health", longDesc: "User ratings, contact numbers, direction maps.", isPremiumRequired: false },
+    { name: "Sulekha Healthcare", url: "https://www.sulekha.com/healthcare", desc: "Find doctors, hospitals, diagnostic centers.", category: "health", longDesc: "Listings verified by local experts.", isPremiumRequired: false },
+    { name: "AskLaila Doctors", url: "https://www.asklaila.com/doctors", desc: "Doctor directory with patient feedback.", category: "health", longDesc: "Specialty search, address & timings.", isPremiumRequired: false },
+    { name: "Sehat", url: "https://www.sehat.com", desc: "Health portal with hospital listings.", category: "health", longDesc: "Medical tourism information.", isPremiumRequired: false },
+    { name: "Portea Medical", url: "https://www.portea.com", desc: "Home healthcare services, nursing, physio.", category: "health", longDesc: "Doctor visits at home, lab tests.", isPremiumRequired: false },
+    { name: "StanPlus", url: "https://www.stanplus.com", desc: "Emergency ambulance booking & response.", category: "health", longDesc: "Instant ambulance for medical emergencies.", isPremiumRequired: false },
+    { name: "Dial 108 (emergency)", url: "https://www.emri.in", desc: "Emergency Response India – ambulance service.", category: "health", longDesc: "Free emergency helpline information.", isPremiumRequired: false },
+    { name: "Medicircle", url: "https://www.medicircle.in", desc: "Healthcare articles, doctor interviews.", category: "health", longDesc: "Preventive health awareness.", isPremiumRequired: false },
+    { name: "Redcliffe Labs", url: "https://www.redcliffelabs.com", desc: "Affordable diagnostic tests at home.", category: "health", longDesc: "NABL accredited, reports online.", isPremiumRequired: false },
+    { name: "Thyrocare", url: "https://www.thyrocare.com", desc: "Wellness checkups, thyroid, vitamin tests.", category: "health", longDesc: "Pan-India sample collection.", isPremiumRequired: false },
+    { name: "Healthians", url: "https://www.healthians.com", desc: "Full body checkups & health packages.", category: "health", longDesc: "Free home sample collection.", isPremiumRequired: false },
+    { name: "Metropolis Healthcare", url: "https://www.metropolisindia.com", desc: "Diagnostic tests & pathology lab.", category: "health", longDesc: "Trusted chain with online reports.", isPremiumRequired: false },
+    { name: "Medlife (now merged)", url: "https://www.medlife.com", desc: "Medicine and healthcare delivery.", category: "health", longDesc: "Partnered with PharmEasy but still accessible.", isPremiumRequired: false },
+    { name: "AltLife", url: "https://www.altlife.com", desc: "Lifestyle health & wellness products.", category: "health", longDesc: "Immunity boosters, vitamins.", isPremiumRequired: false },
+    { name: "CareOnGo", url: "https://www.careongo.com", desc: "Pharmacy & diagnostic booking app.", category: "health", longDesc: "Daily health essentials delivered.", isPremiumRequired: false },
+    { name: "BookMyDoctor", url: "https://www.bookmydoctor.in", desc: "Doctor appointment booking platform.", category: "health", longDesc: "Free online consultation with verified docs.", isPremiumRequired: false },
+    { name: "DoctorAnywhere", url: "https://www.doctoranywhere.com", desc: "Telemedicine & health management.", category: "health", longDesc: "Video consultations, e-prescriptions.", isPremiumRequired: false },
+    { name: "HealthPlix", url: "https://www.healthplix.com", desc: "Doctor EHR platform, but patient info.", category: "health", longDesc: "Find nearby doctors using the platform.", isPremiumRequired: false },
+    { name: "MyUpchar", url: "https://www.myupchar.com", desc: "Health information, medicine info in Hindi.", category: "health", longDesc: "Free articles and doctor answers.", isPremiumRequired: false },
+    { name: "VidzaCare", url: "https://www.vidzacare.com", desc: "Remote healthcare, teleICU services.", category: "health", longDesc: "Specialized in rural healthcare.", isPremiumRequired: false }
+  ];
+
+  // Ensure uniqueness and set icons / longDesc fallback
+  const uniqueMap = new Map();
+  for (const t of toolsData) {
+    const key = t.name.toLowerCase();
+    if (!uniqueMap.has(key)) {
+      let validUrl = t.url;
+      try { new URL(validUrl); } catch(e) { validUrl = "https://" + validUrl; }
+      const iconUrl = `https://www.google.com/s2/favicons?domain=${new URL(validUrl).hostname}`;
+      uniqueMap.set(key, { ...t, url: validUrl, source: 'local', icon: iconUrl, longDesc: t.longDesc || `**${t.name}**\n\n${t.desc}\n\nFree resource for everyday needs.` });
+    }
+  }
+  let toolsWithDetails = Array.from(uniqueMap.values());
+  console.log(`✅ Loaded ${toolsWithDetails.length} verified life tools (food delivery, travel ticket booking, health/medicine)`);
+
+  // ========== API Functions ==========
+  async function apiCall(url, options = {}) {
+    const response = await fetch(url, { ...options, headers: { 'Content-Type': 'application/json', ...options.headers }, credentials: 'include' });
+    if (!response.ok) { const text = await response.text(); throw new Error(text); }
+    const contentType = response.headers.get('content-type');
+    return contentType?.includes('application/json') ? response.json() : response.text();
+  }
+
+  function showToast(message, type = 'success') {
+    const toast = document.createElement('div'); toast.className = `toast ${type}`; toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i> ${message}`;
+    document.body.appendChild(toast); setTimeout(() => toast.remove(), 4000);
+  }
+
+  function getDomainFromUrl(url) {
+    try { return new URL(url).hostname; } catch { return 'example.com'; }
+  }
+
+  async function loadAndMergeTools() {
+    try {
+      document.getElementById('toolsGrid').innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading tools...</div>';
+      let approvedTools = [];
+      try {
+        approvedTools = await apiCall(`/api/tools?page=${PAGE_TYPE}`);
+        console.log(`✅ Loaded ${approvedTools.length} approved tools for ${PAGE_TYPE}`);
+      } catch (error) {
+        console.log('Could not fetch approved tools, using local only:', error);
+      }
+      const formattedApprovedTools = approvedTools.map(tool => ({
+        id: tool.id,
+        name: tool.name,
+        url: tool.url,
+        desc: tool.description || 'Community-submitted tool.',
+        longDesc: `**${tool.name}** (Community Approved)\n\n${tool.description || 'A useful resource.'}`,
+        category: tool.category || 'food',
+        icon: `https://www.google.com/s2/favicons?domain=${getDomainFromUrl(tool.url)}`,
+        source: 'approved',
+        approved: true,
+        created_at: tool.created_at,
+        isPremiumRequired: tool.is_premium === 1
+      }));
+      const allNames = new Set();
+      const merged = [];
+      for (const tool of toolsWithDetails) {
+        const key = tool.name.toLowerCase();
+        if (!allNames.has(key)) {
+          allNames.add(key);
+          merged.push(tool);
+        }
+      }
+      for (const tool of formattedApprovedTools) {
+        const key = tool.name.toLowerCase();
+        if (!allNames.has(key)) {
+          allNames.add(key);
+          merged.push(tool);
+        }
+      }
+      allTools = merged;
+      const statsBadge = document.getElementById('statsBadge');
+      const premiumCount = allTools.filter(t => t.isPremiumRequired).length;
+      statsBadge.innerHTML = `<i class="fas fa-database"></i> Explore our collection of life tools! ${!userPremiumStatus && premiumCount > 0 ? `🔒 ${premiumCount} Premium Tools Available` : ''}`;
+      buildFilterButtons();
+      renderTools();
+      if (!userPremiumStatus) showPremiumRecommendations();
+      return true;
+    } catch (error) {
+      console.error('Error loading tools:', error);
+      document.getElementById('toolsGrid').innerHTML = '<div class="loading">❌ Failed to load tools. Please refresh.</div>';
+      showToast('Failed to load tools', 'error');
+      return false;
+    }
+  }
+
+  // LocalStorage functions
+  if (!localStorage.getItem('popularity')) localStorage.setItem('popularity', '{}');
+  if (!localStorage.getItem('ratings')) localStorage.setItem('ratings', '{}');
+  if (!localStorage.getItem('favorites')) localStorage.setItem('favorites', '[]');
+
+  function getPopularity(name) { return JSON.parse(localStorage.getItem('popularity'))[name] || 0; }
+  function incrementPopularity(name) { let pop = JSON.parse(localStorage.getItem('popularity')); pop[name] = (pop[name] || 0) + 1; localStorage.setItem('popularity', JSON.stringify(pop)); }
+  function getAverageRating(name) { let ratings = JSON.parse(localStorage.getItem('ratings'))[name]; if (!ratings || ratings.length === 0) return 0; return ratings.reduce((a,b)=>a+b,0) / ratings.length; }
+  function addRating(name, stars) { let ratings = JSON.parse(localStorage.getItem('ratings')); if (!ratings[name]) ratings[name] = []; ratings[name].push(stars); localStorage.setItem('ratings', JSON.stringify(ratings)); }
+  function isFavorite(name) { return JSON.parse(localStorage.getItem('favorites')).includes(name); }
+  function toggleFavorite(name) { let favs = JSON.parse(localStorage.getItem('favorites')); if (favs.includes(name)) { localStorage.setItem('favorites', JSON.stringify(favs.filter(f => f !== name))); } else { favs.push(name); localStorage.setItem('favorites', JSON.stringify(favs)); } renderTools(); renderFavorites(); }
+
+  function updateFilteredTools() {
+    let toolsToFilter = [...allTools];
+    if (currentFilter === 'premium') {
+      toolsToFilter = toolsToFilter.filter(t => t.isPremiumRequired === true);
+    } else if (currentFilter !== 'all') {
+      toolsToFilter = toolsToFilter.filter(t => t.category === currentFilter);
+    }
+    if (currentSearch) {
+      const searchLower = currentSearch.toLowerCase();
+      toolsToFilter = toolsToFilter.filter(tool => 
+        tool.name.toLowerCase().includes(searchLower) || 
+        (tool.desc || '').toLowerCase().includes(searchLower)
+      );
+    }
+    filteredTools = toolsToFilter;
+    if (currentSort === 'name') filteredTools.sort((a,b) => a.name.localeCompare(b.name));
+    else if (currentSort === 'popularity') filteredTools.sort((a,b) => getPopularity(b.name) - getPopularity(a.name));
+  }
+
+  function renderPagination() {
+    const totalPages = Math.ceil(filteredTools.length / itemsPerPage);
+    const paginationDiv = document.getElementById('paginationControls');
+    paginationDiv.innerHTML = '';
+    if (totalPages <= 1) return;
+    for (let i = 1; i <= totalPages; i++) {
+      const btn = document.createElement('button');
+      btn.textContent = i;
+      if (i === currentPage) btn.classList.add('active');
+      btn.addEventListener('click', () => { currentPage = i; renderTools(); });
+      paginationDiv.appendChild(btn);
+    }
+  }
+
+  function renderTools() {
+    updateFilteredTools();
+    const start = (currentPage - 1) * itemsPerPage;
+    let pageTools = filteredTools.slice(start, start + itemsPerPage);
+    if (!userPremiumStatus && currentFilter !== 'premium') {
+      pageTools = pageTools.filter(tool => !tool.isPremiumRequired);
+    }
+    const toolsGrid = document.getElementById('toolsGrid');
+    if (pageTools.length === 0) {
+      if (!userPremiumStatus && filteredTools.some(t => t.isPremiumRequired) && currentFilter !== 'premium') {
+        toolsGrid.innerHTML = `<div class="loading">🔒 Some life tools require Premium Access. <a href="profile.html?tab=premium" style="color:#f6d365;">Upgrade to Premium</a> to unlock all tools.</div>`;
+      } else {
+        toolsGrid.innerHTML = '<div class="loading">No tools match your criteria.</div>';
+      }
+      return;
+    }
+    toolsGrid.innerHTML = pageTools.map(tool => {
+      const pop = getPopularity(tool.name);
+      const avgRating = getAverageRating(tool.name);
+      const fullStars = Math.floor(avgRating);
+      const stars = '★'.repeat(fullStars) + (avgRating % 1 >= 0.5 ? '½' : '');
+      const favClass = isFavorite(tool.name) ? 'favorited' : '';
+      const approvedBadge = tool.source === 'approved' ? '<span class="approved-badge"><i class="fas fa-check-circle"></i> Approved</span>' : '';
+      let newBadge = '';
+      if (tool.source === 'approved' && tool.created_at) {
+        const createdDate = new Date(tool.created_at);
+        const now = new Date();
+        const diffDays = (now - createdDate) / (1000 * 60 * 60 * 24);
+        if (diffDays <= NEW_DAYS_THRESHOLD) newBadge = '<span class="time-new-badge">🔥 NEW</span>';
+      }
+      const premiumTag = tool.isPremiumRequired ? '<span class="premium-tag">⭐ PREMIUM</span>' : '';
+      const isPremiumLocked = tool.isPremiumRequired && !userPremiumStatus;
+      const lockOverlay = isPremiumLocked ? `
+        <div class="premium-lock-icon">
+          <i class="fas fa-lock"></i> Premium Tool
+          <button onclick="window.location.href='profile.html?tab=premium'">Upgrade</button>
+        </div>
+      ` : '';
+      const lockClass = isPremiumLocked ? 'premium-locked' : '';
+      return `
+        <div class="tool-card ${lockClass}" data-name="${escapeHtml(tool.name)}" data-url="${tool.url}" data-desc="${escapeHtml(tool.longDesc)}" data-icon="${tool.icon}">
+          ${approvedBadge}
+          ${newBadge}
+          ${premiumTag}
+          <span class="fav-icon ${favClass}" data-fav="${escapeHtml(tool.name)}">❤️</span>
+          <img src="${tool.icon}" alt="${escapeHtml(tool.name)}" loading="lazy" onerror="this.src='https://via.placeholder.com/48'">
+          <h3>${escapeHtml(tool.name)}</h3>
+          <p>${escapeHtml(tool.desc)}</p>
+          <div class="meta">
+            <span class="rating">${stars || '☆☆☆☆☆'}</span>
+            <span class="popularity">🔥 ${pop}</span>
+          </div>
+          <button class="btn details-btn" ${isPremiumLocked ? 'disabled style="opacity:0.6;"' : ''}>Details</button>
+          ${lockOverlay}
+        </div>
+      `;
+    }).join('');
+    attachCardEvents();
+    renderPagination();
+  }
+
+  function attachCardEvents() {
+    document.querySelectorAll('.fav-icon').forEach(icon => {
+      icon.addEventListener('click', (e) => { e.stopPropagation(); toggleFavorite(icon.dataset.fav); });
+    });
+    document.querySelectorAll('.details-btn:not([disabled])').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const card = e.target.closest('.tool-card');
+        openModal(card.dataset.name, card.dataset.url, card.dataset.desc, card.dataset.icon);
+      });
+    });
+  }
+
+  function renderFavorites() {
+    const favs = JSON.parse(localStorage.getItem('favorites'));
+    let favTools = allTools.filter(t => favs.includes(t.name));
+    if (!userPremiumStatus) {
+      favTools = favTools.filter(t => !t.isPremiumRequired);
+    }
+    const favoritesGrid = document.getElementById('favoritesGrid');
+    if (favTools.length === 0) {
+      favoritesGrid.innerHTML = '<div class="loading">No favorite tools yet. Click the heart icon on any tool to add it!</div>';
+      return;
+    }
+    favoritesGrid.innerHTML = favTools.map(tool => {
+      const pop = getPopularity(tool.name);
+      const avgRating = getAverageRating(tool.name);
+      const fullStars = Math.floor(avgRating);
+      const stars = '★'.repeat(fullStars) + (avgRating % 1 >= 0.5 ? '½' : '');
+      const isPremiumLocked = tool.isPremiumRequired && !userPremiumStatus;
+      const lockOverlay = isPremiumLocked ? `<div class="premium-lock-icon"><i class="fas fa-lock"></i> Premium Tool</div>` : '';
+      return `
+        <div class="tool-card ${isPremiumLocked ? 'premium-locked' : ''}" data-name="${escapeHtml(tool.name)}" data-url="${tool.url}" data-desc="${escapeHtml(tool.longDesc)}" data-icon="${tool.icon}">
+          <img src="${tool.icon}" alt="${escapeHtml(tool.name)}" loading="lazy" onerror="this.src='https://via.placeholder.com/48'">
+          <h3>${escapeHtml(tool.name)}</h3>
+          <p>${escapeHtml(tool.desc)}</p>
+          <div class="meta">
+            <span class="rating">${stars || '☆☆☆☆☆'}</span>
+            <span class="popularity">🔥 ${pop}</span>
+          </div>
+          <button class="btn details-btn" ${isPremiumLocked ? 'disabled' : ''}>Details</button>
+          ${lockOverlay}
+        </div>
+      `;
+    }).join('');
+    favoritesGrid.querySelectorAll('.details-btn:not([disabled])').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const card = e.target.closest('.tool-card');
+        openModal(card.dataset.name, card.dataset.url, card.dataset.desc, card.dataset.icon);
+      });
+    });
+  }
+
+  function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
+
+  function openModal(name, url, longDesc, icon) {
+    const tool = allTools.find(t => t.name === name);
+    if (tool?.isPremiumRequired && !userPremiumStatus) {
+      showToast('This tool requires Premium Access. Please upgrade.', 'error');
+      return;
+    }
+    incrementPopularity(name);
+    const category = tool?.category || 'food';
+    document.getElementById('modalTitle').textContent = name;
+    document.getElementById('modalDesc').innerHTML = longDesc.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+    document.getElementById('modalIcon').src = icon;
+    document.getElementById('modalVisitBtn').href = url;
+    const howToHTML = generateHowToUse(name, category, url);
+    document.getElementById('howToUseContent').innerHTML = howToHTML;
+
+    const avgRating = getAverageRating(name);
+    const modalRatingDiv = document.getElementById('modalRating');
+    modalRatingDiv.innerHTML = 'Rate this tool: ';
+    for (let i = 1; i <= 5; i++) {
+      const star = document.createElement('span');
+      star.className = `star ${i <= Math.round(avgRating) ? 'selected' : ''}`;
+      star.textContent = '★';
+      star.dataset.value = i;
+      star.addEventListener('click', (e) => { addRating(name, parseInt(e.target.dataset.value)); openModal(name, url, longDesc, icon); renderTools(); });
+      modalRatingDiv.appendChild(star);
+    }
+    const similar = allTools.filter(t => t.category === category && t.name !== name && (!t.isPremiumRequired || userPremiumStatus)).slice(0, 5);
+    const similarDiv = document.getElementById('similarTools');
+    similarDiv.innerHTML = similar.map(t => `<span class="similar-tool-item" data-name="${escapeHtml(t.name)}">${escapeHtml(t.name)}</span>`).join('');
+    document.querySelectorAll('.similar-tool-item').forEach(el => {
+      el.addEventListener('click', () => { const t = allTools.find(tt => tt.name === el.dataset.name); if(t) openModal(t.name, t.url, t.longDesc, t.icon); });
+    });
+    const shareText = encodeURIComponent(`Check out ${name} on Life Nexus!`);
+    const shareUrl = encodeURIComponent(url);
+    document.getElementById('socialShare').innerHTML = `
+      <a href="https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}" target="_blank"><i class="fab fa-twitter"></i> Twitter</a>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=${shareUrl}" target="_blank"><i class="fab fa-facebook"></i> Facebook</a>
+      <a href="https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}" target="_blank"><i class="fab fa-linkedin"></i> LinkedIn</a>
+    `;
+    document.getElementById('toolModal').classList.add('active');
+  }
+
+  function buildFilterButtons() {
+    const categories = ['all', ...new Set(allTools.map(t => t.category))];
+    categories.push('premium');
+    const filterContainer = document.getElementById('filterContainer');
+    filterContainer.innerHTML = categories.map(cat => `<button class="filter-btn ${cat === currentFilter ? 'active' : ''}" data-filter="${cat}">${cat.charAt(0).toUpperCase() + cat.slice(1)}</button>`).join('');
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.filter;
+        currentPage = 1;
+        renderTools();
+      });
+    });
+  }
+
+  async function submitTool() {
+    const name = document.getElementById('newName').value.trim();
+    const url = document.getElementById('newUrl').value.trim();
+    const description = document.getElementById('newDesc').value.trim();
+    const category = document.getElementById('newCategory').value;
+    if (!name || !url || !description) { showToast('Please fill all fields', 'error'); return; }
+    try { new URL(url); } catch { showToast('Please enter a valid URL (including https://)', 'error'); return; }
+    const submitBtn = document.getElementById('submitToolBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+    try {
+      await apiCall('/api/tools/submit', {
+        method: 'POST',
+        body: JSON.stringify({ name, url, description, category, pageType: PAGE_TYPE })
+      });
+      showToast('✅ Tool submitted! Admin will review it shortly.', 'success');
+      document.getElementById('newName').value = '';
+      document.getElementById('newUrl').value = '';
+      document.getElementById('newDesc').value = '';
+      setTimeout(() => loadAndMergeTools(), 2000);
+    } catch (error) { showToast(error.message || 'Submission failed', 'error'); }
+    finally { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit for Review'; }
+  }
+
+  async function checkSession() {
+    try { const session = await apiCall('/check-session'); if (!session.loggedIn) { window.location.href = '/'; return false; } return true; }
+    catch { return true; }
+  }
+
+  async function fetchPremiumStatus() {
+    try {
+      const res = await fetch('/api/user/premium-status', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        userPremiumStatus = data.isPremium === true;
+        console.log('Premium status (life nexus):', userPremiumStatus);
+        const banner = document.getElementById('premiumBanner');
+        if (banner) banner.style.display = userPremiumStatus ? 'none' : 'flex';
+        const recommendationsDiv = document.getElementById('premiumRecommendations');
+        if (recommendationsDiv) recommendationsDiv.style.display = userPremiumStatus ? 'none' : 'block';
+      } else {
+        userPremiumStatus = false;
+        document.getElementById('premiumBanner').style.display = 'flex';
+        document.getElementById('premiumRecommendations').style.display = 'block';
+      }
+    } catch (err) {
+      console.error('Failed to fetch premium status', err);
+      userPremiumStatus = false;
+      document.getElementById('premiumBanner').style.display = 'flex';
+      document.getElementById('premiumRecommendations').style.display = 'block';
+    }
+  }
+
+  function showPremiumRecommendations() {
+    const premiumTools = allTools.filter(t => t.isPremiumRequired).slice(0, 6);
+    const container = document.getElementById('recommendGrid');
+    if (!container) return;
+    if (premiumTools.length === 0) {
+      container.innerHTML = '<p>No premium tools available yet.</p>';
+      return;
+    }
+    container.innerHTML = premiumTools.map(tool => `
+      <div class="recommend-item">
+        <img src="${tool.icon}" alt="${tool.name}" onerror="this.src='https://via.placeholder.com/40'">
+        <div class="name">${escapeHtml(tool.name)}</div>
+        <button onclick="window.location.href='profile.html?tab=premium'">Unlock</button>
+      </div>
+    `).join('');
+  }
+
+  async function init() {
+    const loggedIn = await checkSession();
+    if (!loggedIn) return;
+    await fetchPremiumStatus();
+    await loadAndMergeTools();
+    try {
+      await fetch('/api/track-usage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tool_name: 'Life Nexus Hub', tool_category: 'life' }), credentials: 'include' });
+    } catch(e) {}
+  }
+
+  // Event listeners
+  document.getElementById('searchInput').addEventListener('input', (e) => { currentSearch = e.target.value; currentPage = 1; renderTools(); });
+  document.getElementById('sortSelect').addEventListener('change', (e) => { currentSort = e.target.value; renderTools(); });
+  document.getElementById('refreshToolsBtn').addEventListener('click', () => { loadAndMergeTools(); showToast('Refreshing tools from database...', 'info'); });
+  document.getElementById('themeToggle').addEventListener('click', () => { document.body.classList.toggle('light-mode'); document.getElementById('themeToggle').textContent = document.body.classList.contains('light-mode') ? '☀️ Light' : '🌙 Dark'; localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark'); });
+  if (localStorage.getItem('theme') === 'light') { document.body.classList.add('light-mode'); document.getElementById('themeToggle').textContent = '☀️ Light'; }
+  document.getElementById('showFavorites').addEventListener('click', (e) => { e.preventDefault(); document.getElementById('toolsGrid').style.display = 'none'; document.getElementById('favoritesPage').style.display = 'block'; renderFavorites(); });
+  document.getElementById('hideFavorites').addEventListener('click', () => { document.getElementById('favoritesPage').style.display = 'none'; document.getElementById('toolsGrid').style.display = 'flex'; });
+  document.getElementById('submitToolBtn').addEventListener('click', submitTool);
+  document.querySelector('.close').addEventListener('click', () => document.getElementById('toolModal').classList.remove('active'));
+  window.addEventListener('click', (e) => { if (e.target === document.getElementById('toolModal')) document.getElementById('toolModal').classList.remove('active'); });
+  window.addEventListener('scroll', () => { const btn = document.getElementById('backToTop'); if(btn) btn.classList.toggle('visible', window.scrollY > 300); });
+  document.getElementById('backToTop').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+  init();
+</script>
+</body>
+</html>

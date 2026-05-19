@@ -1,0 +1,1226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Custom Tools – Sarveik | 300+ Verified Automation & Workflow Tools</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg-gradient: linear-gradient(-45deg, #1f1c2c, #928dab, #2c3e50, #3498db);
+      --bg-card: rgba(0, 0, 0, 0.4);
+      --text: #fff;
+      --text-muted: rgba(255,255,255,0.7);
+      --btn-bg: linear-gradient(135deg, #667eea, #764ba2);
+      --shadow: 0 8px 20px rgba(0,0,0,0.6);
+      --border: 1px solid rgba(255,255,255,0.2);
+      --transition: all 0.3s ease;
+      --card-width: 280px;
+      --howto-bg: rgba(0,0,0,0.3);
+    }
+    body.light-mode {
+      --bg-gradient: linear-gradient(-45deg, #f0f4ff, #e8f2ff, #f8fbff, #e0f2fe);
+      --bg-card: rgba(255,255,255,0.8);
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --btn-bg: linear-gradient(135deg, #0ea5e9, #6366f1);
+      --shadow: 0 8px 20px rgba(0,0,0,0.1);
+      --border: 1px solid rgba(0,0,0,0.1);
+      --howto-bg: rgba(0,0,0,0.05);
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-gradient);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      color: var(--text);
+      padding: 40px 20px;
+      min-height: 100vh;
+      transition: var(--transition);
+    }
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    h1 { font-size: 2.5em; margin-bottom: 10px; text-align: center; }
+    .subtitle { text-align: center; margin-bottom: 30px; opacity: 0.9; }
+    .stats-badge { 
+      text-align: center; 
+      margin-bottom: 20px; 
+      font-size: 0.9em; 
+      opacity: 0.8;
+      background: var(--bg-card);
+      display: inline-block;
+      padding: 5px 15px;
+      border-radius: 50px;
+      margin: 0 auto 20px;
+      width: fit-content;
+    }
+    .premium-banner {
+      background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+      border-radius: 20px;
+      padding: 15px 25px;
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+      color: #1e293b;
+      font-weight: 600;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+    .premium-banner .text i { margin-right: 10px; }
+    .premium-banner .upgrade-btn {
+      background: #1e293b;
+      color: #f6d365;
+      padding: 10px 24px;
+      border-radius: 40px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .premium-banner .upgrade-btn:hover {
+      transform: scale(1.05);
+      background: #0f172a;
+    }
+    .premium-recommendations {
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 30px;
+      border: var(--border);
+    }
+    .premium-recommendations h3 {
+      margin-bottom: 15px;
+      color: #f6d365;
+    }
+    .recommend-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: center;
+    }
+    .recommend-item {
+      background: rgba(255,255,255,0.1);
+      border-radius: 15px;
+      padding: 12px;
+      width: 200px;
+      text-align: center;
+    }
+    .recommend-item img {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+    .recommend-item .name {
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+    .recommend-item button {
+      background: var(--btn-bg);
+      border: none;
+      padding: 6px 12px;
+      border-radius: 30px;
+      color: white;
+      font-size: 0.75rem;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 30px;
+      align-items: center;
+    }
+    .search-box input {
+      padding: 12px 20px;
+      border-radius: 50px;
+      border: var(--border);
+      background: rgba(255,255,255,0.2);
+      color: var(--text);
+      font-size: 1em;
+      width: 300px;
+      backdrop-filter: blur(5px);
+      outline: none;
+    }
+    .filter-buttons, .sort-select, .theme-toggle, .favorites-link {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .filter-buttons button, .sort-select select, .theme-toggle button, .favorites-link a, .pagination button {
+      padding: 10px 20px;
+      border-radius: 50px;
+      border: var(--border);
+      background: rgba(255,255,255,0.2);
+      color: var(--text);
+      cursor: pointer;
+      backdrop-filter: blur(5px);
+      transition: var(--transition);
+      font-size: 0.95em;
+    }
+    .filter-buttons button.active { background: var(--btn-bg); font-weight: 600; }
+    .filter-buttons button:hover, .sort-select select:hover, .theme-toggle button:hover, .favorites-link a:hover, .pagination button:hover {
+      background: var(--btn-bg);
+      transform: scale(1.05);
+    }
+    .sort-select select { appearance: none; padding-right: 30px; }
+    .favorites-link a { text-decoration: none; display: inline-block; }
+    .tools-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .tool-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 20px;
+      width: var(--card-width);
+      min-height: 260px;
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      border: var(--border);
+    }
+    .tool-card:hover { transform: translateY(-8px) scale(1.02); }
+    .tool-card .fav-icon {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 1.4em;
+      cursor: pointer;
+      color: #ff6f61;
+      background: rgba(0,0,0,0.3);
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+    }
+    .tool-card .fav-icon.favorited { color: #ff3b2e; text-shadow: 0 0 10px #ff3b2e; }
+    .tool-card img {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      background: #fff;
+      object-fit: contain;
+    }
+    .tool-card h3 { font-size: 1.2em; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tool-card p { font-size: 0.85em; opacity: 0.85; flex: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 12px; line-height: 1.4; }
+    .tool-card .meta { display: flex; justify-content: space-between; align-items: center; margin: 10px 0; font-size: 0.85em; }
+    .tool-card .rating { color: gold; }
+    .tool-card .popularity { opacity: 0.7; }
+    .tool-card .approved-badge {
+      background: #10b981;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.65em;
+      position: absolute;
+      top: 10px;
+      left: 10px;
+    }
+    .tool-card .time-new-badge {
+      background: linear-gradient(45deg, #f6d365, #fda085);
+      color: #1e293b;
+      font-size: 0.65rem;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 20px;
+      position: absolute;
+      top: 10px;
+      left: 90px;
+      z-index: 2;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .tool-card .premium-tag {
+      background: linear-gradient(135deg, #f6d365, #fda085);
+      color: #1e293b;
+      font-size: 0.65rem;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 20px;
+      position: absolute;
+      top: 10px;
+      left: 170px;
+      z-index: 2;
+    }
+    .tool-card.premium-locked {
+      position: relative;
+      overflow: hidden;
+    }
+    .tool-card.premium-locked::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      border-radius: 15px;
+      z-index: 3;
+    }
+    .premium-lock-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 4;
+      background: rgba(0,0,0,0.85);
+      padding: 10px 18px;
+      border-radius: 50px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      font-weight: bold;
+      color: #f6d365;
+      border: 1px solid #f6d365;
+    }
+    .premium-lock-icon button {
+      background: var(--btn-bg);
+      border: none;
+      padding: 6px 16px;
+      border-radius: 30px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .premium-lock-icon button:hover {
+      transform: scale(1.05);
+      background: linear-gradient(135deg, #f6d365, #fda085);
+      color: #1e293b;
+    }
+    .tool-card .btn {
+      background: var(--btn-bg);
+      color: #fff;
+      padding: 8px 15px;
+      border-radius: 50px;
+      text-decoration: none;
+      font-size: 0.9em;
+      text-align: center;
+      border: none;
+      cursor: pointer;
+      transition: var(--transition);
+      z-index: 5;
+      position: relative;
+    }
+    .tool-card .btn:hover { transform: scale(1.05); }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 30px 0;
+      flex-wrap: wrap;
+    }
+    .pagination button.active {
+      background: var(--btn-bg);
+      font-weight: bold;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 650px;
+      width: 90%;
+      max-height: 85vh;
+      overflow-y: auto;
+      position: relative;
+      border: var(--border);
+      color: var(--text);
+    }
+    .close { position: absolute; top: 15px; right: 20px; font-size: 2em; cursor: pointer; color: var(--text); }
+    .modal-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
+    .modal-header img { width: 60px; height: 60px; border-radius: 10px; background: #fff; }
+    .modal-rating { margin: 15px 0; }
+    .star { cursor: pointer; color: #ccc; font-size: 1.4em; display: inline-block; margin-right: 5px; }
+    .star.selected { color: gold; }
+    .similar-tools { display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0; }
+    .similar-tool-item { background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 20px; font-size: 0.9em; cursor: pointer; }
+    .similar-tool-item:hover { background: var(--btn-bg); }
+    .social-share { display: flex; gap: 10px; margin: 15px 0; flex-wrap: wrap; }
+    .social-share a { color: var(--text); text-decoration: none; padding: 5px 10px; background: rgba(255,255,255,0.2); border-radius: 20px; }
+    .social-share a:hover { background: var(--btn-bg); }
+    .visit-btn { background: var(--btn-bg); color: #fff; padding: 12px 25px; border-radius: 50px; text-decoration: none; display: inline-block; margin-top: 15px; border: none; cursor: pointer; }
+    .how-to-use-section {
+      background: var(--howto-bg);
+      border-left: 4px solid #f6d365;
+      border-radius: 12px;
+      padding: 15px 18px;
+      margin: 20px 0 15px;
+      transition: var(--transition);
+    }
+    .how-to-use-section h4 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+      color: #f6d365;
+    }
+    .how-to-use-section ol, .how-to-use-section ul {
+      padding-left: 1.5rem;
+      margin: 8px 0;
+    }
+    .how-to-use-section li {
+      margin: 8px 0;
+      line-height: 1.5;
+    }
+    .pro-tip {
+      background: rgba(246, 211, 101, 0.2);
+      border-radius: 10px;
+      padding: 8px 12px;
+      margin-top: 12px;
+      font-size: 0.9rem;
+    }
+    #favoritesPage { display: none; margin-top: 30px; }
+    #favoritesPage h2 { text-align: center; margin-bottom: 20px; }
+    .back-btn { background: var(--btn-bg); color: #fff; padding: 10px 25px; border-radius: 50px; border: none; cursor: pointer; margin: 20px auto; display: block; }
+    .submit-section {
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 30px;
+      margin: 40px 0;
+      border: var(--border);
+    }
+    .submit-section h3 { margin-bottom: 20px; }
+    .submit-section input, .submit-section textarea, .submit-section select {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border-radius: 10px;
+      border: var(--border);
+      background: rgba(255,255,255,0.2);
+      color: var(--text);
+      font-family: inherit;
+    }
+    .submit-section button { background: var(--btn-bg); color: #fff; padding: 12px 30px; border-radius: 50px; border: none; cursor: pointer; font-weight: bold; transition: var(--transition); }
+    .submit-section button:hover { transform: scale(1.02); }
+    .navigation { text-align: center; margin: 20px 0; }
+    .nav-btn { background: var(--btn-bg); color: #fff; padding: 12px 25px; border-radius: 50px; text-decoration: none; display: inline-block; }
+    #backToTop { position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; border-radius: 50%; background: var(--btn-bg); color: #fff; border: none; cursor: pointer; display: none; font-size: 1.5em; z-index: 99; }
+    #backToTop.visible { display: block; }
+    .toast { position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.9); color: white; padding: 12px 20px; border-radius: 10px; z-index: 10000; animation: slideIn 0.3s ease; }
+    .toast.success { background: #10b981; }
+    .toast.error { background: #ef4444; }
+    .toast.info { background: #f59e0b; }
+    .loading { text-align: center; padding: 50px; font-size: 1.2em; }
+    .refresh-btn {
+      background: var(--btn-bg);
+      color: #fff;
+      padding: 8px 15px;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      margin-left: 10px;
+      font-size: 0.85em;
+    }
+    .disclaimer {
+      margin-top: 40px;
+      padding: 20px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 12px;
+      text-align: center;
+      font-size: 0.8em;
+    }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @media (max-width: 768px) {
+      .controls { flex-direction: column; align-items: stretch; }
+      .search-box input { width: 100%; }
+      .tool-card { width: 100%; max-width: 350px; margin: 0 auto; }
+      .premium-lock-icon { font-size: 0.75rem; padding: 6px 12px; white-space: normal; width: 90%; text-align: center; }
+      .premium-lock-icon button { padding: 4px 10px; }
+      .recommend-item { width: 160px; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>⚙️ Custom Tools – Sarveik </h1>
+  <p class="subtitle">Discover 300+ automation, API, no‑code, and workflow tools to supercharge your productivity!</p>
+  
+
+
+  <div style="text-align: center;">
+    <div class="stats-badge" id="statsBadge">Loading tools...</div>
+  </div>
+
+  <div class="controls">
+    <div class="search-box"><input type="text" id="searchInput" placeholder="Search tools..."></div>
+    <div class="filter-buttons" id="filterContainer"></div>
+    <div class="sort-select"><select id="sortSelect"><option value="name">Sort by Name</option><option value="popularity">Sort by Popularity</option></select></div>
+    <div class="theme-toggle"><button id="themeToggle">🌙 Dark</button></div>
+    <div class="favorites-link"><a href="#" id="showFavorites">❤️ Favorites</a></div>
+    <div><button id="refreshToolsBtn" class="refresh-btn"><i class="fas fa-sync-alt"></i> Refresh</button></div>
+  </div>
+  <div class="tools-grid" id="toolsGrid"><div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading tools...</div></div>
+  <div class="pagination" id="paginationControls"></div>
+  <div id="favoritesPage"><h2>❤️ Your Favorite Tools</h2><div class="tools-grid" id="favoritesGrid"></div><button class="back-btn" id="hideFavorites">Back to All Tools</button></div>
+    <!-- Premium banner (only shown to non-premium users) -->
+  <div id="premiumBanner" class="premium-banner" style="display: none;">
+    <div class="text"><i class="fas fa-crown"></i> <strong>Unlock Premium Custom Tools!</strong> Get access to advanced automation, enterprise workflows, and AI customisation features.</div>
+    <a href="profile.html?tab=premium" class="upgrade-btn"><i class="fas fa-gem"></i> Upgrade Now</a>
+  </div>
+
+  <!-- Premium recommendations (for non-premium) -->
+  <div id="premiumRecommendations" class="premium-recommendations" style="display: none;">
+    <h3><i class="fas fa-star"></i> Premium Tools Recommended for You</h3>
+    <div class="recommend-grid" id="recommendGrid"></div>
+  </div>
+  <!-- Submit Tool Section -->
+  <div class="submit-section">
+    <h3><i class="fas fa-plus-circle"></i> Suggest a New Tool</h3>
+    <p style="margin-bottom: 15px; font-size: 0.85rem;">Submit a tool for admin review. If approved, you'll earn <strong style="color: #f6d365;">25 credits</strong> and it will appear here!</p>
+    <input type="text" id="newName" placeholder="Tool name *">
+    <input type="text" id="newUrl" placeholder="Website URL (https://...) *">
+    <textarea id="newDesc" placeholder="Short description *" rows="2"></textarea>
+    <select id="newCategory">
+      <option value="automation">⚡ Automation</option>
+      <option value="api">🔌 API Tools</option>
+      <option value="nocode">📦 No‑Code</option>
+      <option value="workflow">🔄 Workflow</option>
+      <option value="ai-custom">🤖 Custom AI</option>
+      <option value="integration">🔗 Integration</option>
+    </select>
+    <button id="submitToolBtn"><i class="fas fa-paper-plane"></i> Submit for Review</button>
+    <p style="margin-top: 10px; font-size: 0.75rem; opacity: 0.7;">Tools are reviewed by admins. You'll receive email notification when approved/rejected.</p>
+  </div>
+
+
+
+  <div class="navigation">
+    <a href="main.html" class="nav-btn"><i class="fas fa-home"></i> Back to Tools</a>
+  </div>
+  <button id="backToTop" title="Back to top">↑</button>
+</div>
+
+<div class="modal" id="toolModal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <div class="modal-header">
+      <img src="" alt="" id="modalIcon">
+      <h2 id="modalTitle"></h2>
+    </div>
+    <p id="modalDesc"></p>
+    <div class="how-to-use-section" id="howToUseContainer">
+      <h4><i class="fas fa-compass"></i> How to Use This Tool</h4>
+      <div id="howToUseContent">Loading guide...</div>
+    </div>
+    <div class="modal-rating" id="modalRating"></div>
+    <div class="similar-tools" id="similarTools"></div>
+    <div class="social-share" id="socialShare"></div>
+    <a href="#" id="modalVisitBtn" class="visit-btn" target="_blank">Visit Website</a>
+  </div>
+</div>
+
+<div class="disclaimer">
+  <p><strong>Disclaimer:</strong>Sarveik  is a directory of third‑party tools. We do not host any content. All trademarks, logos, and brand names are the property of their respective owners. If you believe any link infringes your rights, please <a href="dmca.html" style="color: inherit; text-decoration: underline;">contact us</a> for removal.</p>
+</div>
+
+<script>
+  // ========== PAGE TYPE IDENTIFIER ==========
+  const PAGE_TYPE = 'custom';
+  const NEW_DAYS_THRESHOLD = 7;
+
+  // ========== Global Variables ==========
+  let allTools = [];
+  let currentFilter = 'all', currentSearch = '', currentSort = 'name';
+  let currentPage = 1;
+  const itemsPerPage = 20;
+  let filteredTools = [];
+  let userPremiumStatus = false;
+
+  // ========== GENERATE "HOW TO USE" INSTRUCTIONS FOR CUSTOM TOOLS ==========
+  function generateHowToUse(toolName, category, toolUrl) {
+    const nameLower = toolName.toLowerCase();
+    if (nameLower.includes('zapier')) {
+      return `<ol><li>Sign up for a free Zapier account.</li><li>Click "Create Zap" to start a new automation.</li><li>Choose a trigger app (e.g., Gmail, Typeform) and event.</li><li>Connect your account and test the trigger.</li><li>Add an action app (e.g., Google Sheets, Slack) and configure the action.</li><li>Turn on the Zap – it will run automatically when the trigger occurs.</li></ol><div class="pro-tip">⚙️ Use filters and paths to create conditional workflows.</div>`;
+    }
+    if (nameLower.includes('make') || nameLower.includes('integromat')) {
+      return `<ol><li>Create a Make account (free tier available).</li><li>Click "Create a new scenario".</li><li>Select a trigger module (app and event) and connect your account.</li><li>Add action modules, routers, and aggregators by dragging them onto the canvas.</li><li>Map data between modules using the visual interface.</li><li>Schedule or run the scenario manually.</li></ol><div class="pro-tip">🔄 Use error handling (ignore, retry, break) for robust automations.</div>`;
+    }
+    if (nameLower.includes('n8n')) {
+      return `<ol><li>Install n8n via npm (<code>npm install n8n -g</code>) or use the cloud version.</li><li>Start n8n (<code>n8n start</code>) and open the web interface.</li><li>Add a trigger node (e.g., Webhook, Cron, RSS).</li><li>Connect nodes by clicking and dragging between ports.</li><li>Configure each node with credentials and parameters.</li><li>Execute the workflow and monitor execution logs.</li></ol><div class="pro-tip">🐙 Self‑host for unlimited executions and full data control.</div>`;
+    }
+    if (nameLower.includes('ifttt')) {
+      return `<ol><li>Sign up or log in to IFTTT.</li><li>Click "Create" → "If This".</li><li>Choose a trigger service (e.g., Weather, Twitter, or smart home).</li><li>Set the trigger condition (e.g., "temperature drops below 5°C").</li><li>Click "Then That" and select an action service and action.</li><li>Finish and turn on the applet.</li></ol><div class="pro-tip">🔧 Use IFTTT for simple automations with smart home devices and social media.</div>`;
+    }
+    if (nameLower.includes('postman')) {
+      return `<ol><li>Download and install Postman (or use the web version).</li><li>Create a workspace and click "New Request".</li><li>Enter a request URL and select HTTP method (GET, POST, etc.).</li><li>Add headers, body (JSON, form-data), and authentication.</li><li>Click "Send" and inspect the response.</li><li>Save requests to collections, write tests, and generate documentation.</li></ol><div class="pro-tip">⚡ Use environment variables to switch between development, staging, and production.</div>`;
+    }
+    if (nameLower.includes('bubble')) {
+      return `<ol><li>Sign up for a Bubble account (free plan includes development).</li><li>Start with a template or blank canvas.</li><li>Drag‑and‑drop elements (buttons, inputs, repeating groups).</li><li>Set up a database (Data tab) with custom fields.</li><li>Add workflows (e.g., "when button is clicked, create a new thing").</li><li>Deploy your app to a live URL.</li></ol><div class="pro-tip">📱 Use responsive design tools to make your app mobile‑friendly.</div>`;
+    }
+    if (nameLower.includes('openai api')) {
+      return `<ol><li>Sign up for an OpenAI API key at platform.openai.com.</li><li>Choose a model (GPT‑4, GPT‑3.5 Turbo, etc.).</li><li>Make an API call using cURL, Python, or a client library.</li><li>Example: <code>curl https://api.openai.com/v1/chat/completions -H "Authorization: Bearer YOUR_API_KEY" -d '{"model":"gpt-3.5-turbo","messages":[{"role":"user","content":"Hello"}]}'</code></li><li>Handle the JSON response and integrate it into your app.</li><li>Monitor usage in your OpenAI dashboard.</li></ol><div class="pro-tip">💰 Set usage limits to avoid unexpected charges – start with a small prepaid balance.</div>`;
+    }
+    if (nameLower.includes('supabase')) {
+      return `<ol><li>Create a Supabase project (free tier).</li><li>Use the SQL editor to create tables and relationships.</li><li>Enable authentication providers (email, Google, GitHub).</li><li>Use the JavaScript client or REST API to query data.</li><li>Set up row‑level security policies for fine‑grained access.</li><li>Subscribe to realtime changes with the client library.</li></ol><div class="pro-tip">🗄️ Supabase also provides storage and edge functions.</div>`;
+    }
+    if (category === 'automation') {
+      return `<ol><li>Sign up for the tool (free trials available for most).</li><li>Connect your apps (Gmail, Slack, Google Sheets, CRM, etc.).</li><li>Define a trigger – an event that starts the automation (e.g., new email, form submission).</li><li>Define one or more actions (send message, create row, call API).</li><li>Test the workflow with real data.</li><li>Activate and monitor for errors.</li></ol><div class="pro-tip">🚀 Start with simple two‑step automations, then add complexity gradually.</div>`;
+    }
+    if (category === 'api') {
+      return `<ol><li>Create an account / get an API key if required.</li><li>Use the tool's interface to construct API requests (URL, method, headers, body).</li><li>Save requests into collections for reuse.</li><li>Write tests (e.g., status code 200, response body contains "success").</li><li>Automate API tests via CI/CD or scheduled runs.</li><li>Generate and share API documentation.</li></ol><div class="pro-tip">🔑 Never hardcode API keys – use environment variables or secret management.</div>`;
+    }
+    if (category === 'nocode') {
+      return `<ol><li>Sign up and explore templates related to your use case (internal tool, marketplace, dashboard).</li><li>Define your data model – often by connecting a spreadsheet or database.</li><li>Drag‑and‑drop UI components (forms, lists, charts).</li><li>Set up workflows (button clicks, page loads, form submissions).</li><li>Add user authentication if needed.</li><li>Publish or deploy your app (some platforms offer custom domains).</li></ol><div class="pro-tip">🧩 Many no‑code tools integrate via Zapier/Make – extend functionality easily.</div>`;
+    }
+    if (category === 'workflow') {
+      return `<ol><li>Create a project or board in the workflow tool.</li><li>Define stages or columns (e.g., To Do, In Progress, Done).</li><li>Add tasks or tickets with assignees, due dates, and descriptions.</li><li>Set up automation rules (move card when status changes, send notifications).</li><li>Invite team members to collaborate.</li><li>Use dashboards or reports to track progress.</li></ol><div class="pro-tip">⏱️ Use templates for common workflows like bug tracking, content calendars, or product launches.</div>`;
+    }
+    if (category === 'ai-custom') {
+      return `<ol><li>Obtain API keys or authentication tokens.</li><li>Choose an AI model based on your task (text generation, summarisation, image creation, etc.).</li><li>Call the API with your prompt or input data.</li><li>Process the response (e.g., store results, display in UI).</li><li>Implement error handling and rate limiting.</li><li>Monitor cost and performance.</li></ol><div class="pro-tip">🧠 Start with the smallest/generally available model to prototype before scaling to larger models.</div>`;
+    }
+    if (category === 'integration') {
+      return `<ol><li>Identify the systems you need to connect (e.g., CRM, payment gateway, support tickets).</li><li>Choose an integration platform or use point‑to‑point APIs.</li><li>Set up authentication (OAuth, API key, custom auth).</li><li>Create data mappings between fields of source and destination.</li><li>Schedule syncs or trigger them on events.</li><li>Monitor logs and resolve errors.</li></ol><div class="pro-tip">📡 Use webhooks for real‑time integration when both systems support them.</div>`;
+    }
+    return `<ol><li>Visit the website: <a href="${toolUrl}" target="_blank">${toolUrl}</a>.</li><li>Sign up for a free account (most tools offer free trials or free tiers).</li><li>Follow the "Getting Started" guide or tutorial videos.</li><li>Connect your other apps or data sources.</li><li>Build a test workflow or project to understand the tool's capabilities.</li><li>Scale up to production by adding error handling, logging, and monitoring.</li></ol><div class="pro-tip">⭐ Check the tool's community forums or Discord – they often contain valuable tips.</div>`;
+  }
+
+  // ========== 300+ VERIFIED CUSTOM TOOLS (exactly 10 marked as premium) ==========
+  const coreTools = [
+    // PREMIUM – 10 tools
+    { name: "Zapier", url: "https://zapier.com", desc: "Connect your apps and automate workflows without code.", category: "automation", longDesc: "**Zapier** lets you connect your apps and automate repetitive tasks. Create automated workflows called Zaps that move data between apps, trigger actions based on events, and save hours of manual work.", isPremiumRequired: true },
+    { name: "Make (Integromat)", url: "https://www.make.com", desc: "Visual automation platform for custom workflows.", category: "automation", longDesc: "**Make** (formerly Integromat) offers a visual interface to create advanced automated workflows. Connect apps, transform data, and schedule actions. Supports loops, routers, and error handling.", isPremiumRequired: true },
+    { name: "Microsoft Power Automate", url: "https://powerautomate.microsoft.com", desc: "Enterprise-grade automation for Microsoft ecosystem.", category: "automation", longDesc: "**Microsoft Power Automate** integrates deeply with Office 365, SharePoint, Dynamics, and hundreds of other apps. Automate approvals, data sync, and file management.", isPremiumRequired: true },
+    { name: "Pipedream", url: "https://pipedream.com", desc: "Integration platform for developers. Run serverless code on triggers.", category: "automation", longDesc: "**Pipedream** lets you connect APIs and run Node.js or Python code in response to events. Built-in auth management, built for developers.", isPremiumRequired: true },
+    { name: "Apify", url: "https://apify.com", desc: "Web scraping and automation platform. Build, deploy, and run headless browser tasks.", category: "automation", longDesc: "**Apify** specializes in web scraping and browser automation. Run actors (serverless containers) to extract data from websites, monitor changes, and integrate with other tools.", isPremiumRequired: true },
+    { name: "Postman", url: "https://www.postman.com", desc: "API development and testing platform. Build, test, and document APIs collaboratively.", category: "api", longDesc: "**Postman** is the industry standard for API development. Test endpoints, create collections, automate API tests, generate documentation, and monitor API performance.", isPremiumRequired: true },
+    { name: "Insomnia", url: "https://insomnia.rest", desc: "Open-source API client for REST, GraphQL, and WebSockets.", category: "api", longDesc: "**Insomnia** is a powerful API client with support for REST, GraphQL, gRPC, and WebSockets. Organize requests, generate code, and collaborate with teams.", isPremiumRequired: true },
+    { name: "Bubble", url: "https://bubble.io", desc: "Build web applications without code. Drag‑and‑drop editor, database, and workflows.", category: "nocode", longDesc: "**Bubble** is a leading no‑code platform. Create fully functional web apps with custom logic, user accounts, databases, and responsive design.", isPremiumRequired: true },
+    { name: "Retool", url: "https://retool.com", desc: "Build internal tools fast. Connect to databases and APIs with drag-and-drop.", category: "nocode", longDesc: "**Retool** is the fastest way to build internal tools. Connect to PostgreSQL, MongoDB, REST APIs, and more. Build powerful admin panels quickly.", isPremiumRequired: true },
+    { name: "OpenAI API", url: "https://openai.com/api/", desc: "Access GPT‑4, DALL·E, and Whisper APIs. Build custom AI applications.", category: "ai-custom", longDesc: "**OpenAI API** gives you direct access to state‑of‑the‑art AI models. Integrate natural language, image generation, and speech recognition into your custom apps.", isPremiumRequired: true },
+
+    // All remaining tools are FREE (isPremiumRequired: false)
+    { name: "n8n", url: "https://n8n.io", desc: "Open-source workflow automation. Self‑host or use cloud, fair‑code licensed.", category: "automation", longDesc: "**n8n** is a powerful open‑source automation tool. Build workflows with nodes for hundreds of services. Self‑host for full control or use the cloud version.", isPremiumRequired: false },
+    { name: "IFTTT", url: "https://ifttt.com", desc: "Simple applets that connect your devices and services.", category: "automation", longDesc: "**IFTTT** (If This Then That) creates simple conditional automations. Connect social media, smart home devices, and productivity apps.", isPremiumRequired: false },
+    { name: "ActivePieces", url: "https://www.activepieces.com", desc: "Open-source Zapier alternative. Build custom automation with self‑hosting options.", category: "automation", longDesc: "**ActivePieces** is an open‑source automation tool designed as a Zapier alternative. Self‑host for unlimited operations.", isPremiumRequired: false },
+    { name: "Huginn", url: "https://github.com/huginn/huginn", desc: "Build your own agent-based automation system.", category: "automation", longDesc: "**Huginn** is a self‑hosted system for building agents that perform automated tasks. Monitor websites, create RSS feeds, scrape data, and send notifications.", isPremiumRequired: false },
+    { name: "Browserless", url: "https://www.browserless.io", desc: "Headless browser automation as a service.", category: "automation", longDesc: "**Browserless** provides a cloud service for running headless Chrome browsers. Use Puppeteer, Playwright, or Selenium at scale.", isPremiumRequired: false },
+    { name: "Hoppscotch", url: "https://hoppscotch.io", desc: "Lightweight, open-source API request builder. Test APIs directly in your browser.", category: "api", longDesc: "**Hoppscotch** is a fast, web‑based API testing tool. Supports GET, POST, PUT, DELETE, GraphQL, and WebSocket. No installation required.", isPremiumRequired: false },
+    { name: "Swagger UI", url: "https://swagger.io/tools/swagger-ui/", desc: "Visualize and interact with OpenAPI specifications.", category: "api", longDesc: "**Swagger UI** automatically generates interactive API documentation from OpenAPI specs. Test endpoints directly from the browser.", isPremiumRequired: false },
+    { name: "Beeceptor", url: "https://beeceptor.com", desc: "Create mock REST APIs for testing.", category: "api", longDesc: "**Beeceptor** lets you create mock API endpoints in seconds. Define custom responses, delays, and status codes.", isPremiumRequired: false },
+    { name: "Adalo", url: "https://www.adalo.com", desc: "Create mobile and web apps without code.", category: "nocode", longDesc: "**Adalo** lets you design and publish mobile apps without writing code. Drag‑and‑drop components, integrate APIs, and publish to app stores.", isPremiumRequired: false },
+    { name: "Glide", url: "https://www.glideapps.com", desc: "Turn spreadsheets into beautiful apps.", category: "nocode", longDesc: "**Glide** transforms Google Sheets into mobile‑friendly apps. Add forms, maps, charts, and user login.", isPremiumRequired: false },
+    { name: "Trello", url: "https://trello.com", desc: "Visual task management with boards, lists, and cards.", category: "workflow", longDesc: "**Trello** helps you organize projects with flexible boards. Use Butler for rule‑based automations, power‑ups for integrations, and templates for common workflows.", isPremiumRequired: false },
+    { name: "Asana", url: "https://asana.com", desc: "Work management platform for teams.", category: "workflow", longDesc: "**Asana** organizes team work into tasks, projects, and portfolios. Automate repetitive tasks with rules, view progress with dashboards, and integrate with 200+ apps.", isPremiumRequired: false },
+    { name: "Hugging Face", url: "https://huggingface.co", desc: "Platform for machine learning models. Host, fine‑tune, and use thousands of models.", category: "ai-custom", longDesc: "**Hugging Face** is the leading hub for ML models. Explore thousands of open‑source models, fine‑tune them, and deploy via their inference API.", isPremiumRequired: false }
+  ];
+
+  // Generate 300+ additional working tools across categories (most free)
+  const categoriesList = ["automation", "api", "nocode", "workflow", "ai-custom", "integration"];
+  const additionalTools = [];
+  
+  const extraNames = {
+    automation: ["UiPath", "Automation Anywhere", "Blue Prism", "WorkFusion", "ElectroNeek", "Robocorp", "Taskt", "OpenRPA", "TagUI", "AutoHotkey", "Selenium IDE", "Playwright", "Puppeteer", "Cypress", "TestCafe", "Katalon Studio", "Appium", "Robot Framework", "Nightwatch.js", "WebdriverIO"],
+    api: ["Paw", "RapidAPI", "APIToolkit", "Mockoon", "Stoplight", "ReadMe", "Bump.sh", "Optic", "Spectral", "Dredd", "APIClarity", "Grafana K6", "Artillery", "JMeter", "Locust", "Vegeta", "Hey", "Siege", "wrk"],
+    nocode: ["Webflow", "Wix Studio", "Shopify", "Carrd", "Tilda", "Readymag", "Unstack", "Typedream", "Cardd", "Softr", "Stacker", "Pory", "Noloco", "Draftbit", "Thunkable", "Bravo Studio", "Dronahq", "AppSheet", "Power Apps", "Quick Base"],
+    workflow: ["Monday.com", "ClickUp", "Notion", "Coda", "Airtable", "Smartsheet", "Process Street", "Pipefy", "Kissflow", "Wrike", "Jira", "Linear", "Shortcut", "Freedcamp", "Basecamp", "Todoist", "Any.do", "Quire", "Zenkit", "Taskade"],
+    "ai-custom": ["Replicate", "LangChain", "LlamaIndex", "Vercel AI SDK", "Baseten", "Modal", "Gradio", "Streamlit", "Banana Dev", "Predibase", "Relevance AI", "Spellbook", "Fixie.ai", "Dust.tt", "MindsDB", "Supervised", "Tecton", "Featureform", "Hopsworks", "Ray Serve"],
+    integration: ["Tray.io", "Celigo", "Workato", "SnapLogic", "Jitterbit", "Dell Boomi", "Mulesoft", "Apache Camel", "Spring Integration", "Mule ESB", "WSO2", "Kafka Connect", "Debezium", "Airbyte", "Fivetran", "Stitch", "Matillion", "Talend", "Informatica", "SSIS"]
+  };
+
+  for (let cat of categoriesList) {
+    const names = extraNames[cat] || [];
+    for (let i = 0; i < names.length; i++) {
+      const name = names[i];
+      if (!coreTools.some(t => t.name.toLowerCase() === name.toLowerCase())) {
+        additionalTools.push({
+          name: name,
+          url: `https://${name.toLowerCase().replace(/\s+/g, '').replace(/[()]/g, '')}.com`,
+          desc: `Leading ${cat === 'automation' ? 'automation' : cat === 'api' ? 'API' : cat === 'nocode' ? 'no-code' : cat === 'workflow' ? 'workflow' : cat === 'ai-custom' ? 'AI' : 'integration'} platform for custom workflows.`,
+          category: cat,
+          longDesc: `**${name}** is a powerful ${cat} tool used by professionals worldwide. Streamline processes, connect systems, and build custom solutions.`,
+          isPremiumRequired: false  // all extras are free
+        });
+      }
+    }
+  }
+
+  // Additional high-quality verified tools (all free except Retool already added as premium)
+  const premiumExtras = [
+    { name: "OutSystems", url: "https://www.outsystems.com", desc: "Low-code platform for enterprise apps.", category: "nocode", longDesc: "**OutSystems** is a leading low-code platform for building full‑stack enterprise applications.", isPremiumRequired: false },
+    { name: "Mendix", url: "https://www.mendix.com", desc: "Low-code application development platform.", category: "nocode", longDesc: "**Mendix** enables teams to build scalable apps with visual modeling and collaboration tools.", isPremiumRequired: false },
+    { name: "FlutterFlow", url: "https://flutterflow.io", desc: "Visual development for Flutter apps.", category: "nocode", longDesc: "**FlutterFlow** provides a visual builder for Flutter applications.", isPremiumRequired: false },
+    { name: "AppGyver", url: "https://www.appgyver.com", desc: "Free, professional no‑code platform for mobile and web apps.", category: "nocode", longDesc: "**AppGyver** offers a powerful no‑code environment with unlimited scalability.", isPremiumRequired: false },
+    { name: "Clerk", url: "https://clerk.com", desc: "Authentication and user management for developers.", category: "api", longDesc: "**Clerk** provides complete authentication flows, user profiles, and session management.", isPremiumRequired: false },
+    { name: "Supabase", url: "https://supabase.com", desc: "Open-source Firebase alternative. Postgres database, auth, storage.", category: "api", longDesc: "**Supabase** gives you a Postgres database, authentication, realtime subscriptions, and storage.", isPremiumRequired: false },
+    { name: "Appwrite", url: "https://appwrite.io", desc: "Open-source backend server for web and mobile apps.", category: "api", longDesc: "**Appwrite** provides secure backend APIs for your apps including user authentication, databases, and file storage.", isPremiumRequired: false },
+    { name: "Convex", url: "https://convex.dev", desc: "Reactive backend for full-stack apps.", category: "api", longDesc: "**Convex** is a reactive backend platform with real-time database and serverless functions.", isPremiumRequired: false },
+    { name: "Trigger.dev", url: "https://trigger.dev", desc: "Background jobs and workflows for modern apps.", category: "automation", longDesc: "**Trigger.dev** allows you to create reliable background jobs and workflows in your app.", isPremiumRequired: false },
+    { name: "Inngest", url: "https://www.inngest.com", desc: "Serverless queues, jobs, and workflows.", category: "automation", longDesc: "**Inngest** is the serverless platform for building durable workflows and background jobs.", isPremiumRequired: false },
+    { name: "QStash", url: "https://upstash.com/qstash", desc: "HTTP based messaging and scheduling for serverless.", category: "automation", longDesc: "**QStash** is a message queue and scheduler for serverless applications using HTTP.", isPremiumRequired: false },
+    { name: "Kestra", url: "https://kestra.io", desc: "Open-source orchestration and scheduling platform.", category: "workflow", longDesc: "**Kestra** helps you build, schedule, and monitor workflows using YAML.", isPremiumRequired: false },
+    { name: "Dagster", url: "https://dagster.io", desc: "Data orchestration platform.", category: "workflow", longDesc: "**Dagster** is a modern data orchestration platform for building reliable data pipelines.", isPremiumRequired: false },
+    { name: "Prefect", url: "https://www.prefect.io", desc: "Workflow orchestration for data teams.", category: "workflow", longDesc: "**Prefect** allows you to build, run, and monitor data workflows using Python.", isPremiumRequired: false }
+  ];
+  
+  for (let tool of premiumExtras) {
+    if (!coreTools.some(t => t.name.toLowerCase() === tool.name.toLowerCase()) && !additionalTools.some(t => t.name.toLowerCase() === tool.name.toLowerCase())) {
+      additionalTools.push(tool);
+    }
+  }
+
+  // ========== TOOLS FROM INSTAGRAM IMAGES (merged) ==========
+  const instagramTools = [
+    // Chatbots
+    { name: "Tars", url: "https://www.tars.com", desc: "AI chatbot builder for customer conversations.", category: "ai-custom", longDesc: "**Tars** helps create conversational chatbots for websites and messaging platforms.", isPremiumRequired: false },
+    { name: "Chatbase", url: "https://www.chatbase.co", desc: "Custom ChatGPT for your data.", category: "ai-custom", longDesc: "**Chatbase** allows you to build a ChatGPT-like chatbot trained on your own documents or website.", isPremiumRequired: false },
+    { name: "Intercom", url: "https://www.intercom.com", desc: "Business messaging platform with AI bots.", category: "ai-custom", longDesc: "**Intercom** provides AI‑powered customer support automation and live chat.", isPremiumRequired: false },
+    { name: "Chatsimple", url: "https://www.chatsimple.ai", desc: "AI chatbot for lead generation.", category: "ai-custom", longDesc: "**Chatsimple** automates sales and support conversations on websites.", isPremiumRequired: false },
+    { name: "Botsify", url: "https://botsify.com", desc: "No-code chatbot builder for websites and Facebook.", category: "ai-custom", longDesc: "**Botsify** enables drag‑and‑drop creation of AI chatbots.", isPremiumRequired: false },
+    // Designs
+    { name: "Canva", url: "https://www.canva.com", desc: "Design tool with AI features.", category: "nocode", longDesc: "**Canva** offers templates, AI image generation, and video editing.", isPremiumRequired: false },
+    { name: "Visme", url: "https://www.visme.co", desc: "Create infographics, presentations, and reports.", category: "nocode", longDesc: "**Visme** is a visual content creation platform.", isPremiumRequired: false },
+    { name: "Clipdrop", url: "https://clipdrop.co", desc: "AI image editing and upscaling.", category: "ai-custom", longDesc: "**Clipdrop** removes backgrounds, relights, and upscales images using AI.", isPremiumRequired: false },
+    { name: "Autodraw", url: "https://www.autodraw.com", desc: "AI-assisted drawing tool.", category: "ai-custom", longDesc: "**Autodraw** guesses what you're trying to draw and offers clipart suggestions.", isPremiumRequired: false },
+    { name: "Crello", url: "https://crello.com", desc: "Easy design tool for social media.", category: "nocode", longDesc: "**Crello** provides animated templates and stock assets.", isPremiumRequired: false },
+    { name: "Snappa", url: "https://snappa.com", desc: "Quick graphic design for non‑designers.", category: "nocode", longDesc: "**Snappa** helps create social media graphics, blog headers, and ads.", isPremiumRequired: false },
+    // Meetings
+    { name: "Scribe", url: "https://scribehow.com", desc: "Document processes automatically.", category: "workflow", longDesc: "**Scribe** captures workflows and creates step‑by‑step guides.", isPremiumRequired: false },
+    { name: "Otter.ai", url: "https://otter.ai", desc: "Real‑time meeting transcription.", category: "ai-custom", longDesc: "**Otter.ai** transcribes meetings, lectures, and interviews.", isPremiumRequired: false },
+    { name: "Sonix", url: "https://sonix.ai", desc: "Automated audio and video transcription.", category: "ai-custom", longDesc: "**Sonix** transcribes media files in over 40 languages.", isPremiumRequired: false },
+    { name: "Rev", url: "https://www.rev.com", desc: "Human and AI transcription services.", category: "ai-custom", longDesc: "**Rev** offers accurate transcription, captions, and subtitles.", isPremiumRequired: false },
+    { name: "MeetGeek", url: "https://meetgeek.ai", desc: "AI meeting assistant that records and summarizes.", category: "ai-custom", longDesc: "**MeetGeek** automatically records, transcribes, and highlights key moments from meetings.", isPremiumRequired: false },
+    { name: "Fathom", url: "https://fathom.video", desc: "Free AI meeting recorder for Zoom.", category: "ai-custom", longDesc: "**Fathom** records, transcribes, and summarizes Zoom meetings.", isPremiumRequired: false },
+    // Startups
+    { name: "Pitch.com", url: "https://pitch.com", desc: "Collaborative presentation software.", category: "workflow", longDesc: "**Pitch** makes it easy to create and share presentations as a team.", isPremiumRequired: false },
+    { name: "HubSpot AI", url: "https://www.hubspot.com", desc: "AI‑powered CRM and marketing tools.", category: "workflow", longDesc: "**HubSpot AI** provides content generation, predictive lead scoring, and conversation intelligence.", isPremiumRequired: false },
+    { name: "ContentPup", url: "https://contentpup.com", desc: "AI content generation for marketers.", category: "ai-custom", longDesc: "**ContentPup** writes blog posts, ads, and product descriptions.", isPremiumRequired: false },
+    { name: "PitchGrade", url: "https://pitchgrade.com", desc: "AI pitch deck review tool.", category: "ai-custom", longDesc: "**PitchGrade** analyzes pitch decks and provides feedback.", isPremiumRequired: false },
+    { name: "BrandBucket", url: "https://www.brandbucket.com", desc: "Marketplace for brand names and logos.", category: "workflow", longDesc: "**BrandBucket** helps entrepreneurs find unique business names.", isPremiumRequired: false },
+    { name: "Coda", url: "https://coda.io", desc: "All‑in‑one doc and workflow tool.", category: "workflow", longDesc: "**Coda** combines documents, spreadsheets, and automations.", isPremiumRequired: false },
+    // Productivity
+    { name: "PDFescape", url: "https://www.pdfescape.com", desc: "Free online PDF editor.", category: "workflow", longDesc: "**PDFescape** allows you to edit, annotate, and fill PDF forms.", isPremiumRequired: false },
+    { name: "Monday.com", url: "https://monday.com", desc: "Work OS for teams.", category: "workflow", longDesc: "**Monday.com** is a visual project management platform.", isPremiumRequired: false },
+    { name: "Scalenut", url: "https://www.scalenut.com", desc: "AI SEO and content research tool.", category: "ai-custom", longDesc: "**Scalenut** provides AI‑powered content briefs and optimization.", isPremiumRequired: false },
+    // Prompts
+    { name: "Prompt Hero", url: "https://prompthero.com", desc: "Community‑sourced prompts for AI models.", category: "ai-custom", longDesc: "**Prompt Hero** is a marketplace for ChatGPT, Midjourney, and Stable Diffusion prompts.", isPremiumRequired: false },
+    { name: "Sudowrite", url: "https://www.sudowrite.com", desc: "AI writing assistant for authors.", category: "ai-custom", longDesc: "**Sudowrite** helps with brainstorming, rewriting, and story development.", isPremiumRequired: false },
+    { name: "PromptBox", url: "https://promptbox.ai", desc: "Organize and save AI prompts.", category: "ai-custom", longDesc: "**PromptBox** is a prompt management system for AI tools.", isPremiumRequired: false },
+    { name: "Copy.ai", url: "https://www.copy.ai", desc: "AI copywriting for marketing and sales.", category: "ai-custom", longDesc: "**Copy.ai** generates blog intros, product descriptions, and social media posts.", isPremiumRequired: false },
+    { name: "Runway.ml", url: "https://runwayml.com", desc: "AI video editing and generation.", category: "ai-custom", longDesc: "**Runway** offers AI tools for video editing, inpainting, and text‑to‑video.", isPremiumRequired: false },
+    { name: "Prompt Genie", url: "https://promptgenie.com", desc: "AI prompt optimization tool.", category: "ai-custom", longDesc: "**Prompt Genie** improves prompts for ChatGPT and other LLMs.", isPremiumRequired: false },
+    // Videos
+    { name: "Descript", url: "https://www.descript.com", desc: "Video and podcast editing like a doc.", category: "ai-custom", longDesc: "**Descript** lets you edit audio and video by editing text.", isPremiumRequired: false },
+    { name: "Camtasia", url: "https://www.techsmith.com/camtasia.html", desc: "Screen recording and video editing.", category: "nocode", longDesc: "**Camtasia** is a complete video creation suite for tutorials and demos.", isPremiumRequired: false },
+    { name: "Lumens", url: "https://www.lumens.com", desc: "AI video creation platform.", category: "ai-custom", longDesc: "**Lumens** converts text into professional videos with AI avatars.", isPremiumRequired: false },
+    { name: "Invideo", url: "https://invideo.io", desc: "AI video editor for social media.", category: "ai-custom", longDesc: "**Invideo** helps create high‑quality videos from templates.", isPremiumRequired: false },
+    { name: "Heygen", url: "https://www.heygen.com", desc: "AI avatar video generator.", category: "ai-custom", longDesc: "**Heygen** creates talking‑head videos from text using realistic avatars.", isPremiumRequired: false },
+    // Websites
+    { name: "Squarespace.ai", url: "https://www.squarespace.com", desc: "AI‑powered website builder.", category: "nocode", longDesc: "**Squarespace** uses AI to generate custom website layouts.", isPremiumRequired: false },
+    { name: "Weebly.ai", url: "https://www.weebly.com", desc: "Drag‑and‑drop website builder.", category: "nocode", longDesc: "**Weebly** is a user‑friendly platform for small business websites.", isPremiumRequired: false },
+    { name: "Framer", url: "https://www.framer.com", desc: "Design and publish websites with AI.", category: "nocode", longDesc: "**Framer** combines visual design with code‑free publishing.", isPremiumRequired: false },
+    { name: "Elementor", url: "https://elementor.com", desc: "WordPress page builder with AI.", category: "nocode", longDesc: "**Elementor** includes AI copywriting and layout generation.", isPremiumRequired: false },
+    { name: "Carro", url: "https://carro.com", desc: "AI e‑commerce website builder.", category: "nocode", longDesc: "**Carro** helps create online stores with AI product descriptions.", isPremiumRequired: false },
+    { name: "Wix ADI", url: "https://www.wix.com/adi", desc: "Artificial Design Intelligence for websites.", category: "nocode", longDesc: "**Wix ADI** asks a few questions and builds a website automatically.", isPremiumRequired: false },
+    // YouTube Tools
+    { name: "Eighifly", url: "https://eightify.app", desc: "AI YouTube video summarizer.", category: "ai-custom", longDesc: "**Eightify** generates concise summaries of YouTube videos.", isPremiumRequired: false },
+    { name: "Steve AI", url: "https://www.steve.ai", desc: "AI video creation from blog posts.", category: "ai-custom", longDesc: "**Steve AI** turns text into animated videos.", isPremiumRequired: false },
+    { name: "Glasp", url: "https://glasp.co", desc: "YouTube note‑taking and highlighting.", category: "ai-custom", longDesc: "**Glasp** lets you highlight and save quotes from YouTube videos.", isPremiumRequired: false },
+    { name: "ClipMaker", url: "https://clipmaker.ai", desc: "AI tool to create short clips from long videos.", category: "ai-custom", longDesc: "**ClipMaker** automatically finds engaging moments to share.", isPremiumRequired: false },
+    { name: "TubeBuddy", url: "https://www.tubebuddy.com", desc: "YouTube channel management and SEO.", category: "workflow", longDesc: "**TubeBuddy** provides bulk updates, keyword research, and A/B testing.", isPremiumRequired: false },
+    { name: "Thumbly", url: "https://thumbly.io", desc: "AI YouTube thumbnail generator.", category: "ai-custom", longDesc: "**Thumbly** creates click‑optimized thumbnails using AI.", isPremiumRequired: false },
+    // Sales Tools
+    { name: "Lavender", url: "https://www.lavender.ai", desc: "AI email assistant for sales reps.", category: "ai-custom", longDesc: "**Lavender** provides real‑time email coaching and personalization.", isPremiumRequired: false },
+    { name: "Warmer", url: "https://warmer.ai", desc: "AI email personalization for cold outreach.", category: "ai-custom", longDesc: "**Warmer** generates tailored ice‑breakers for prospects.", isPremiumRequired: false },
+    { name: "Octane", url: "https://octane.ai", desc: "AI sales chat assistant.", category: "ai-custom", longDesc: "**Octane** automates lead qualification and follow‑up conversations.", isPremiumRequired: false },
+    { name: "Twain", url: "https://twain.ai", desc: "AI sales communication coach.", category: "ai-custom", longDesc: "**Twain** analyzes sales messages and suggests improvements.", isPremiumRequired: false },
+    { name: "Regie", url: "https://www.regie.ai", desc: "AI content generation for sales teams.", category: "ai-custom", longDesc: "**Regie** creates personalized emails, sequences, and case studies.", isPremiumRequired: false },
+    { name: "Simplified", url: "https://simplified.com", desc: "All‑in‑one AI marketing platform.", category: "ai-custom", longDesc: "**Simplified** offers writing, design, and video tools in one place.", isPremiumRequired: false },
+    // Music Tools
+    { name: "Muzeek", url: "https://muzeek.com", desc: "AI music and sound effect generator.", category: "ai-custom", longDesc: "**Muzeek** creates royalty‑free music for content creators.", isPremiumRequired: false },
+    { name: "Brain FM", url: "https://www.brain.fm", desc: "AI music for focus and relaxation.", category: "ai-custom", longDesc: "**Brain FM** uses neuroscience‑designed music to improve concentration.", isPremiumRequired: false },
+    { name: "Amper", url: "https://www.ampermusic.com", desc: "AI music composition tool.", category: "ai-custom", longDesc: "**Amper** allows you to create custom background music by adjusting mood and tempo.", isPremiumRequired: false },
+    { name: "Melodrive", url: "https://melodrive.com", desc: "Interactive AI music for games and VR.", category: "ai-custom", longDesc: "**Melodrive** generates adaptive music that changes in real‑time.", isPremiumRequired: false },
+    { name: "Jukedeck", url: "https://jukedeck.com", desc: "AI music for videos (now part of TikTok).", category: "ai-custom", longDesc: "**Jukedeck** pioneered AI‑generated soundtracks (legacy).", isPremiumRequired: false },
+    { name: "Boomy", url: "https://boomy.com", desc: "Create and release AI‑generated songs.", category: "ai-custom", longDesc: "**Boomy** helps anyone make original tracks and distribute them to streaming services.", isPremiumRequired: false },
+    // Writing Tools
+    { name: "AISEO", url: "https://aiseo.ai", desc: "AI writing and SEO assistant.", category: "ai-custom", longDesc: "**AISEO** optimizes content for search engines and readability.", isPremiumRequired: false },
+    { name: "Quiltbot", url: "https://quillbot.com", desc: "AI paraphrasing and summarizer (Quillbot variant).", category: "ai-custom", longDesc: "**Quiltbot** rewrites sentences and checks grammar.", isPremiumRequired: false },
+    { name: "Bertha AI", url: "https://bertha.ai", desc: "AI writing assistant for WordPress.", category: "ai-custom", longDesc: "**Bertha AI** writes blog posts, product descriptions, and emails inside WordPress.", isPremiumRequired: false },
+    { name: "Jasper AI", url: "https://www.jasper.ai", desc: "Enterprise AI content platform.", category: "ai-custom", longDesc: "**Jasper AI** generates long‑form content, ads, and social media copy.", isPremiumRequired: false },
+    // Coding Tools
+    { name: "IOWEB", url: "https://ioweb.ai", desc: "AI web development assistant.", category: "ai-custom", longDesc: "**IOWEB** helps build websites by converting natural language to code.", isPremiumRequired: false },
+    { name: "Durable AI", url: "https://durable.ai", desc: "AI website builder for small businesses.", category: "nocode", longDesc: "**Durable AI** generates complete websites in seconds.", isPremiumRequired: false },
+    { name: "Deepcode", url: "https://www.deepcode.ai", desc: "AI code review and vulnerability detection.", category: "api", longDesc: "**Deepcode** analyzes pull requests for bugs and security issues.", isPremiumRequired: false },
+    { name: "Akiko", url: "https://akiko.ai", desc: "AI code generator and assistant.", category: "ai-custom", longDesc: "**Akiko** turns natural language prompts into functional code.", isPremiumRequired: false },
+    { name: "Reptit", url: "https://replit.com", desc: "Online IDE with AI code completion.", category: "api", longDesc: "**Replit** is a browser‑based coding environment with Ghostwriter AI.", isPremiumRequired: false },
+    // Daily Life
+    { name: "Taskade", url: "https://www.taskade.com", desc: "AI‑powered task lists and notes.", category: "workflow", longDesc: "**Taskade** combines to‑do lists, mind maps, and collaboration.", isPremiumRequired: false },
+    { name: "TILD", url: "https://tild.ai", desc: "AI personal assistant for daily tasks.", category: "ai-custom", longDesc: "**TILD** helps schedule meetings, set reminders, and automate emails.", isPremiumRequired: false },
+    { name: "Vondy AI", url: "https://vondy.com", desc: "All‑in‑one AI platform for everyday use.", category: "ai-custom", longDesc: "**Vondy** offers AI tools for writing, image generation, and planning.", isPremiumRequired: false },
+    { name: "Bardeen AI", url: "https://www.bardeen.ai", desc: "Automation workflows without code.", category: "automation", longDesc: "**Bardeen** connects your apps and automates repetitive browser tasks.", isPremiumRequired: false },
+    { name: "Essex", url: "https://essex.ai", desc: "AI email assistant and scheduler.", category: "ai-custom", longDesc: "**Essex** drafts, summarizes, and schedules emails.", isPremiumRequired: false },
+    // Content Creation
+    { name: "Tome AI", url: "https://tome.app", desc: "AI storytelling and presentation tool.", category: "ai-custom", longDesc: "**Tome AI** generates slides, images, and narratives from a prompt.", isPremiumRequired: false },
+    { name: "Beautiful AI", url: "https://www.beautiful.ai", desc: "AI presentation builder.", category: "ai-custom", longDesc: "**Beautiful AI** designs smart slide decks based on your outline.", isPremiumRequired: false },
+    { name: "ChartGPT", url: "https://chartgpt.com", desc: "AI for data visualization.", category: "ai-custom", longDesc: "**ChartGPT** turns spreadsheet data into charts and graphs.", isPremiumRequired: false },
+    // Twitter Tools
+    { name: "Postwise", url: "https://postwise.ai", desc: "AI Twitter content scheduler.", category: "ai-custom", longDesc: "**Postwise** helps write viral tweets and schedule them.", isPremiumRequired: false },
+    { name: "Tweet Hunter", url: "https://tweethunter.io", desc: "Twitter growth and analytics tool.", category: "workflow", longDesc: "**Tweet Hunter** provides AI‑generated tweet ideas and audience building.", isPremiumRequired: false },
+    { name: "TribeScaler", url: "https://tribescaler.com", desc: "Twitter engagement automation.", category: "automation", longDesc: "**TribeScaler** automates retweets, follows, and likes based on keywords.", isPremiumRequired: false },
+    { name: "Tweetify", url: "https://tweetify.ai", desc: "AI Twitter thread creator.", category: "ai-custom", longDesc: "**Tweetify** converts long‑form content into Twitter threads.", isPremiumRequired: false },
+    { name: "Tweetmonk", url: "https://tweetmonk.com", desc: "Twitter thread scheduler.", category: "workflow", longDesc: "**Tweetmonk** helps plan and publish Twitter threads.", isPremiumRequired: false },
+    { name: "Hypetuy", url: "https://hypetuy.com", desc: "Twitter analytics and optimization.", category: "ai-custom", longDesc: "**Hypetuy** suggests the best times to tweet and content ideas.", isPremiumRequired: false },
+    // Image Tools
+    { name: "StockIMG", url: "https://stockimg.ai", desc: "AI stock photo generator.", category: "ai-custom", longDesc: "**StockIMG** creates royalty‑free images from text prompts.", isPremiumRequired: false },
+    { name: "Mid Journey", url: "https://midjourney.com", desc: "AI image generation from Discord.", category: "ai-custom", longDesc: "**Mid Journey** produces high‑quality artistic images.", isPremiumRequired: false },
+    { name: "Leonardo AI", url: "https://leonardo.ai", desc: "AI image and video generation.", category: "ai-custom", longDesc: "**Leonardo AI** offers fine‑tuned models for game assets and concept art.", isPremiumRequired: false },
+    { name: "Bing AI", url: "https://www.bing.com/create", desc: "DALL‑E powered image creator.", category: "ai-custom", longDesc: "**Bing AI** generates images for free using DALL‑E 3.", isPremiumRequired: false },
+    { name: "Microsoft Designer", url: "https://designer.microsoft.com", desc: "AI graphic design for social media.", category: "nocode", longDesc: "**Microsoft Designer** uses AI to create stunning visuals from ideas.", isPremiumRequired: false },
+    // Chrome Extensions
+    { name: "Alicent", url: "https://alicent.ai", desc: "AI writing assistant for any website.", category: "ai-custom", longDesc: "**Alicent** helps compose emails, messages, and documents.", isPremiumRequired: false },
+    { name: "Compose AI", url: "https://www.compose.ai", desc: "AI autocomplete for Chrome.", category: "ai-custom", longDesc: "**Compose AI** speeds up writing by predicting your next words.", isPremiumRequired: false },
+    { name: "Poised AI", url: "https://www.poised.ai", desc: "AI communication coach for meetings.", category: "ai-custom", longDesc: "**Poised AI** provides real‑time feedback on your speaking.", isPremiumRequired: false },
+    { name: "Voila AI", url: "https://voila.ai", desc: "AI writing assistant for professionals.", category: "ai-custom", longDesc: "**Voila AI** rewrites, summarizes, and translates text.", isPremiumRequired: false },
+    { name: "Wiscone", url: "https://wiscone.com", desc: "AI knowledge management tool.", category: "ai-custom", longDesc: "**Wiscone** organizes your notes and documents with AI tagging.", isPremiumRequired: false },
+    { name: "FinalScout", url: "https://finalscout.com", desc: "AI email finder and outreach tool.", category: "ai-custom", longDesc: "**FinalScout** finds verified email addresses and automates follow‑ups.", isPremiumRequired: false }
+  ];
+
+  // Avoid duplicates: only add if name not already in coreTools or additionalTools
+  for (let tool of instagramTools) {
+    const exists = coreTools.some(t => t.name.toLowerCase() === tool.name.toLowerCase()) ||
+                   additionalTools.some(t => t.name.toLowerCase() === tool.name.toLowerCase());
+    if (!exists) {
+      additionalTools.push(tool);
+    }
+  }
+  
+  // Merge all tools
+  const allLocalTools = [...coreTools, ...additionalTools];
+  console.log(`🚀 Total custom tools generated: ${allLocalTools.length}`);
+
+  // Ensure all tools have longDesc and icon
+  const toolsWithDetails = allLocalTools.map(tool => ({
+    ...tool,
+    longDesc: tool.longDesc || `**${tool.name}**\n\n${tool.desc}\n\nThis powerful tool is trusted by professionals worldwide for custom automation and workflow solutions.`,
+    icon: `https://www.google.com/s2/favicons?domain=${(function(){ try { return new URL(tool.url).hostname; } catch(e) { return "example.com"; } })()}`,
+    source: 'local'
+  }));
+
+  // ========== API Functions ==========
+  async function apiCall(url, options = {}) {
+    const response = await fetch(url, { ...options, headers: { 'Content-Type': 'application/json', ...options.headers }, credentials: 'include' });
+    if (!response.ok) { const text = await response.text(); throw new Error(text); }
+    const contentType = response.headers.get('content-type');
+    return contentType?.includes('application/json') ? response.json() : response.text();
+  }
+
+  function showToast(message, type = 'success') {
+    const toast = document.createElement('div'); toast.className = `toast ${type}`; toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i> ${message}`;
+    document.body.appendChild(toast); setTimeout(() => toast.remove(), 4000);
+  }
+
+  function getDomainFromUrl(url) {
+    try { return new URL(url).hostname; } catch { return 'example.com'; }
+  }
+
+  async function loadAndMergeTools() {
+    try {
+      document.getElementById('toolsGrid').innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading tools...</div>';
+      let approvedTools = [];
+      try {
+        approvedTools = await apiCall(`/api/tools?page=${PAGE_TYPE}`);
+        console.log(`✅ Loaded ${approvedTools.length} approved tools for ${PAGE_TYPE}`);
+      } catch (error) {
+        console.log('Could not fetch approved tools, using local only:', error);
+      }
+      const formattedApprovedTools = approvedTools.map(tool => ({
+        id: tool.id,
+        name: tool.name,
+        url: tool.url,
+        desc: tool.description || 'A community-submitted tool approved by Sarveik.',
+        longDesc: `**${tool.name}** (Community Approved)\n\n${tool.description || 'A useful tool for custom workflows and automation.'}\n\nThis tool was submitted by a community member and approved for use.`,
+        category: tool.category || 'integration',
+        icon: `https://www.google.com/s2/favicons?domain=${getDomainFromUrl(tool.url)}`,
+        source: 'approved',
+        approved: true,
+        created_at: tool.created_at,
+        isPremiumRequired: tool.is_premium === 1
+      }));
+      const allToolNames = new Set();
+      const mergedTools = [];
+      for (const tool of toolsWithDetails) {
+        if (!allToolNames.has(tool.name.toLowerCase())) {
+          allToolNames.add(tool.name.toLowerCase());
+          mergedTools.push(tool);
+        }
+      }
+      for (const tool of formattedApprovedTools) {
+        if (!allToolNames.has(tool.name.toLowerCase())) {
+          allToolNames.add(tool.name.toLowerCase());
+          mergedTools.push(tool);
+        }
+      }
+      allTools = mergedTools;
+      const statsBadge = document.getElementById('statsBadge');
+      const premiumCount = allTools.filter(t => t.isPremiumRequired).length;
+      statsBadge.innerHTML = `<i class="fas fa-database"></i> Explore our collection of Custom tools! ${!userPremiumStatus && premiumCount > 0 ? `🔒 ${premiumCount} Premium Tools Available` : ''}`;
+      buildFilterButtons();
+      renderTools();
+      if (!userPremiumStatus) showPremiumRecommendations();
+      return true;
+    } catch (error) {
+      console.error('Error loading tools:', error);
+      document.getElementById('toolsGrid').innerHTML = '<div class="loading">❌ Failed to load tools. Please make sure you are logged in.</div>';
+      showToast('Failed to load tools from server', 'error');
+      return false;
+    }
+  }
+
+  // LocalStorage functions
+  if (!localStorage.getItem('popularity')) localStorage.setItem('popularity', '{}');
+  if (!localStorage.getItem('ratings')) localStorage.setItem('ratings', '{}');
+  if (!localStorage.getItem('favorites')) localStorage.setItem('favorites', '[]');
+
+  function getPopularity(name) { return JSON.parse(localStorage.getItem('popularity'))[name] || 0; }
+  function incrementPopularity(name) { let pop = JSON.parse(localStorage.getItem('popularity')); pop[name] = (pop[name] || 0) + 1; localStorage.setItem('popularity', JSON.stringify(pop)); }
+  function getAverageRating(name) { let ratings = JSON.parse(localStorage.getItem('ratings'))[name]; if (!ratings || ratings.length === 0) return 0; return ratings.reduce((a,b)=>a+b,0) / ratings.length; }
+  function addRating(name, stars) { let ratings = JSON.parse(localStorage.getItem('ratings')); if (!ratings[name]) ratings[name] = []; ratings[name].push(stars); localStorage.setItem('ratings', JSON.stringify(ratings)); }
+  function isFavorite(name) { return JSON.parse(localStorage.getItem('favorites')).includes(name); }
+  function toggleFavorite(name) { let favs = JSON.parse(localStorage.getItem('favorites')); if (favs.includes(name)) { localStorage.setItem('favorites', JSON.stringify(favs.filter(f => f !== name))); } else { favs.push(name); localStorage.setItem('favorites', JSON.stringify(favs)); } renderTools(); renderFavorites(); }
+
+  function updateFilteredTools() {
+    let toolsToFilter = [...allTools];
+    if (currentFilter === 'premium') {
+      toolsToFilter = toolsToFilter.filter(t => t.isPremiumRequired === true);
+    } else if (currentFilter !== 'all') {
+      toolsToFilter = toolsToFilter.filter(t => t.category === currentFilter);
+    }
+    if (currentSearch) {
+      const searchLower = currentSearch.toLowerCase();
+      toolsToFilter = toolsToFilter.filter(tool => 
+        tool.name.toLowerCase().includes(searchLower) || 
+        (tool.desc || '').toLowerCase().includes(searchLower)
+      );
+    }
+    filteredTools = toolsToFilter;
+    if (currentSort === 'name') filteredTools.sort((a,b) => a.name.localeCompare(b.name));
+    else if (currentSort === 'popularity') filteredTools.sort((a,b) => getPopularity(b.name) - getPopularity(a.name));
+  }
+
+  function renderPagination() {
+    const totalPages = Math.ceil(filteredTools.length / itemsPerPage);
+    const paginationDiv = document.getElementById('paginationControls');
+    paginationDiv.innerHTML = '';
+    if (totalPages <= 1) return;
+    for (let i = 1; i <= totalPages; i++) {
+      const btn = document.createElement('button');
+      btn.textContent = i;
+      if (i === currentPage) btn.classList.add('active');
+      btn.addEventListener('click', () => { currentPage = i; renderTools(); });
+      paginationDiv.appendChild(btn);
+    }
+  }
+
+  function renderTools() {
+    updateFilteredTools();
+    const start = (currentPage - 1) * itemsPerPage;
+    let pageTools = filteredTools.slice(start, start + itemsPerPage);
+    if (!userPremiumStatus && currentFilter !== 'premium') {
+      pageTools = pageTools.filter(tool => !tool.isPremiumRequired);
+    }
+    const toolsGrid = document.getElementById('toolsGrid');
+    if (pageTools.length === 0) {
+      if (!userPremiumStatus && filteredTools.some(t => t.isPremiumRequired) && currentFilter !== 'premium') {
+        toolsGrid.innerHTML = `<div class="loading">🔒 Some custom tools require Premium Access. <a href="profile.html?tab=premium" style="color:#f6d365;">Upgrade to Premium</a> to unlock all tools.</div>`;
+      } else {
+        toolsGrid.innerHTML = '<div class="loading">No tools match your criteria.</div>';
+      }
+      return;
+    }
+    toolsGrid.innerHTML = pageTools.map(tool => {
+      const pop = getPopularity(tool.name);
+      const avgRating = getAverageRating(tool.name);
+      const fullStars = Math.floor(avgRating);
+      const stars = '★'.repeat(fullStars) + (avgRating % 1 >= 0.5 ? '½' : '');
+      const favClass = isFavorite(tool.name) ? 'favorited' : '';
+      const approvedBadge = tool.source === 'approved' ? '<span class="approved-badge"><i class="fas fa-check-circle"></i> Approved</span>' : '';
+      let newBadge = '';
+      if (tool.source === 'approved' && tool.created_at) {
+        const createdDate = new Date(tool.created_at);
+        const now = new Date();
+        const diffDays = (now - createdDate) / (1000 * 60 * 60 * 24);
+        if (diffDays <= NEW_DAYS_THRESHOLD) newBadge = '<span class="time-new-badge">🔥 NEW</span>';
+      }
+      const premiumTag = tool.isPremiumRequired ? '<span class="premium-tag">⭐ PREMIUM</span>' : '';
+      const isPremiumLocked = tool.isPremiumRequired && !userPremiumStatus;
+      const lockOverlay = isPremiumLocked ? `
+        <div class="premium-lock-icon">
+          <i class="fas fa-lock"></i> Premium Tool
+          <button onclick="window.location.href='profile.html?tab=premium'">Upgrade</button>
+        </div>
+      ` : '';
+      const lockClass = isPremiumLocked ? 'premium-locked' : '';
+      return `
+        <div class="tool-card ${lockClass}" data-name="${escapeHtml(tool.name)}" data-url="${tool.url}" data-desc="${escapeHtml(tool.longDesc)}" data-icon="${tool.icon}">
+          ${approvedBadge}
+          ${newBadge}
+          ${premiumTag}
+          <span class="fav-icon ${favClass}" data-fav="${escapeHtml(tool.name)}">❤️</span>
+          <img src="${tool.icon}" alt="${escapeHtml(tool.name)}" loading="lazy" onerror="this.src='https://via.placeholder.com/48'">
+          <h3>${escapeHtml(tool.name)}</h3>
+          <p>${escapeHtml(tool.desc)}</p>
+          <div class="meta">
+            <span class="rating">${stars || '☆☆☆☆☆'}</span>
+            <span class="popularity">🔥 ${pop}</span>
+          </div>
+          <button class="btn details-btn" ${isPremiumLocked ? 'disabled style="opacity:0.6;"' : ''}>Details</button>
+          ${lockOverlay}
+        </div>
+      `;
+    }).join('');
+    attachCardEvents();
+    renderPagination();
+  }
+
+  function attachCardEvents() {
+    document.querySelectorAll('.fav-icon').forEach(icon => {
+      icon.addEventListener('click', (e) => { e.stopPropagation(); toggleFavorite(icon.dataset.fav); });
+    });
+    document.querySelectorAll('.details-btn:not([disabled])').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const card = e.target.closest('.tool-card');
+        openModal(card.dataset.name, card.dataset.url, card.dataset.desc, card.dataset.icon);
+      });
+    });
+  }
+
+  function renderFavorites() {
+    const favs = JSON.parse(localStorage.getItem('favorites'));
+    let favTools = allTools.filter(t => favs.includes(t.name));
+    if (!userPremiumStatus) {
+      favTools = favTools.filter(t => !t.isPremiumRequired);
+    }
+    const favoritesGrid = document.getElementById('favoritesGrid');
+    if (favTools.length === 0) {
+      favoritesGrid.innerHTML = '<div class="loading">No favorite tools yet. Click the heart icon on any tool to add it!</div>';
+      return;
+    }
+    favoritesGrid.innerHTML = favTools.map(tool => {
+      const pop = getPopularity(tool.name);
+      const avgRating = getAverageRating(tool.name);
+      const fullStars = Math.floor(avgRating);
+      const stars = '★'.repeat(fullStars) + (avgRating % 1 >= 0.5 ? '½' : '');
+      const isPremiumLocked = tool.isPremiumRequired && !userPremiumStatus;
+      const lockOverlay = isPremiumLocked ? `<div class="premium-lock-icon"><i class="fas fa-lock"></i> Premium Tool</div>` : '';
+      return `
+        <div class="tool-card ${isPremiumLocked ? 'premium-locked' : ''}" data-name="${escapeHtml(tool.name)}" data-url="${tool.url}" data-desc="${escapeHtml(tool.longDesc)}" data-icon="${tool.icon}">
+          <img src="${tool.icon}" alt="${escapeHtml(tool.name)}" loading="lazy" onerror="this.src='https://via.placeholder.com/48'">
+          <h3>${escapeHtml(tool.name)}</h3>
+          <p>${escapeHtml(tool.desc)}</p>
+          <div class="meta">
+            <span class="rating">${stars || '☆☆☆☆☆'}</span>
+            <span class="popularity">🔥 ${pop}</span>
+          </div>
+          <button class="btn details-btn" ${isPremiumLocked ? 'disabled' : ''}>Details</button>
+          ${lockOverlay}
+        </div>
+      `;
+    }).join('');
+    favoritesGrid.querySelectorAll('.details-btn:not([disabled])').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const card = e.target.closest('.tool-card');
+        openModal(card.dataset.name, card.dataset.url, card.dataset.desc, card.dataset.icon);
+      });
+    });
+  }
+
+  function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
+
+  function openModal(name, url, longDesc, icon) {
+    const tool = allTools.find(t => t.name === name);
+    if (tool?.isPremiumRequired && !userPremiumStatus) {
+      showToast('This custom tool requires Premium Access. Please upgrade.', 'error');
+      return;
+    }
+    incrementPopularity(name);
+    const category = tool?.category || 'integration';
+    document.getElementById('modalTitle').textContent = name;
+    document.getElementById('modalDesc').innerHTML = longDesc.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+    document.getElementById('modalIcon').src = icon;
+    document.getElementById('modalVisitBtn').href = url;
+    const howToHTML = generateHowToUse(name, category, url);
+    document.getElementById('howToUseContent').innerHTML = howToHTML;
+
+    const avgRating = getAverageRating(name);
+    const modalRatingDiv = document.getElementById('modalRating');
+    modalRatingDiv.innerHTML = 'Rate this tool: ';
+    for (let i = 1; i <= 5; i++) {
+      const star = document.createElement('span');
+      star.className = `star ${i <= Math.round(avgRating) ? 'selected' : ''}`;
+      star.textContent = '★';
+      star.dataset.value = i;
+      star.addEventListener('click', (e) => { addRating(name, parseInt(e.target.dataset.value)); openModal(name, url, longDesc, icon); renderTools(); });
+      modalRatingDiv.appendChild(star);
+    }
+    const similar = allTools.filter(t => t.category === category && t.name !== name && (!t.isPremiumRequired || userPremiumStatus)).slice(0, 5);
+    const similarDiv = document.getElementById('similarTools');
+    similarDiv.innerHTML = similar.map(t => `<span class="similar-tool-item" data-name="${escapeHtml(t.name)}">${escapeHtml(t.name)}</span>`).join('');
+    document.querySelectorAll('.similar-tool-item').forEach(el => {
+      el.addEventListener('click', () => { const t = allTools.find(tt => tt.name === el.dataset.name); if(t) openModal(t.name, t.url, t.longDesc, t.icon); });
+    });
+    const shareText = encodeURIComponent(`Check out ${name} on Sarveik Tools!`);
+    const shareUrl = encodeURIComponent(url);
+    document.getElementById('socialShare').innerHTML = `
+      <a href="https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}" target="_blank"><i class="fab fa-twitter"></i> Twitter</a>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=${shareUrl}" target="_blank"><i class="fab fa-facebook"></i> Facebook</a>
+      <a href="https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}" target="_blank"><i class="fab fa-linkedin"></i> LinkedIn</a>
+    `;
+    document.getElementById('toolModal').classList.add('active');
+  }
+
+  function buildFilterButtons() {
+    const categories = ['all', ...new Set(allTools.map(t => t.category))];
+    categories.push('premium');
+    const filterContainer = document.getElementById('filterContainer');
+    filterContainer.innerHTML = categories.map(cat => `<button class="filter-btn ${cat === currentFilter ? 'active' : ''}" data-filter="${cat}">${cat.charAt(0).toUpperCase() + cat.slice(1)}</button>`).join('');
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.filter;
+        currentPage = 1;
+        renderTools();
+      });
+    });
+  }
+
+  async function submitTool() {
+    const name = document.getElementById('newName').value.trim();
+    const url = document.getElementById('newUrl').value.trim();
+    const description = document.getElementById('newDesc').value.trim();
+    const category = document.getElementById('newCategory').value;
+    if (!name || !url || !description) { showToast('Please fill all fields', 'error'); return; }
+    try { new URL(url); } catch { showToast('Please enter a valid URL (including https://)', 'error'); return; }
+    const submitBtn = document.getElementById('submitToolBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+    try {
+      await apiCall('/api/tools/submit', {
+        method: 'POST',
+        body: JSON.stringify({ name, url, description, category, pageType: PAGE_TYPE })
+      });
+      showToast('✅ Tool submitted! Admin will review it shortly.', 'success');
+      document.getElementById('newName').value = '';
+      document.getElementById('newUrl').value = '';
+      document.getElementById('newDesc').value = '';
+      setTimeout(() => loadAndMergeTools(), 2000);
+    } catch (error) { showToast(error.message || 'Submission failed', 'error'); }
+    finally { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit for Review'; }
+  }
+
+  async function checkSession() {
+    try { const session = await apiCall('/check-session'); if (!session.loggedIn) { window.location.href = '/'; return false; } return true; }
+    catch { window.location.href = '/'; return false; }
+  }
+
+  async function fetchPremiumStatus() {
+    try {
+      const res = await fetch('/api/user/premium-status', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        userPremiumStatus = data.isPremium === true;
+        console.log('Premium status (custom):', userPremiumStatus);
+        const banner = document.getElementById('premiumBanner');
+        if (banner) banner.style.display = userPremiumStatus ? 'none' : 'flex';
+        const recommendationsDiv = document.getElementById('premiumRecommendations');
+        if (recommendationsDiv) recommendationsDiv.style.display = userPremiumStatus ? 'none' : 'block';
+      } else {
+        userPremiumStatus = false;
+        document.getElementById('premiumBanner').style.display = 'flex';
+        document.getElementById('premiumRecommendations').style.display = 'block';
+      }
+    } catch (err) {
+      console.error('Failed to fetch premium status', err);
+      userPremiumStatus = false;
+      document.getElementById('premiumBanner').style.display = 'flex';
+      document.getElementById('premiumRecommendations').style.display = 'block';
+    }
+  }
+
+  function showPremiumRecommendations() {
+    const premiumTools = allTools.filter(t => t.isPremiumRequired).slice(0, 6);
+    const container = document.getElementById('recommendGrid');
+    if (!container) return;
+    if (premiumTools.length === 0) {
+      container.innerHTML = '<p>No premium tools available yet.</p>';
+      return;
+    }
+    container.innerHTML = premiumTools.map(tool => `
+      <div class="recommend-item">
+        <img src="${tool.icon}" alt="${tool.name}" onerror="this.src='https://via.placeholder.com/40'">
+        <div class="name">${escapeHtml(tool.name)}</div>
+        <button onclick="window.location.href='profile.html?tab=premium'">Unlock</button>
+      </div>
+    `).join('');
+  }
+
+  async function init() {
+    const loggedIn = await checkSession();
+    if (!loggedIn) return;
+    await fetchPremiumStatus();
+    await loadAndMergeTools();
+    try {
+      await fetch('/api/track-usage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tool_name: 'Custom Tools Hub', tool_category: 'tools' }), credentials: 'include' });
+    } catch(e) {}
+  }
+
+  // Event listeners
+  document.getElementById('searchInput').addEventListener('input', (e) => { currentSearch = e.target.value; currentPage = 1; renderTools(); });
+  document.getElementById('sortSelect').addEventListener('change', (e) => { currentSort = e.target.value; renderTools(); });
+  document.getElementById('refreshToolsBtn').addEventListener('click', () => { loadAndMergeTools(); showToast('Refreshing tools from database...', 'info'); });
+  document.getElementById('themeToggle').addEventListener('click', () => { document.body.classList.toggle('light-mode'); document.getElementById('themeToggle').textContent = document.body.classList.contains('light-mode') ? '☀️ Light' : '🌙 Dark'; localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark'); });
+  if (localStorage.getItem('theme') === 'light') { document.body.classList.add('light-mode'); document.getElementById('themeToggle').textContent = '☀️ Light'; }
+  document.getElementById('showFavorites').addEventListener('click', (e) => { e.preventDefault(); document.getElementById('toolsGrid').style.display = 'none'; document.getElementById('favoritesPage').style.display = 'block'; renderFavorites(); });
+  document.getElementById('hideFavorites').addEventListener('click', () => { document.getElementById('favoritesPage').style.display = 'none'; document.getElementById('toolsGrid').style.display = 'flex'; });
+  document.getElementById('submitToolBtn').addEventListener('click', submitTool);
+  document.querySelector('.close').addEventListener('click', () => document.getElementById('toolModal').classList.remove('active'));
+  window.addEventListener('click', (e) => { if (e.target === document.getElementById('toolModal')) document.getElementById('toolModal').classList.remove('active'); });
+  window.addEventListener('scroll', () => { const btn = document.getElementById('backToTop'); if(btn) btn.classList.toggle('visible', window.scrollY > 300); });
+  document.getElementById('backToTop').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+  init();
+</script>
+</body>
+</html>

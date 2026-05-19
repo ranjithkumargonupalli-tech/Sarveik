@@ -1,0 +1,1826 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Dashboard | Sarveik </title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+    <style>
+        /* ========== THEME VARIABLES ========== */
+        :root {
+            --primary: #667eea;
+            --primary-2: #764ba2;
+            --accent: #00d4ff;
+            --accent-2: #7c3aed;
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-primary: #1f2937;
+            --text-secondary: #4b5563;
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --body-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --modal-bg: linear-gradient(135deg, #1a1a2e, #16213e);
+            --toast-bg: rgba(0, 0, 0, 0.85);
+            --border-light: rgba(255, 255, 255, 0.2);
+            --particle-color: rgba(255, 255, 255, 0.15);
+            --scrollbar-track: rgba(0, 0, 0, 0.05);
+            --scrollbar-thumb: rgba(0, 0, 0, 0.2);
+            --glow: 0 0 30px rgba(102,126,234,0.3);
+            --card-hover-shadow: 0 20px 60px rgba(0,0,0,0.25);
+        }
+
+        body.dark-mode {
+            --primary-gradient: linear-gradient(135deg, #1e1e2f 0%, #2d2d44 100%);
+            --glass-bg: rgba(255, 255, 255, 0.04);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --text-primary: #e5e7eb;
+            --text-secondary: #9ca3af;
+            --card-bg: rgba(15, 15, 25, 0.85);
+            --body-bg: #070710;
+            --modal-bg: linear-gradient(135deg, #111827, #1f2937);
+            --toast-bg: rgba(0, 0, 0, 0.95);
+            --border-light: rgba(255, 255, 255, 0.08);
+            --particle-color: rgba(102, 126, 234, 0.15);
+            --scrollbar-track: rgba(255, 255, 255, 0.03);
+            --scrollbar-thumb: rgba(255, 255, 255, 0.15);
+            --glow: 0 0 40px rgba(102,126,234,0.15);
+            --card-hover-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+        ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 10px; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--body-bg);
+            min-height: 100vh;
+            color: var(--text-primary);
+            overflow-x: hidden;
+            transition: background 0.4s ease, color 0.3s ease;
+        }
+
+        body.dark-mode {
+            background: var(--body-bg);
+        }
+
+        /* ========== PARTICLES ========== */
+        .particles {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none; z-index: 1;
+            overflow: hidden;
+        }
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            animation: float linear infinite;
+            opacity: 0;
+        }
+        @keyframes float {
+            0% { transform: translateY(110vh) rotate(0deg) scale(0); opacity: 0; }
+            10% { opacity: 1; transform: scale(1); }
+            90% { opacity: 0.6; }
+            100% { transform: translateY(-10vh) rotate(720deg) scale(0.5); opacity: 0; }
+        }
+
+        /* ========== NAVBAR ========== */
+        .navbar {
+            background: rgba(255,255,255,0.08);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 0.9rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky; top: 0; z-index: 1000;
+            transition: all 0.3s ease;
+        }
+        body.dark-mode .navbar {
+            background: rgba(7, 7, 16, 0.7);
+        }
+        .navbar.scrolled {
+            box-shadow: 0 4px 30px rgba(0,0,0,0.2);
+        }
+
+        .nav-brand {
+            font-size: 1.4rem; font-weight: 800;
+            color: white; display: flex; align-items: center; gap: 0.6rem;
+            text-decoration: none; letter-spacing: -0.5px;
+        }
+        .nav-brand-icon {
+            width: 38px; height: 38px;
+            background: linear-gradient(135deg, #00d4ff, #764ba2);
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem; color: white;
+            box-shadow: 0 4px 15px rgba(0,212,255,0.3);
+        }
+
+        .nav-links {
+            display: flex; list-style: none; gap: 0.3rem;
+            align-items: center; margin-left: auto;
+        }
+        .nav-links a {
+            color: rgba(255,255,255,0.85);
+            text-decoration: none; font-weight: 500; font-size: 0.88rem;
+            display: flex; align-items: center; gap: 0.4rem;
+            padding: 0.5rem 0.9rem;
+            border-radius: 50px;
+            transition: all 0.25s ease;
+        }
+        body.dark-mode .nav-links a { color: var(--text-secondary); }
+        .nav-links a:hover, .nav-links a.active {
+            background: rgba(255,255,255,0.18);
+            color: white;
+            transform: translateY(-1px);
+        }
+        body.dark-mode .nav-links a:hover, body.dark-mode .nav-links a.active {
+            background: rgba(255,255,255,0.08);
+            color: var(--text-primary);
+        }
+
+        /* Notification bell */
+        .notif-btn {
+            position: relative;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 50%; width: 38px; height: 38px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: white; font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        body.dark-mode .notif-btn {
+            background: var(--glass-bg); border-color: var(--glass-border);
+            color: var(--text-primary);
+        }
+        .notif-btn:hover { background: rgba(255,255,255,0.28); transform: scale(1.05); }
+        .notif-dot {
+            position: absolute; top: 6px; right: 6px;
+            width: 8px; height: 8px;
+            background: #ef4444; border-radius: 50%;
+            border: 2px solid transparent;
+            animation: pulse-dot 1.5s infinite;
+        }
+        @keyframes pulse-dot {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.7; }
+        }
+
+        .theme-toggle {
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 40px; padding: 7px 15px;
+            display: flex; align-items: center; gap: 7px;
+            cursor: pointer; font-size: 0.85rem; font-weight: 600;
+            color: white; transition: all 0.3s ease; white-space: nowrap;
+        }
+        body.dark-mode .theme-toggle {
+            background: var(--glass-bg); border-color: var(--glass-border);
+            color: var(--text-primary);
+        }
+        .theme-toggle:hover { background: rgba(255,255,255,0.28); transform: translateY(-1px); }
+
+        .hamburger {
+            display: none;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.25);
+            border-radius: 40px; padding: 8px 14px;
+            cursor: pointer; font-size: 1.1rem; color: white;
+            align-items: center; gap: 8px;
+        }
+        body.dark-mode .hamburger {
+            background: var(--glass-bg); border-color: var(--glass-border);
+            color: var(--text-primary);
+        }
+
+        /* Mobile drawer */
+        .mobile-menu-overlay {
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(6px); z-index: 1001;
+        }
+        .mobile-menu-drawer {
+            position: fixed; top: 0; right: -300px;
+            width: 300px; height: 100%;
+            background: var(--card-bg);
+            backdrop-filter: blur(30px);
+            border-left: 1px solid var(--glass-border);
+            z-index: 1002; transition: right 0.35s cubic-bezier(0.4,0,0.2,1);
+            padding: 2rem 1.2rem; display: flex; flex-direction: column; gap: 0.8rem;
+        }
+        .mobile-menu-drawer.open { right: 0; }
+        .mobile-nav-links { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+        .mobile-nav-links a {
+            color: var(--text-primary); text-decoration: none;
+            padding: 0.8rem 1rem; border-radius: 14px;
+            display: flex; align-items: center; gap: 0.8rem;
+            transition: all 0.25s ease; font-weight: 500;
+        }
+        .mobile-nav-links a:hover, .mobile-nav-links a.active {
+            background: rgba(102,126,234,0.15); color: var(--primary);
+        }
+        .mobile-close {
+            align-self: flex-end; font-size: 2rem;
+            cursor: pointer; color: var(--text-secondary);
+            line-height: 1; transition: color 0.2s ease;
+        }
+        .mobile-close:hover { color: var(--danger); }
+        .mobile-theme-toggle {
+            background: var(--glass-bg); border: 1px solid var(--glass-border);
+            border-radius: 40px; padding: 9px 16px;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            cursor: pointer; font-size: 0.9rem; font-weight: 600;
+            color: var(--text-primary); margin-top: auto;
+        }
+
+        @media (max-width: 992px) {
+            .nav-links { display: none; }
+            .hamburger { display: flex; }
+            .navbar { padding: 0.8rem 1.2rem; }
+        }
+
+        /* ========== MAIN LAYOUT ========== */
+        .dashboard-container {
+            max-width: 1400px; margin: 2rem auto;
+            padding: 0 2rem; position: relative; z-index: 10;
+        }
+
+        /* ========== WELCOME BANNER ========== */
+        .welcome-section {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 28px; padding: 2rem 2.5rem;
+            margin-bottom: 2rem;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 1.5rem;
+            border: 1px solid rgba(255,255,255,0.2);
+            animation: fadeInUp 0.7s ease-out;
+            position: relative; overflow: hidden;
+        }
+        .welcome-section::before {
+            content: '';
+            position: absolute; top: -60px; right: -60px;
+            width: 200px; height: 200px;
+            background: radial-gradient(circle, rgba(0,212,255,0.15), transparent 70%);
+            border-radius: 50%; pointer-events: none;
+        }
+        body.dark-mode .welcome-section {
+            background: var(--card-bg); border-color: var(--glass-border);
+        }
+        .welcome-text h2 {
+            font-size: 1.9rem; font-weight: 800; margin-bottom: 0.3rem;
+            background: linear-gradient(90deg, #00d4ff, #fff, #b79dff);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-size: 200% auto; animation: shimmer 4s linear infinite;
+        }
+        @keyframes shimmer {
+            0% { background-position: 0% center; }
+            100% { background-position: 200% center; }
+        }
+        .welcome-text p { color: rgba(255,255,255,0.75); font-size: 0.95rem; }
+        body.dark-mode .welcome-text p { color: var(--text-secondary); }
+
+        .quick-actions {
+            display: flex; gap: 0.8rem; flex-wrap: wrap; align-items: center;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(25px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ========== STATS GRID ========== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.2rem; margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 22px; padding: 1.6rem 1.4rem;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            cursor: pointer; position: relative; overflow: hidden;
+            animation: fadeInUp 0.7s ease-out both;
+        }
+        body.dark-mode .stat-card {
+            background: var(--card-bg); border-color: var(--glass-border);
+        }
+        .stat-card::after {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.08), transparent);
+            opacity: 0; transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        .stat-card:hover::after { opacity: 1; }
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.2s; }
+        .stat-card:nth-child(3) { animation-delay: 0.3s; }
+        .stat-card:nth-child(4) { animation-delay: 0.4s; }
+        .stat-card:nth-child(5) { animation-delay: 0.5s; }
+        .stat-card:nth-child(6) { animation-delay: 0.6s; }
+        .stat-card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--card-hover-shadow);
+        }
+        .stat-icon-wrap {
+            width: 56px; height: 56px; border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 1rem; font-size: 1.5rem;
+        }
+        .stat-card:nth-child(1) .stat-icon-wrap { background: rgba(0,212,255,0.2); color: #00d4ff; }
+        .stat-card:nth-child(2) .stat-icon-wrap { background: rgba(245,158,11,0.2); color: #f59e0b; }
+        .stat-card:nth-child(3) .stat-icon-wrap { background: rgba(16,185,129,0.2); color: #10b981; }
+        .stat-card:nth-child(4) .stat-icon-wrap { background: rgba(239,68,68,0.2); color: #ef4444; }
+        .stat-card:nth-child(5) .stat-icon-wrap { background: rgba(124,58,237,0.2); color: #7c3aed; }
+        .stat-card:nth-child(6) .stat-icon-wrap { background: rgba(59,130,246,0.2); color: #3b82f6; }
+        .stat-number {
+            font-size: 2.4rem; font-weight: 800; margin-bottom: 0.3rem; color: white;
+        }
+        body.dark-mode .stat-number { color: var(--text-primary); }
+        .stat-label { color: rgba(255,255,255,0.7); font-size: 0.85rem; font-weight: 500; }
+        body.dark-mode .stat-label { color: var(--text-secondary); }
+        .stat-trend {
+            font-size: 0.75rem; margin-top: 0.4rem;
+            display: inline-flex; align-items: center; gap: 3px;
+            padding: 2px 8px; border-radius: 20px;
+        }
+        .stat-trend.up { background: rgba(16,185,129,0.2); color: #10b981; }
+        .stat-trend.down { background: rgba(239,68,68,0.2); color: #ef4444; }
+        .stat-trend.neutral { background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.6); }
+
+        /* ========== GRID LAYOUT ========== */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem; margin-bottom: 1.5rem;
+        }
+        .main-grid-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1.5rem; margin-bottom: 1.5rem;
+        }
+        .col-span-2 { grid-column: span 2; }
+
+        /* ========== CARD ========== */
+        .card {
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 22px; padding: 1.6rem;
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.3s cubic-bezier(0.4,0,0.2,1);
+            animation: fadeInUp 0.7s ease-out both;
+            position: relative; overflow: hidden;
+        }
+        body.dark-mode .card {
+            background: var(--card-bg); border-color: var(--glass-border);
+        }
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--card-hover-shadow);
+        }
+        .card-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1.3rem; padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255,255,255,0.12);
+        }
+        body.dark-mode .card-header { border-bottom-color: var(--glass-border); }
+        .card-header h3 {
+            font-size: 1.05rem; font-weight: 700;
+            display: flex; align-items: center; gap: 0.6rem;
+            color: white; text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        body.dark-mode .card-header h3 { color: var(--text-primary); }
+        .card-header-actions { display: flex; gap: 0.5rem; align-items: center; }
+
+        /* ========== SEARCH BAR ========== */
+        .search-bar {
+            position: relative; margin-bottom: 2rem;
+        }
+        .search-input {
+            width: 100%; padding: 0.9rem 1.2rem 0.9rem 3rem;
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 50px; color: white;
+            font-size: 0.95rem; font-family: inherit;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            outline: none;
+        }
+        .search-input::placeholder { color: rgba(255,255,255,0.5); }
+        body.dark-mode .search-input {
+            background: var(--glass-bg); border-color: var(--glass-border);
+            color: var(--text-primary);
+        }
+        body.dark-mode .search-input::placeholder { color: var(--text-secondary); }
+        .search-input:focus {
+            background: rgba(255,255,255,0.18);
+            border-color: rgba(0,212,255,0.6);
+            box-shadow: 0 0 0 3px rgba(0,212,255,0.15);
+        }
+        .search-icon {
+            position: absolute; left: 1.1rem; top: 50%;
+            transform: translateY(-50%);
+            color: rgba(255,255,255,0.5); font-size: 1rem;
+            pointer-events: none;
+        }
+        body.dark-mode .search-icon { color: var(--text-secondary); }
+
+        /* ========== LEVEL / GAMIFICATION ========== */
+        .level-section {
+            display: grid; grid-template-columns: auto 1fr auto;
+            gap: 1.2rem; align-items: center;
+        }
+        .level-badge {
+            width: 70px; height: 70px; border-radius: 50%;
+            background: linear-gradient(135deg, #00d4ff, #7c3aed);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.6rem; font-weight: 900; color: white;
+            box-shadow: 0 0 20px rgba(0,212,255,0.4);
+            flex-shrink: 0; position: relative;
+        }
+        .level-badge::after {
+            content: 'LVL';
+            position: absolute; bottom: -18px;
+            font-size: 0.6rem; font-weight: 700;
+            color: rgba(255,255,255,0.6); letter-spacing: 1px;
+        }
+        .level-info { flex: 1; }
+        .level-info h4 { font-size: 1rem; color: white; margin-bottom: 2px; font-weight: 700; }
+        body.dark-mode .level-info h4 { color: var(--text-primary); }
+        .level-info p { font-size: 0.8rem; color: rgba(255,255,255,0.6); margin-bottom: 8px; }
+        body.dark-mode .level-info p { color: var(--text-secondary); }
+        .xp-bar-wrap { background: rgba(0,0,0,0.25); border-radius: 20px; height: 10px; overflow: hidden; }
+        .xp-bar {
+            height: 100%; border-radius: 20px;
+            background: linear-gradient(90deg, #00d4ff, #7c3aed);
+            transition: width 1s cubic-bezier(0.4,0,0.2,1);
+            position: relative; overflow: hidden;
+        }
+        .xp-bar::after {
+            content: ''; position: absolute; top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            animation: xp-shine 2s infinite;
+        }
+        @keyframes xp-shine {
+            0% { left: -100%; } 100% { left: 200%; }
+        }
+        .streak-badge {
+            text-align: center; padding: 0.8rem 1.2rem;
+            background: rgba(245,158,11,0.15);
+            border: 1px solid rgba(245,158,11,0.3);
+            border-radius: 16px;
+        }
+        .streak-badge .streak-num { font-size: 1.8rem; font-weight: 900; color: #f59e0b; }
+        .streak-badge .streak-label { font-size: 0.7rem; color: rgba(255,255,255,0.6); font-weight: 600; }
+        body.dark-mode .streak-badge .streak-label { color: var(--text-secondary); }
+
+        .achievement-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 0.8rem; margin-top: 1rem;
+        }
+        .achievement-item {
+            background: rgba(255,255,255,0.08);
+            border-radius: 14px; padding: 0.8rem 0.5rem;
+            text-align: center; border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.25s ease; cursor: pointer;
+        }
+        body.dark-mode .achievement-item { border-color: var(--glass-border); }
+        .achievement-item:hover { transform: scale(1.07); background: rgba(255,255,255,0.15); }
+        .achievement-item.locked { opacity: 0.35; filter: grayscale(1); }
+        .achievement-item .ach-icon { font-size: 1.8rem; margin-bottom: 4px; }
+        .achievement-item .ach-name { font-size: 0.65rem; color: rgba(255,255,255,0.7); font-weight: 600; }
+        body.dark-mode .achievement-item .ach-name { color: var(--text-secondary); }
+
+        /* ========== QUESTS ========== */
+        .quest-item {
+            background: rgba(255,255,255,0.06);
+            border-radius: 16px; padding: 1rem 1.2rem;
+            margin-bottom: 0.8rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.2s ease;
+        }
+        body.dark-mode .quest-item { border-color: var(--glass-border); background: rgba(255,255,255,0.03); }
+        .quest-item.completed {
+            opacity: 0.75;
+            background: rgba(16,185,129,0.08);
+            border-color: rgba(16,185,129,0.3);
+        }
+        .quest-item:hover { transform: translateX(4px); }
+        .quest-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 0.5rem; gap: 0.5rem;
+        }
+        .quest-title { font-weight: 700; font-size: 0.95rem; color: white; }
+        body.dark-mode .quest-title { color: var(--text-primary); }
+        .quest-desc { font-size: 0.82rem; color: rgba(255,255,255,0.6); margin-bottom: 0.6rem; }
+        body.dark-mode .quest-desc { color: var(--text-secondary); }
+        .quest-rewards { font-size: 0.75rem; color: rgba(255,255,255,0.5); margin-top: 0.5rem; }
+        body.dark-mode .quest-rewards { color: var(--text-secondary); }
+        .quest-bar-wrap { background: rgba(0,0,0,0.25); border-radius: 10px; height: 6px; overflow: hidden; }
+        .quest-bar {
+            height: 100%; border-radius: 10px;
+            background: linear-gradient(90deg, #00d4ff, #7c3aed);
+            transition: width 0.5s ease;
+        }
+
+        /* ========== ACTIVITY ========== */
+        .activity-list { max-height: 360px; overflow-y: auto; }
+        .activity-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0.75rem 0.9rem;
+            background: rgba(255,255,255,0.05);
+            border-radius: 14px; margin-bottom: 0.5rem;
+            transition: all 0.2s ease; gap: 1rem;
+            border: 1px solid transparent;
+        }
+        .activity-item:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.1);
+            transform: translateX(3px);
+        }
+        body.dark-mode .activity-item:hover { border-color: var(--glass-border); }
+        .activity-info { display: flex; align-items: center; gap: 0.9rem; flex: 1; min-width: 0; }
+        .activity-icon {
+            width: 36px; height: 36px; flex-shrink: 0;
+            background: rgba(0,212,255,0.15); border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            color: #00d4ff; font-size: 0.9rem;
+        }
+        .activity-text { font-size: 0.88rem; color: white; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        body.dark-mode .activity-text { color: var(--text-primary); }
+        .activity-time { font-size: 0.75rem; color: rgba(255,255,255,0.5); white-space: nowrap; flex-shrink: 0; }
+        body.dark-mode .activity-time { color: var(--text-secondary); }
+
+        /* ========== MINI CHART ========== */
+        .chart-wrap { position: relative; height: 180px; }
+
+        /* ========== TOP TOOLS ========== */
+        .tool-item {
+            display: flex; align-items: center; gap: 1rem;
+            padding: 0.75rem; border-radius: 14px;
+            background: rgba(255,255,255,0.05);
+            margin-bottom: 0.6rem; transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+        .tool-item:hover {
+            background: rgba(255,255,255,0.1); transform: translateX(4px);
+            border-color: rgba(255,255,255,0.1);
+        }
+        .tool-rank {
+            font-size: 1rem; font-weight: 800; width: 24px; text-align: center;
+            color: rgba(255,255,255,0.4);
+        }
+        .tool-rank.gold { color: #f59e0b; }
+        .tool-rank.silver { color: #9ca3af; }
+        .tool-rank.bronze { color: #cd7c2f; }
+        .tool-icon-sm {
+            width: 38px; height: 38px; border-radius: 12px;
+            background: linear-gradient(135deg, rgba(0,212,255,0.2), rgba(124,58,237,0.2));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.1rem;
+        }
+        .tool-info { flex: 1; }
+        .tool-name { font-size: 0.9rem; font-weight: 600; color: white; }
+        body.dark-mode .tool-name { color: var(--text-primary); }
+        .tool-uses { font-size: 0.75rem; color: rgba(255,255,255,0.5); }
+        body.dark-mode .tool-uses { color: var(--text-secondary); }
+        .tool-bar-mini {
+            width: 60px; height: 6px; background: rgba(0,0,0,0.3); border-radius: 10px; overflow: hidden;
+        }
+        .tool-bar-fill { height: 100%; border-radius: 10px; background: linear-gradient(90deg, #00d4ff, #7c3aed); }
+
+        /* ========== LEADERBOARD MINI ========== */
+        .lb-item {
+            display: flex; align-items: center; gap: 0.8rem;
+            padding: 0.7rem 0.9rem; border-radius: 14px;
+            background: rgba(255,255,255,0.05); margin-bottom: 0.5rem;
+            transition: all 0.2s ease; border: 1px solid transparent;
+        }
+        .lb-item:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.1); }
+        .lb-item.you { border-color: rgba(0,212,255,0.4); background: rgba(0,212,255,0.08); }
+        .lb-rank-num {
+            font-weight: 900; font-size: 1rem; width: 22px; text-align: center;
+            color: rgba(255,255,255,0.35);
+        }
+        .lb-rank-num.r1 { color: #f59e0b; } .lb-rank-num.r2 { color: #9ca3af; } .lb-rank-num.r3 { color: #cd7c2f; }
+        .lb-avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.85rem; font-weight: 700; color: white; flex-shrink: 0;
+        }
+        .lb-name { flex: 1; font-size: 0.88rem; font-weight: 600; color: white; }
+        body.dark-mode .lb-name { color: var(--text-primary); }
+        .lb-pts { font-size: 0.8rem; font-weight: 700; color: #f59e0b; }
+
+        /* ========== QUICK LINKS ========== */
+        .quick-links {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 0.8rem;
+        }
+        .quick-link-btn {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 16px; padding: 1rem 0.8rem;
+            text-align: center; cursor: pointer; color: white;
+            transition: all 0.25s ease; text-decoration: none;
+            display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+        }
+        body.dark-mode .quick-link-btn {
+            background: rgba(255,255,255,0.04); border-color: var(--glass-border);
+            color: var(--text-primary);
+        }
+        .quick-link-btn:hover {
+            background: rgba(255,255,255,0.18);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+            border-color: rgba(0,212,255,0.4);
+        }
+        .quick-link-btn i { font-size: 1.5rem; }
+        .quick-link-btn span { font-size: 0.8rem; font-weight: 600; }
+
+        /* ========== COUNTDOWN ========== */
+        .countdown-grid {
+            display: flex; gap: 0.8rem; justify-content: center; margin: 0.5rem 0;
+        }
+        .countdown-block { text-align: center; }
+        .countdown-num {
+            font-size: 2rem; font-weight: 900; color: #00d4ff;
+            background: rgba(0,212,255,0.1); border-radius: 12px;
+            padding: 0.3rem 0.8rem; min-width: 52px;
+            display: inline-block; border: 1px solid rgba(0,212,255,0.25);
+        }
+        .countdown-lbl { font-size: 0.65rem; color: rgba(255,255,255,0.5); margin-top: 3px; font-weight: 600; }
+        body.dark-mode .countdown-lbl { color: var(--text-secondary); }
+
+        /* ========== BUTTONS ========== */
+        .btn {
+            padding: 0.7rem 1.4rem; border: none; border-radius: 50px;
+            font-weight: 600; cursor: pointer; transition: all 0.3s ease;
+            font-family: inherit; display: inline-flex; align-items: center; gap: 0.5rem;
+            font-size: 0.88rem; white-space: nowrap;
+        }
+        .btn-primary {
+            background: var(--primary-gradient); color: white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.25);
+        }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102,126,234,0.5); }
+        .btn-secondary {
+            background: rgba(255,255,255,0.15); color: white;
+            border: 1px solid rgba(255,255,255,0.25);
+        }
+        body.dark-mode .btn-secondary {
+            background: var(--glass-bg); color: var(--text-primary); border-color: var(--glass-border);
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.28); transform: translateY(-2px); }
+        .btn-sm { padding: 0.4rem 0.9rem; font-size: 0.78rem; }
+        .btn-icon {
+            width: 36px; height: 36px; padding: 0;
+            background: rgba(255,255,255,0.15); color: white;
+            border: 1px solid rgba(255,255,255,0.2); border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        body.dark-mode .btn-icon {
+            background: var(--glass-bg); border-color: var(--glass-border); color: var(--text-primary);
+        }
+        .btn-icon:hover { background: rgba(255,255,255,0.28); transform: scale(1.08); }
+        .refresh-btn {
+            background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
+            color: white; padding: 0.5rem 1rem; border-radius: 20px;
+            cursor: pointer; font-size: 0.82rem; transition: all 0.2s ease; font-family: inherit;
+            display: inline-flex; align-items: center; gap: 6px;
+        }
+        body.dark-mode .refresh-btn { background: var(--glass-bg); border-color: var(--glass-border); color: var(--text-primary); }
+        .refresh-btn:hover { background: rgba(255,255,255,0.25); transform: scale(1.02); }
+        .refresh-btn.spinning i { animation: spin 0.8s linear infinite; }
+
+        /* ========== BADGES & CHIPS ========== */
+        .badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 2px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700;
+        }
+        .badge-success { background: rgba(16,185,129,0.25); color: #10b981; border: 1px solid rgba(16,185,129,0.4); }
+        .badge-warning { background: rgba(245,158,11,0.2); color: #f59e0b; border: 1px solid rgba(245,158,11,0.35); }
+        .badge-info { background: rgba(59,130,246,0.2); color: #60a5fa; border: 1px solid rgba(59,130,246,0.35); }
+        .badge-purple { background: rgba(124,58,237,0.2); color: #a78bfa; border: 1px solid rgba(124,58,237,0.35); }
+        .premium-badge {
+            background: linear-gradient(90deg, #f59e0b, #ef4444);
+            color: white; font-size: 0.68rem; padding: 2px 8px;
+            border-radius: 20px; font-weight: 700;
+        }
+        .coming-soon-badge {
+            background: rgba(245,158,11,0.2); color: #f59e0b;
+            font-size: 0.68rem; padding: 2px 8px; border-radius: 20px; font-weight: 700;
+        }
+
+        /* ========== MODALS ========== */
+        .modal {
+            display: none; position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.75);
+            backdrop-filter: blur(12px);
+            z-index: 10000; align-items: center; justify-content: center;
+            padding: 1rem;
+        }
+        .modal-content {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            border-radius: 28px; max-width: 600px; width: 100%;
+            max-height: 85vh; overflow-y: auto;
+            padding: 2rem; position: relative;
+            animation: modalPop 0.35s cubic-bezier(0.4,0,0.2,1);
+            border: 1px solid rgba(255,255,255,0.15);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5);
+        }
+        body.dark-mode .modal-content { background: var(--modal-bg); }
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.92) translateY(-20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .modal-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .modal-header h2 { color: #00d4ff; font-size: 1.2rem; display: flex; align-items: center; gap: 0.6rem; }
+        .close-modal, .close-store-modal {
+            background: rgba(255,255,255,0.1); border: none; color: white;
+            font-size: 1.5rem; cursor: pointer; border-radius: 50%;
+            width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+            transition: all 0.25s ease;
+        }
+        .close-modal:hover, .close-store-modal:hover {
+            background: rgba(239,68,68,0.25); color: #ef4444; transform: rotate(90deg);
+        }
+
+        /* ========== STORE ITEMS ========== */
+        .store-item {
+            background: rgba(255,255,255,0.07); border-radius: 18px;
+            padding: 1.1rem 1.2rem; margin-bottom: 0.9rem;
+            border: 1px solid rgba(255,255,255,0.12);
+            transition: all 0.2s ease;
+        }
+        .store-item:hover { background: rgba(255,255,255,0.12); transform: translateX(4px); }
+        .store-item.coming-soon { opacity: 0.6; filter: grayscale(0.3); }
+        .store-item.coming-soon .store-item-btn { background: rgba(107,114,128,0.5); cursor: not-allowed; pointer-events: none; }
+        .store-item-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 0.4rem; flex-wrap: wrap; gap: 0.5rem;
+        }
+        .store-item-title { font-weight: 700; font-size: 1rem; color: #f6d365; }
+        .store-item-cost { font-weight: 800; color: #00d4ff; }
+        .store-item-desc { font-size: 0.82rem; color: rgba(255,255,255,0.6); margin-bottom: 0.7rem; }
+        .store-item-btn {
+            background: var(--primary-gradient); border: none;
+            padding: 0.45rem 1.2rem; border-radius: 30px;
+            color: white; font-weight: 600; cursor: pointer; font-size: 0.82rem;
+            transition: all 0.2s; font-family: inherit;
+        }
+        .store-item-btn:hover { transform: scale(1.05); box-shadow: 0 4px 14px rgba(102,126,234,0.45); }
+
+        /* ========== NOTIFICATION PANEL ========== */
+        .notif-panel {
+            position: fixed; top: 70px; right: 20px;
+            width: 320px; max-height: 420px;
+            background: rgba(20,20,40,0.97);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.12);
+            border-radius: 20px; padding: 1.2rem;
+            z-index: 9999; overflow-y: auto;
+            animation: fadeInUp 0.25s ease;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            display: none;
+        }
+        body.dark-mode .notif-panel { background: rgba(7,7,16,0.97); }
+        .notif-panel.open { display: block; }
+        .notif-panel-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1rem;
+        }
+        .notif-panel-header h4 { color: white; font-size: 0.95rem; }
+        .notif-panel-clear { font-size: 0.75rem; color: #00d4ff; cursor: pointer; }
+        .notif-panel-clear:hover { text-decoration: underline; }
+        .notif-entry {
+            display: flex; gap: 0.8rem; padding: 0.8rem;
+            border-radius: 12px; margin-bottom: 0.5rem;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.08);
+            transition: all 0.2s;
+        }
+        .notif-entry:hover { background: rgba(255,255,255,0.1); }
+        .notif-entry.unread { border-left: 3px solid #00d4ff; }
+        .notif-entry-icon { font-size: 1.2rem; flex-shrink: 0; margin-top: 2px; }
+        .notif-entry-text { font-size: 0.82rem; color: rgba(255,255,255,0.8); }
+        .notif-entry-time { font-size: 0.7rem; color: rgba(255,255,255,0.4); margin-top: 3px; }
+
+        /* ========== TOAST ========== */
+        .toast {
+            position: fixed; bottom: 24px; right: 24px;
+            color: white; padding: 0.9rem 1.4rem;
+            border-radius: 14px; z-index: 10001;
+            animation: slideIn 0.35s cubic-bezier(0.4,0,0.2,1);
+            display: flex; align-items: center; gap: 0.6rem;
+            backdrop-filter: blur(12px); font-size: 0.9rem; font-weight: 500;
+            max-width: 360px; min-width: 200px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+        }
+        .toast.success { background: rgba(16,185,129,0.95); }
+        .toast.error { background: rgba(239,68,68,0.95); }
+        .toast.info { background: rgba(59,130,246,0.95); }
+        .toast.warning { background: rgba(245,158,11,0.95); color: #1a1a2e; }
+        @keyframes slideIn {
+            from { transform: translateX(120%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* ========== STATES ========== */
+        .loading { text-align: center; padding: 2rem; }
+        .spinner {
+            width: 36px; height: 36px;
+            border: 3px solid rgba(255,255,255,0.15);
+            border-radius: 50%; border-top-color: #00d4ff;
+            animation: spin 0.9s ease-in-out infinite;
+            margin: 0 auto 0.8rem;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .empty-state { text-align: center; padding: 2rem; color: rgba(255,255,255,0.5); }
+        body.dark-mode .empty-state { color: var(--text-secondary); }
+        .empty-state i { font-size: 2.5rem; margin-bottom: 0.8rem; opacity: 0.4; display: block; }
+        .empty-state p { font-size: 0.9rem; }
+
+        /* ========== FOOTER ========== */
+        .footer {
+            text-align: center; padding: 2rem;
+            color: rgba(255,255,255,0.6); font-size: 0.8rem;
+            border-top: 1px solid rgba(255,255,255,0.1); margin-top: 2rem;
+        }
+        body.dark-mode .footer { color: var(--text-secondary); border-top-color: var(--glass-border); }
+        .footer a { color: rgba(255,255,255,0.8); text-decoration: none; }
+        body.dark-mode .footer a { color: var(--text-primary); }
+        .footer a:hover { color: #00d4ff; }
+
+        /* ========== DISCLAIMER ========== */
+        .disclaimer {
+            margin: 1.5rem 2rem 2rem;
+            padding: 1rem 1.5rem;
+            background: rgba(0,0,0,0.15); border-radius: 14px;
+            text-align: center; font-size: 0.78rem;
+            color: rgba(255,255,255,0.5); position: relative; z-index: 10;
+        }
+        body.dark-mode .disclaimer { background: rgba(255,255,255,0.03); color: var(--text-secondary); }
+
+        /* ========== GAMIFICATION EXTRA ========== */
+        .streak-fire { color: #f59e0b; animation: pulse-f 1.2s infinite; }
+        @keyframes pulse-f { 0%,100% { opacity:1; transform:scale(1); } 50% { opacity:0.7; transform:scale(1.15); } }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 900px) {
+            .main-grid, .main-grid-3 { grid-template-columns: 1fr; }
+            .col-span-2 { grid-column: span 1; }
+        }
+        @media (max-width: 768px) {
+            .dashboard-container { padding: 1rem; }
+            .stats-grid { grid-template-columns: repeat(2, 1fr); }
+            .welcome-section { flex-direction: column; text-align: center; padding: 1.5rem; }
+            .welcome-text h2 { font-size: 1.4rem; }
+            .quick-actions { justify-content: center; }
+            .level-section { grid-template-columns: 1fr; text-align: center; }
+            .streak-badge { margin: 0 auto; }
+        }
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr 1fr; gap: 0.8rem; }
+            .btn { padding: 0.6rem 1rem; font-size: 0.82rem; }
+        }
+
+        /* ========== MISC ========== */
+        .divider { height: 1px; background: rgba(255,255,255,0.1); margin: 1rem 0; }
+        body.dark-mode .divider { background: var(--glass-border); }
+        .text-accent { color: #00d4ff; }
+        .text-gold { color: #f59e0b; }
+        .text-muted { color: rgba(255,255,255,0.55); font-size: 0.85rem; }
+        body.dark-mode .text-muted { color: var(--text-secondary); }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; }
+        .mt-1 { margin-top: 0.5rem; } .mt-2 { margin-top: 1rem; }
+        .mb-2 { margin-bottom: 1.5rem; }
+        .fw-700 { font-weight: 700; }
+        .online-dot {
+            display: inline-block; width: 8px; height: 8px;
+            background: #10b981; border-radius: 50%;
+            box-shadow: 0 0 6px #10b981;
+            animation: pulse-f 2s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+
+    <nav class="navbar" id="mainNavbar">
+        <a href="dashboard.html" class="nav-brand">
+            <div class="nav-brand-icon"><i class="fas fa-shield-alt"></i></div>
+            Sarveik 
+        </a>
+        <ul class="nav-links">
+            <li><a href="dashboard.html" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li><a href="leaderboard.html"><i class="fas fa-trophy"></i> Leaderboard</a></li>
+            <li><a href="profile.html"><i class="fas fa-user"></i> Profile</a></li>
+            <li><a href="analytics.html"><i class="fas fa-chart-line"></i> Analytics</a></li>
+            <li><a href="main.html"><i class="fas fa-rocket"></i> Tools</a></li>
+            <li><a href="friends.html"><i class="fas fa-users"></i> Friends</a></li>
+            <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            <li>
+                <button class="notif-btn" id="notifBtn" title="Notifications">
+                    <i class="fas fa-bell"></i>
+                    <span class="notif-dot" id="notifDot"></span>
+                </button>
+            </li>
+            <li><div class="theme-toggle" id="themeToggleBtn"><i class="fas fa-moon"></i> <span>Dark</span></div></li>
+        </ul>
+        <div class="hamburger" id="hamburgerBtn">
+            <i class="fas fa-bars"></i><span style="font-size:0.8rem;">Menu</span>
+        </div>
+    </nav>
+
+    <!-- Notification Panel -->
+    <div class="notif-panel" id="notifPanel">
+        <div class="notif-panel-header">
+            <h4><i class="fas fa-bell text-accent"></i> Notifications</h4>
+            <span class="notif-panel-clear" id="clearNotifs">Clear all</span>
+        </div>
+        <div id="notifList">
+            <div class="notif-entry unread">
+                <span class="notif-entry-icon">🎉</span>
+                <div>
+                    <div class="notif-entry-text">Welcome to Sarveik! Claim your 100 credit bonus.</div>
+                    <div class="notif-entry-time">Just now</div>
+                </div>
+            </div>
+            <div class="notif-entry unread">
+                <span class="notif-entry-icon">🔥</span>
+                <div>
+                    <div class="notif-entry-text">Your daily login streak is active. Keep it going!</div>
+                    <div class="notif-entry-time">5 min ago</div>
+                </div>
+            </div>
+            <div class="notif-entry">
+                <span class="notif-entry-icon">⭐</span>
+                <div>
+                    <div class="notif-entry-text">New daily quests are available.</div>
+                    <div class="notif-entry-time">1 hour ago</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Mobile drawer -->
+    <div class="mobile-menu-overlay" id="mobileOverlay"></div>
+    <div class="mobile-menu-drawer" id="mobileDrawer">
+        <div class="mobile-close" id="mobileCloseBtn">&times;</div>
+        <ul class="mobile-nav-links">
+            <li><a href="dashboard.html" class="active"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li><a href="leaderboard.html"><i class="fas fa-trophy"></i> Leaderboard</a></li>
+            <li><a href="profile.html"><i class="fas fa-user"></i> Profile</a></li>
+            <li><a href="analytics.html"><i class="fas fa-chart-line"></i> Analytics</a></li>
+            <li><a href="main.html"><i class="fas fa-rocket"></i> Tools</a></li>
+            <li><a href="friends.html"><i class="fas fa-users"></i> Friends</a></li>
+            <li><a href="#" id="mobileLogoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+        <div class="mobile-theme-toggle" id="mobileThemeToggle">
+            <i class="fas fa-moon"></i> <span>Dark Mode</span>
+        </div>
+    </div>
+
+    <div class="dashboard-container">
+
+        <!-- WELCOME BANNER -->
+        <div class="welcome-section mb-2">
+            <div class="welcome-text">
+                <h2 id="welcomeMessage">Welcome back! ✨</h2>
+                <p><span class="online-dot"></span> Live dashboard &nbsp;·&nbsp; Track activity, earn credits, discover tools</p>
+            </div>
+            <div class="quick-actions">
+                <button class="btn btn-primary" id="spendCreditsBtn"><i class="fas fa-store"></i> Shop</button>
+                <button class="btn btn-primary" onclick="window.location.href='main.html'"><i class="fas fa-rocket"></i> Tools</button>
+                <button class="btn btn-secondary" id="creditsGuideBtn"><i class="fas fa-coins"></i> Earn Credits</button>
+                <button class="refresh-btn" id="manualRefreshBtn"><i class="fas fa-sync-alt"></i> Refresh</button>
+            </div>
+        </div>
+
+        <!-- SEARCH -->
+        <div class="search-bar mb-2">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" class="search-input" placeholder="Search tools, activity, quests..." id="globalSearch">
+        </div>
+
+        <!-- STATS GRID -->
+        <div class="stats-grid">
+            <div class="stat-card" onclick="window.location.href='main.html'">
+                <div class="stat-icon-wrap"><i class="fas fa-chart-line"></i></div>
+                <div class="stat-number" id="toolsUsed">0</div>
+                <div class="stat-label">Tools Used</div>
+                <div><span class="stat-trend up" id="toolsTrend"><i class="fas fa-arrow-up"></i> —</span></div>
+            </div>
+            <div class="stat-card" id="creditsCard">
+                <div class="stat-icon-wrap"><i class="fas fa-coins"></i></div>
+                <div class="stat-number" id="creditsBalance">0</div>
+                <div class="stat-label">Credits</div>
+                <div><span class="stat-trend neutral" id="creditsTrend">Lifetime earned</span></div>
+            </div>
+            <div class="stat-card" onclick="window.location.href='friends.html'">
+                <div class="stat-icon-wrap"><i class="fas fa-users"></i></div>
+                <div class="stat-number" id="friendsCount">0</div>
+                <div class="stat-label">Connections</div>
+                <div><span class="stat-trend neutral">Friends &amp; referrals</span></div>
+            </div>
+            <div class="stat-card" id="streakCard">
+                <div class="stat-icon-wrap"><i class="fas fa-fire"></i></div>
+                <div class="stat-number" id="streakDays">0</div>
+                <div class="stat-label">Day Streak 🔥</div>
+                <div><span class="stat-trend warning" style="background:rgba(245,158,11,0.15);color:#f59e0b;">Click to claim</span></div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon-wrap"><i class="fas fa-star"></i></div>
+                <div class="stat-number" id="totalXpStat">0</div>
+                <div class="stat-label">Total XP</div>
+                <div><span class="stat-trend up"><i class="fas fa-arrow-up"></i> Lifetime</span></div>
+            </div>
+        </div>
+
+        <!-- LEVEL + DAILY RESET COUNTDOWN -->
+        <div class="main-grid mb-2">
+            <!-- Gamification / Level -->
+            <div class="card col-span-2">
+                <div class="card-header">
+                    <h3><i class="fas fa-gamepad text-accent"></i> Your Progress</h3>
+                    <div class="card-header-actions">
+                        <button class="btn btn-icon" onclick="window.refreshGamification()" title="Refresh"><i class="fas fa-sync-alt"></i></button>
+                    </div>
+                </div>
+                <div id="gamificationWidget">
+                    <div class="loading"><div class="spinner"></div>Loading...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ACHIEVEMENTS + COUNTDOWN -->
+        <div class="main-grid mb-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-medal text-accent"></i> Achievements</h3>
+                    <span class="text-muted" id="achCount">0/8</span>
+                </div>
+                <div class="achievement-grid" id="achievementGrid">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-clock text-accent"></i> Daily Reset In</h3>
+                </div>
+                <div class="countdown-grid" id="countdownGrid">
+                    <div class="countdown-block"><div class="countdown-num" id="cdH">00</div><div class="countdown-lbl">HRS</div></div>
+                    <div class="countdown-block"><div class="countdown-num" id="cdM">00</div><div class="countdown-lbl">MIN</div></div>
+                    <div class="countdown-block"><div class="countdown-num" id="cdS">00</div><div class="countdown-lbl">SEC</div></div>
+                </div>
+                <div class="divider"></div>
+                <p class="text-muted" style="text-align:center;font-size:0.82rem;">Quests &amp; streak bonuses reset at midnight UTC</p>
+
+                <!-- Quick Links -->
+                <div class="card-header" style="margin-top:1.2rem;border-top:1px solid rgba(255,255,255,0.1);padding-top:1rem;border-bottom:none;margin-bottom:0.8rem;">
+                    <h3><i class="fas fa-bolt text-accent"></i> Quick Access</h3>
+                </div>
+                <div class="quick-links">
+                    <a href="main.html" class="quick-link-btn"><i class="fas fa-robot" style="color:#00d4ff;"></i><span>AI Tools</span></a>
+                    <a href="leaderboard.html" class="quick-link-btn"><i class="fas fa-trophy" style="color:#f59e0b;"></i><span>Leaderboard</span></a>
+                    <a href="friends.html" class="quick-link-btn"><i class="fas fa-users" style="color:#10b981;"></i><span>Friends</span></a>
+                    <a href="analytics.html" class="quick-link-btn"><i class="fas fa-chart-bar" style="color:#7c3aed;"></i><span>Analytics</span></a>
+                    <a href="profile.html" class="quick-link-btn"><i class="fas fa-user-circle" style="color:#3b82f6;"></i><span>Profile</span></a>
+                    <div class="quick-link-btn" id="shareBtn"><i class="fas fa-share-alt" style="color:#ef4444;"></i><span>Share</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- QUESTS + ACTIVITY -->
+        <div class="main-grid mb-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-tasks text-accent"></i> Daily Quests</h3>
+                    <i class="fas fa-calendar-day text-muted"></i>
+                </div>
+                <div id="dailyQuestsList">
+                    <div class="loading"><div class="spinner"></div>Loading quests...</div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-history text-accent"></i> Recent Activity</h3>
+                    <i class="fas fa-clock text-muted"></i>
+                </div>
+                <div class="activity-list" id="activityList">
+                    <div class="loading"><div class="spinner"></div>Loading activity...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MINI CHART + TOP TOOLS + LEADERBOARD PREVIEW -->
+        <div class="main-grid-3 mb-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-chart-area text-accent"></i> XP This Week</h3>
+                </div>
+                <div class="chart-wrap">
+                    <canvas id="xpChart"></canvas>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h3><i class="fas fa-fire text-accent"></i> Top Tools</h3>
+                </div>
+                <div id="topToolsList">
+                    <div class="loading"><div class="spinner"></div></div>
+                </div>
+            </div>
+
+        </div>
+
+    </div><!-- /dashboard-container -->
+
+    <div class="footer">
+        <p>&copy; 2025 Sarveik. All rights reserved. | <a href="/privacy.html">Privacy</a> | <a href="terms.html">Terms</a></p>
+    </div>
+    <div class="disclaimer">
+        <strong>Disclaimer:</strong> Sarveik  is a directory of third-party tools. We do not host any content. All trademarks and brand names are the property of their respective owners.
+        <a href="dmca.html" style="color:inherit;text-decoration:underline;">DMCA</a>
+    </div>
+
+    <!-- Credits Guide Modal -->
+    <div id="creditsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-coins"></i> Earn &amp; Spend Credits</h2>
+                <button class="close-modal">&times;</button>
+            </div>
+            <h3 style="color:#f6d365;margin-bottom:0.8rem;">💰 Earning Credits</h3>
+            <ul style="padding-left:1.5rem;line-height:2;margin-bottom:1.5rem;">
+                <li><strong>🎁 Welcome Bonus:</strong> 100 credits</li>
+                <li><strong>📅 Daily Login:</strong> 5 credits/day</li>
+                <li><strong>👥 Refer Friends:</strong> 50 credits/referral</li>
+                <li><strong>📝 Complete Profile:</strong> 30 credits</li>
+                <li><strong>📤 Submit Tools:</strong> 25 credits/approved tool</li>
+                <li><strong>⭐ Write Reviews:</strong> 10 credits/review</li>
+                <li><strong>🎯 Complete Quests:</strong> Variable rewards</li>
+            </ul>
+            <h3 style="color:#f6d365;margin-bottom:0.8rem;">💎 Spending Credits</h3>
+            <ul style="padding-left:1.5rem;line-height:2;margin-bottom:1.5rem;">
+                <li><strong>👑 Premium Tools:</strong> Coming Soon! 🚀</li>
+                <li><strong>📊 Advanced Analytics:</strong> 200 credits (7 days)</li>
+                <li><strong>🎯 Priority Support:</strong> 100 credits (30 days)</li>
+                <li><strong>🏅 Custom Badge:</strong> 150 credits (permanent)</li>
+                <li><strong>⭐ Featured Profile:</strong> 300 credits (7 days)</li>
+            </ul>
+            <h3 style="color:#f6d365;margin-bottom:0.8rem;">🚀 Tips</h3>
+            <ul style="padding-left:1.5rem;line-height:2;">
+                <li>✅ Log in daily for your bonus</li>
+                <li>✅ Share your referral link</li>
+                <li>✅ Complete quests for bonus XP + credits</li>
+                <li>✅ Keep your streak alive for XP multipliers!</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Store Modal -->
+    <div id="storeModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2><i class="fas fa-store"></i> Sarveik Premium Shop</h2>
+                <button class="close-store-modal">&times;</button>
+            </div>
+            <div id="storeItemsList">
+                <div class="loading"><div class="spinner"></div>Loading options...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // ========== PARTICLES ==========
+    (function createParticles() {
+        const c = document.getElementById('particles');
+        if (!c) return;
+        const colors = ['rgba(0,212,255,0.3)','rgba(124,58,237,0.3)','rgba(102,126,234,0.3)','rgba(255,255,255,0.2)'];
+        for (let i = 0; i < 60; i++) {
+            const p = document.createElement('div');
+            p.className = 'particle';
+            const size = Math.random() * 5 + 2;
+            p.style.cssText = `
+                left:${Math.random()*100}%;
+                width:${size}px; height:${size}px;
+                background:${colors[Math.floor(Math.random()*colors.length)]};
+                animation-delay:${Math.random()*25}s;
+                animation-duration:${Math.random()*15+12}s;
+            `;
+            c.appendChild(p);
+        }
+    })();
+
+    // ========== NAVBAR SCROLL ==========
+    window.addEventListener('scroll', () => {
+        document.getElementById('mainNavbar').classList.toggle('scrolled', window.scrollY > 10);
+    });
+
+    // ========== THEME ==========
+    function initTheme() {
+        const isDark = localStorage.getItem('nova_theme') === 'dark';
+        document.body.classList.toggle('dark-mode', isDark);
+        updateThemeUI(isDark);
+    }
+    function updateThemeUI(isDark) {
+        const d = document.getElementById('themeToggleBtn');
+        const m = document.getElementById('mobileThemeToggle');
+        if (d) d.innerHTML = isDark ? '<i class="fas fa-sun"></i> <span>Light</span>' : '<i class="fas fa-moon"></i> <span>Dark</span>';
+        if (m) m.innerHTML = isDark ? '<i class="fas fa-sun"></i> <span>Light Mode</span>' : '<i class="fas fa-moon"></i> <span>Dark Mode</span>';
+    }
+    function toggleTheme() {
+        const isDark = document.body.classList.toggle('dark-mode');
+        localStorage.setItem('nova_theme', isDark ? 'dark' : 'light');
+        updateThemeUI(isDark);
+        showToast(isDark ? 'Dark mode on' : 'Light mode on', 'info');
+    }
+
+    // ========== TOAST ==========
+    function showToast(msg, type = 'success') {
+        const icons = { success:'fa-check-circle', error:'fa-exclamation-circle', info:'fa-info-circle', warning:'fa-exclamation-triangle' };
+        const t = document.createElement('div');
+        t.className = `toast ${type}`;
+        t.innerHTML = `<i class="fas ${icons[type]||'fa-info-circle'}"></i> ${msg}`;
+        document.body.appendChild(t);
+        setTimeout(() => { t.style.animation = 'slideIn 0.3s ease reverse'; setTimeout(() => t.remove(), 300); }, 4000);
+    }
+
+    // ========== UTIL ==========
+    function escapeHtml(text) {
+        if (!text) return '';
+        const d = document.createElement('div'); d.textContent = text; return d.innerHTML;
+    }
+    function formatRelativeTime(ds) {
+        const diff = Date.now() - new Date(ds);
+        const m = Math.floor(diff/60000), h = Math.floor(diff/3600000), d = Math.floor(diff/86400000);
+        if (m < 1) return 'Just now';
+        if (m < 60) return `${m}m ago`;
+        if (h < 24) return `${h}h ago`;
+        return `${d}d ago`;
+    }
+    function animateNumber(id, end) {
+        const el = document.getElementById(id); if (!el) return;
+        const start = parseInt(el.textContent) || 0;
+        if (start === end) return;
+        const dur = 900, step = 16;
+        const inc = (end - start) / (dur / step);
+        let cur = start;
+        const t = setInterval(() => {
+            cur += inc;
+            if ((inc>0&&cur>=end)||(inc<0&&cur<=end)) { el.textContent = end; clearInterval(t); }
+            else el.textContent = Math.floor(cur);
+        }, step);
+    }
+
+    // ========== API ==========
+    async function apiCall(url, options = {}) {
+        const r = await fetch(url, {
+            ...options,
+            headers: { 'Content-Type': 'application/json', ...options.headers },
+            credentials: 'include'
+        });
+        if (!r.ok) { const t = await r.text().catch(()=>''); throw new Error(t || `HTTP ${r.status}`); }
+        const ct = r.headers.get('content-type') || '';
+        return ct.includes('application/json') ? r.json() : r.text();
+    }
+
+    // ========== COUNTDOWN ==========
+    function updateCountdown() {
+        const now = new Date();
+        const midnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()+1));
+        const diff = midnight - now;
+        const h = Math.floor(diff/3600000);
+        const m = Math.floor((diff%3600000)/60000);
+        const s = Math.floor((diff%60000)/1000);
+        const pad = n => String(n).padStart(2,'0');
+        const cdH = document.getElementById('cdH'), cdM = document.getElementById('cdM'), cdS = document.getElementById('cdS');
+        if (cdH) cdH.textContent = pad(h);
+        if (cdM) cdM.textContent = pad(m);
+        if (cdS) cdS.textContent = pad(s);
+    }
+    setInterval(updateCountdown, 1000); updateCountdown();
+
+    // ========== ACHIEVEMENTS (static data, enhance with API later) ==========
+    const ACHIEVEMENTS = [
+        { icon: '🏆', name: 'First Tool', unlocked: true },
+        { icon: '🔥', name: '7-Day Streak', unlocked: false },
+        { icon: '💰', name: '500 Credits', unlocked: false },
+        { icon: '👥', name: 'Social Bee', unlocked: false },
+        { icon: '🚀', name: '10 Tools', unlocked: false },
+        { icon: '⭐', name: 'Reviewer', unlocked: false },
+        { icon: '🎯', name: 'Quest Master', unlocked: false },
+        { icon: '👑', name: 'Level 10', unlocked: false },
+    ];
+    function renderAchievements(stats) {
+        const grid = document.getElementById('achievementGrid');
+        if (!grid) return;
+        const unlockedAchs = ACHIEVEMENTS.map((a, i) => {
+            let unlocked = a.unlocked;
+            if (stats) {
+                if (i===0 && stats.toolsUsed > 0) unlocked = true;
+                if (i===1 && stats.streak >= 7) unlocked = true;
+                if (i===2 && stats.aiCredits >= 500) unlocked = true;
+                if (i===4 && stats.toolsUsed >= 10) unlocked = true;
+            }
+            return { ...a, unlocked };
+        });
+        const count = unlockedAchs.filter(a=>a.unlocked).length;
+        const achCount = document.getElementById('achCount');
+        if (achCount) achCount.textContent = `${count}/${ACHIEVEMENTS.length}`;
+        grid.innerHTML = unlockedAchs.map(a => `
+            <div class="achievement-item ${a.unlocked?'':'locked'}" title="${a.name}">
+                <div class="ach-icon">${a.icon}</div>
+                <div class="ach-name">${a.name}</div>
+            </div>
+        `).join('');
+    }
+
+    // ========== TOP TOOLS ==========
+    const DEMO_TOOLS = [
+        { name: 'AI Chat', uses: 142, icon: '🤖' },
+        { name: 'Image Gen', uses: 98, icon: '🎨' },
+        { name: 'Code Helper', uses: 76, icon: '💻' },
+        { name: 'SEO Writer', uses: 54, icon: '✍️' },
+        { name: 'Translator', uses: 31, icon: '🌍' },
+    ];
+    function renderTopTools() {
+        const el = document.getElementById('topToolsList');
+        if (!el) return;
+        const max = DEMO_TOOLS[0].uses;
+        const rankClass = i => i===0?'gold':i===1?'silver':i===2?'bronze':'';
+        el.innerHTML = DEMO_TOOLS.map((t,i) => `
+            <div class="tool-item">
+                <span class="tool-rank ${rankClass(i)}">${i+1}</span>
+                <div class="tool-icon-sm">${t.icon}</div>
+                <div class="tool-info">
+                    <div class="tool-name">${t.name}</div>
+                    <div class="tool-uses">${t.uses} uses</div>
+                </div>
+                <div class="tool-bar-mini">
+                    <div class="tool-bar-fill" style="width:${(t.uses/max*100).toFixed(0)}%"></div>
+                </div>
+            </div>
+        `).join('');
+    }
+
+    // ========== LEADERBOARD MINI ==========
+    const DEMO_LB = [
+        { name: 'Alex K.', pts: 4820, you: false },
+        { name: 'Maria S.', pts: 3910, you: false },
+        { name: 'Dev R.', pts: 3500, you: false },
+        { name: 'You', pts: 2100, you: true },
+        { name: 'Priya M.', pts: 1800, you: false },
+    ];
+    function renderLbMini() {
+        const el = document.getElementById('lbMiniList');
+        if (!el) return;
+        const rankClass = i => i===0?'r1':i===1?'r2':i===2?'r3':'';
+        const rankIcon = i => i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1;
+        el.innerHTML = DEMO_LB.map((u,i) => `
+            <div class="lb-item ${u.you?'you':''}">
+                <span class="lb-rank-num ${rankClass(i)}">${rankIcon(i)}</span>
+                <div class="lb-avatar">${u.name[0]}</div>
+                <div class="lb-name">${u.you?'<b>You</b>':u.name}</div>
+                <span class="lb-pts">${u.pts.toLocaleString()} XP</span>
+            </div>
+        `).join('');
+    }
+
+    // ========== XP CHART ==========
+    let xpChartInstance = null;
+    function renderXpChart(data) {
+        const canvas = document.getElementById('xpChart');
+        if (!canvas) return;
+        if (xpChartInstance) xpChartInstance.destroy();
+        const labels = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+        const vals = data || [10, 25, 18, 40, 30, 55, 42];
+        const isDark = document.body.classList.contains('dark-mode');
+        const gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.15)';
+        const textColor = isDark ? '#9ca3af' : 'rgba(255,255,255,0.7)';
+        xpChartInstance = new Chart(canvas, {
+            type: 'line',
+            data: {
+                labels,
+                datasets: [{
+                    label: 'XP',
+                    data: vals,
+                    borderColor: '#00d4ff',
+                    backgroundColor: 'rgba(0,212,255,0.12)',
+                    borderWidth: 2.5,
+                    pointBackgroundColor: '#00d4ff',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    fill: true,
+                    tension: 0.45,
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 } } },
+                    y: { grid: { color: gridColor }, ticks: { color: textColor, font: { size: 11 } }, beginAtZero: true }
+                }
+            }
+        });
+    }
+
+    // ========== PROFILE & STATS ==========
+    async function loadUserProfile() {
+        try {
+            const p = await apiCall('/profile');
+            const h = new Date().getHours();
+            const g = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+            const el = document.getElementById('welcomeMessage');
+            if (el) el.innerHTML = `${g}, ${escapeHtml(p.username)}! ✨`;
+        } catch { /* silent */ }
+    }
+
+    let latestStats = null;
+    async function loadStats() {
+        try {
+            const s = await apiCall('/api/stats');
+            latestStats = s;
+            animateNumber('toolsUsed', s.toolsUsed || 0);
+            animateNumber('creditsBalance', s.aiCredits || 0);
+            animateNumber('friendsCount', s.friendsCount || 0);
+            animateNumber('streakDays', s.streak || 0);
+            animateNumber('totalXpStat', s.totalXP || 0);
+            const tn = document.getElementById('toolsTrend');
+            if (tn && s.toolsUsed) tn.innerHTML = `<i class="fas fa-arrow-up"></i> ${s.toolsUsed} total`;
+            renderAchievements(s);
+        } catch (e) { console.error('Stats error:', e); }
+    }
+
+    // ========== GAMIFICATION ==========
+    async function loadGamification() {
+        try {
+            const r = await fetch('/api/gamification/status', { credentials: 'include' });
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            const d = await r.json();
+            const level = d.level ?? 1, xp = d.xp ?? 0, nextXP = d.nextLevelXP ?? 100;
+            const prog = d.progress ?? 0, totalXP = d.totalXP ?? 0;
+            const streak = d.streak ?? { current_streak: 0, multiplier: 1 };
+            const quests = d.dailyQuests ?? [];
+
+            animateNumber('totalXpStat', totalXP);
+
+            const w = document.getElementById('gamificationWidget');
+            if (w) w.innerHTML = `
+                <div class="level-section">
+                    <div style="text-align:center;">
+                        <div class="level-badge">${level}</div>
+                        <div style="margin-top:22px;"></div>
+                    </div>
+                    <div class="level-info">
+                        <h4>Level ${level} Explorer</h4>
+                        <p>${xp.toLocaleString()} / ${nextXP.toLocaleString()} XP to next level</p>
+                        <div class="xp-bar-wrap">
+                            <div class="xp-bar" style="width:${Math.min(100,Math.max(0,prog))}%"></div>
+                        </div>
+                        <p style="margin-top:6px;font-size:0.78rem;">Total XP: <b>${totalXP.toLocaleString()}</b></p>
+                    </div>
+                    <div class="streak-badge">
+                        <div class="streak-num"><i class="fas fa-fire streak-fire"></i> ${streak.current_streak}</div>
+                        <div class="streak-label">DAY STREAK</div>
+                        <div style="font-size:0.7rem;margin-top:4px;color:#f59e0b;">${streak.multiplier}x XP</div>
+                    </div>
+                </div>
+            `;
+
+            renderQuests(quests);
+            renderXpChart();
+        } catch (e) {
+            console.error('Gamification:', e);
+            const w = document.getElementById('gamificationWidget');
+            if (w) w.innerHTML = '<div class="empty-state"><i class="fas fa-gamepad"></i><p>Failed to load progress</p></div>';
+            renderQuests([]);
+            renderXpChart();
+        }
+    }
+
+    function renderQuests(quests) {
+        const el = document.getElementById('dailyQuestsList');
+        if (!el) return;
+        if (!quests.length) {
+            el.innerHTML = '<div class="empty-state"><i class="fas fa-calendar-day"></i><p>No quests today. Check back tomorrow!</p></div>';
+            return;
+        }
+        el.innerHTML = quests.map(q => {
+            const prog = q.progress ?? 0, target = q.target ?? 1;
+            const done = prog >= target, claimed = q.claimed === true;
+            let badge = '', claimBtn = '';
+            if (done && !claimed) {
+                badge = '<span class="badge badge-warning">✨ Ready!</span>';
+                claimBtn = `<button class="btn btn-sm btn-primary claim-quest-btn" data-id="${q.id}" style="margin-top:0.5rem;">Claim Reward</button>`;
+            } else if (done && claimed) {
+                badge = '<span class="badge badge-success">✅ Claimed</span>';
+            } else {
+                badge = `<span class="badge badge-info">${prog}/${target}</span>`;
+            }
+            return `
+                <div class="quest-item ${done?'completed':''}">
+                    <div class="quest-row">
+                        <span class="quest-title">${escapeHtml(q.name)}</span>
+                        ${badge}
+                    </div>
+                    <div class="quest-desc">${escapeHtml(q.description)}</div>
+                    <div class="quest-bar-wrap">
+                        <div class="quest-bar" style="width:${Math.min(100,(prog/target*100)).toFixed(0)}%"></div>
+                    </div>
+                    <div class="quest-rewards"><i class="fas fa-coins"></i> ${q.creditsReward} credits &nbsp; <i class="fas fa-star"></i> +${q.xpReward} XP</div>
+                    ${claimBtn}
+                </div>
+            `;
+        }).join('');
+
+        document.querySelectorAll('.claim-quest-btn').forEach(btn => {
+            btn.addEventListener('click', async function() {
+                const id = this.dataset.id;
+                this.disabled = true; this.textContent = 'Claiming…';
+                try {
+                    const res = await fetch(`/api/quests/${id}/claim`, {
+                        method: 'POST', credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' }
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        showToast(data.message || 'Quest claimed! 🎉', 'success');
+                        await loadGamification(); await loadStats();
+                    } else {
+                        showToast(data.error || 'Claim failed', 'error');
+                        this.disabled = false; this.textContent = 'Claim Reward';
+                    }
+                } catch(e) {
+                    showToast('Error claiming quest', 'error');
+                    this.disabled = false; this.textContent = 'Claim Reward';
+                }
+            });
+        });
+    }
+
+    // ========== ACTIVITY ==========
+    async function loadActivity() {
+        const el = document.getElementById('activityList');
+        if (!el) return;
+        el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+        try {
+            const [toolActs, txns] = await Promise.all([
+                apiCall('/api/activity').catch(()=>[]),
+                apiCall('/api/credits/transactions?limit=20').catch(()=>({ transactions:[] }))
+            ]);
+            let combined = [];
+            if (toolActs?.length) combined.push(...toolActs.map(a=>({ text: a.action, icon: a.icon||'fas fa-robot', time: a.time })));
+            if (txns?.transactions?.length) {
+                combined.push(...txns.transactions.map(t => {
+                    let text='', icon='';
+                    if (t.type==='earn') { text=`Earned ${t.amount} credits: ${t.description}`; icon='fas fa-coins'; }
+                    else if (t.type==='spend') { text=`Spent ${t.amount} credits: ${t.description}`; icon='fas fa-shopping-cart'; }
+                    else if (t.type==='bonus') { text=`Bonus: ${t.description}`; icon='fas fa-gift'; }
+                    else { text=t.description; icon='fas fa-exchange-alt'; }
+                    return { text, icon, time: t.created_at };
+                }));
+            }
+            combined.sort((a,b)=>new Date(b.time)-new Date(a.time));
+            const items = combined.slice(0,15);
+            if (!items.length) {
+                el.innerHTML = '<div class="empty-state"><i class="fas fa-history"></i><p>No activity yet. Start using tools!</p></div>';
+                return;
+            }
+            el.innerHTML = items.map(a=>`
+                <div class="activity-item">
+                    <div class="activity-info">
+                        <div class="activity-icon"><i class="${a.icon}"></i></div>
+                        <span class="activity-text">${escapeHtml(a.text)}</span>
+                    </div>
+                    <div class="activity-time">${formatRelativeTime(a.time)}</div>
+                </div>
+            `).join('');
+        } catch {
+            el.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Failed to load activity</p></div>';
+        }
+    }
+
+    // ========== STORE ==========
+    const ALLOWED_FEATURES = ['analytics','support','badge','featured'];
+    async function loadSpendOptions() {
+        const el = document.getElementById('storeItemsList');
+        if (!el) return;
+        try {
+            const options = await apiCall('/api/credits/spend-options');
+            const filtered = options.filter(o=>ALLOWED_FEATURES.includes(o.feature));
+            const premium = { id:999,title:'Premium Tools Access',description:'Unlock all premium AI tools for 30 days',cost:500,icon:'fa-crown',duration:'30 days',feature:'premium',comingSoon:true };
+            const all = [premium, ...filtered];
+            el.innerHTML = all.map(o => {
+                const cs = o.comingSoon||o.feature==='premium';
+                return `
+                    <div class="store-item ${cs?'coming-soon':''}">
+                        <div class="store-item-header">
+                            <span class="store-item-title">
+                                ${o.title}
+                                ${o.popular&&!cs?'<span class="premium-badge">HOT</span>':''}
+                                ${cs?'<span class="coming-soon-badge">🚀 Soon</span>':''}
+                            </span>
+                            <span class="store-item-cost">${o.cost} cr</span>
+                        </div>
+                        <div class="store-item-desc">${o.description} (${o.duration})</div>
+                        <button class="store-item-btn" data-id="${o.id}" data-cost="${o.cost}" data-reason="${o.title}" data-feature="${o.feature}" data-duration="${o.duration}" ${cs?'disabled':''}>
+                            ${cs?'Coming Soon':'<i class="fas fa-shopping-cart"></i> Purchase'}
+                        </button>
+                    </div>
+                `;
+            }).join('');
+            document.querySelectorAll('.store-item-btn:not([disabled])').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const cost = parseInt(btn.dataset.cost);
+                    const dur = btn.dataset.duration;
+                    const days = dur==='30 days'?30:dur==='7 days'?7:0;
+                    await purchaseItem(cost, btn.dataset.reason, btn.dataset.feature, days);
+                });
+            });
+        } catch { el.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><p>Failed to load store</p></div>'; }
+    }
+
+    async function purchaseItem(amount, reason, feature, days) {
+        try {
+            const bal = await apiCall('/api/credits/balance');
+            if (bal.balance < amount) { showToast(`Need ${amount} credits, you have ${bal.balance}`, 'error'); return; }
+            if (!confirm(`Spend ${amount} credits on "${reason}"?`)) return;
+            const r = await apiCall('/api/credits/spend', { method:'POST', body:JSON.stringify({amount,reason,feature,duration:days}) });
+            if (!r.success) throw new Error(r.error||'Purchase failed');
+            showToast(`✅ ${reason} purchased!`, 'success');
+            document.getElementById('storeModal').style.display='none';
+            await loadStats(); await loadGamification();
+        } catch(e) { showToast(e.message, 'error'); }
+    }
+
+    // ========== DAILY BONUS ==========
+    let claimingBonus = false;
+    async function claimDailyBonus() {
+        if (claimingBonus) return;
+        claimingBonus = true;
+        try {
+            await apiCall('/api/credits/claim-daily', { method:'POST' });
+            showToast('🎉 Daily bonus claimed! +5 credits', 'success');
+            await loadStats(); await loadGamification();
+        } catch(e) {
+            if (e.message?.includes('already')) showToast('Already claimed today!', 'info');
+            else showToast(e.message, 'error');
+        } finally { claimingBonus = false; }
+    }
+
+    // ========== SESSION ==========
+    async function checkSession() {
+        try {
+            const s = await apiCall('/check-session');
+            if (!s.loggedIn) { window.location.href='/'; return false; }
+            return true;
+        } catch { window.location.href='/'; return false; }
+    }
+
+    async function logout() {
+        try { await apiCall('/logout',{method:'POST'}); } catch {}
+        window.location.href='/';
+    }
+
+    // ========== SEARCH ==========
+    document.getElementById('globalSearch')?.addEventListener('input', function() {
+        const q = this.value.toLowerCase();
+        if (!q) return;
+        // Filter activity items
+        document.querySelectorAll('.activity-item').forEach(item => {
+            const txt = item.querySelector('.activity-text')?.textContent.toLowerCase();
+            item.style.display = txt?.includes(q) ? '' : 'none';
+        });
+    });
+
+    // ========== SHARE ==========
+    document.getElementById('shareBtn')?.addEventListener('click', async () => {
+        const url = window.location.origin;
+        if (navigator.share) {
+            try { await navigator.share({ title:'Sarveik', text:'Check out Sarveik!', url }); }
+            catch {}
+        } else {
+            await navigator.clipboard.writeText(url);
+            showToast('Link copied to clipboard!', 'success');
+        }
+    });
+
+    // ========== NOTIFICATIONS ==========
+    const notifBtn = document.getElementById('notifBtn');
+    const notifPanel = document.getElementById('notifPanel');
+    notifBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        notifPanel.classList.toggle('open');
+        if (notifPanel.classList.contains('open')) {
+            const dot = document.getElementById('notifDot');
+            if (dot) dot.style.display = 'none';
+            // mark unread as read
+            document.querySelectorAll('.notif-entry.unread').forEach(n=>n.classList.remove('unread'));
+        }
+    });
+    document.addEventListener('click', (e) => {
+        if (notifPanel && !notifPanel.contains(e.target) && e.target !== notifBtn) {
+            notifPanel.classList.remove('open');
+        }
+    });
+    document.getElementById('clearNotifs')?.addEventListener('click', () => {
+        document.getElementById('notifList').innerHTML = '<div class="empty-state" style="padding:1rem;"><i class="fas fa-bell-slash"></i><p>No notifications</p></div>';
+    });
+
+    // ========== SOCKET.IO ==========
+    if (typeof io !== 'undefined') {
+        const socket = io();
+        socket.on('level_up', d => { showToast(`🎉 LEVEL UP! You reached Level ${d.newLevel}!`, 'success'); loadGamification(); loadStats(); });
+        socket.on('achievement_unlocked', d => { showToast(`🏆 Achievement: ${d.name} (+${d.xp} XP)`, 'success'); loadGamification(); loadStats(); });
+        socket.on('quest_ready', () => { showToast('✨ Quest ready to claim!', 'info'); loadGamification(); });
+        socket.on('quest_claimed', d => { showToast(`🎉 "${d.name}" claimed! +${d.xp} XP`, 'success'); loadGamification(); loadStats(); });
+        socket.on('quest_completed', d => { showToast(`✨ Quest done! +${d.xp} XP`, 'success'); loadGamification(); loadStats(); });
+    }
+
+    // ========== MODAL HELPERS ==========
+    function openModal(id) { const m=document.getElementById(id); if(m) m.style.display='flex'; }
+    function closeModal(id) { const m=document.getElementById(id); if(m) m.style.display='none'; }
+    window.addEventListener('click', e => {
+        ['creditsModal','storeModal'].forEach(id => { if(e.target===document.getElementById(id)) closeModal(id); });
+    });
+
+    // ========== REFRESH ==========
+    window.refreshGamification = async function() {
+        const btn = document.getElementById('manualRefreshBtn');
+        if (btn) btn.classList.add('spinning');
+        await Promise.all([loadGamification(), loadStats(), loadActivity()]);
+        if (btn) btn.classList.remove('spinning');
+        showToast('Dashboard refreshed!', 'info');
+    };
+
+    // ========== INIT ==========
+    async function init() {
+        initTheme();
+        const ok = await checkSession();
+        if (!ok) return;
+        await loadUserProfile();
+        await Promise.all([loadStats(), loadActivity(), loadGamification()]);
+        renderTopTools();
+        renderLbMini();
+        renderXpChart();
+        // auto claim daily
+        try { await apiCall('/api/credits/claim-daily',{method:'POST'}); await loadStats(); await loadGamification(); } catch {}
+    }
+
+    // Event listeners
+    document.getElementById('logoutBtn')?.addEventListener('click', async e => { e.preventDefault(); if(confirm('Log out?')) await logout(); });
+    document.getElementById('mobileLogoutBtn')?.addEventListener('click', async e => { e.preventDefault(); if(confirm('Log out?')) await logout(); });
+    document.getElementById('creditsGuideBtn')?.addEventListener('click', ()=>openModal('creditsModal'));
+    document.querySelector('#creditsModal .close-modal')?.addEventListener('click', ()=>closeModal('creditsModal'));
+    document.getElementById('streakCard')?.addEventListener('click', claimDailyBonus);
+    document.getElementById('creditsCard')?.addEventListener('click', ()=>openModal('creditsModal'));
+    document.getElementById('spendCreditsBtn')?.addEventListener('click', ()=>{ loadSpendOptions(); openModal('storeModal'); });
+    document.querySelector('#storeModal .close-store-modal')?.addEventListener('click', ()=>closeModal('storeModal'));
+    document.getElementById('themeToggleBtn')?.addEventListener('click', toggleTheme);
+    document.getElementById('mobileThemeToggle')?.addEventListener('click', toggleTheme);
+    document.getElementById('manualRefreshBtn')?.addEventListener('click', window.refreshGamification);
+
+    // Mobile menu
+    const hamburger=document.getElementById('hamburgerBtn'), overlay=document.getElementById('mobileOverlay'),
+          drawer=document.getElementById('mobileDrawer'), closeBtn=document.getElementById('mobileCloseBtn');
+    function openMenu() { drawer.classList.add('open'); overlay.style.display='block'; document.body.style.overflow='hidden'; }
+    function closeMenu() { drawer.classList.remove('open'); overlay.style.display='none'; document.body.style.overflow=''; }
+    hamburger?.addEventListener('click', openMenu);
+    closeBtn?.addEventListener('click', closeMenu);
+    overlay?.addEventListener('click', closeMenu);
+    document.querySelectorAll('.mobile-nav-links a').forEach(l=>l.addEventListener('click', closeMenu));
+
+    // Auto-refresh
+    const interval = setInterval(()=>{ loadStats(); loadActivity(); loadGamification(); }, 30000);
+    window.addEventListener('beforeunload', ()=>clearInterval(interval));
+
+    init();
+    </script>
+</body>
+</html>

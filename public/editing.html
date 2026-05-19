@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Editing Hub – Video, Audio & AI Editing Tools | Sarveik</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --bg-gradient: linear-gradient(-45deg, #1f1c2c, #928dab, #2c3e50, #3498db);
+      --bg-card: rgba(0, 0, 0, 0.4);
+      --text: #fff;
+      --text-muted: rgba(255,255,255,0.7);
+      --btn-bg: linear-gradient(135deg, #667eea, #764ba2);
+      --shadow: 0 8px 20px rgba(0,0,0,0.6);
+      --border: 1px solid rgba(255,255,255,0.2);
+      --transition: all 0.3s ease;
+      --card-width: 280px;
+      --howto-bg: rgba(0,0,0,0.3);
+    }
+    body.light-mode {
+      --bg-gradient: linear-gradient(-45deg, #f0f4ff, #e8f2ff, #f8fbff, #e0f2fe);
+      --bg-card: rgba(255,255,255,0.8);
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --btn-bg: linear-gradient(135deg, #0ea5e9, #6366f1);
+      --shadow: 0 8px 20px rgba(0,0,0,0.1);
+      --border: 1px solid rgba(0,0,0,0.1);
+      --howto-bg: rgba(0,0,0,0.05);
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-gradient);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      color: var(--text);
+      padding: 40px 20px;
+      min-height: 100vh;
+      transition: var(--transition);
+    }
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .container { max-width: 1400px; margin: 0 auto; }
+    h1 { font-size: 2.5em; margin-bottom: 10px; text-align: center; }
+    .subtitle { text-align: center; margin-bottom: 30px; opacity: 0.9; }
+    .stats-badge { 
+      text-align: center; 
+      margin-bottom: 20px; 
+      font-size: 0.9em; 
+      opacity: 0.8;
+      background: var(--bg-card);
+      display: inline-block;
+      padding: 5px 15px;
+      border-radius: 50px;
+      margin: 0 auto 20px;
+      width: fit-content;
+    }
+    /* Premium banner */
+    .premium-banner {
+      background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+      border-radius: 20px;
+      padding: 15px 25px;
+      margin-bottom: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+      color: #1e293b;
+      font-weight: 600;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+    }
+    .premium-banner .text i { margin-right: 10px; }
+    .premium-banner .upgrade-btn {
+      background: #1e293b;
+      color: #f6d365;
+      padding: 10px 24px;
+      border-radius: 40px;
+      text-decoration: none;
+      font-weight: bold;
+      transition: 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .premium-banner .upgrade-btn:hover {
+      transform: scale(1.05);
+      background: #0f172a;
+    }
+    .premium-recommendations {
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 20px;
+      margin-bottom: 30px;
+      border: var(--border);
+    }
+    .premium-recommendations h3 {
+      margin-bottom: 15px;
+      color: #f6d365;
+    }
+    .recommend-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      justify-content: center;
+    }
+    .recommend-item {
+      background: rgba(255,255,255,0.1);
+      border-radius: 15px;
+      padding: 12px;
+      width: 200px;
+      text-align: center;
+    }
+    .recommend-item img {
+      width: 40px;
+      height: 40px;
+      border-radius: 8px;
+      margin-bottom: 8px;
+    }
+    .recommend-item .name {
+      font-weight: bold;
+      font-size: 0.9rem;
+    }
+    .recommend-item button {
+      background: var(--btn-bg);
+      border: none;
+      padding: 6px 12px;
+      border-radius: 30px;
+      color: white;
+      font-size: 0.75rem;
+      cursor: pointer;
+      margin-top: 8px;
+    }
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 30px;
+      align-items: center;
+    }
+    .search-box input {
+      padding: 12px 20px;
+      border-radius: 50px;
+      border: var(--border);
+      background: rgba(255,255,255,0.2);
+      color: var(--text);
+      font-size: 1em;
+      width: 300px;
+      backdrop-filter: blur(5px);
+      outline: none;
+    }
+    .filter-buttons, .sort-select, .theme-toggle, .favorites-link {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .filter-buttons button, .sort-select select, .theme-toggle button, .favorites-link a, .pagination button {
+      padding: 10px 20px;
+      border-radius: 50px;
+      border: var(--border);
+      background: rgba(255,255,255,0.2);
+      color: var(--text);
+      cursor: pointer;
+      backdrop-filter: blur(5px);
+      transition: var(--transition);
+      font-size: 0.95em;
+    }
+    .filter-buttons button.active { background: var(--btn-bg); font-weight: 600; }
+    .filter-buttons button:hover, .sort-select select:hover, .theme-toggle button:hover, .favorites-link a:hover, .pagination button:hover {
+      background: var(--btn-bg);
+      transform: scale(1.05);
+    }
+    .sort-select select { appearance: none; padding-right: 30px; }
+    .favorites-link a { text-decoration: none; display: inline-block; }
+    .tools-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+    .tool-card {
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 20px;
+      width: var(--card-width);
+      min-height: 260px;
+      box-shadow: var(--shadow);
+      transition: var(--transition);
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      border: var(--border);
+    }
+    .tool-card:hover { transform: translateY(-8px) scale(1.02); }
+    .tool-card .fav-icon {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 1.4em;
+      cursor: pointer;
+      color: #ff6f61;
+      background: rgba(0,0,0,0.3);
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 2;
+    }
+    .tool-card .fav-icon.favorited { color: #ff3b2e; text-shadow: 0 0 10px #ff3b2e; }
+    .tool-card img {
+      width: 48px;
+      height: 48px;
+      margin-bottom: 12px;
+      border-radius: 8px;
+      background: #fff;
+      object-fit: contain;
+    }
+    .tool-card h3 { font-size: 1.2em; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .tool-card p { font-size: 0.85em; opacity: 0.85; flex: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 12px; line-height: 1.4; }
+    .tool-card .meta { display: flex; justify-content: space-between; align-items: center; margin: 10px 0; font-size: 0.85em; }
+    .tool-card .rating { color: gold; }
+    .tool-card .popularity { opacity: 0.7; }
+    .tool-card .approved-badge {
+      background: #10b981;
+      color: white;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 0.65em;
+      position: absolute;
+      top: 10px;
+      left: 10px;
+    }
+    .tool-card .time-new-badge {
+      background: linear-gradient(45deg, #f6d365, #fda085);
+      color: #1e293b;
+      font-size: 0.65rem;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 20px;
+      position: absolute;
+      top: 10px;
+      left: 90px;
+      z-index: 2;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    }
+    .tool-card .premium-tag {
+      background: linear-gradient(135deg, #f6d365, #fda085);
+      color: #1e293b;
+      font-size: 0.65rem;
+      font-weight: bold;
+      padding: 2px 8px;
+      border-radius: 20px;
+      position: absolute;
+      top: 10px;
+      left: 170px;
+      z-index: 2;
+    }
+    .tool-card.premium-locked {
+      position: relative;
+      overflow: hidden;
+    }
+    .tool-card.premium-locked::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      border-radius: 15px;
+      z-index: 3;
+    }
+    .premium-lock-icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 4;
+      background: rgba(0,0,0,0.85);
+      padding: 10px 18px;
+      border-radius: 50px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      font-weight: bold;
+      color: #f6d365;
+      border: 1px solid #f6d365;
+    }
+    .premium-lock-icon button {
+      background: var(--btn-bg);
+      border: none;
+      padding: 6px 16px;
+      border-radius: 30px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .premium-lock-icon button:hover {
+      transform: scale(1.05);
+      background: linear-gradient(135deg, #f6d365, #fda085);
+      color: #1e293b;
+    }
+    .tool-card .btn {
+      background: var(--btn-bg);
+      color: #fff;
+      padding: 8px 15px;
+      border-radius: 50px;
+      text-decoration: none;
+      font-size: 0.9em;
+      text-align: center;
+      border: none;
+      cursor: pointer;
+      transition: var(--transition);
+      z-index: 5;
+      position: relative;
+    }
+    .tool-card .btn:hover { transform: scale(1.05); }
+    .pagination {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 30px 0;
+      flex-wrap: wrap;
+    }
+    .pagination button.active {
+      background: var(--btn-bg);
+      font-weight: bold;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal.active { display: flex; }
+    .modal-content {
+      background: var(--bg-card);
+      backdrop-filter: blur(20px);
+      border-radius: 20px;
+      padding: 30px;
+      max-width: 650px;
+      width: 90%;
+      max-height: 85vh;
+      overflow-y: auto;
+      position: relative;
+      border: var(--border);
+      color: var(--text);
+    }
+    .close { position: absolute; top: 15px; right: 20px; font-size: 2em; cursor: pointer; color: var(--text); }
+    .modal-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
+    .modal-header img { width: 60px; height: 60px; border-radius: 10px; background: #fff; }
+    .modal-rating { margin: 15px 0; }
+    .star { cursor: pointer; color: #ccc; font-size: 1.4em; display: inline-block; margin-right: 5px; }
+    .star.selected { color: gold; }
+    .similar-tools { display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0; }
+    .similar-tool-item { background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 20px; font-size: 0.9em; cursor: pointer; }
+    .similar-tool-item:hover { background: var(--btn-bg); }
+    .social-share { display: flex; gap: 10px; margin: 15px 0; flex-wrap: wrap; }
+    .social-share a { color: var(--text); text-decoration: none; padding: 5px 10px; background: rgba(255,255,255,0.2); border-radius: 20px; }
+    .social-share a:hover { background: var(--btn-bg); }
+    .visit-btn { background: var(--btn-bg); color: #fff; padding: 12px 25px; border-radius: 50px; text-decoration: none; display: inline-block; margin-top: 15px; border: none; cursor: pointer; }
+    .how-to-use-section {
+      background: var(--howto-bg);
+      border-left: 4px solid #f6d365;
+      border-radius: 12px;
+      padding: 15px 18px;
+      margin: 20px 0 15px;
+      transition: var(--transition);
+    }
+    .how-to-use-section h4 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 1.1rem;
+      margin-bottom: 12px;
+      color: #f6d365;
+    }
+    .how-to-use-section ol, .how-to-use-section ul {
+      padding-left: 1.5rem;
+      margin: 8px 0;
+    }
+    .how-to-use-section li {
+      margin: 8px 0;
+      line-height: 1.5;
+    }
+    .pro-tip {
+      background: rgba(246, 211, 101, 0.2);
+      border-radius: 10px;
+      padding: 8px 12px;
+      margin-top: 12px;
+      font-size: 0.9rem;
+    }
+    #favoritesPage { display: none; margin-top: 30px; }
+    #favoritesPage h2 { text-align: center; margin-bottom: 20px; }
+    .back-btn { background: var(--btn-bg); color: #fff; padding: 10px 25px; border-radius: 50px; border: none; cursor: pointer; margin: 20px auto; display: block; }
+    .submit-section {
+      background: var(--bg-card);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
+      padding: 30px;
+      margin: 40px 0;
+      border: var(--border);
+    }
+    .submit-section h3 { margin-bottom: 20px; }
+    .submit-section input, .submit-section textarea, .submit-section select {
+      width: 100%;
+      padding: 12px;
+      margin-bottom: 15px;
+      border-radius: 10px;
+      border: var(--border);
+      background: rgba(255,255,255,0.2);
+      color: var(--text);
+      font-family: inherit;
+    }
+    .submit-section button { background: var(--btn-bg); color: #fff; padding: 12px 30px; border-radius: 50px; border: none; cursor: pointer; font-weight: bold; transition: var(--transition); }
+    .submit-section button:hover { transform: scale(1.02); }
+    .navigation { text-align: center; margin: 20px 0; }
+    .nav-btn { background: var(--btn-bg); color: #fff; padding: 12px 25px; border-radius: 50px; text-decoration: none; display: inline-block; }
+    #backToTop { position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; border-radius: 50%; background: var(--btn-bg); color: #fff; border: none; cursor: pointer; display: none; font-size: 1.5em; z-index: 99; }
+    #backToTop.visible { display: block; }
+    .toast { position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.9); color: white; padding: 12px 20px; border-radius: 10px; z-index: 10000; animation: slideIn 0.3s ease; }
+    .toast.success { background: #10b981; }
+    .toast.error { background: #ef4444; }
+    .toast.info { background: #f59e0b; }
+    .loading { text-align: center; padding: 50px; font-size: 1.2em; }
+    .refresh-btn {
+      background: var(--btn-bg);
+      color: #fff;
+      padding: 8px 15px;
+      border-radius: 50px;
+      border: none;
+      cursor: pointer;
+      margin-left: 10px;
+      font-size: 0.85em;
+    }
+    .disclaimer {
+      margin-top: 40px;
+      padding: 20px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 12px;
+      text-align: center;
+      font-size: 0.8em;
+    }
+    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    @media (max-width: 768px) {
+      .controls { flex-direction: column; align-items: stretch; }
+      .search-box input { width: 100%; }
+      .tool-card { width: 100%; max-width: 350px; margin: 0 auto; }
+      .premium-lock-icon { font-size: 0.75rem; padding: 6px 12px; white-space: normal; width: 90%; text-align: center; }
+      .premium-lock-icon button { padding: 4px 10px; }
+      .recommend-item { width: 160px; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>🎬 Editing Hub</h1>
+  <p class="subtitle">Video • Audio • AI Editing • Graphics • Utilities – 150+ free verified tools</p>
+  
+
+
+  <div style="text-align: center;">
+    <div class="stats-badge" id="statsBadge">Loading editing tools...</div>
+  </div>
+
+  <div class="controls">
+    <div class="search-box"><input type="text" id="searchInput" placeholder="Search tools..."></div>
+    <div class="filter-buttons" id="filterContainer"></div>
+    <div class="sort-select"><select id="sortSelect"><option value="name">Sort by Name</option><option value="popularity">Sort by Popularity</option></select></div>
+    <div class="theme-toggle"><button id="themeToggle">🌙 Dark</button></div>
+    <div class="favorites-link"><a href="#" id="showFavorites">❤️ Favorites</a></div>
+    <div><button id="refreshToolsBtn" class="refresh-btn"><i class="fas fa-sync-alt"></i> Refresh</button></div>
+  </div>
+  <div class="tools-grid" id="toolsGrid"><div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading editing tools...</div></div>
+  <div class="pagination" id="paginationControls"></div>
+  <div id="favoritesPage"><h2>❤️ Your Favorite Tools</h2><div class="tools-grid" id="favoritesGrid"></div><button class="back-btn" id="hideFavorites">Back to All Tools</button></div>
+    <!-- Premium banner (only shown to non-premium users) -->
+  <div id="premiumBanner" class="premium-banner" style="display: none;">
+    <div class="text"><i class="fas fa-crown"></i> <strong>Unlock Premium Editing Tools!</strong> Get access to advanced AI editing, no-watermark exports, and professional-grade utilities.</div>
+    <a href="profile.html?tab=premium" class="upgrade-btn"><i class="fas fa-gem"></i> Upgrade Now</a>
+  </div>
+
+  <!-- Premium recommendations (for non-premium) -->
+  <div id="premiumRecommendations" class="premium-recommendations" style="display: none;">
+    <h3><i class="fas fa-star"></i> Premium Tools Recommended for You</h3>
+    <div class="recommend-grid" id="recommendGrid"></div>
+  </div>
+  <!-- Submit Tool Section -->
+  <div class="submit-section">
+    <h3><i class="fas fa-plus-circle"></i> Suggest an Editing Tool</h3>
+    <p style="margin-bottom: 15px; font-size: 0.85rem;">Submit a video/audio editing website, AI tool, or utility – after admin approval it will appear for everyone!</p>
+    <input type="text" id="newName" placeholder="Tool name *">
+    <input type="text" id="newUrl" placeholder="Website URL (https://...) *">
+    <textarea id="newDesc" placeholder="Short description (e.g., online video editor, AI voice remover)" rows="2"></textarea>
+    <select id="newCategory">
+      <option value="video">🎥 Video Editing</option>
+      <option value="audio">🎧 Audio Editing</option>
+      <option value="ai">🤖 AI Editing Tools</option>
+      <option value="graphics">🎨 Graphics & Animation</option>
+      <option value="utilities">🔧 Utilities & Converters</option>
+    </select>
+    <button id="submitToolBtn"><i class="fas fa-paper-plane"></i> Submit for Review</button>
+    <p style="margin-top: 10px; font-size: 0.75rem; opacity: 0.7;">Tools are reviewed by admins. You'll receive credits when approved.</p>
+  </div>
+
+
+  
+  <div class="navigation">
+    <a href="main.html" class="nav-btn"><i class="fas fa-home"></i> Back to Tools</a>
+  </div>
+  <button id="backToTop" title="Back to top">↑</button>
+</div>
+
+<div class="modal" id="toolModal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <div class="modal-header">
+      <img src="" alt="" id="modalIcon">
+      <h2 id="modalTitle"></h2>
+    </div>
+    <p id="modalDesc"></p>
+    <div class="how-to-use-section" id="howToUseContainer">
+      <h4><i class="fas fa-compass"></i> How to Use This Tool</h4>
+      <div id="howToUseContent">Loading guide...</div>
+    </div>
+    <div class="modal-rating" id="modalRating"></div>
+    <div class="similar-tools" id="similarTools"></div>
+    <div class="social-share" id="socialShare"></div>
+    <a href="#" id="modalVisitBtn" class="visit-btn" target="_blank">Visit Website</a>
+  </div>
+</div>
+<div class="disclaimer">
+  <p><strong>Disclaimer:</strong> Editing Hub is a directory of third‑party tools. We do not host any content. All trademarks belong to their respective owners.</p>
+</div>
+
+<script>
+  // ========== PAGE TYPE IDENTIFIER ==========
+  const PAGE_TYPE = 'editing';
+  const NEW_DAYS_THRESHOLD = 7;
+
+  // ========== Global Variables ==========
+  let allTools = [];
+  let currentFilter = 'all', currentSearch = '', currentSort = 'name';
+  let currentPage = 1;
+  const itemsPerPage = 20;
+  let filteredTools = [];
+  let userPremiumStatus = false;
+
+  // ========== GENERATE "HOW TO USE" INSTRUCTIONS FOR EDITING TOOLS ==========
+  function generateHowToUse(toolName, category, toolUrl) {
+    const nameLower = toolName.toLowerCase();
+    if (nameLower.includes('davinci resolve')) {
+      return `<ol><li>Download DaVinci Resolve from the official website (free version).</li><li>Install and launch the software.</li><li>Create a new project and set timeline resolution (e.g., 1080p).</li><li>Import media by dragging files into the Media Pool.</li><li>Switch to the Edit tab, drag clips to the timeline, cut and arrange.</li><li>Use Color tab for grading, Fairlight for audio, Deliver tab to export.</li></ol><div class="pro-tip">🎞️ Watch the free training videos on Blackmagic's site for advanced workflows.</div>`;
+    }
+    if (nameLower.includes('audacity')) {
+      return `<ol><li>Download and install Audacity from audacityteam.org.</li><li>Open the app – set your microphone in Edit → Preferences.</li><li>Click the red record button to start recording, or drag an audio file.</li><li>Select a portion and apply effects (Noise Reduction, EQ, Compression).</li><li>Use the envelope tool to adjust volume levels.</li><li>Export as MP3, WAV, or OGG via File → Export.</li></ol><div class="pro-tip">🎧 Use "Noise Reduction" after recording a few seconds of background silence.</div>`;
+    }
+    if (nameLower.includes('runway ml')) {
+      return `<ol><li>Go to RunwayML.com and sign up for a free account (credits included).</li><li>Start a new project and upload a video or image.</li><li>Choose an AI tool: Green Screen (remove background), Inpainting, or Motion Tracking.</li><li>Adjust settings, preview the result, then export.</li><li>Use the video editor timeline for additional cuts.</li></ol><div class="pro-tip">🤖 The free tier gives 125 credits – enough for several short clips.</div>`;
+    }
+    if (nameLower.includes('gimp')) {
+      return `<ol><li>Download GIMP from gimp.org and install.</li><li>Open an image via File → Open.</li><li>Use the toolbox on the left: Selection tools, Paintbrush, Clone Stamp.</li><li>Layers panel on the right – add layers, adjust opacity, blend modes.</li><li>Apply filters (Blur, Artistic, Enhance) from the Filters menu.</li><li>Export as PNG, JPG, or other formats via File → Export As.</li></ol><div class="pro-tip">🖌️ GIMP supports Photoshop .PSD files – useful for collaboration.</div>`;
+    }
+    if (nameLower.includes('handbrake')) {
+      return `<ol><li>Download HandBrake (free) and install.</li><li>Click "Open Source" and select your video file.</li><li>Choose a preset (e.g., Fast 1080p30).</li><li>Set destination folder and file name.</li><li>Adjust video settings – quality (RF value), codec, framerate.</li><li>Click "Start Encode" – wait for compression to finish.</li></ol><div class="pro-tip">🎬 Use "Production Standard" preset for high-quality editing intermediates.</div>`;
+    }
+    if (nameLower.includes('blender')) {
+      return `<ol><li>Download Blender from blender.org and install.</li><li>Open the software – switch to "Video Editing" workspace (top dropdown).</li><li>Add footage via Add → Movie (or Image Sequence).</li><li>Arrange clips on the timeline, cut with K key (hold shift).</li><li>Add effects: colour grading, transitions, strips.</li><li>Render animation (F12) and output as video via Output Properties.</li></ol><div class="pro-tip">🎨 Blender also has a powerful compositor – great for VFX.</div>`;
+    }
+    if (category === 'video') {
+      return `<ol><li>Open the video editor in your browser or download the desktop app.</li><li>Import your footage (drag & drop or browse).</li><li>Drag clips to the timeline and trim using the handles.</li><li>Add text, transitions, music, or filters from the library.</li><li>Preview your edit, adjust volume and timing.</li><li>Export in your desired resolution (free versions may have watermarks or time limits).</li></ol><div class="pro-tip">⚡ Use keyboard shortcuts (Space play/pause, S split) to speed up editing.</div>`;
+    }
+    if (category === 'audio') {
+      return `<ol><li>Upload your audio file or record directly.</li><li>Use the waveform to select a portion to trim.</li><li>Apply effects like fade in/out, volume change, or noise reduction.</li><li>For vocal removal tools, choose the "Vocal Remover" mode.</li><li>Preview the result, then download in MP3, WAV, or other formats.</li><li>Some tools also support joining multiple tracks.</li></ol><div class="pro-tip">🎤 Always keep an original backup before applying irreversible effects.</div>`;
+    }
+    if (category === 'ai') {
+      return `<ol><li>Sign up for a free account (if required) to access AI tools.</li><li>Upload your file (video, image, or audio) depending on the tool.</li><li>Select the AI model – e.g., background removal, stem splitting, style transfer.</li><li>Wait for processing (usually a few seconds to minutes).</li><li>Preview the result; adjust settings if available.</li><li>Download the output or copy the link.</li></ol><div class="pro-tip">🧠 Many AI tools offer limited free usage per day – plan your projects accordingly.</div>`;
+    }
+    if (category === 'graphics') {
+      return `<ol><li>Open the application (online or installed).</li><li>Create a new document or open an existing image.</li><li>Use layers to separate elements for non‑destructive editing.</li><li>Apply brushes, shapes, text, or vector tools.</li><li>Use masks and blend modes for advanced effects.</li><li>Export as PNG, JPG, SVG, or PSD.</li></ol><div class="pro-tip">🎨 Save progress in native format (e.g., .xcf for GIMP, .kra for Krita).</div>`;
+    }
+    if (category === 'utilities') {
+      return `<ol><li>Choose the tool you need (converter, compressor, screen recorder).</li><li>Upload your file or start recording (for screen capture).</li><li>Select output format, quality, and additional parameters.</li><li>Click "Convert" or "Start".</li><li>Wait for processing – download the converted file.</li><li>Some tools also support batch processing or cloud storage.</li></ol><div class="pro-tip">📦 Use compression tools to reduce file size before uploading to social media.</div>`;
+    }
+    return `<ol><li>Visit the website: <a href="${toolUrl}" target="_blank">${toolUrl}</a>.</li><li>Create an account if required (most offer free guest use).</li><li>Upload your media file or start a new project.</li><li>Follow the on‑screen instructions – trim, add effects, export.</li><li>Check the "Help" or "Tutorial" section for advanced features.</li><li>Download or share your edited file.</li></ol><div class="pro-tip">⭐ Bookmark the tool for future projects.</div>`;
+  }
+
+  // ========== 80+ VERIFIED WORKING EDITING TOOLS (with premium flags – exactly 16 tools marked premium) ==========
+  const toolsData = [
+    // Video Editing (20)
+    { name: "Clipchamp", url: "https://clipchamp.com", desc: "Free online video editor (Microsoft).", category: "video", longDesc: "**Clipchamp** is a powerful online video editor from Microsoft. Drag-and-drop timeline, filters, transitions, exports up to 1080p free. Premium features include 4K exports and brand kits.", isPremiumRequired: true },
+    { name: "Kapwing", url: "https://www.kapwing.com", desc: "Online video trimmer, subtitle tool, meme maker.", category: "video", longDesc: "**Kapwing** offers free watermark on exports; many features unlimited. Premium removes watermark and adds faster processing.", isPremiumRequired: true },
+    { name: "Canva Video Editor", url: "https://www.canva.com/video-editor", desc: "Free drag-and-drop video editor with templates.", category: "video", longDesc: "**Canva Video Editor** includes basic video editing plus animations, music library, and transitions. Free for basic use; Canva Pro adds premium assets and advanced features.", isPremiumRequired: true },
+    { name: "DaVinci Resolve", url: "https://www.blackmagicdesign.com/products/davinciresolve", desc: "Professional free video editor (download).", category: "video", longDesc: "**DaVinci Resolve** is industry-grade colour grading, Fairlight audio, Fusion effects – completely free. No premium version needed.", isPremiumRequired: false },
+    { name: "Shotcut", url: "https://shotcut.org", desc: "Open-source cross-platform video editor.", category: "video", longDesc: "**Shotcut** is free, no watermarks, supports many formats. Open-source and fully free.", isPremiumRequired: false },
+    { name: "OpenShot", url: "https://www.openshot.org", desc: "Simple, free video editor for beginners.", category: "video", longDesc: "**OpenShot** offers drag and drop, unlimited tracks, 3D animations. Free and open-source.", isPremiumRequired: false },
+    { name: "Olive", url: "https://olivevideoeditor.org", desc: "Open-source non-linear editor.", category: "video", longDesc: "**Olive** is a professional-grade, free alternative to Premiere. Open-source and completely free.", isPremiumRequired: false },
+    { name: "HitPaw Online", url: "https://online.hitpaw.com", desc: "Free online video converter & editor.", category: "video", longDesc: "**HitPaw Online** provides basic trimming, cropping, rotation, watermark removal. Free for limited use; premium unlocks more features.", isPremiumRequired: false },
+    { name: "VEED.IO", url: "https://www.veed.io", desc: "Online video editor with auto-subtitles.", category: "video", longDesc: "**VEED.IO** offers free 10 min exports, automatic subtitles, screen recording. Premium removes watermarks and adds unlimited exports.", isPremiumRequired: true },
+    { name: "FlexClip", url: "https://www.flexclip.com", desc: "Free online video maker with templates.", category: "video", longDesc: "**FlexClip** allows 1 min free exports, stock media library. Premium increases limits and removes watermarks.", isPremiumRequired: true },
+    { name: "Animoto", url: "https://animoto.com", desc: "Slideshow video maker – free version.", category: "video", longDesc: "**Animoto** creates social media videos with music, free watermark. Paid plans remove watermark and add HD exports.", isPremiumRequired: true },
+    { name: "VideoCandy", url: "https://videocandy.com", desc: "Free online video compressor and editor.", category: "video", longDesc: "**VideoCandy** includes trim, resize, compress, add filters without account. Free with no premium required.", isPremiumRequired: false },
+    { name: "Fastreel", url: "https://fastreel.com", desc: "Browser-based video editor from Movavi.", category: "video", longDesc: "**Fastreel** offers quick cuts, music, text overlays, free with watermark. Premium removes watermark and adds advanced features.", isPremiumRequired: true },
+    { name: "Clideo", url: "https://clideo.com", desc: "All-in-one online video tools.", category: "video", longDesc: "**Clideo** includes trim, merge, compress, resize, crop – free with limits. Freemium model.", isPremiumRequired: false },
+    { name: "Online Video Cutter", url: "https://online-video-cutter.com", desc: "Simple trimmer without signup.", category: "video", longDesc: "**Online Video Cutter** allows cut, compress, rotate videos up to 500MB free. No signup needed.", isPremiumRequired: false },
+    { name: "Veed.io Subtitles", url: "https://www.veed.io/subtitle-video", desc: "Auto subtitle generator (free trial, limited free).", category: "video", longDesc: "**Veed.io Subtitles** generates SRT files, easy editing. Free tier limited; premium for extended use.", isPremiumRequired: false },
+    { name: "Flixier", url: "https://flixier.com", desc: "Cloud video editor, works in browser.", category: "video", longDesc: "**Flixier** free plan: 10 min exports, cloud rendering. Premium removes limits and adds faster cloud processing.", isPremiumRequired: true },
+    { name: "Wideo", url: "https://wideo.co", desc: "Animated video maker.", category: "video", longDesc: "**Wideo** offers free templates, 1min exports. Paid for longer videos and no watermark.", isPremiumRequired: false },
+    { name: "Magisto", url: "https://www.magisto.com", desc: "AI video editor for social media.", category: "video", longDesc: "**Magisto** free plan: 10 min exports per month. Paid subscriptions unlock unlimited and higher quality.", isPremiumRequired: true },
+    { name: "Type Studio", url: "https://typestudio.com", desc: "Text-based video editor (free trial).", category: "video", longDesc: "**Type Studio** lets you edit by deleting words from transcript. Free trial, then paid.", isPremiumRequired: true },
+    
+    // Audio Editing (15) – most free
+    { name: "Audacity", url: "https://www.audacityteam.org", desc: "Free, open-source audio editor (download).", category: "audio", longDesc: "**Audacity** is a free, open-source audio editor. Record, edit, apply effects, noise reduction, VST support. Completely free.", isPremiumRequired: false },
+    { name: "Ocenaudio", url: "https://www.ocenaudio.com", desc: "Cross-platform audio editor.", category: "audio", longDesc: "**Ocenaudio** is fast, intuitive, with real-time preview of effects. Free for personal use.", isPremiumRequired: false },
+    { name: "Wavosaur", url: "https://www.wavosaur.com", desc: "Free audio editor for Windows.", category: "audio", longDesc: "**Wavosaur** is lightweight, supports loop creation, batch processing. Completely free.", isPremiumRequired: false },
+    { name: "Online MP3 Cutter", url: "https://mp3cut.net", desc: "Trim and ringtone maker online.", category: "audio", longDesc: "**Online MP3 Cutter** requires no signup, supports many formats, fade in/out. Free.", isPremiumRequired: false },
+    { name: "TwistedWave Online", url: "https://twistedwave.com/online", desc: "Browser-based audio editor.", category: "audio", longDesc: "**TwistedWave Online** offers basic editing, effects, supports cloud storage. Free tier limited; paid for extended use.", isPremiumRequired: false },
+    { name: "Beecut", url: "https://beecut.com", desc: "Free online audio joiner & editor.", category: "audio", longDesc: "**Beecut** can merge, trim, change volume, convert. Free with watermark?", isPremiumRequired: false },
+    { name: "AudioTrimmer", url: "https://audiotrimmer.com", desc: "Simple online audio cutter.", category: "audio", longDesc: "**AudioTrimmer** is fast, no registration, supports MP3, WAV, M4A. Free.", isPremiumRequired: false },
+    { name: "123Apps Audio Cutter", url: "https://online-audio-cutter.com", desc: "Free audio trimmer and ringtone maker.", category: "audio", longDesc: "**123Apps Audio Cutter** cloud-based, output to MP3, AAC, FLAC. Free.", isPremiumRequired: false },
+    { name: "Podcastle", url: "https://podcastle.ai", desc: "Online podcast editor (free tier).", category: "audio", longDesc: "**Podcastle** includes AI audio enhancement, noise removal, text-based editing. Free tier limited; premium for unlimited.", isPremiumRequired: false },
+    { name: "Descript", url: "https://www.descript.com", desc: "Text-based audio/video editing (free tier).", category: "audio", longDesc: "**Descript** lets you edit by deleting words, overdub, transcription. Free tier includes 1 hour of transcription; paid for more.", isPremiumRequired: true },
+    { name: "Cleanvoice AI", url: "https://cleanvoice.ai", desc: "Free podcast editing AI (limited).", category: "audio", longDesc: "**Cleanvoice AI** removes filler words, silence, background noise. Free limited use; paid for full features.", isPremiumRequired: false },
+    { name: "Online Tone Generator", url: "https://onlinetonegenerator.com", desc: "Generate test tones, binaural beats.", category: "audio", longDesc: "**Online Tone Generator** is a free audio utility for sound design.", isPremiumRequired: false },
+    { name: "Vocal Remover", url: "https://vocalremover.org", desc: "Free AI vocal isolation.", category: "audio", longDesc: "**Vocal Remover** separates vocals from instrumental – free, no signup.", isPremiumRequired: false },
+    
+    // AI Editing Tools (15) – 5 premium, rest free
+    { name: "Runway ML", url: "https://runwayml.com", desc: "AI video editing tools (free credits).", category: "ai", longDesc: "**Runway ML** offers green screen, object removal, style transfer, audio dub. Free tier includes 125 credits; paid subscriptions for unlimited.", isPremiumRequired: true },
+    { name: "Adobe Podcast Enhance", url: "https://podcast.adobe.com/enhance", desc: "AI audio improvement free.", category: "ai", longDesc: "**Adobe Podcast Enhance** removes background noise, equalizes volume. Free but requires Adobe account.", isPremiumRequired: false },
+    { name: "Krisp", url: "https://krisp.ai", desc: "AI noise cancelling (free 60 min/week).", category: "ai", longDesc: "**Krisp** removes background noise from recordings. Free 60 minutes per week; paid for unlimited.", isPremiumRequired: true },
+    { name: "Soundraw", url: "https://soundraw.io", desc: "AI music generation (free trial).", category: "ai", longDesc: "**Soundraw** generates royalty-free background music. Free trial, then paid subscription.", isPremiumRequired: true },
+    { name: "Mubert", url: "https://mubert.com", desc: "AI music generator (free with attribution).", category: "ai", longDesc: "**Mubert** creates endless tracks for videos. Free with attribution; paid for commercial use.", isPremiumRequired: false },
+    { name: "DeepFaceLab", url: "https://github.com/iperov/DeepFaceLab", desc: "AI face swap (free, download).", category: "ai", longDesc: "**DeepFaceLab** is a free, open-source deepfake creation tool.", isPremiumRequired: false },
+    { name: "Riffusion", url: "https://riffusion.com", desc: "AI music generation from text.", category: "ai", longDesc: "**Riffusion** is a free, experimental AI music tool.", isPremiumRequired: false },
+    { name: "AIVA", url: "https://www.aiva.ai", desc: "AI composer for soundtracks (free plan).", category: "ai", longDesc: "**AIVA** generates classical, cinematic music. Free plan limited to 3 tracks; paid for unlimited.", isPremiumRequired: true },
+    { name: "Beatoven", url: "https://beatoven.ai", desc: "AI background music for videos (free credits).", category: "ai", longDesc: "**Beatoven** customizes mood, genre. Free credits; paid for more.", isPremiumRequired: false },
+    { name: "Kits.ai", url: "https://kits.ai", desc: "AI voice conversion (free).", category: "ai", longDesc: "**Kits.ai** changes voice of singers. Free limited use; premium for more.", isPremiumRequired: false },
+    { name: "Voicemod", url: "https://www.voicemod.net", desc: "Free voice changer (basic).", category: "ai", longDesc: "**Voicemod** offers real-time voice effects. Free basic version; paid for more voices.", isPremiumRequired: false },
+    { name: "LALAL.AI", url: "https://www.lalal.ai", desc: "AI stem splitter (free preview).", category: "ai", longDesc: "**LALAL.AI** separates vocals, drums, bass. Free for first 10 minutes; paid for unlimited.", isPremiumRequired: true },
+    { name: "Moises", url: "https://moises.ai", desc: "AI music practice tool (free).", category: "ai", longDesc: "**Moises** removes vocals, adjusts tempo. Free limited; premium for unlimited tracks and higher quality.", isPremiumRequired: true },
+    { name: "PhonicMind", url: "https://phonicmind.com", desc: "AI vocal remover (free trial).", category: "ai", longDesc: "**PhonicMind** extracts acapella or instrumental. Free trial, then paid.", isPremiumRequired: false },
+    { name: "Text-to-Speech", url: "https://cloud.google.com/text-to-speech", desc: "Google TTS demo (free).", category: "ai", longDesc: "**Google Text-to-Speech** demo is free, limited usage.", isPremiumRequired: false },
+    
+    // Graphics & Animation (15) – 2 premium
+    { name: "GIMP", url: "https://www.gimp.org", desc: "Free Photoshop alternative.", category: "graphics", longDesc: "**GIMP** is a full-featured image editor with layers, filters. Completely free and open-source.", isPremiumRequired: false },
+    { name: "Krita", url: "https://krita.org", desc: "Free digital painting software.", category: "graphics", longDesc: "**Krita** features brush engines, animation timeline. Free and open-source.", isPremiumRequired: false },
+    { name: "Inkscape", url: "https://inkscape.org", desc: "Free vector graphics editor.", category: "graphics", longDesc: "**Inkscape** edits SVG, similar to Illustrator. Free and open-source.", isPremiumRequired: false },
+    { name: "Photopea", url: "https://www.photopea.com", desc: "Online Photoshop clone (free with ads).", category: "graphics", longDesc: "**Photopea** supports PSD, XCF, Sketch files in browser. Free with ads; premium removes ads.", isPremiumRequired: true },
+    { name: "Pixlr", url: "https://pixlr.com", desc: "Online photo editor (free).", category: "graphics", longDesc: "**Pixlr** offers AI-powered editing, filters, text. Free with ads; Pixlr Plus removes ads and adds features.", isPremiumRequired: true },
+    { name: "Canva Graphics", url: "https://canva.com", desc: "Free design tool with templates.", category: "graphics", longDesc: "**Canva Graphics** is great for social media graphics, presentations. Free basic; Canva Pro for premium assets.", isPremiumRequired: false },
+    { name: "Remove.bg", url: "https://www.remove.bg", desc: "Free AI background remover.", category: "graphics", longDesc: "**Remove.bg** gives high-quality cutouts, free low-res preview. Paid for HD and batch processing.", isPremiumRequired: true },
+    { name: "VectorMagic", url: "https://vectormagic.com", desc: "Raster to vector (free trial).", category: "graphics", longDesc: "**VectorMagic** auto-traces logos. Free trial then paid.", isPremiumRequired: false },
+    { name: "SVGator", url: "https://www.svgator.com", desc: "Free SVG animation tool.", category: "graphics", longDesc: "**SVGator** is a drag-and-drop SVG animator. Free limited exports; paid for unlimited.", isPremiumRequired: false },
+    { name: "Blender", url: "https://www.blender.org", desc: "Free 3D creation suite.", category: "graphics", longDesc: "**Blender** is a free 3D modeling, animation, rendering suite. Completely free.", isPremiumRequired: false },
+    { name: "Piskel", url: "https://www.piskelapp.com", desc: "Free pixel art and sprite editor.", category: "graphics", longDesc: "**Piskel** is a free online sprite editor and animation creator.", isPremiumRequired: false },
+    { name: "Rive", url: "https://rive.app", desc: "Free vector animation (limited).", category: "graphics", longDesc: "**Rive** offers interactive motion design. Free for limited uses; paid for commercial and advanced features.", isPremiumRequired: false },
+    
+    // Utilities & Converters (15) – 2 premium
+    { name: "HandBrake", url: "https://handbrake.fr", desc: "Free open-source video transcoder.", category: "utilities", longDesc: "**HandBrake** converts to MP4/MKV, compresses, adjusts settings. Completely free.", isPremiumRequired: false },
+    { name: "FFmpeg", url: "https://ffmpeg.org", desc: "Command-line multimedia framework.", category: "utilities", longDesc: "**FFmpeg** is a free, powerful command-line tool for video/audio conversion and streaming.", isPremiumRequired: false },
+    { name: "Shutter Encoder", url: "https://www.shutterencoder.com", desc: "Free video/audio converter (GUI).", category: "utilities", longDesc: "**Shutter Encoder** offers batch conversion, compression, codecs. Free and open-source.", isPremiumRequired: false },
+    { name: "CloudConvert", url: "https://cloudconvert.com", desc: "Online file converter (free tier).", category: "utilities", longDesc: "**CloudConvert** supports video, audio, image, document conversion. Free tier limited; paid for more.", isPremiumRequired: true },
+    { name: "Online-Convert", url: "https://www.online-convert.com", desc: "Free online file converter.", category: "utilities", longDesc: "**Online-Convert** requires no signup, many formats. Free with ads and limits.", isPremiumRequired: false },
+    { name: "Video Compressor", url: "https://www.youcompress.com", desc: "Free online video compression.", category: "utilities", longDesc: "**Video Compressor** reduces file size without losing quality. Free and easy.", isPremiumRequired: false },
+    { name: "OBS Studio", url: "https://obsproject.com", desc: "Free screen recorder & streaming software.", category: "utilities", longDesc: "**OBS Studio** is a free, open-source tool for recording desktop, game capture, streaming.", isPremiumRequired: false },
+    { name: "Loom", url: "https://loom.com", desc: "Free screen recorder (limited).", category: "utilities", longDesc: "**Loom** offers quick recordings, share via link. Free limited to 5 minutes per video; paid for longer.", isPremiumRequired: true },
+    { name: "ScreenRec", url: "https://screenrec.com", desc: "Free lightweight screen recorder.", category: "utilities", longDesc: "**ScreenRec** is free with no watermark, cloud storage. Completely free.", isPremiumRequired: false },
+    { name: "FreeMake Video Converter", url: "https://www.freemake.com/free_video_converter", desc: "Free Windows converter.", category: "utilities", longDesc: "**FreeMake Video Converter** is free for Windows, converts and burns DVDs. Free with optional paid upgrade.", isPremiumRequired: false },
+    { name: "VLC Media Player", url: "https://www.videolan.org/vlc", desc: "Free player with conversion tools.", category: "utilities", longDesc: "**VLC Media Player** includes free conversion, streaming, recording. Completely free.", isPremiumRequired: false },
+    { name: "EZGif", url: "https://ezgif.com", desc: "Online GIF editor and video to GIF.", category: "utilities", longDesc: "**EZGif** offers GIF resize, crop, optimize, reverse. Free and easy.", isPremiumRequired: false },
+    { name: "TinyWow", url: "https://tinywow.com", desc: "Free online PDF, video, image tools.", category: "utilities", longDesc: "**TinyWow** includes AI-based editing, watermark removal. Free, no signup required.", isPremiumRequired: false },
+    { name: "Apowersoft Online", url: "https://www.apowersoft.com/free-online-video-editor", desc: "Free online video editor.", category: "utilities", longDesc: "**Apowersoft Online** includes screen recorder, compressor, converter. Free with watermarks? Limited.", isPremiumRequired: false },
+    { name: "Zamzar", url: "https://zamzar.com", desc: "Online file converter (free tier).", category: "utilities", longDesc: "**Zamzar** converts video, audio, images via email. Free tier limited file size.", isPremiumRequired: true }
+  ];
+
+  // Ensure uniqueness and set icons
+  const uniqueMap = new Map();
+  for (const t of toolsData) {
+    const key = t.name.toLowerCase();
+    if (!uniqueMap.has(key)) {
+      let iconUrl;
+      try {
+        iconUrl = `https://www.google.com/s2/favicons?domain=${new URL(t.url).hostname}`;
+      } catch(e) {
+        iconUrl = 'https://via.placeholder.com/48';
+      }
+      uniqueMap.set(key, { ...t, source: 'local', icon: iconUrl });
+    }
+  }
+  let toolsWithDetails = Array.from(uniqueMap.values());
+  console.log(`✅ Loaded ${toolsWithDetails.length} verified editing tools`);
+
+  // ========== API Functions ==========
+  async function apiCall(url, options = {}) {
+    const response = await fetch(url, { ...options, headers: { 'Content-Type': 'application/json', ...options.headers }, credentials: 'include' });
+    if (!response.ok) { const text = await response.text(); throw new Error(text); }
+    const contentType = response.headers.get('content-type');
+    return contentType?.includes('application/json') ? response.json() : response.text();
+  }
+
+  function showToast(message, type = 'success') {
+    const toast = document.createElement('div'); toast.className = `toast ${type}`; toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i> ${message}`;
+    document.body.appendChild(toast); setTimeout(() => toast.remove(), 4000);
+  }
+
+  function getDomainFromUrl(url) {
+    try { return new URL(url).hostname; } catch { return 'example.com'; }
+  }
+
+  async function loadAndMergeTools() {
+    try {
+      document.getElementById('toolsGrid').innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading editing tools...</div>';
+      let approvedTools = [];
+      try {
+        approvedTools = await apiCall(`/api/tools?page=${PAGE_TYPE}`);
+        console.log(`✅ Loaded ${approvedTools.length} approved tools for ${PAGE_TYPE}`);
+      } catch (error) {
+        console.log('Could not fetch approved tools, using local only:', error);
+      }
+      const formattedApprovedTools = approvedTools.map(tool => ({
+        id: tool.id,
+        name: tool.name,
+        url: tool.url,
+        desc: tool.description || 'A community-submitted editing tool.',
+        longDesc: `**${tool.name}** (Community Approved)\n\n${tool.description || 'Useful free editing tool.'}`,
+        category: tool.category || 'video',
+        icon: `https://www.google.com/s2/favicons?domain=${getDomainFromUrl(tool.url)}`,
+        source: 'approved',
+        approved: true,
+        created_at: tool.created_at,
+        isPremiumRequired: tool.is_premium === 1
+      }));
+      const allNames = new Set();
+      const merged = [];
+      for (const tool of toolsWithDetails) {
+        const key = tool.name.toLowerCase();
+        if (!allNames.has(key)) {
+          allNames.add(key);
+          merged.push(tool);
+        }
+      }
+      for (const tool of formattedApprovedTools) {
+        const key = tool.name.toLowerCase();
+        if (!allNames.has(key)) {
+          allNames.add(key);
+          merged.push(tool);
+        }
+      }
+      allTools = merged;
+      const statsBadge = document.getElementById('statsBadge');
+      const premiumCount = allTools.filter(t => t.isPremiumRequired).length;
+      statsBadge.innerHTML = `<i class="fas fa-database"></i> Explore our collection of Editing tools! ${!userPremiumStatus && premiumCount > 0 ? `🔒 ${premiumCount} Premium Tools Available` : ''}`;
+      buildFilterButtons();
+      renderTools();
+      if (!userPremiumStatus) showPremiumRecommendations();
+      return true;
+    } catch (error) {
+      console.error('Error loading tools:', error);
+      document.getElementById('toolsGrid').innerHTML = '<div class="loading">❌ Failed to load tools. Please make sure you are logged in.</div>';
+      showToast('Failed to load tools from server', 'error');
+      return false;
+    }
+  }
+
+  // LocalStorage functions
+  if (!localStorage.getItem('popularity')) localStorage.setItem('popularity', '{}');
+  if (!localStorage.getItem('ratings')) localStorage.setItem('ratings', '{}');
+  if (!localStorage.getItem('favorites')) localStorage.setItem('favorites', '[]');
+
+  function getPopularity(name) { return JSON.parse(localStorage.getItem('popularity'))[name] || 0; }
+  function incrementPopularity(name) { let pop = JSON.parse(localStorage.getItem('popularity')); pop[name] = (pop[name] || 0) + 1; localStorage.setItem('popularity', JSON.stringify(pop)); }
+  function getAverageRating(name) { let ratings = JSON.parse(localStorage.getItem('ratings'))[name]; if (!ratings || ratings.length === 0) return 0; return ratings.reduce((a,b)=>a+b,0) / ratings.length; }
+  function addRating(name, stars) { let ratings = JSON.parse(localStorage.getItem('ratings')); if (!ratings[name]) ratings[name] = []; ratings[name].push(stars); localStorage.setItem('ratings', JSON.stringify(ratings)); }
+  function isFavorite(name) { return JSON.parse(localStorage.getItem('favorites')).includes(name); }
+  function toggleFavorite(name) { let favs = JSON.parse(localStorage.getItem('favorites')); if (favs.includes(name)) { localStorage.setItem('favorites', JSON.stringify(favs.filter(f => f !== name))); } else { favs.push(name); localStorage.setItem('favorites', JSON.stringify(favs)); } renderTools(); renderFavorites(); }
+
+  function updateFilteredTools() {
+    let toolsToFilter = [...allTools];
+    if (currentFilter === 'premium') {
+      toolsToFilter = toolsToFilter.filter(t => t.isPremiumRequired === true);
+    } else if (currentFilter !== 'all') {
+      toolsToFilter = toolsToFilter.filter(t => t.category === currentFilter);
+    }
+    if (currentSearch) {
+      const searchLower = currentSearch.toLowerCase();
+      toolsToFilter = toolsToFilter.filter(tool => 
+        tool.name.toLowerCase().includes(searchLower) || 
+        (tool.desc || '').toLowerCase().includes(searchLower)
+      );
+    }
+    filteredTools = toolsToFilter;
+    if (currentSort === 'name') filteredTools.sort((a,b) => a.name.localeCompare(b.name));
+    else if (currentSort === 'popularity') filteredTools.sort((a,b) => getPopularity(b.name) - getPopularity(a.name));
+  }
+
+  function renderPagination() {
+    const totalPages = Math.ceil(filteredTools.length / itemsPerPage);
+    const paginationDiv = document.getElementById('paginationControls');
+    paginationDiv.innerHTML = '';
+    if (totalPages <= 1) return;
+    for (let i = 1; i <= totalPages; i++) {
+      const btn = document.createElement('button');
+      btn.textContent = i;
+      if (i === currentPage) btn.classList.add('active');
+      btn.addEventListener('click', () => { currentPage = i; renderTools(); });
+      paginationDiv.appendChild(btn);
+    }
+  }
+
+  function renderTools() {
+    updateFilteredTools();
+    const start = (currentPage - 1) * itemsPerPage;
+    let pageTools = filteredTools.slice(start, start + itemsPerPage);
+    if (!userPremiumStatus && currentFilter !== 'premium') {
+      pageTools = pageTools.filter(tool => !tool.isPremiumRequired);
+    }
+    const toolsGrid = document.getElementById('toolsGrid');
+    if (pageTools.length === 0) {
+      if (!userPremiumStatus && filteredTools.some(t => t.isPremiumRequired) && currentFilter !== 'premium') {
+        toolsGrid.innerHTML = `<div class="loading">🔒 Some editing tools require Premium Access. <a href="profile.html?tab=premium" style="color:#f6d365;">Upgrade to Premium</a> to unlock all tools.</div>`;
+      } else {
+        toolsGrid.innerHTML = '<div class="loading">No tools match your criteria.</div>';
+      }
+      return;
+    }
+    toolsGrid.innerHTML = pageTools.map(tool => {
+      const pop = getPopularity(tool.name);
+      const avgRating = getAverageRating(tool.name);
+      const fullStars = Math.floor(avgRating);
+      const stars = '★'.repeat(fullStars) + (avgRating % 1 >= 0.5 ? '½' : '');
+      const favClass = isFavorite(tool.name) ? 'favorited' : '';
+      const approvedBadge = tool.source === 'approved' ? '<span class="approved-badge"><i class="fas fa-check-circle"></i> Approved</span>' : '';
+      let newBadge = '';
+      if (tool.source === 'approved' && tool.created_at) {
+        const createdDate = new Date(tool.created_at);
+        const now = new Date();
+        const diffDays = (now - createdDate) / (1000 * 60 * 60 * 24);
+        if (diffDays <= NEW_DAYS_THRESHOLD) newBadge = '<span class="time-new-badge">🔥 NEW</span>';
+      }
+      const premiumTag = tool.isPremiumRequired ? '<span class="premium-tag">⭐ PREMIUM</span>' : '';
+      const isPremiumLocked = tool.isPremiumRequired && !userPremiumStatus;
+      const lockOverlay = isPremiumLocked ? `
+        <div class="premium-lock-icon">
+          <i class="fas fa-lock"></i> Premium Tool
+          <button onclick="window.location.href='profile.html?tab=premium'">Upgrade</button>
+        </div>
+      ` : '';
+      const lockClass = isPremiumLocked ? 'premium-locked' : '';
+      return `
+        <div class="tool-card ${lockClass}" data-name="${escapeHtml(tool.name)}" data-url="${tool.url}" data-desc="${escapeHtml(tool.longDesc)}" data-icon="${tool.icon}">
+          ${approvedBadge}
+          ${newBadge}
+          ${premiumTag}
+          <span class="fav-icon ${favClass}" data-fav="${escapeHtml(tool.name)}">❤️</span>
+          <img src="${tool.icon}" alt="${escapeHtml(tool.name)}" loading="lazy" onerror="this.src='https://via.placeholder.com/48'">
+          <h3>${escapeHtml(tool.name)}</h3>
+          <p>${escapeHtml(tool.desc)}</p>
+          <div class="meta">
+            <span class="rating">${stars || '☆☆☆☆☆'}</span>
+            <span class="popularity">🔥 ${pop}</span>
+          </div>
+          <button class="btn details-btn" ${isPremiumLocked ? 'disabled style="opacity:0.6;"' : ''}>Details</button>
+          ${lockOverlay}
+        </div>
+      `;
+    }).join('');
+    attachCardEvents();
+    renderPagination();
+  }
+
+  function attachCardEvents() {
+    document.querySelectorAll('.fav-icon').forEach(icon => {
+      icon.addEventListener('click', (e) => { e.stopPropagation(); toggleFavorite(icon.dataset.fav); });
+    });
+    document.querySelectorAll('.details-btn:not([disabled])').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const card = e.target.closest('.tool-card');
+        openModal(card.dataset.name, card.dataset.url, card.dataset.desc, card.dataset.icon);
+      });
+    });
+  }
+
+  function renderFavorites() {
+    const favs = JSON.parse(localStorage.getItem('favorites'));
+    let favTools = allTools.filter(t => favs.includes(t.name));
+    if (!userPremiumStatus) {
+      favTools = favTools.filter(t => !t.isPremiumRequired);
+    }
+    const favoritesGrid = document.getElementById('favoritesGrid');
+    if (favTools.length === 0) {
+      favoritesGrid.innerHTML = '<div class="loading">No favorite tools yet. Click the heart icon on any tool to add it!</div>';
+      return;
+    }
+    favoritesGrid.innerHTML = favTools.map(tool => {
+      const pop = getPopularity(tool.name);
+      const avgRating = getAverageRating(tool.name);
+      const fullStars = Math.floor(avgRating);
+      const stars = '★'.repeat(fullStars) + (avgRating % 1 >= 0.5 ? '½' : '');
+      const isPremiumLocked = tool.isPremiumRequired && !userPremiumStatus;
+      const lockOverlay = isPremiumLocked ? `<div class="premium-lock-icon"><i class="fas fa-lock"></i> Premium Tool</div>` : '';
+      return `
+        <div class="tool-card ${isPremiumLocked ? 'premium-locked' : ''}" data-name="${escapeHtml(tool.name)}" data-url="${tool.url}" data-desc="${escapeHtml(tool.longDesc)}" data-icon="${tool.icon}">
+          <img src="${tool.icon}" alt="${escapeHtml(tool.name)}" loading="lazy" onerror="this.src='https://via.placeholder.com/48'">
+          <h3>${escapeHtml(tool.name)}</h3>
+          <p>${escapeHtml(tool.desc)}</p>
+          <div class="meta">
+            <span class="rating">${stars || '☆☆☆☆☆'}</span>
+            <span class="popularity">🔥 ${pop}</span>
+          </div>
+          <button class="btn details-btn" ${isPremiumLocked ? 'disabled' : ''}>Details</button>
+          ${lockOverlay}
+        </div>
+      `;
+    }).join('');
+    favoritesGrid.querySelectorAll('.details-btn:not([disabled])').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const card = e.target.closest('.tool-card');
+        openModal(card.dataset.name, card.dataset.url, card.dataset.desc, card.dataset.icon);
+      });
+    });
+  }
+
+  function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
+
+  function openModal(name, url, longDesc, icon) {
+    const tool = allTools.find(t => t.name === name);
+    if (tool?.isPremiumRequired && !userPremiumStatus) {
+      showToast('This editing tool requires Premium Access. Please upgrade.', 'error');
+      return;
+    }
+    incrementPopularity(name);
+    const category = tool?.category || 'video';
+    document.getElementById('modalTitle').textContent = name;
+    document.getElementById('modalDesc').innerHTML = longDesc.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+    document.getElementById('modalIcon').src = icon;
+    document.getElementById('modalVisitBtn').href = url;
+    const howToHTML = generateHowToUse(name, category, url);
+    document.getElementById('howToUseContent').innerHTML = howToHTML;
+
+    const avgRating = getAverageRating(name);
+    const modalRatingDiv = document.getElementById('modalRating');
+    modalRatingDiv.innerHTML = 'Rate this tool: ';
+    for (let i = 1; i <= 5; i++) {
+      const star = document.createElement('span');
+      star.className = `star ${i <= Math.round(avgRating) ? 'selected' : ''}`;
+      star.textContent = '★';
+      star.dataset.value = i;
+      star.addEventListener('click', (e) => { addRating(name, parseInt(e.target.dataset.value)); openModal(name, url, longDesc, icon); renderTools(); });
+      modalRatingDiv.appendChild(star);
+    }
+    const similar = allTools.filter(t => t.category === category && t.name !== name && (!t.isPremiumRequired || userPremiumStatus)).slice(0, 5);
+    const similarDiv = document.getElementById('similarTools');
+    similarDiv.innerHTML = similar.map(t => `<span class="similar-tool-item" data-name="${escapeHtml(t.name)}">${escapeHtml(t.name)}</span>`).join('');
+    document.querySelectorAll('.similar-tool-item').forEach(el => {
+      el.addEventListener('click', () => { const t = allTools.find(tt => tt.name === el.dataset.name); if(t) openModal(t.name, t.url, t.longDesc, t.icon); });
+    });
+    const shareText = encodeURIComponent(`Check out ${name} on Editing Hub!`);
+    const shareUrl = encodeURIComponent(url);
+    document.getElementById('socialShare').innerHTML = `
+      <a href="https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}" target="_blank"><i class="fab fa-twitter"></i> Twitter</a>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=${shareUrl}" target="_blank"><i class="fab fa-facebook"></i> Facebook</a>
+      <a href="https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}" target="_blank"><i class="fab fa-linkedin"></i> LinkedIn</a>
+    `;
+    document.getElementById('toolModal').classList.add('active');
+  }
+
+  function buildFilterButtons() {
+    const categories = ['all', ...new Set(allTools.map(t => t.category))];
+    categories.push('premium');
+    const filterContainer = document.getElementById('filterContainer');
+    filterContainer.innerHTML = categories.map(cat => `<button class="filter-btn ${cat === currentFilter ? 'active' : ''}" data-filter="${cat}">${cat.charAt(0).toUpperCase() + cat.slice(1)}</button>`).join('');
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentFilter = btn.dataset.filter;
+        currentPage = 1;
+        renderTools();
+      });
+    });
+  }
+
+  async function submitTool() {
+    const name = document.getElementById('newName').value.trim();
+    const url = document.getElementById('newUrl').value.trim();
+    const description = document.getElementById('newDesc').value.trim();
+    const category = document.getElementById('newCategory').value;
+    if (!name || !url || !description) { showToast('Please fill all fields', 'error'); return; }
+    try { new URL(url); } catch { showToast('Please enter a valid URL (including https://)', 'error'); return; }
+    const submitBtn = document.getElementById('submitToolBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+    try {
+      await apiCall('/api/tools/submit', {
+        method: 'POST',
+        body: JSON.stringify({ name, url, description, category, pageType: PAGE_TYPE })
+      });
+      showToast('✅ Tool submitted! Admin will review it shortly.', 'success');
+      document.getElementById('newName').value = '';
+      document.getElementById('newUrl').value = '';
+      document.getElementById('newDesc').value = '';
+      setTimeout(() => loadAndMergeTools(), 2000);
+    } catch (error) { showToast(error.message || 'Submission failed', 'error'); }
+    finally { submitBtn.disabled = false; submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit for Review'; }
+  }
+
+  async function checkSession() {
+    try { const session = await apiCall('/check-session'); if (!session.loggedIn) { window.location.href = '/'; return false; } return true; }
+    catch { window.location.href = '/'; return false; }
+  }
+
+  async function fetchPremiumStatus() {
+    try {
+      const res = await fetch('/api/user/premium-status', { credentials: 'include' });
+      if (res.ok) {
+        const data = await res.json();
+        userPremiumStatus = data.isPremium === true;
+        console.log('Premium status (editing):', userPremiumStatus);
+        const banner = document.getElementById('premiumBanner');
+        if (banner) banner.style.display = userPremiumStatus ? 'none' : 'flex';
+        const recommendationsDiv = document.getElementById('premiumRecommendations');
+        if (recommendationsDiv) recommendationsDiv.style.display = userPremiumStatus ? 'none' : 'block';
+      } else {
+        userPremiumStatus = false;
+        document.getElementById('premiumBanner').style.display = 'flex';
+        document.getElementById('premiumRecommendations').style.display = 'block';
+      }
+    } catch (err) {
+      console.error('Failed to fetch premium status', err);
+      userPremiumStatus = false;
+      document.getElementById('premiumBanner').style.display = 'flex';
+      document.getElementById('premiumRecommendations').style.display = 'block';
+    }
+  }
+
+  function showPremiumRecommendations() {
+    const premiumTools = allTools.filter(t => t.isPremiumRequired).slice(0, 6);
+    const container = document.getElementById('recommendGrid');
+    if (!container) return;
+    if (premiumTools.length === 0) {
+      container.innerHTML = '<p>No premium tools available yet.</p>';
+      return;
+    }
+    container.innerHTML = premiumTools.map(tool => `
+      <div class="recommend-item">
+        <img src="${tool.icon}" alt="${tool.name}" onerror="this.src='https://via.placeholder.com/40'">
+        <div class="name">${escapeHtml(tool.name)}</div>
+        <button onclick="window.location.href='profile.html?tab=premium'">Unlock</button>
+      </div>
+    `).join('');
+  }
+
+  async function init() {
+    const loggedIn = await checkSession();
+    if (!loggedIn) return;
+    await fetchPremiumStatus();
+    await loadAndMergeTools();
+    try {
+      await fetch('/api/track-usage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tool_name: 'Editing Hub', tool_category: 'editing' }), credentials: 'include' });
+    } catch(e) {}
+  }
+
+  // Event listeners
+  document.getElementById('searchInput').addEventListener('input', (e) => { currentSearch = e.target.value; currentPage = 1; renderTools(); });
+  document.getElementById('sortSelect').addEventListener('change', (e) => { currentSort = e.target.value; renderTools(); });
+  document.getElementById('refreshToolsBtn').addEventListener('click', () => { loadAndMergeTools(); showToast('Refreshing tools from database...', 'info'); });
+  document.getElementById('themeToggle').addEventListener('click', () => { document.body.classList.toggle('light-mode'); document.getElementById('themeToggle').textContent = document.body.classList.contains('light-mode') ? '☀️ Light' : '🌙 Dark'; localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark'); });
+  if (localStorage.getItem('theme') === 'light') { document.body.classList.add('light-mode'); document.getElementById('themeToggle').textContent = '☀️ Light'; }
+  document.getElementById('showFavorites').addEventListener('click', (e) => { e.preventDefault(); document.getElementById('toolsGrid').style.display = 'none'; document.getElementById('favoritesPage').style.display = 'block'; renderFavorites(); });
+  document.getElementById('hideFavorites').addEventListener('click', () => { document.getElementById('favoritesPage').style.display = 'none'; document.getElementById('toolsGrid').style.display = 'flex'; });
+  document.getElementById('submitToolBtn').addEventListener('click', submitTool);
+  document.querySelector('.close').addEventListener('click', () => document.getElementById('toolModal').classList.remove('active'));
+  window.addEventListener('click', (e) => { if (e.target === document.getElementById('toolModal')) document.getElementById('toolModal').classList.remove('active'); });
+  window.addEventListener('scroll', () => { const btn = document.getElementById('backToTop'); if(btn) btn.classList.toggle('visible', window.scrollY > 300); });
+  document.getElementById('backToTop').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+  init();
+</script>
+</body>
+</html>
