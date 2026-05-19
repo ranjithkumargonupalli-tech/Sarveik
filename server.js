@@ -1,8 +1,6 @@
 require('dotenv').config();
 
-
 // ==================== ENVIRONMENT CHECKS ====================
-// FIXED: session secret length check operator precedence
 if (process.env.NODE_ENV === 'production' && (process.env.SESSION_SECRET?.length || 0) < 32) {
     throw new Error('SESSION_SECRET must be at least 32 characters in production');
 }
@@ -21,31 +19,13 @@ const http = require('http');
 const socketIo = require('socket.io');
 const sharedsession = require('express-socket.io-session');
 const { pool } = require('./database');
-const poolConnect = Promise.resolve(); // PostgreSQL doesn't need this - compatibility shim
-// Auto-migration: create tables if they don't exist (first deploy only)
-(async () => {
-    try {
-        await pool.query('SELECT 1 FROM users LIMIT 1');
-        console.log('✅ Database tables already exist');
-    } catch (err) {
-        console.log('⚠️ Tables missing, running migration...');
-        try {
-            require('./migrate-pg.js');
-            console.log('✅ Migration completed');
-        } catch (migrateErr) {
-            console.error('❌ Migration failed:', migrateErr.message);
-        }
-    }
-})();
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
-const { rateLimit, ipKeyGenerator } = require('express-rate-limit');
+const { rateLimit } = require('express-rate-limit');
 const zxcvbn = require('zxcvbn');
 const cron = require('node-cron');
 const nodemailer = require('nodemailer');
 const { fileTypeFromBuffer } = require('file-type');
-
-// PhonePe SDK
 const { StandardCheckoutClient, Env, StandardCheckoutPayRequest } = require('@phonepe-pg/pg-sdk-node');
 const crypto = require('crypto');
 
@@ -60,7 +40,7 @@ const {
     sendAccountDeletionAlert 
 } = require('./utils/emailService');
 
-// ==================== EMAIL CONFIGURATION (Fallback) ====================
+// ==================== EMAIL CONFIGURATION ====================
 const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -84,7 +64,6 @@ async function sendEmail(to, subject, html) {
     }
 }
 
-// ---------- EMAIL FUNCTIONS FOR TOOL APPROVAL ----------
 async function sendToolApprovalEmail(to, username, toolName) {
     const subject = 'Your submitted tool has been approved!';
     const html = `
@@ -127,12 +106,10 @@ async function sendToolRejectionEmail(to, username, toolName, reason = null) {
     return sendEmail(to, subject, html);
 }
 
-// ==================== ENHANCED ADMIN ALERT ====================
 async function sendToolSubmissionAlert(details) {
     try {
-        await poolConnect;
-        const admins = await pool.request().query("SELECT email, username FROM users WHERE role = 'admin'");
-        for (let admin of admins.recordset) {
+        const admins = await pool.query("SELECT email, username FROM users WHERE role = 'admin'");
+        for (let admin of admins.rows) {
             const html = `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f4f4f4; border-radius: 10px;">
                     <h2 style="color: #667eea;">New Tool Submission</h2>
@@ -164,8 +141,8 @@ app.get('/health', (req, res) => res.send('OK'));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
+
 // ==================== SECURITY MIDDLEWARE ====================
-// HTTPS enforcement (production)
 if (process.env.NODE_ENV === 'production') {
     app.use((req, res, next) => {
         if (req.headers['x-forwarded-proto'] !== 'https') {
@@ -175,7 +152,6 @@ if (process.env.NODE_ENV === 'production') {
     });
 }
 
-// CORS - restrict to allowed origins
 const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ['http://localhost:3000'];
 app.use(cors({
     origin: function(origin, callback) {
@@ -188,14 +164,11 @@ app.use(cors({
     credentials: true
 }));
 
-// Request size limits
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
-// PhonePe webhook needs raw body (must be placed BEFORE JSON parser for this route)
 app.use('/api/phonepe-webhook', express.raw({ type: 'application/json' }));
 app.use(express.static('public'));
 
-// Session configuration with secure cookie
 const sessionMiddleware = session({
     secret: process.env.SESSION_SECRET,
     resave: false,
@@ -225,10 +198,6 @@ function validateIntParam(value, paramName) {
     return num;
 }
 
-// ==================== OTP STORAGE (DATABASE) ====================
-// Table creation (ensure it exists)
-
-
 // Clean expired OTPs every 10 minutes
 setInterval(async () => {
     try {
@@ -249,35 +218,27 @@ const authLimiter = rateLimit({
     skipSuccessfulRequests: true,
     message: 'Too many attempts, please try again later.'
 });
-// FIXED: ipKeyGenerator no longer needed - use req.ip directly
 const otpVerificationLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 5,
     keyGenerator: (req) => {
-        // If the request contains an email, use that as the key
         if (req.body.email) return req.body.email;
-        // Otherwise, use the official ipKeyGenerator helper (handles IPv6 safely)
-        return ipKeyGenerator(req.ip);
+        return req.ip;
     },
     message: 'Too many OTP verification attempts, please try again later.'
 });
 
-// ==================== DATABASE INITIALIZATION (ADD BADGE COLUMNS) ====================
-
-// ==================== STAFF LOUNGE (ADMIN/MODERATOR GROUP) ====================
+// ==================== STAFF LOUNGE ====================
 async function ensureStaffLoungeGroup() {
     try {
-        // Insert group if not exists
         await pool.query(`
             INSERT INTO groups (name, created_by)
             SELECT 'Staff Lounge', 1
             WHERE NOT EXISTS (SELECT 1 FROM groups WHERE name = 'Staff Lounge')
         `);
-        // Get the group id
         const groupRes = await pool.query(`SELECT id FROM groups WHERE name = 'Staff Lounge'`);
         if (groupRes.rows.length === 0) return;
         const groupId = groupRes.rows[0].id;
-        // Get all staff users
         const staffRes = await pool.query(`SELECT id FROM users WHERE role IN ('admin', 'moderator')`);
         for (const user of staffRes.rows) {
             await pool.query(`
@@ -292,17 +253,7 @@ async function ensureStaffLoungeGroup() {
     }
 }
 
-
 // ==================== GAMIFICATION HELPER FUNCTIONS ====================
-
-/**
- * XP required to reach a given level (exponential curve)
- */
-// ==================== GAMIFICATION HELPER FUNCTIONS ====================
-
-/**
- * XP required to reach a given level (exponential curve) - with memoization for performance
- */
 const xpCache = new Map();
 function xpForLevel(level) {
     if (level <= 1) return 0;
@@ -315,9 +266,6 @@ function xpForLevel(level) {
     return total;
 }
 
-/**
- * Add XP to a user, trigger level‑up, and log transaction
- */
 async function addXP(userId, amount, source) {
     try {
         await pool.query(
@@ -335,9 +283,6 @@ async function addXP(userId, amount, source) {
     }
 }
 
-/**
- * Check if user reached a new level and grant rewards
- */
 async function checkLevelUp(userId) {
     try {
         const user = await pool.query(
@@ -365,56 +310,56 @@ async function checkLevelUp(userId) {
     }
 }
 
-/**
- * Grant rewards for each passed level (credits, premium days, badges)
- */
 async function grantLevelRewards(userId, oldLevel, newLevel) {
-    const rewards = await pool.request()
-        .input('minLevel', sql.Int, oldLevel + 1)
-        .input('maxLevel', sql.Int, newLevel)
-        .query('SELECT * FROM level_rewards WHERE level BETWEEN @minLevel AND @maxLevel');
-    for (const reward of rewards.recordset) {
-        if (reward.reward_type === 'credits') {
-            await pool.request()
-                .input('userId', sql.Int, userId)
-                .input('amount', sql.Decimal(10,2), reward.reward_value)
-                .query('UPDATE user_credits SET balance = balance + @amount WHERE user_id = @userId');
-            await pool.request()
-                .input('userId', sql.Int, userId)
-                .input('amount', sql.Decimal(10,2), reward.reward_value)
-                .input('desc', sql.NVarChar, `Level ${reward.level} reward: ${reward.reward_value} credits`)
-                .query('INSERT INTO credit_transactions (user_id, amount, type, description) VALUES (@userId, @amount, \'bonus\', @desc)');
-        } else if (reward.reward_type === 'premium_days') {
-            const user = await pool.request()
-                .input('userId', sql.Int, userId)
-                .query('SELECT premium_until FROM users WHERE id = @userId');
-            let current = user.recordset[0].premium_until;
-            let newExpiry;
-            if (current && new Date(current) > new Date()) {
-                newExpiry = new Date(new Date(current).getTime() + reward.reward_value * 24 * 60 * 60 * 1000);
-            } else {
-                newExpiry = new Date(Date.now() + reward.reward_value * 24 * 60 * 60 * 1000);
+    try {
+        const rewards = await pool.query(
+            'SELECT * FROM level_rewards WHERE level BETWEEN $1 AND $2',
+            [oldLevel + 1, newLevel]
+        );
+        for (const reward of rewards.rows) {
+            if (reward.reward_type === 'credits') {
+                await pool.query(
+                    'UPDATE user_credits SET balance = balance + $1 WHERE user_id = $2',
+                    [reward.reward_value, userId]
+                );
+                await pool.query(
+                    `INSERT INTO credit_transactions (user_id, amount, type, description)
+                     VALUES ($1, $2, 'bonus', $3)`,
+                    [userId, reward.reward_value, `Level ${reward.level} reward: ${reward.reward_value} credits`]
+                );
+            } else if (reward.reward_type === 'premium_days') {
+                const user = await pool.query(
+                    'SELECT premium_until FROM users WHERE id = $1',
+                    [userId]
+                );
+                let current = user.rows[0].premium_until;
+                let newExpiry;
+                if (current && new Date(current) > new Date()) {
+                    newExpiry = new Date(new Date(current).getTime() + reward.reward_value * 24 * 60 * 60 * 1000);
+                } else {
+                    newExpiry = new Date(Date.now() + reward.reward_value * 24 * 60 * 60 * 1000);
+                }
+                await pool.query(
+                    'UPDATE users SET premium_until = $1 WHERE id = $2',
+                    [newExpiry, userId]
+                );
+            } else if (reward.reward_type === 'badge') {
+                await pool.query(
+                    'INSERT INTO user_achievements (user_id, achievement_id) VALUES ($1, $2)',
+                    [userId, reward.reward_value]
+                );
+            } else if (reward.reward_type === 'custom_badge') {
+                await pool.query(
+                    'UPDATE users SET has_custom_badge = true WHERE id = $1',
+                    [userId]
+                );
             }
-            await pool.request()
-                .input('userId', sql.Int, userId)
-                .input('expiry', sql.DateTime, newExpiry)
-                .query('UPDATE users SET premium_until = @expiry WHERE id = @userId');
-        } else if (reward.reward_type === 'badge') {
-            await pool.request()
-                .input('userId', sql.Int, userId)
-                .input('achievementId', sql.Int, reward.reward_value)
-                .query('INSERT INTO user_achievements (user_id, achievement_id) VALUES (@userId, @achievementId)');
-        } else if (reward.reward_type === 'custom_badge') {
-            await pool.request()
-                .input('userId', sql.Int, userId)
-                .query('UPDATE users SET has_custom_badge = true WHERE id = @userId');
         }
+    } catch (err) {
+        console.error('grantLevelRewards error:', err);
     }
 }
 
-/**
- * Update daily login streak and return multiplier
- */
 async function updateStreak(userId) {
     const today = new Date().toISOString().slice(0, 10);
     try {
@@ -458,41 +403,30 @@ async function updateStreak(userId) {
         return 1;
     }
 }
-/**
- * Get or initialise daily quests for a user (creates missing rows)
- */
+
 async function getDailyQuests(userId) {
     const today = new Date().toISOString().slice(0,10);
-    const quests = await pool.request()
-        .input('userId', sql.Int, userId)
-        .input('today', sql.Date, today)
-        .query(`
-            SELECT q.*, uqd.progress, uqd.completed, uqd.claimed
-            FROM daily_quests q
-            LEFT JOIN user_daily_quests uqd ON q.id = uqd.quest_id AND uqd.user_id = @userId AND uqd.date = @today
-        `);
-    for (const q of quests.recordset) {
-        if (q.progress === undefined) {
-            await pool.request()
-                .input('userId', sql.Int, userId)
-                .input('questId', sql.Int, q.id)
-                .input('date', sql.Date, today)
-                .query('INSERT INTO user_daily_quests (user_id, quest_id, date, progress, completed, claimed) VALUES (@userId, @questId, @date, 0, 0, 0)');
-            q.progress = 0;
-            q.completed = 0;
-            q.claimed = 0;
+    const quests = await pool.query(`
+        SELECT q.*, COALESCE(uqd.progress, 0) as progress, COALESCE(uqd.completed, false) as completed, COALESCE(uqd.claimed, false) as claimed
+        FROM daily_quests q
+        LEFT JOIN user_daily_quests uqd ON q.id = uqd.quest_id AND uqd.user_id = $1 AND uqd.date = $2
+    `, [userId, today]);
+    for (const q of quests.rows) {
+        if (q.progress === 0 && q.completed === false && q.claimed === false && !q.progress_from_db) { // crude check if missing
+            await pool.query(
+                `INSERT INTO user_daily_quests (user_id, quest_id, date, progress, completed, claimed)
+                 VALUES ($1, $2, $3, 0, false, false)
+                 ON CONFLICT DO NOTHING`,
+                [userId, q.id, today]
+            );
         }
     }
-    return quests.recordset;
+    return quests.rows;
 }
 
-/**
- * Update quest progress for a specific action (login, use_tool, etc.)
- */
 async function updateQuestProgress(userId, action, increment = 1) {
     const today = new Date().toISOString().slice(0,10);
     try {
-        // First, ensure a row exists for today (INSERT if not exists)
         await pool.query(`
             INSERT INTO user_daily_quests (user_id, quest_id, date, progress, completed, claimed)
             SELECT $1, q.id, $2, 0, false, false
@@ -501,7 +435,6 @@ async function updateQuestProgress(userId, action, increment = 1) {
             ON CONFLICT (user_id, quest_id, date) DO NOTHING
         `, [userId, today, action]);
 
-        // Then update progress for that quest (if not completed)
         const updateRes = await pool.query(`
             UPDATE user_daily_quests
             SET progress = progress + $1
@@ -512,7 +445,6 @@ async function updateQuestProgress(userId, action, increment = 1) {
         `, [increment, userId, action, today]);
         console.log(`[Quest] Updated ${updateRes.rowCount} quest(s)`);
 
-        // Mark as completed if target reached
         const completedRes = await pool.query(`
             UPDATE user_daily_quests
             SET completed = true
@@ -533,9 +465,6 @@ async function updateQuestProgress(userId, action, increment = 1) {
     }
 }
 
-/**
- * Check and unlock achievements based on user's data (retrospective)
- */
 async function checkAchievements(userId) {
     const achievements = await pool.query(`
         SELECT a.* FROM achievements a
@@ -616,7 +545,8 @@ async function checkAchievements(userId) {
         }
     }
 }
-// ==================== PASSPORT SERIALIZATION ====================
+
+// ==================== PASSPORT ====================
 passport.serializeUser((user, done) => {
     if (!user || !user.id) return done(new Error('User object missing id'));
     done(null, user.id);
@@ -634,7 +564,6 @@ passport.deserializeUser(async (id, done) => {
     }
 });
 
-// ==================== GOOGLE OAUTH STRATEGY ====================
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -642,7 +571,6 @@ passport.use(new GoogleStrategy({
   },
   async (accessToken, refreshToken, profile, done) => {
     try {
-      // Find user by google_id
       let userResult = await pool.query(
         'SELECT id, username, email, role FROM users WHERE google_id = $1',
         [profile.id]
@@ -651,7 +579,6 @@ passport.use(new GoogleStrategy({
 
       if (!user) {
         const email = profile.emails[0].value;
-        // Check if user exists with this email
         let existingUserResult = await pool.query(
           'SELECT id, username, email, role FROM users WHERE email = $1',
           [email]
@@ -659,19 +586,16 @@ passport.use(new GoogleStrategy({
         let existingUser = existingUserResult.rows[0];
 
         if (existingUser) {
-          // Link google_id to existing account
           await pool.query(
             'UPDATE users SET google_id = $1 WHERE email = $2',
             [profile.id, email]
           );
-          // Fetch updated user
           const updatedResult = await pool.query(
             'SELECT id, username, email, role FROM users WHERE email = $1',
             [email]
           );
           user = updatedResult.rows[0];
         } else {
-          // Create new user
           let username = profile.displayName.replace(/\s/g, '').toLowerCase();
           const checkUsernameResult = await pool.query(
             'SELECT id FROM users WHERE username = $1',
@@ -700,8 +624,8 @@ passport.use(new GoogleStrategy({
     }
   }
 ));
-// ==================== FILE UPLOAD SECURITY ====================
-// Store avatars outside public folder, serve via route
+
+// ==================== FILE UPLOAD ====================
 const avatarStorage = multer.diskStorage({
     destination: (req, file, cb) => {
         const dir = './private_uploads/avatars';
@@ -727,20 +651,20 @@ const upload = multer({
     }
 });
 
-// ==================== AUTH MIDDLEWARE (with role in session) ====================
+// ==================== AUTH MIDDLEWARE ====================
 const isAuthenticated = async (req, res, next) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Not authenticated' });
     try {
         if (!req.session.role) {
- const result = await pool.query(
-    'SELECT role, is_banned FROM users WHERE id = $1',
-    [req.session.userId]
-);
-if (result.rows[0].is_banned) {
-    req.session.destroy();
-    return res.status(403).json({ error: 'Your account has been banned' });
-}
-req.session.role = result.rows[0].role;
+            const result = await pool.query(
+                'SELECT role, is_banned FROM users WHERE id = $1',
+                [req.session.userId]
+            );
+            if (result.rows[0].is_banned) {
+                req.session.destroy();
+                return res.status(403).json({ error: 'Your account has been banned' });
+            }
+            req.session.role = result.rows[0].role;
         }
         next();
     } catch (err) {
@@ -767,7 +691,6 @@ const isAdmin = async (req, res, next) => {
     }
 };
 
-// ==================== isAdminOrModerator MIDDLEWARE (fixed) ====================
 const isAdminOrModerator = async (req, res, next) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Not authenticated' });
     const role = req.session.role;
@@ -788,7 +711,6 @@ const isAdminOrModerator = async (req, res, next) => {
     }
 };
 
-// ==================== AVATAR SERVING ROUTE (after isAuthenticated) ====================
 app.get('/uploads/avatars/:filename', isAuthenticated, (req, res) => {
     const filepath = path.join(__dirname, 'private_uploads', 'avatars', req.params.filename);
     if (fs.existsSync(filepath)) {
@@ -798,7 +720,7 @@ app.get('/uploads/avatars/:filename', isAuthenticated, (req, res) => {
     }
 });
 
-// ==================== HELPER: GET PREMIUM STATUS (WITH BADGE) ====================
+// ==================== PREMIUM STATUS HELPER ====================
 async function getPremiumStatus(userId) {
     try {
         const result = await pool.query(
@@ -829,13 +751,13 @@ async function getPremiumStatus(userId) {
         return {};
     }
 }
-// ==================== CREDITS SYSTEM (ATOMIC SPEND WITH TRANSACTION) ====================
+
+// ==================== CREDITS SYSTEM ====================
 async function spendCredits(userId, amount, reason, feature, durationDays = 0, uses = 0) {
-    const client = await pool.connect(); // get a client for transaction
+    const client = await pool.connect();
     try {
         await client.query('BEGIN');
         
-        // Update user credits (check balance first)
         const updateResult = await client.query(
             `UPDATE user_credits 
              SET balance = balance - $1, lifetime_spent = lifetime_spent + $1, last_updated = NOW()
@@ -846,7 +768,6 @@ async function spendCredits(userId, amount, reason, feature, durationDays = 0, u
             throw new Error('Insufficient credits');
         }
         
-        // Insert transaction record
         await client.query(
             `INSERT INTO credit_transactions (user_id, amount, type, description)
              VALUES ($1, $2, 'spend', $3)`,
@@ -894,7 +815,6 @@ async function spendCredits(userId, amount, reason, feature, durationDays = 0, u
         
         await client.query('COMMIT');
         
-        // Get new balance
         const balanceResult = await pool.query(
             'SELECT balance FROM user_credits WHERE user_id = $1',
             [userId]
@@ -907,7 +827,7 @@ async function spendCredits(userId, amount, reason, feature, durationDays = 0, u
         client.release();
     }
 }
-// ==================== USER CREDITS INIT ====================
+
 async function initializeUserCredits(userId) {
     try {
         const welcomeBonus = 600;
@@ -944,22 +864,12 @@ async function ensureUserCredits(userId) {
 async function awardCreditsForToolApproval(userId, toolName) {
     try {
         const approvalBonus = 25;
-        await pool.request()
-            .input('user_id', sql.Int, userId)
-            .input('amount', sql.Decimal(10,2), approvalBonus)
-            .query(`
-                UPDATE user_credits 
-                SET balance = balance + @amount, lifetime_earned = lifetime_earned + @amount
-                WHERE user_id = @user_id
-            `);
-        
-       await pool.query(
-          `INSERT INTO otp_store (email, otp, expires_at)
-           VALUES ($1, $2, $3)
-           ON CONFLICT (email) DO UPDATE SET otp = $2, expires_at = $3`,
-           [email, otp, expires]
+        await pool.query(
+            `UPDATE user_credits 
+             SET balance = balance + $1, lifetime_earned = lifetime_earned + $1
+             WHERE user_id = $2`,
+            [approvalBonus, userId]
         );
-        
         console.log(`✅ Awarded ${approvalBonus} credits to user ${userId} for tool approval: ${toolName}`);
     } catch (err) {
         console.error('Error awarding credits:', err);
@@ -967,7 +877,6 @@ async function awardCreditsForToolApproval(userId, toolName) {
 }
 
 // ==================== PHONEPE PAYMENT GATEWAY ====================
-// Initialize PhonePe Client
 let phonepeClient = null;
 if (process.env.PHONEPE_CLIENT_ID && process.env.PHONEPE_CLIENT_SECRET) {
     try {
@@ -985,7 +894,6 @@ if (process.env.PHONEPE_CLIENT_ID && process.env.PHONEPE_CLIENT_SECRET) {
     console.log('⚠️ PhonePe credentials missing, payments disabled');
 }
 
-// Credit packs for purchase
 const CREDIT_PACKS = [
     { id: 'pack_100', credits: 100, pricePaise: 4900, name: '100 Credits' },
     { id: 'pack_250', credits: 250, pricePaise: 9900, name: '250 Credits' },
@@ -993,7 +901,6 @@ const CREDIT_PACKS = [
     { id: 'pack_1000', credits: 1000, pricePaise: 29900, name: '1000 Credits' }
 ];
 
-// Endpoint to initiate PhonePe payment
 app.post('/api/create-phonepe-order', isAuthenticated, async (req, res) => {
     const { packId, credits, amountInPaise } = req.body;
     if (!packId || !credits || !amountInPaise) {
@@ -1001,25 +908,17 @@ app.post('/api/create-phonepe-order', isAuthenticated, async (req, res) => {
     }
     const merchantOrderId = `ORDER_${Date.now()}_${req.session.userId}`;
     try {
-        // Build payment request
         const paymentRequest = await StandardCheckoutPayRequest.builder()
             .merchantOrderId(merchantOrderId)
-            .amount(amountInPaise) // in paise
-            .redirectUrl(`${process.env.PHONEPE_REDIRECT_URL}?order_id=${merchantOrderId}`)   // <-- ONLY CHANGE HERE
+            .amount(amountInPaise)
+            .redirectUrl(`${process.env.PHONEPE_REDIRECT_URL}?order_id=${merchantOrderId}`)
             .build();
         const paymentResponse = await phonepeClient.pay(paymentRequest);
-        // Save transaction in DB
-        await poolConnect;
-        await pool.request()
-            .input('user_id', sql.Int, req.session.userId)
-            .input('credits', sql.Int, credits)
-            .input('amount', sql.Decimal(10,2), amountInPaise / 100)
-            .input('merchant_order_id', sql.NVarChar, merchantOrderId)
-            .input('pack_id', sql.NVarChar, packId)
-            .query(`
-                INSERT INTO credit_purchases (user_id, credits, amount, merchant_order_id, pack_id, status, created_at)
-                VALUES (@user_id, @credits, @amount, @merchant_order_id, @pack_id, 'PENDING', NOW())
-            `);
+        await pool.query(
+            `INSERT INTO credit_purchases (user_id, credits, amount, merchant_order_id, pack_id, status, created_at)
+             VALUES ($1, $2, $3, $4, $5, 'PENDING', NOW())`,
+            [req.session.userId, credits, amountInPaise / 100, merchantOrderId, packId]
+        );
         res.json({ success: true, redirectUrl: paymentResponse.redirectUrl });
     } catch (err) {
         console.error('PhonePe order error:', err);
@@ -1027,12 +926,10 @@ app.post('/api/create-phonepe-order', isAuthenticated, async (req, res) => {
     }
 });
 
-// PhonePe webhook to confirm payment and add credits
 app.post('/api/phonepe-webhook', async (req, res) => {
     const authHeader = req.headers['x-verify'];
     const responseBody = req.body;
     try {
-        // FIXED: Convert buffer to string properly
         const rawBody = responseBody.toString();
         const isValid = phonepeClient.validateCallback(
             process.env.PHONEPE_CLIENT_ID,
@@ -1047,33 +944,28 @@ app.post('/api/phonepe-webhook', async (req, res) => {
         const eventData = JSON.parse(rawBody);
         if (eventData.type === 'PG_ORDER_COMPLETED' && eventData.payload.state === 'COMPLETED') {
             const merchantOrderId = eventData.payload.orderId;
-            await poolConnect;
-            const purchase = await pool.request()
-                .input('merchant_order_id', sql.NVarChar, merchantOrderId)
-                .query('SELECT * FROM credit_purchases WHERE merchant_order_id = @merchant_order_id AND status = \'PENDING\'');
-            if (purchase.recordset.length > 0) {
-                const { user_id, credits } = purchase.recordset[0];
+            const purchase = await pool.query(
+                'SELECT * FROM credit_purchases WHERE merchant_order_id = $1 AND status = $2',
+                [merchantOrderId, 'PENDING']
+            );
+            if (purchase.rows.length > 0) {
+                const { user_id, credits } = purchase.rows[0];
                 await ensureUserCredits(user_id);
-                await pool.request()
-                    .input('user_id', sql.Int, user_id)
-                    .input('amount', sql.Decimal(10,2), credits)
-                    .query(`
-                        UPDATE user_credits 
-                        SET balance = balance + @amount, lifetime_earned = lifetime_earned + @amount
-                        WHERE user_id = @user_id
-                    `);
-                await pool.request()
-                    .input('user_id', sql.Int, user_id)
-                    .input('amount', sql.Decimal(10,2), credits)
-                    .input('type', sql.NVarChar, 'earn')
-                    .input('description', sql.NVarChar, `Purchased ${credits} credits via PhonePe`)
-                    .query(`
-                        INSERT INTO credit_transactions (user_id, amount, type, description)
-                        VALUES (@user_id, @amount, @type, @description)
-                    `);
-                await pool.request()
-                    .input('merchant_order_id', sql.NVarChar, merchantOrderId)
-                    .query('UPDATE credit_purchases SET status = \'COMPLETED\', updated_at = NOW() WHERE merchant_order_id = @merchant_order_id');
+                await pool.query(
+                    `UPDATE user_credits 
+                     SET balance = balance + $1, lifetime_earned = lifetime_earned + $1
+                     WHERE user_id = $2`,
+                    [credits, user_id]
+                );
+                await pool.query(
+                    `INSERT INTO credit_transactions (user_id, amount, type, description)
+                     VALUES ($1, $2, 'earn', $3)`,
+                    [user_id, credits, `Purchased ${credits} credits via PhonePe`]
+                );
+                await pool.query(
+                    'UPDATE credit_purchases SET status = $1, updated_at = NOW() WHERE merchant_order_id = $2',
+                    ['COMPLETED', merchantOrderId]
+                );
                 console.log(`✅ Added ${credits} credits to user ${user_id} via PhonePe`);
             }
         }
@@ -1083,7 +975,7 @@ app.post('/api/phonepe-webhook', async (req, res) => {
         res.status(500).send('Internal server error');
     }
 });
-// Manual verification endpoint (fallback if webhook fails)
+
 app.get('/api/verify-payment', isAuthenticated, async (req, res) => {
     const { order_id } = req.query;
     if (!order_id) {
@@ -1091,54 +983,35 @@ app.get('/api/verify-payment', isAuthenticated, async (req, res) => {
     }
 
     try {
-        await poolConnect;
+        const purchase = await pool.query(
+            `SELECT * FROM credit_purchases 
+             WHERE merchant_order_id = $1 AND user_id = $2 AND status = 'PENDING'`,
+            [order_id, req.session.userId]
+        );
 
-        // Find the pending purchase
-        const purchase = await pool.request()
-            .input('merchant_order_id', sql.NVarChar, order_id)
-            .input('user_id', sql.Int, req.session.userId)
-            .query(`
-                SELECT * FROM credit_purchases 
-                WHERE merchant_order_id = @merchant_order_id 
-                  AND user_id = @user_id 
-                  AND status = 'PENDING'
-            `);
-
-        if (purchase.recordset.length === 0) {
+        if (purchase.rows.length === 0) {
             return res.json({ status: 'not_found', message: 'No pending purchase found' });
         }
 
-        const { id, credits, amount, merchant_order_id, user_id } = purchase.recordset[0];
+        const { id, credits, user_id } = purchase.rows[0];
 
-        // Add credits to user's wallet
-        await pool.request()
-            .input('user_id', sql.Int, user_id)
-            .input('credits', sql.Int, credits)
-            .query(`
-                UPDATE user_credits 
-                SET balance = balance + @credits, lifetime_earned = lifetime_earned + @credits
-                WHERE user_id = @user_id
-            `);
+        await pool.query(
+            `UPDATE user_credits 
+             SET balance = balance + $1, lifetime_earned = lifetime_earned + $1
+             WHERE user_id = $2`,
+            [credits, user_id]
+        );
 
-        // Log transaction
-        await pool.request()
-            .input('user_id', sql.Int, user_id)
-            .input('amount', sql.Decimal(10,2), credits)
-            .input('type', sql.NVarChar, 'earn')
-            .input('description', sql.NVarChar, `Purchased ${credits} credits via PhonePe (manual verification)`)
-            .query(`
-                INSERT INTO credit_transactions (user_id, amount, type, description)
-                VALUES (@user_id, @amount, @type, @description)
-            `);
+        await pool.query(
+            `INSERT INTO credit_transactions (user_id, amount, type, description)
+             VALUES ($1, $2, 'earn', $3)`,
+            [user_id, credits, `Purchased ${credits} credits via PhonePe (manual verification)`]
+        );
 
-        // Mark purchase as completed
-        await pool.request()
-            .input('id', sql.Int, id)
-            .query(`
-                UPDATE credit_purchases 
-                SET status = 'COMPLETED', updated_at = NOW() 
-                WHERE id = @id
-            `);
+        await pool.query(
+            `UPDATE credit_purchases SET status = 'COMPLETED', updated_at = NOW() WHERE id = $1`,
+            [id]
+        );
 
         res.json({ success: true, credits_added: credits });
     } catch (err) {
@@ -1147,7 +1020,6 @@ app.get('/api/verify-payment', isAuthenticated, async (req, res) => {
     }
 });
 
-// Create PhonePe order for a premium feature (e.g., 'premium' for 30 days)
 app.post('/api/create-phonepe-premium-order', isAuthenticated, async (req, res) => {
   const { feature, durationDays, amountPaise } = req.body;
   const merchantOrderId = `PREMIUM_${Date.now()}_${req.session.userId}`;
@@ -1158,14 +1030,11 @@ app.post('/api/create-phonepe-premium-order', isAuthenticated, async (req, res) 
       .redirectUrl(`${process.env.PHONEPE_REDIRECT_URL}?order_id=${merchantOrderId}&feature=${feature}&days=${durationDays}`)
       .build();
     const paymentResponse = await phonepeClient.pay(paymentRequest);
-    // Store pending premium purchase in a new table (e.g., premium_purchases)
-    await pool.request()
-      .input('user_id', sql.Int, req.session.userId)
-      .input('feature', sql.NVarChar, feature)
-      .input('duration_days', sql.Int, durationDays)
-      .input('merchant_order_id', sql.NVarChar, merchantOrderId)
-      .query(`INSERT INTO premium_purchases (user_id, feature, duration_days, merchant_order_id, status) 
-              VALUES (@user_id, @feature, @duration_days, @merchant_order_id, 'PENDING')`);
+    await pool.query(
+      `INSERT INTO premium_purchases (user_id, feature, duration_days, merchant_order_id, status) 
+       VALUES ($1, $2, $3, $4, 'PENDING')`,
+      [req.session.userId, feature, durationDays, merchantOrderId]
+    );
     res.json({ success: true, redirectUrl: paymentResponse.redirectUrl });
   } catch (err) {
     console.error(err);
@@ -1173,13 +1042,12 @@ app.post('/api/create-phonepe-premium-order', isAuthenticated, async (req, res) 
   }
 });
 
-// ==================== SOCKET.IO SETUP (ENHANCED with group chat and admin stats) ====================
+// ==================== SOCKET.IO SETUP ====================
 const server = http.createServer(app);
 const io = socketIo(server, { cors: { origin: allowedOrigins, credentials: true } });
 io.use(sharedsession(sessionMiddleware, { autoSave: true }));
 
-// FIXED: Store multiple socket IDs per user
-const onlineUsers = new Map(); // userId -> { socketId: string, socketIds: Set }
+const onlineUsers = new Map();
 
 async function getFriendsList(userId) {
     try {
@@ -1199,7 +1067,6 @@ async function getFriendsList(userId) {
     }
 }
 
-// Helper for real‑time admin stats
 async function getTotalUsersCount() {
     const result = await pool.query('SELECT COUNT(*) as count FROM users');
     return result.rows[0].count;
@@ -1209,20 +1076,6 @@ async function getRecentActivities() {
     return result.rows;
 }
 
-// Server-side interval for broadcasting admin stats (once per 10 seconds)
-//let adminStatsInterval = null;
-//if (!adminStatsInterval) {
-  //  adminStatsInterval = setInterval(async () => {
-    //    const totalUsers = await getTotalUsersCount();
-      //  const recentActivities = await getRecentActivities();
-        //io.to('admin_room').emit('admin_stats', {
-          //  onlineUsers: onlineUsers.size,
-            //totalUsers,
-            //recentActivities
-        //});
-    //}, 10000);
-//}
-
 io.on('connection', (socket) => {
     const session = socket.handshake.session;
     const userId = session.userId;
@@ -1231,21 +1084,18 @@ io.on('connection', (socket) => {
         return;
     }
     
-    // Manage multiple sockets per user
     let userEntry = onlineUsers.get(userId);
     if (!userEntry) {
         userEntry = { socketId: socket.id, socketIds: new Set() };
         onlineUsers.set(userId, userEntry);
     }
     userEntry.socketIds.add(socket.id);
-    userEntry.socketId = socket.id; // primary socket for simplicity
+    userEntry.socketId = socket.id;
     
     socket.join(`user_${userId}`);
     
-    // Join admin room if role allows
     if (session.role === 'admin' || session.role === 'moderator') {
         socket.join('admin_room');
-        // Send initial stats
         (async () => {
             const totalUsers = await getTotalUsersCount();
             const recentActivities = await getRecentActivities();
@@ -1257,7 +1107,6 @@ io.on('connection', (socket) => {
         })();
     }
 
-    // ---- Existing: friend online status ----
     (async () => {
         try {
             const friends = await getFriendsList(userId);
@@ -1268,18 +1117,15 @@ io.on('connection', (socket) => {
         } catch (err) { console.error('Error broadcasting online status:', err); }
     })();
 
-    // ---- Existing: private messages ----
     socket.on('private_message', async (data) => {
         const { to, message, tempId } = data;
         if (!to || !message) return;
         try {
-            await poolConnect;
-            const result = await pool.request()
-                .input('sender_id', sql.Int, userId)
-                .input('receiver_id', sql.Int, to)
-                .input('content', sql.NVarChar, message)
-                .query('INSERT INTO messages (sender_id, receiver_id, content) VALUES (@sender_id, @receiver_id, @content)');
-            const newMessageId = result.rowsAffected[0] ? result.recordset?.[0]?.id : null;
+            const result = await pool.query(
+                'INSERT INTO messages (sender_id, receiver_id, content) VALUES ($1, $2, $3) RETURNING id',
+                [userId, to, message]
+            );
+            const newMessageId = result.rows[0]?.id;
             const realMessage = {
                 id: newMessageId,
                 sender_id: userId,
@@ -1295,7 +1141,6 @@ io.on('connection', (socket) => {
         } catch (err) { console.error('Error saving message:', err); }
     });
 
-    // ========== Group Chat Handlers (Enhanced) ==========
     socket.on('join_group', async (groupId) => {
         socket.join(`group_${groupId}`);
     });
@@ -1303,35 +1148,32 @@ io.on('connection', (socket) => {
         socket.leave(`group_${groupId}`);
     });
     socket.on('group_message', async (data) => {
-    const { groupId, message } = data;
-    if (!groupId || !message) return;
-    try {
-        // Check membership
-        const membership = await pool.query(
-            'SELECT 1 FROM group_members WHERE group_id = $1 AND user_id = $2',
-            [groupId, userId]
-        );
-        if (membership.rows.length === 0) return;
+        const { groupId, message } = data;
+        if (!groupId || !message) return;
+        try {
+            const membership = await pool.query(
+                'SELECT 1 FROM group_members WHERE group_id = $1 AND user_id = $2',
+                [groupId, userId]
+            );
+            if (membership.rows.length === 0) return;
 
-        // Insert message and get new ID (single statement)
-        const result = await pool.query(
-            'INSERT INTO group_messages (group_id, sender_id, content) VALUES ($1, $2, $3) RETURNING id',
-            [groupId, userId, message]
-        );
-        const newId = result.rows[0].id;
+            const result = await pool.query(
+                'INSERT INTO group_messages (group_id, sender_id, content) VALUES ($1, $2, $3) RETURNING id',
+                [groupId, userId, message]
+            );
+            const newId = result.rows[0].id;
 
-        // Broadcast
-        io.to(`group_${groupId}`).emit('group_message', {
-            groupId,
-            from: userId,
-            message,
-            timestamp: new Date().toISOString(),
-            id: newId
-        });
-    } catch (err) {
-        console.error('Group message error:', err);
-    }
-});
+            io.to(`group_${groupId}`).emit('group_message', {
+                groupId,
+                from: userId,
+                message,
+                timestamp: new Date().toISOString(),
+                id: newId
+            });
+        } catch (err) {
+            console.error('Group message error:', err);
+        }
+    });
     socket.on('disconnect', () => {
         const userEntry = onlineUsers.get(userId);
         if (userEntry) {
@@ -1348,7 +1190,6 @@ io.on('connection', (socket) => {
                     } catch (err) { console.error('Error broadcasting offline status:', err); }
                 })();
             } else {
-                // Update primary socket id
                 userEntry.socketId = Array.from(userEntry.socketIds)[0];
             }
         }
@@ -1356,99 +1197,82 @@ io.on('connection', (socket) => {
     });
 });
 
-// ==================== GROUP CHAT REST ENDPOINTS (NEW) ====================
-
-// Get group messages with pagination
+// ==================== GROUP CHAT REST ENDPOINTS ====================
 app.get('/api/groups/:id/messages', isAuthenticated, async (req, res) => {
     const groupId = parseInt(req.params.id);
     const offset = parseInt(req.query.offset) || 0;
     const limit = parseInt(req.query.limit) || 30;
     if (isNaN(groupId)) return res.status(400).json({ error: 'Invalid group ID' });
     try {
-        await poolConnect;
-        // Verify user is a member
-        const membership = await pool.request()
-            .input('groupId', sql.Int, groupId)
-            .input('userId', sql.Int, req.session.userId)
-            .query('SELECT 1 FROM group_members WHERE group_id = @groupId AND user_id = @userId');
-        if (membership.recordset.length === 0) {
+        const membership = await pool.query(
+            'SELECT 1 FROM group_members WHERE group_id = $1 AND user_id = $2',
+            [groupId, req.session.userId]
+        );
+        if (membership.rows.length === 0) {
             return res.status(403).json({ error: 'You are not a member of this group' });
         }
-        const result = await pool.request()
-            .input('groupId', sql.Int, groupId)
-            .input('offset', sql.Int, offset)
-            .input('limit', sql.Int, limit)
-            .query(`
-                SELECT gm.id, gm.sender_id, gm.content, gm.created_at, u.username as sender_name
-                FROM group_messages gm
-                JOIN users u ON gm.sender_id = u.id
-                WHERE gm.group_id = @groupId
-                ORDER BY gm.created_at DESC
-                OFFSET @offset ROWS
-                FETCH NEXT @limit ROWS ONLY
-            `);
-        res.json(result.recordset);
+        const result = await pool.query(
+            `SELECT gm.id, gm.sender_id, gm.content, gm.created_at, u.username as sender_name
+             FROM group_messages gm
+             JOIN users u ON gm.sender_id = u.id
+             WHERE gm.group_id = $1
+             ORDER BY gm.created_at DESC
+             LIMIT $2 OFFSET $3`,
+            [groupId, limit, offset]
+        );
+        res.json(result.rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to fetch group messages' });
     }
 });
 
-// Get group members
 app.get('/api/groups/:id/members', isAuthenticated, async (req, res) => {
     const groupId = parseInt(req.params.id);
     if (isNaN(groupId)) return res.status(400).json({ error: 'Invalid group ID' });
     try {
-        await poolConnect;
-        const membership = await pool.request()
-            .input('groupId', sql.Int, groupId)
-            .input('userId', sql.Int, req.session.userId)
-            .query('SELECT 1 FROM group_members WHERE group_id = @groupId AND user_id = @userId');
-        if (membership.recordset.length === 0) {
+        const membership = await pool.query(
+            'SELECT 1 FROM group_members WHERE group_id = $1 AND user_id = $2',
+            [groupId, req.session.userId]
+        );
+        if (membership.rows.length === 0) {
             return res.status(403).json({ error: 'You are not a member of this group' });
         }
-        const result = await pool.request()
-            .input('groupId', sql.Int, groupId)
-            .query(`
-                SELECT u.id, u.username, u.display_name, u.avatar_url
-                FROM group_members gm
-                JOIN users u ON gm.user_id = u.id
-                WHERE gm.group_id = @groupId
-            `);
-        res.json(result.recordset);
+        const result = await pool.query(
+            `SELECT u.id, u.username, u.display_name, u.avatar_url
+             FROM group_members gm
+             JOIN users u ON gm.user_id = u.id
+             WHERE gm.group_id = $1`,
+            [groupId]
+        );
+        res.json(result.rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to fetch group members' });
     }
 });
 
-// Add member to group (admin only – group creator)
 app.post('/api/groups/:id/members', isAuthenticated, async (req, res) => {
     const groupId = parseInt(req.params.id);
     const { userId } = req.body;
     if (isNaN(groupId) || !userId) return res.status(400).json({ error: 'Invalid parameters' });
     try {
-        await poolConnect;
-        // Check if current user is group creator
-        const group = await pool.request()
-            .input('groupId', sql.Int, groupId)
-            .query('SELECT created_by FROM groups WHERE id = @groupId');
-        if (group.recordset.length === 0) return res.status(404).json({ error: 'Group not found' });
-        if (group.recordset[0].created_by !== req.session.userId && req.session.role !== 'admin') {
+        const group = await pool.query('SELECT created_by FROM groups WHERE id = $1', [groupId]);
+        if (group.rows.length === 0) return res.status(404).json({ error: 'Group not found' });
+        if (group.rows[0].created_by !== req.session.userId && req.session.role !== 'admin') {
             return res.status(403).json({ error: 'Only group creator can add members' });
         }
-        // Check if user exists and not already a member
-        const existing = await pool.request()
-            .input('groupId', sql.Int, groupId)
-            .input('userId', sql.Int, userId)
-            .query('SELECT 1 FROM group_members WHERE group_id = @groupId AND user_id = @userId');
-        if (existing.recordset.length > 0) {
+        const existing = await pool.query(
+            'SELECT 1 FROM group_members WHERE group_id = $1 AND user_id = $2',
+            [groupId, userId]
+        );
+        if (existing.rows.length > 0) {
             return res.status(409).json({ error: 'User is already a member' });
         }
-        await pool.request()
-            .input('groupId', sql.Int, groupId)
-            .input('userId', sql.Int, userId)
-            .query('INSERT INTO group_members (group_id, user_id) VALUES (@groupId, @userId)');
+        await pool.query(
+            'INSERT INTO group_members (group_id, user_id) VALUES ($1, $2)',
+            [groupId, userId]
+        );
         res.json({ success: true, message: 'Member added' });
     } catch (err) {
         console.error(err);
@@ -1456,28 +1280,23 @@ app.post('/api/groups/:id/members', isAuthenticated, async (req, res) => {
     }
 });
 
-// Remove member from group (admin only)
 app.delete('/api/groups/:id/members/:userId', isAuthenticated, async (req, res) => {
     const groupId = parseInt(req.params.id);
     const memberId = parseInt(req.params.userId);
     if (isNaN(groupId) || isNaN(memberId)) return res.status(400).json({ error: 'Invalid parameters' });
     try {
-        await poolConnect;
-        const group = await pool.request()
-            .input('groupId', sql.Int, groupId)
-            .query('SELECT created_by FROM groups WHERE id = @groupId');
-        if (group.recordset.length === 0) return res.status(404).json({ error: 'Group not found' });
-        if (group.recordset[0].created_by !== req.session.userId && req.session.role !== 'admin') {
+        const group = await pool.query('SELECT created_by FROM groups WHERE id = $1', [groupId]);
+        if (group.rows.length === 0) return res.status(404).json({ error: 'Group not found' });
+        if (group.rows[0].created_by !== req.session.userId && req.session.role !== 'admin') {
             return res.status(403).json({ error: 'Only group creator can remove members' });
         }
-        // Cannot remove creator
-        if (memberId === group.recordset[0].created_by) {
+        if (memberId === group.rows[0].created_by) {
             return res.status(400).json({ error: 'Cannot remove group creator' });
         }
-        await pool.request()
-            .input('groupId', sql.Int, groupId)
-            .input('userId', sql.Int, memberId)
-            .query('DELETE FROM group_members WHERE group_id = @groupId AND user_id = @userId');
+        await pool.query(
+            'DELETE FROM group_members WHERE group_id = $1 AND user_id = $2',
+            [groupId, memberId]
+        );
         res.json({ success: true, message: 'Member removed' });
     } catch (err) {
         console.error(err);
@@ -1485,69 +1304,45 @@ app.delete('/api/groups/:id/members/:userId', isAuthenticated, async (req, res) 
     }
 });
 
-// Leave group (for current user)
 app.post('/api/groups/:id/leave', isAuthenticated, async (req, res) => {
     const groupId = parseInt(req.params.id);
     if (isNaN(groupId)) return res.status(400).json({ error: 'Invalid group ID' });
 
     try {
-        await poolConnect;
+        const group = await pool.query('SELECT created_by FROM groups WHERE id = $1', [groupId]);
+        if (group.rows.length === 0) return res.status(404).json({ error: 'Group not found' });
 
-        // Get group info
-        const group = await pool.request()
-            .input('groupId', sql.Int, groupId)
-            .query('SELECT created_by FROM groups WHERE id = @groupId');
-        if (group.recordset.length === 0) return res.status(404).json({ error: 'Group not found' });
+        const isCreator = (group.rows[0].created_by === req.session.userId);
 
-        const isCreator = (group.recordset[0].created_by === req.session.userId);
-
-        // ──────────────────────────────────────────────
-        // OPTION 1: Creator can leave → group is deleted
-        // ──────────────────────────────────────────────
         if (isCreator) {
-            // Delete entire group (cascades to members & messages)
-            await pool.request()
-                .input('groupId', sql.Int, groupId)
-                .query('DELETE FROM groups WHERE id = @groupId');
-            
-            // Notify all members that group is gone
-            const members = await pool.request()
-                .input('groupId', sql.Int, groupId)
-                .query('SELECT user_id FROM group_members WHERE group_id = @groupId');
-            for (const member of members.recordset) {
+            await pool.query('DELETE FROM groups WHERE id = $1', [groupId]);
+            const members = await pool.query('SELECT user_id FROM group_members WHERE group_id = $1', [groupId]);
+            for (const member of members.rows) {
                 const userEntry = onlineUsers.get(member.user_id);
                 if (userEntry && userEntry.socketId) {
                     io.to(userEntry.socketId).emit('group_deleted', { groupId });
                 }
             }
-            
             return res.json({ success: true, message: 'Group deleted because you were the creator' });
         }
 
-        // ──────────────────────────────────────────────
-        // Regular member leaves
-        // ──────────────────────────────────────────────
-        await pool.request()
-            .input('groupId', sql.Int, groupId)
-            .input('userId', sql.Int, req.session.userId)
-            .query('DELETE FROM group_members WHERE group_id = @groupId AND user_id = @userId');
+        await pool.query(
+            'DELETE FROM group_members WHERE group_id = $1 AND user_id = $2',
+            [groupId, req.session.userId]
+        );
 
-        // Notify the user to leave socket room
         const userEntry = onlineUsers.get(req.session.userId);
         if (userEntry && userEntry.socketId) {
             io.to(userEntry.socketId).emit('leave_group', groupId);
         }
 
         res.json({ success: true, message: 'Left group' });
-
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to leave group' });
     }
 });
-// ==================== ADD THESE MISSING ENDPOINTS ====================
 
-// CREATE GROUP
 app.post('/api/admin/groups', isAdminOrModerator, async (req, res) => {
     const { name, members } = req.body;
     if (!name || !Array.isArray(members)) {
@@ -1555,56 +1350,45 @@ app.post('/api/admin/groups', isAdminOrModerator, async (req, res) => {
     }
 
     try {
-        await poolConnect;
-
-        // Verify that all members are either admin or moderator
         for (const userId of members) {
-            const roleCheck = await pool.request()
-                .input('userId', sql.Int, userId)
-                .query('SELECT role FROM users WHERE id = @userId');
-            if (roleCheck.recordset.length === 0)
+            const roleCheck = await pool.query('SELECT role FROM users WHERE id = $1', [userId]);
+            if (roleCheck.rows.length === 0)
                 return res.status(400).json({ error: `User ${userId} does not exist` });
-            const role = roleCheck.recordset[0].role;
+            const role = roleCheck.rows[0].role;
             if (role !== 'admin' && role !== 'moderator') {
                 return res.status(403).json({ error: 'Only admins and moderators can be added to staff groups' });
             }
         }
 
-        // Create group
-        const result = await pool.request()
-            .input('name', sql.NVarChar, name)
-            .input('created_by', sql.Int, req.session.userId)
-            .query(`INSERT INTO groups (name, created_by) OUTPUT INSERTED.id VALUES (@name, @created_by)`);
-        const groupId = result.recordset[0].id;
+        const result = await pool.query(
+            `INSERT INTO groups (name, created_by) VALUES ($1, $2) RETURNING id`,
+            [name, req.session.userId]
+        );
+        const groupId = result.rows[0].id;
 
-        // Add creator
-        await pool.request()
-            .input('groupId', sql.Int, groupId)
-            .input('userId', sql.Int, req.session.userId)
-            .query(`INSERT INTO group_members (group_id, user_id) VALUES (@groupId, @userId)`);
+        await pool.query(
+            `INSERT INTO group_members (group_id, user_id) VALUES ($1, $2)`,
+            [groupId, req.session.userId]
+        );
 
-        // Add other members
         for (const userId of members) {
             if (userId === req.session.userId) continue;
-               const isFriend = await pool.request()
-               .input('userId', req.session.userId)
-               .input('friendId', userId)
-               .query(`SELECT 1 FROM friendships 
-                WHERE (user_id = @userId AND friend_id = @friendId)
-                   OR (user_id = @friendId AND friend_id = @userId)
-                  AND status = 'accepted'`);
-            if (isFriend.recordset.length === 0) {
-                 return res.status(403).json({ error: 'You can only add friends to a group' });
-                }
+            const isFriend = await pool.query(
+                `SELECT 1 FROM friendships 
+                 WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1) AND status = 'accepted'`,
+                [req.session.userId, userId]
+            );
+            if (isFriend.rows.length === 0) {
+                return res.status(403).json({ error: 'You can only add friends to a group' });
+            }
         }
         for (const userId of members) {
-            await pool.request()
-                .input('groupId', sql.Int, groupId)
-                .input('userId', sql.Int, userId)
-                .query(`INSERT INTO group_members (group_id, user_id) VALUES (@groupId, @userId)`);
+            await pool.query(
+                `INSERT INTO group_members (group_id, user_id) VALUES ($1, $2)`,
+                [groupId, userId]
+            );
         }
 
-        // Notify all members via Socket.IO
         for (const userId of [req.session.userId, ...members]) {
             const userEntry = onlineUsers.get(userId);
             if (userEntry && userEntry.socketId) io.to(userEntry.socketId).emit('group_created', { groupId, name });
@@ -1617,52 +1401,44 @@ app.post('/api/admin/groups', isAdminOrModerator, async (req, res) => {
     }
 });
 
-// GET USER'S GROUPS
 app.get('/api/groups', isAuthenticated, async (req, res) => {
     try {
-        await poolConnect;
-        const result = await pool.request()
-            .input('userId', sql.Int, req.session.userId)
-            .query(`
-                SELECT g.id, g.name, g.created_at,
-                       (SELECT COUNT(*) FROM group_members WHERE group_id = g.id) as member_count
-                FROM groups g
-                JOIN group_members gm ON g.id = gm.group_id
-                WHERE gm.user_id = @userId
-            `);
-        res.json(result.recordset);
+        const result = await pool.query(`
+            SELECT g.id, g.name, g.created_at,
+                   (SELECT COUNT(*) FROM group_members WHERE group_id = g.id) as member_count
+            FROM groups g
+            JOIN group_members gm ON g.id = gm.group_id
+            WHERE gm.user_id = $1
+        `, [req.session.userId]);
+        res.json(result.rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to fetch groups' });
     }
 });
+
 app.delete('/api/groups/:id', isAuthenticated, async (req, res) => {
     const groupId = parseInt(req.params.id);
     try {
-        const group = await pool.request()
-            .input('id', groupId)
-            .query('SELECT created_by FROM groups WHERE id = @id');
-        if (group.recordset.length === 0) return res.status(404).json({ error: 'Group not found' });
-        if (group.recordset[0].created_by !== req.session.userId && req.session.role !== 'admin') {
+        const group = await pool.query('SELECT created_by FROM groups WHERE id = $1', [groupId]);
+        if (group.rows.length === 0) return res.status(404).json({ error: 'Group not found' });
+        if (group.rows[0].created_by !== req.session.userId && req.session.role !== 'admin') {
             return res.status(403).json({ error: 'Only creator or admin can delete' });
         }
-        await pool.request().input('id', groupId).query('DELETE FROM groups WHERE id = @id');
+        await pool.query('DELETE FROM groups WHERE id = $1', [groupId]);
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: 'Failed to delete group' });
     }
 });
 
-// ==================== STAFF LOUNGE INFO ENDPOINT ====================
 app.get('/api/staff-lounge', isAdminOrModerator, async (req, res) => {
     try {
-        await poolConnect;
-        const groupResult = await pool.request()
-            .query(`SELECT id FROM groups WHERE name = 'Staff Lounge'`);
-        if (groupResult.recordset.length === 0) {
+        const groupResult = await pool.query(`SELECT id FROM groups WHERE name = 'Staff Lounge'`);
+        if (groupResult.rows.length === 0) {
             return res.status(404).json({ error: 'Staff Lounge not found' });
         }
-        const groupId = groupResult.recordset[0].id;
+        const groupId = groupResult.rows[0].id;
         res.json({
             groupId,
             name: 'Staff Lounge',
@@ -1697,27 +1473,24 @@ app.post('/send-otp', authLimiter, async (req, res) => {
         res.status(500).send('Server error');
     }
 });
-// Create a new group
+
 app.post('/api/groups', isAuthenticated, async (req, res) => {
     const { name, members } = req.body;
     if (!name || !Array.isArray(members)) {
         return res.status(400).json({ error: 'Group name and members array required' });
     }
     try {
-        // Insert group and return id
         const result = await pool.query(
             `INSERT INTO groups (name, created_by) VALUES ($1, $2) RETURNING id`,
             [name, req.session.userId]
         );
         const groupId = result.rows[0].id;
         
-        // Add creator as member
         await pool.query(
             `INSERT INTO group_members (group_id, user_id) VALUES ($1, $2)`,
             [groupId, req.session.userId]
         );
         
-        // Add other members
         for (const memberId of members) {
             await pool.query(
                 `INSERT INTO group_members (group_id, user_id) VALUES ($1, $2)`,
@@ -1725,7 +1498,6 @@ app.post('/api/groups', isAuthenticated, async (req, res) => {
             );
         }
         
-        // Notify all members via Socket.IO
         for (const userId of [req.session.userId, ...members]) {
             const userEntry = onlineUsers.get(userId);
             if (userEntry && userEntry.socketId) {
@@ -1739,6 +1511,7 @@ app.post('/api/groups', isAuthenticated, async (req, res) => {
         res.status(500).json({ error: 'Failed to create group' });
     }
 });
+
 app.get('/api/groups', isAuthenticated, async (req, res) => {
     try {
         const result = await pool.query(`
@@ -1754,7 +1527,8 @@ app.get('/api/groups', isAuthenticated, async (req, res) => {
         res.status(500).json({ error: 'Failed to fetch groups' });
     }
 });
-// ==================== FIXED REGISTER: Username uniqueness check + proper error ====================
+
+// ==================== REGISTER ====================
 app.post('/register', authLimiter, async (req, res) => {
     const { username, email, password, otp, ref } = req.body;
     if (!username || !email || !password || !otp)
@@ -1764,7 +1538,6 @@ app.post('/register', authLimiter, async (req, res) => {
     if (!strength.valid) return res.status(400).send(strength.message);
 
     try {
-        // Check username existence
         const existingUsername = await pool.query(
             'SELECT id FROM users WHERE username = $1',
             [username]
@@ -1831,7 +1604,6 @@ app.post('/register', authLimiter, async (req, res) => {
                  VALUES ($1, $2, 'earn', $3)`,
                 [referrerId, referralBonus, `Referral bonus for inviting ${username}`]
             );
-            // GAMIFICATION: Award XP to referrer for referral
             await addXP(referrerId, 50, 'Referral');
             await updateQuestProgress(referrerId, 'referral');
             await checkAchievements(referrerId);
@@ -1842,14 +1614,14 @@ app.post('/register', authLimiter, async (req, res) => {
         res.status(201).send('Registration successful! Please login.');
     } catch (err) {
         console.error(err);
-        // Handle duplicate key error from PostgreSQL
-        if (err.code === '23505') { // unique violation
+        if (err.code === '23505') {
             if (err.constraint === 'users_username_key') return res.status(409).send('Username already exists');
             if (err.constraint === 'users_email_key') return res.status(409).send('Email already registered');
         }
         res.status(500).send('Server error');
     }
 });
+
 // ==================== LOGIN ====================
 const MAX_LOGIN_ATTEMPTS = 15;
 function validatePasswordStrength(password) {
@@ -1923,7 +1695,6 @@ app.post('/login', authLimiter, async (req, res) => {
             else res.send('Login successful');
         });
 
-        // Gamification after login
         updateStreak(user.id).catch(err => console.error('Streak error:', err));
         updateQuestProgress(user.id, 'login').catch(err => console.error('Quest error:', err));
         checkAchievements(user.id).catch(err => console.error('Achievement error:', err));
@@ -1963,7 +1734,7 @@ app.get('/auth/google/callback', passport.authenticate('google', { failureRedire
     });
 });
 
-// ==================== TOOL USAGE TRACKING (with gamification) ====================
+// ==================== TOOL USAGE TRACKING ====================
 app.post('/api/track-usage', isAuthenticated, async (req, res) => {
     const { tool_name, tool_category } = req.body;
     if (!tool_name) return res.status(400).send('Tool name required');
@@ -1980,7 +1751,8 @@ app.post('/api/track-usage', isAuthenticated, async (req, res) => {
         res.status(500).send('Server error');
     }
 });
-// ==================== TOOL REVIEW ENDPOINT (with gamification) ====================
+
+// ==================== TOOL REVIEW ====================
 app.post('/api/tools/:id/review', isAuthenticated, async (req, res) => {
     const toolId = req.params.id;
     const { rating, comment } = req.body;
@@ -1988,73 +1760,36 @@ app.post('/api/tools/:id/review', isAuthenticated, async (req, res) => {
         return res.status(400).json({ error: 'Rating must be between 1 and 5' });
     }
     try {
-        await poolConnect;
-        // Insert review (assuming reviews table exists; create if not exists)
-        await pool.request().query(`
-            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='tool_reviews' AND xtype='U')
-            CREATE TABLE tool_reviews (
-                id INT IDENTITY(1,1) PRIMARY KEY,
-                tool_id INT NOT NULL,
-                user_id INT NOT NULL,
-                rating INT NOT NULL,
-                comment NVARCHAR(1000) NULL,
-                created_at DATETIME DEFAULT NOW(),
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-                FOREIGN KEY (tool_id) REFERENCES tools(id) ON DELETE CASCADE
-            )
-        `);
-        await pool.request()
-            .input('tool_id', sql.Int, toolId)
-            .input('user_id', sql.Int, req.session.userId)
-            .input('rating', sql.Int, rating)
-            .input('comment', sql.NVarChar, comment || '')
-            .query('INSERT INTO tool_reviews (tool_id, user_id, rating, comment) VALUES (@tool_id, @user_id, @rating, @comment)');
-        
-        // GAMIFICATION: award XP for writing a review, update quest, check achievements
+        await pool.query(
+            `INSERT INTO tool_reviews (tool_id, user_id, rating, comment, created_at)
+             VALUES ($1, $2, $3, $4, NOW())`,
+            [toolId, req.session.userId, rating, comment || '']
+        );
         await addXP(req.session.userId, 10, 'Review');
         await updateQuestProgress(req.session.userId, 'review');
         await checkAchievements(req.session.userId);
-        
         res.json({ success: true, message: 'Review submitted! +10 XP' });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to submit review' });
     }
 });
-// ==================== CATEGORY REVIEW (for main page cards) ====================
+
+// ==================== CATEGORY REVIEW ====================
 app.post('/api/category-review', isAuthenticated, async (req, res) => {
     const { category, rating, comment } = req.body;
     if (!category || !rating || rating < 1 || rating > 5) {
         return res.status(400).json({ error: 'Category and valid rating (1-5) are required' });
     }
     try {
-        await poolConnect;
-        // Create category_reviews table if not exists
-        await pool.request().query(`
-            IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='category_reviews' AND xtype='U')
-            CREATE TABLE category_reviews (
-                id INT IDENTITY(1,1) PRIMARY KEY,
-                user_id INT NOT NULL,
-                category NVARCHAR(100) NOT NULL,
-                rating INT NOT NULL,
-                comment NVARCHAR(1000) NULL,
-                created_at DATETIME DEFAULT NOW(),
-                FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-            )
-        `);
-        // Insert review
-        await pool.request()
-            .input('user_id', sql.Int, req.session.userId)
-            .input('category', sql.NVarChar, category)
-            .input('rating', sql.Int, rating)
-            .input('comment', sql.NVarChar, comment || '')
-            .query(`INSERT INTO category_reviews (user_id, category, rating, comment) VALUES (@user_id, @category, @rating, @comment)`);
-        
-        // Award XP and update quest progress (same as tool review)
+        await pool.query(
+            `INSERT INTO category_reviews (user_id, category, rating, comment, created_at)
+             VALUES ($1, $2, $3, $4, NOW())`,
+            [req.session.userId, category, rating, comment || '']
+        );
         await addXP(req.session.userId, 10, 'Category Review');
         await updateQuestProgress(req.session.userId, 'review');
         await checkAchievements(req.session.userId);
-        
         res.json({ success: true, message: `Review submitted for ${category}! +10 XP` });
     } catch (err) {
         console.error('Category review error:', err);
@@ -2070,17 +1805,11 @@ app.post('/api/user/set-badge', isAuthenticated, async (req, res) => {
         return res.status(400).json({ error: 'Invalid badge' });
     }
     try {
-        await poolConnect;
-        const user = await pool.request()
-            .input('userId', req.session.userId)
-            .query('SELECT has_custom_badge FROM users WHERE id = @userId');
-        if (!user.recordset[0]?.has_custom_badge) {
+        const user = await pool.query('SELECT has_custom_badge FROM users WHERE id = $1', [req.session.userId]);
+        if (!user.rows[0]?.has_custom_badge) {
             return res.status(403).json({ error: 'You have not purchased a custom badge' });
         }
-        await pool.request()
-            .input('userId', req.session.userId)
-            .input('badge', badge || null)
-            .query('UPDATE users SET selected_badge = @badge WHERE id = @userId');
+        await pool.query('UPDATE users SET selected_badge = $1 WHERE id = $2', [badge || null, req.session.userId]);
         res.json({ success: true });
     } catch (err) {
         console.error(err);
@@ -2088,26 +1817,24 @@ app.post('/api/user/set-badge', isAuthenticated, async (req, res) => {
     }
 });
 
-// ==================== ADMIN REWARDS DEDICATED ENDPOINT ====================
+// ==================== ADMIN REWARDS ====================
 app.get('/api/credits/admin-rewards', isAuthenticated, async (req, res) => {
     try {
-        await poolConnect;
-        const result = await pool.request()
-            .input('userId', req.session.userId)
-            .query(`
-                SELECT id, amount, type, description, created_at
-                FROM credit_transactions
-                WHERE user_id = @userId AND type = 'earn' AND (description LIKE '%admin%' OR description LIKE '%reward%')
-                ORDER BY created_at DESC
-            `);
-        res.json(result.recordset);
+        const result = await pool.query(
+            `SELECT id, amount, type, description, created_at
+             FROM credit_transactions
+             WHERE user_id = $1 AND type = 'earn' AND (description LIKE '%admin%' OR description LIKE '%reward%')
+             ORDER BY created_at DESC`,
+            [req.session.userId]
+        );
+        res.json(result.rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
     }
 });
 
-// ==================== PREMIUM STATUS ROUTE (WITH BADGE) ====================
+// ==================== PREMIUM STATUS ====================
 app.get('/api/user/premium-status', isAuthenticated, async (req, res) => {
     try {
         const status = await getPremiumStatus(req.session.userId);
@@ -2118,7 +1845,7 @@ app.get('/api/user/premium-status', isAuthenticated, async (req, res) => {
     }
 });
 
-// ==================== SPEND ROUTE (ATOMIC) ====================
+// ==================== SPEND CREDITS ====================
 app.post('/api/credits/spend', isAuthenticated, async (req, res) => {
     const { amount, reason, feature, duration } = req.body;
     if (!amount || amount <= 0) return res.status(400).json({ error: 'Invalid amount' });
@@ -2141,7 +1868,6 @@ app.post('/api/credits/spend', isAuthenticated, async (req, res) => {
         if (feature === 'boost' && uses === 0) uses = 10;
         
         const newBalance = await spendCredits(req.session.userId, amount, reason, feature, days, uses);
-        
         const updatedPremiumStatus = await getPremiumStatus(req.session.userId);
         res.json({ success: true, message: `Spent ${amount} credits on ${feature}`, newBalance, premiumStatus: updatedPremiumStatus });
     } catch (err) {
@@ -2154,47 +1880,41 @@ app.post('/api/credits/spend', isAuthenticated, async (req, res) => {
     }
 });
 
-// ==================== PROFILE UPDATE (WITH ESCAPING) ====================
+// ==================== PROFILE UPDATE ====================
 app.put('/profile/update', isAuthenticated, async (req, res) => {
     const { display_name, bio, phone, github, twitter, linkedin } = req.body;
     try {
-        await poolConnect;
-        await pool.request()
-            .input('id', sql.Int, req.session.userId)
-            .input('display_name', sql.NVarChar, display_name ? escapeHtml(display_name) : null)
-            .input('bio', sql.NVarChar, bio ? escapeHtml(bio) : null)
-            .input('phone', sql.NVarChar, phone ? escapeHtml(phone) : null)
-            .input('github', sql.NVarChar, github ? escapeHtml(github) : null)
-            .input('twitter', sql.NVarChar, twitter ? escapeHtml(twitter) : null)
-            .input('linkedin', sql.NVarChar, linkedin ? escapeHtml(linkedin) : null)
-            .query(`
-                UPDATE users SET
-                    display_name = @display_name,
-                    bio = @bio,
-                    phone = @phone,
-                    github = @github,
-                    twitter = @twitter,
-                    linkedin = @linkedin,
-                    updated_at = NOW()
-                WHERE id = @id
-            `);
-        const updated = await pool.request()
-            .input('id', sql.Int, req.session.userId)
-            .query(`
-                SELECT id, username, display_name, email, bio, phone,
-                       github, twitter, linkedin, email_verified,
-                       two_factor_enabled, created_at, updated_at,
-                       avatar_url
-                FROM users WHERE id = @id
-            `);
-        res.json(updated.recordset[0]);
+        await pool.query(
+            `UPDATE users SET
+                display_name = $1, bio = $2, phone = $3,
+                github = $4, twitter = $5, linkedin = $6,
+                updated_at = NOW()
+             WHERE id = $7`,
+            [
+                display_name ? escapeHtml(display_name) : null,
+                bio ? escapeHtml(bio) : null,
+                phone ? escapeHtml(phone) : null,
+                github ? escapeHtml(github) : null,
+                twitter ? escapeHtml(twitter) : null,
+                linkedin ? escapeHtml(linkedin) : null,
+                req.session.userId
+            ]
+        );
+        const updated = await pool.query(
+            `SELECT id, username, display_name, email, bio, phone,
+                    github, twitter, linkedin, email_verified,
+                    two_factor_enabled, created_at, updated_at, avatar_url
+             FROM users WHERE id = $1`,
+            [req.session.userId]
+        );
+        res.json(updated.rows[0]);
     } catch (err) {
         console.error(err);
         res.status(500).send('Server error');
     }
 });
 
-// ==================== AVATAR UPLOAD (with file type validation) ====================
+// ==================== AVATAR UPLOAD ====================
 app.post('/profile/avatar', isAuthenticated, upload.single('avatar'), async (req, res) => {
     if (!req.file) return res.status(400).send('No file uploaded');
     try {
@@ -2217,10 +1937,7 @@ app.post('/profile/avatar', isAuthenticated, upload.single('avatar'), async (req
     }
 });
 
-// ==================== TOOL SUBMISSION & APPROVAL SYSTEM ====================
-// (All your original tool routes go here – unchanged)
-
-// User submits a new tool
+// ==================== TOOL SUBMISSION & APPROVAL ====================
 app.post('/api/tools/submit', isAuthenticated, async (req, res) => {
     const { name, url, description, category, pageType } = req.body;
     
@@ -2273,7 +1990,7 @@ app.post('/api/tools/submit', isAuthenticated, async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
-// Get all pending tools (for admin/moderator)
+
 app.get('/api/admin/tools/pending', isAdminOrModerator, async (req, res) => {
     try {
         const result = await pool.query(
@@ -2289,8 +2006,6 @@ app.get('/api/admin/tools/pending', isAdminOrModerator, async (req, res) => {
     }
 });
 
-// Get all tools (admin/moderator view - includes pending) - ENHANCED with usage_count and is_featured
-// ==================== ALL TOOLS (admin) ====================
 app.get('/api/admin/tools', isAdminOrModerator, async (req, res) => {
     try {
         const result = await pool.query(
@@ -2307,8 +2022,6 @@ app.get('/api/admin/tools', isAdminOrModerator, async (req, res) => {
     }
 });
 
-// Approve a tool (admin only)
-// ==================== APPROVE TOOL ====================
 app.put('/api/admin/tools/:id/approve', isAdmin, async (req, res) => {
     const toolId = req.params.id;
     try {
@@ -2345,8 +2058,6 @@ app.put('/api/admin/tools/:id/approve', isAdmin, async (req, res) => {
     }
 });
 
-
-// ==================== ADMIN GIVE CREDITS ====================
 app.post('/api/admin/users/:id/credits', isAdmin, async (req, res) => {
     const userId = parseInt(req.params.id);
     let { amount, reason } = req.body;
@@ -2367,14 +2078,13 @@ app.post('/api/admin/users/:id/credits', isAdmin, async (req, res) => {
              VALUES ($1, $2, 'earn', $3)`,
             [userId, numericAmount, reason?.trim() || `Admin added ${numericAmount} credits`]
         );
-       res.json({ success: true, message: `Added ${numericAmount} credits to user ${userId}` });
+        res.json({ success: true, message: `Added ${numericAmount} credits to user ${userId}` });
     } catch (err) {
         console.error('Error giving credits:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
 
-// ==================== ADMIN: BULK EMAIL ====================
 app.post('/api/admin/bulk-email', isAdmin, async (req, res) => {
     const { userIds, subject, htmlContent } = req.body;
     if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
@@ -2384,23 +2094,19 @@ app.post('/api/admin/bulk-email', isAdmin, async (req, res) => {
         return res.status(400).json({ error: 'Subject and content are required' });
     }
     try {
-        await poolConnect;
-        const users = await pool.request()
-            .query(`SELECT id, email, username FROM users WHERE id IN (${userIds.join(',')})`);
+        const placeholders = userIds.map((_, i) => `$${i+1}`).join(',');
+        const users = await pool.query(`SELECT id, email, username FROM users WHERE id IN (${placeholders})`, userIds);
         let successCount = 0, failCount = 0;
-        for (const user of users.recordset) {
+        for (const user of users.rows) {
             const ok = await sendEmail(user.email, subject, htmlContent);
             if (ok.success) successCount++;
             else failCount++;
         }
-        // Log the action
-        await pool.request()
-            .input('moderator_id', sql.Int, req.session.userId)
-            .input('moderator_name', sql.NVarChar, req.session.username)
-            .input('action', sql.NVarChar, 'Bulk email')
-            .input('target', sql.NVarChar, `${successCount} users`)
-            .input('details', sql.NVarChar, `Subject: ${subject}`)
-            .query(`INSERT INTO moderator_activity (moderator_id, moderator_name, action, target, details) VALUES (@moderator_id, @moderator_name, @action, @target, @details)`);
+        await pool.query(
+            `INSERT INTO moderator_activity (moderator_id, moderator_name, action, target, details)
+             VALUES ($1, $2, $3, $4, $5)`,
+            [req.session.userId, req.session.username, 'Bulk email', `${successCount} users`, `Subject: ${subject}`]
+        );
         res.json({ success: true, successCount, failCount });
     } catch (err) {
         console.error('Bulk email error:', err);
@@ -2408,64 +2114,6 @@ app.post('/api/admin/bulk-email', isAdmin, async (req, res) => {
     }
 });
 
-// Admin: give credits to user
-app.post('/api/admin/users/:id/credits', isAdmin, async (req, res) => {
-    const userId = parseInt(req.params.id);
-    let { amount, reason } = req.body;
-
-    if (isNaN(userId)) {
-        return res.status(400).json({ error: 'Invalid user ID' });
-    }
-
-    let numericAmount = parseFloat(amount);
-    if (isNaN(numericAmount) || numericAmount <= 0) {
-        return res.status(400).json({ error: 'Invalid credit amount. Must be a positive number.' });
-    }
-
-    try {
-        await poolConnect;
-
-        const userCheck = await pool.request()
-            .input('id', sql.Int, userId)
-            .query('SELECT id FROM users WHERE id = @id');
-        if (userCheck.recordset.length === 0) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        await ensureUserCredits(userId);
-
-        await pool.request()
-            .input('user_id', sql.Int, userId)
-            .input('amount', sql.Decimal(10,2), numericAmount)
-            .query(`
-                UPDATE user_credits 
-                SET balance = balance + @amount, 
-                    lifetime_earned = lifetime_earned + @amount,
-                    last_updated = NOW()
-                WHERE user_id = @user_id
-            `);
-
-        const transactionReason = reason ? reason.trim() : `Admin added ${numericAmount} credits`;
-        await pool.request()
-            .input('user_id', sql.Int, userId)
-            .input('amount', sql.Decimal(10,2), numericAmount)
-            .input('type', sql.NVarChar, 'earn')
-            .input('description', sql.NVarChar, transactionReason)
-            .query(`
-                INSERT INTO credit_transactions (user_id, amount, type, description)
-                VALUES (@user_id, @amount, @type, @description)
-            `);
-
-        console.log(`✅ Admin ${req.session.username} gave ${numericAmount} credits to user ${userId}`);
-        res.json({ success: true, message: `Added ${numericAmount} credits to user ${userId}` });
-    } catch (err) {
-        console.error('Error giving credits:', err);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
-// Reject a tool (admin only)
-// ==================== REJECT TOOL ====================
 app.delete('/api/admin/tools/:id/reject', isAdmin, async (req, res) => {
     const toolId = req.params.id;
     const { reason } = req.body;
@@ -2488,7 +2136,6 @@ app.delete('/api/admin/tools/:id/reject', isAdmin, async (req, res) => {
     }
 });
 
-// Get approved tools only for a specific page (for users) - ENHANCED with is_featured
 app.get('/api/tools', isAuthenticated, async (req, res) => {
     const { page = 'student', premium = 'false' } = req.query;
     try {
@@ -2510,35 +2157,32 @@ app.get('/api/tools', isAuthenticated, async (req, res) => {
     }
 });
 
-// Get recently approved tools (for newtools.html – all categories)
 app.get('/api/tools/recent', isAuthenticated, async (req, res) => {
     const { limit = 50, page } = req.query;
     try {
-        await poolConnect;
         let query = `
-            SELECT TOP (@limit) t.*, u.username as submitted_by
+            SELECT t.*, u.username as submitted_by
             FROM tools t
             LEFT JOIN users u ON t.user_id = u.id
             WHERE t.approved = true
         `;
+        const params = [];
+        let paramIdx = 1;
         if (page && page !== 'all') {
-            query += ` AND t.page_type = @page_type`;
+            query += ` AND t.page_type = $${paramIdx}`;
+            params.push(page);
+            paramIdx++;
         }
-        query += ` ORDER BY t.created_at DESC`;
-        
-        const request = pool.request().input('limit', sql.Int, parseInt(limit));
-        if (page && page !== 'all') {
-            request.input('page_type', sql.NVarChar, page);
-        }
-        const result = await request.query(query);
-        res.json(result.recordset);
+        query += ` ORDER BY t.created_at DESC LIMIT $${paramIdx}`;
+        params.push(parseInt(limit));
+        const result = await pool.query(query, params);
+        res.json(result.rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
     }
 });
 
-// Admin add tool directly (ENHANCED: now accepts is_featured flag)
 app.post('/api/admin/tools', isAdmin, async (req, res) => {
     const { name, url, description, category, approved, pageType, is_premium, is_featured } = req.body;
     if (!name || !url) return res.status(400).json({ error: 'Name and URL are required' });
@@ -2556,7 +2200,6 @@ app.post('/api/admin/tools', isAdmin, async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
-
 
 app.put('/api/admin/tools/:id', isAdmin, async (req, res) => {
     const { name, url, description, category, approved, pageType, is_premium, is_featured } = req.body;
@@ -2576,7 +2219,6 @@ app.put('/api/admin/tools/:id', isAdmin, async (req, res) => {
     }
 });
 
-// Admin delete tool
 app.delete('/api/admin/tools/:id', isAdmin, async (req, res) => {
     try {
         await pool.query('DELETE FROM tools WHERE id = $1', [req.params.id]);
@@ -2586,90 +2228,57 @@ app.delete('/api/admin/tools/:id', isAdmin, async (req, res) => {
     }
 });
 
-
-// ==================== CARDS MANAGEMENT (Admin only) ====================
-
-// Get all cards (public, but admin uses it)
+// ==================== CARDS MANAGEMENT ====================
 app.get('/api/cards', async (req, res) => {
     try {
-        await poolConnect;
-        const result = await pool.request().query(`
-            SELECT * FROM cards ORDER BY display_order ASC, id ASC
-        `);
-        res.json(result.recordset);
+        const result = await pool.query(`SELECT * FROM cards ORDER BY display_order ASC, id ASC`);
+        res.json(result.rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to fetch cards' });
     }
 });
 
-// Get single card
 app.get('/api/cards/:id', isAdmin, async (req, res) => {
     const cardId = parseInt(req.params.id);
     try {
-        await poolConnect;
-        const result = await pool.request()
-            .input('id', sql.Int, cardId)
-            .query('SELECT * FROM cards WHERE id = @id');
-        if (result.recordset.length === 0) return res.status(404).json({ error: 'Card not found' });
-        res.json(result.recordset[0]);
+        const result = await pool.query('SELECT * FROM cards WHERE id = $1', [cardId]);
+        if (result.rows.length === 0) return res.status(404).json({ error: 'Card not found' });
+        res.json(result.rows[0]);
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch card' });
     }
 });
 
-// Create new card (admin only)
 app.post('/api/cards', isAdmin, async (req, res) => {
     const { title, description, icon, link, category, order } = req.body;
     if (!title || !icon || !link || !category) {
         return res.status(400).json({ error: 'Missing required fields' });
     }
     try {
-        await poolConnect;
-        const result = await pool.request()
-            .input('title', sql.NVarChar, title)
-            .input('description', sql.NVarChar, description || '')
-            .input('icon', sql.NVarChar, icon)
-            .input('link', sql.NVarChar, link)
-            .input('category', sql.NVarChar, category)
-            .input('display_order', sql.Int, order || 0)
-            .query(`
-                INSERT INTO cards (title, description, icon, link, category, display_order)
-                OUTPUT INSERTED.id
-                VALUES (@title, @description, @icon, @link, @category, @display_order)
-            `);
-        res.status(201).json({ success: true, id: result.recordset[0].id });
+        const result = await pool.query(
+            `INSERT INTO cards (title, description, icon, link, category, display_order, created_at)
+             VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING id`,
+            [title, description || '', icon, link, category, order || 0]
+        );
+        res.status(201).json({ success: true, id: result.rows[0].id });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to create card' });
     }
 });
 
-// Update card (admin only)
 app.put('/api/cards/:id', isAdmin, async (req, res) => {
     const cardId = parseInt(req.params.id);
     const { title, description, icon, link, category, order } = req.body;
     try {
-        await poolConnect;
-        await pool.request()
-            .input('id', sql.Int, cardId)
-            .input('title', sql.NVarChar, title)
-            .input('description', sql.NVarChar, description || '')
-            .input('icon', sql.NVarChar, icon)
-            .input('link', sql.NVarChar, link)
-            .input('category', sql.NVarChar, category)
-            .input('display_order', sql.Int, order || 0)
-            .query(`
-                UPDATE cards SET
-                    title = @title,
-                    description = @description,
-                    icon = @icon,
-                    link = @link,
-                    category = @category,
-                    display_order = @display_order,
-                    updated_at = NOW()
-                WHERE id = @id
-            `);
+        await pool.query(
+            `UPDATE cards SET
+                title = $1, description = $2, icon = $3, link = $4,
+                category = $5, display_order = $6, updated_at = NOW()
+             WHERE id = $7`,
+            [title, description || '', icon, link, category, order || 0, cardId]
+        );
         res.json({ success: true });
     } catch (err) {
         console.error(err);
@@ -2677,15 +2286,11 @@ app.put('/api/cards/:id', isAdmin, async (req, res) => {
     }
 });
 
-// Delete card (admin only)
 app.delete('/api/cards/:id', isAdmin, async (req, res) => {
     const cardId = parseInt(req.params.id);
     try {
-        await poolConnect;
-        const result = await pool.request()
-            .input('id', sql.Int, cardId)
-            .query('DELETE FROM cards WHERE id = @id');
-        if (result.rowsAffected[0] === 0) return res.status(404).json({ error: 'Card not found' });
+        const result = await pool.query('DELETE FROM cards WHERE id = $1', [cardId]);
+        if (result.rowCount === 0) return res.status(404).json({ error: 'Card not found' });
         res.json({ success: true });
     } catch (err) {
         console.error(err);
@@ -2694,8 +2299,6 @@ app.delete('/api/cards/:id', isAdmin, async (req, res) => {
 });
 
 // ==================== CREDITS SYSTEM ====================
-
-// Get user credits balance
 app.get('/api/credits/balance', isAuthenticated, async (req, res) => {
     try {
         await ensureUserCredits(req.session.userId);
@@ -2717,7 +2320,6 @@ app.get('/api/credits/balance', isAuthenticated, async (req, res) => {
     }
 });
 
-// Get credit transactions
 app.get('/api/credits/transactions', isAuthenticated, async (req, res) => {
     const limit = Math.min(parseInt(req.query.limit) || 50, 200);
     const offset = parseInt(req.query.offset) || 0;
@@ -2742,7 +2344,6 @@ app.get('/api/credits/transactions', isAuthenticated, async (req, res) => {
     }
 });
 
-// Get credit opportunities
 app.get('/api/credits/opportunities', isAuthenticated, async (req, res) => {
     const opportunities = [
         { id: 1, title: "Daily Login Bonus", description: "Log in daily to earn credits", amount: 5, icon: "fa-calendar-day", action: "daily_login", frequency: "daily" },
@@ -2754,8 +2355,6 @@ app.get('/api/credits/opportunities', isAuthenticated, async (req, res) => {
     ];
     res.json(opportunities);
 });
-
-// ==================== CLAIM DAILY BONUS ====================
 
 app.post('/api/credits/claim-daily', isAuthenticated, async (req, res) => {
     try {
@@ -2788,7 +2387,6 @@ app.post('/api/credits/claim-daily', isAuthenticated, async (req, res) => {
     }
 });
 
-// Get spend options (without badge)
 app.get('/api/credits/spend-options', isAuthenticated, async (req, res) => {
     const options = [
         { id: 1, title: "Premium Tools Access", description: "Unlock all premium AI tools for 30 days", cost: 500, icon: "fa-crown", duration: "30 days", popular: true, feature: "premium" },
@@ -2837,47 +2435,28 @@ app.get('/api/referrals/link', isAuthenticated, async (req, res) => {
     }
 });
 
-// ========== PREMIUM FEATURES ENDPOINTS ==========
-app.get('/api/user/premium-status', isAuthenticated, async (req, res) => {
-    try {
-        const status = await getPremiumStatus(req.session.userId);
-        res.json(status);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
 app.post('/api/user/use-boost', isAuthenticated, async (req, res) => {
     try {
-        const result = await pool.request()
-            .input('userId', req.session.userId)
-            .query('SELECT message_boosts_remaining FROM users WHERE id = @userId');
-        const remaining = result.recordset[0]?.message_boosts_remaining || 0;
+        const result = await pool.query('SELECT message_boosts_remaining FROM users WHERE id = $1', [req.session.userId]);
+        const remaining = result.rows[0]?.message_boosts_remaining || 0;
         if (remaining <= 0) {
             return res.status(400).json({ error: 'No boosts remaining' });
         }
-        await pool.request()
-            .input('userId', req.session.userId)
-            .query('UPDATE users SET message_boosts_remaining = message_boosts_remaining - 1 WHERE id = @userId');
+        await pool.query('UPDATE users SET message_boosts_remaining = message_boosts_remaining - 1 WHERE id = $1', [req.session.userId]);
         res.json({ success: true, remaining: remaining - 1 });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
     }
 });
-// ==================== UPDATE USER AVATAR STYLE ====================
+
 app.post('/api/user/avatar-style', isAuthenticated, async (req, res) => {
     const { style } = req.body;
     if (!style || typeof style !== 'string') {
         return res.status(400).json({ error: 'Avatar style is required' });
     }
     try {
-        await poolConnect;
-        await pool.request()
-            .input('userId', sql.Int, req.session.userId)
-            .input('style', sql.NVarChar, style)
-            .query('UPDATE users SET avatar_style = @style WHERE id = @userId');
+        await pool.query('UPDATE users SET avatar_style = $1 WHERE id = $2', [style, req.session.userId]);
         res.json({ success: true });
     } catch (err) {
         console.error('Error updating avatar style:', err);
@@ -2889,46 +2468,31 @@ app.post('/api/messages/boost/:messageId', isAuthenticated, async (req, res) => 
     const messageId = req.params.messageId;
     const userId = req.session.userId;
     try {
-        await poolConnect;
-        const msg = await pool.request()
-            .input('id', messageId)
-            .input('userId', userId)
-            .query('SELECT sender_id FROM messages WHERE id = @id AND sender_id = @userId');
-        if (msg.recordset.length === 0) {
+        const msg = await pool.query('SELECT sender_id FROM messages WHERE id = $1 AND sender_id = $2', [messageId, userId]);
+        if (msg.rows.length === 0) {
             return res.status(404).json({ error: 'Message not found or not yours' });
         }
         
-        const boostsResult = await pool.request()
-            .input('userId', userId)
-            .query('SELECT message_boosts_remaining FROM users WHERE id = @userId');
-        let boostsRemaining = boostsResult.recordset[0]?.message_boosts_remaining || 0;
+        const boostsResult = await pool.query('SELECT message_boosts_remaining FROM users WHERE id = $1', [userId]);
+        let boostsRemaining = boostsResult.rows[0]?.message_boosts_remaining || 0;
         
         if (boostsRemaining > 0) {
-            await pool.request()
-                .input('userId', userId)
-                .query('UPDATE users SET message_boosts_remaining = message_boosts_remaining - 1 WHERE id = @userId');
+            await pool.query('UPDATE users SET message_boosts_remaining = message_boosts_remaining - 1 WHERE id = $1', [userId]);
         } else {
-            const balanceCheck = await pool.request()
-                .input('userId', userId)
-                .query('SELECT balance FROM user_credits WHERE user_id = @userId');
-            const balance = balanceCheck.recordset[0]?.balance || 0;
+            const balanceCheck = await pool.query('SELECT balance FROM user_credits WHERE user_id = $1', [userId]);
+            const balance = balanceCheck.rows[0]?.balance || 0;
             if (balance < 10) {
                 return res.status(400).json({ error: 'Insufficient credits (need 10) and no boosts left' });
             }
-            await pool.request()
-                .input('userId', userId)
-                .input('amount', 10)
-                .query(`
-                    UPDATE user_credits SET balance = balance - @amount WHERE user_id = @userId;
-                    INSERT INTO credit_transactions (user_id, amount, type, description)
-                    VALUES (@userId, @amount, 'spend', 'Message boost');
-                `);
+            await pool.query('UPDATE user_credits SET balance = balance - $1 WHERE user_id = $2', [10, userId]);
+            await pool.query(
+                `INSERT INTO credit_transactions (user_id, amount, type, description)
+                 VALUES ($1, $2, 'spend', 'Message boost')`,
+                [userId, 10]
+            );
         }
         
-        await pool.request()
-            .input('id', messageId)
-            .query('UPDATE messages SET is_boosted = true WHERE id = @id');
-        
+        await pool.query('UPDATE messages SET is_boosted = true WHERE id = $1', [messageId]);
         res.json({ success: true });
     } catch (err) {
         console.error(err);
@@ -2938,10 +2502,8 @@ app.post('/api/messages/boost/:messageId', isAuthenticated, async (req, res) => 
 
 app.get('/api/referrals/list', isAuthenticated, async (req, res) => {
     try {
-        const result = await pool.query()
-            .input('referrerId', req.session.userId)
-            .query('SELECT id, username, email, created_at FROM users WHERE referrer_id = @referrerId ORDER BY created_at DESC');
-        res.json(result.recordset);
+        const result = await pool.query('SELECT id, username, email, created_at FROM users WHERE referrer_id = $1 ORDER BY created_at DESC', [req.session.userId]);
+        res.json(result.rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -2952,12 +2514,10 @@ app.post('/api/messages/send', isAuthenticated, async (req, res) => {
     const { to, message } = req.body;
     if (!to || !message) return res.status(400).json({ error: 'Missing fields' });
     try {
-        await poolConnect;
-        await pool.request()
-            .input('sender_id', sql.Int, req.session.userId)
-            .input('receiver_id', sql.Int, to)
-            .input('content', sql.NVarChar, message)
-            .query('INSERT INTO messages (sender_id, receiver_id, content) VALUES (@sender_id, @receiver_id, @content)');
+        await pool.query(
+            'INSERT INTO messages (sender_id, receiver_id, content) VALUES ($1, $2, $3)',
+            [req.session.userId, to, message]
+        );
         const toEntry = onlineUsers.get(parseInt(to));
         if (toEntry && toEntry.socketId) {
             io.to(toEntry.socketId).emit('private_message', { from: req.session.userId, message, timestamp: new Date() });
@@ -2969,9 +2529,7 @@ app.post('/api/messages/send', isAuthenticated, async (req, res) => {
     }
 });
 
-// ==================== SUPPORT TICKETS SYSTEM (ENHANCED) ====================
-
-// AI Helper Function for Support
+// ==================== SUPPORT TICKETS SYSTEM ====================
 async function getAIResponseForSupport(subject, message, conversationHistory = []) {
     try {
         const prompt = `You are a support assistant for Sraveik . 
@@ -2980,7 +2538,6 @@ async function getAIResponseForSupport(subject, message, conversationHistory = [
         Previous conversation: ${JSON.stringify(conversationHistory)}
         Provide a helpful, concise answer. If you cannot answer, say "I cannot answer this. A human moderator will assist you shortly."`;
         
-        // Call your existing AI service (Cohere via Spring Boot)
         const response = await fetch('http://localhost:8080/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -2995,16 +2552,15 @@ async function getAIResponseForSupport(subject, message, conversationHistory = [
 }
 
 async function getTicketWithReplies(ticketId, userId, isModOrAdmin) {
-    const ticket = await pool.request()
-        .input('id', sql.Int, ticketId)
-        .query(`
-            SELECT t.*, u.username as user_name, u.email as user_email
-            FROM support_tickets t
-            JOIN users u ON t.user_id = u.id
-            WHERE t.id = @id
-        `);
-    if (ticket.recordset.length === 0) return null;
-    const ticketData = ticket.recordset[0];
+    const ticket = await pool.query(
+        `SELECT t.*, u.username as user_name, u.email as user_email
+         FROM support_tickets t
+         JOIN users u ON t.user_id = u.id
+         WHERE t.id = $1`,
+        [ticketId]
+    );
+    if (ticket.rows.length === 0) return null;
+    const ticketData = ticket.rows[0];
     if (!isModOrAdmin && ticketData.user_id !== userId) return null;
     
     let replies = [];
@@ -3021,22 +2577,15 @@ app.post('/api/support/tickets', isAuthenticated, async (req, res) => {
         return res.status(400).json({ error: 'Subject and message are required' });
     }
     try {
-        await poolConnect;
-        const result = await pool.request()
-            .input('user_id', sql.Int, req.session.userId)
-            .input('subject', sql.NVarChar, subject)
-            .input('message', sql.NVarChar, message)
-            .query(`
-                INSERT INTO support_tickets (user_id, subject, message, replies, status)
-                OUTPUT INSERTED.id
-                VALUES (@user_id, @subject, @message, '[]', 'open')
-            `);
-        const ticketId = result.recordset[0].id;
+        const result = await pool.query(
+            `INSERT INTO support_tickets (user_id, subject, message, replies, status, created_at)
+             VALUES ($1, $2, $3, '[]', 'open', NOW())
+             RETURNING id`,
+            [req.session.userId, subject, message]
+        );
+        const ticketId = result.rows[0].id;
         
-        // Generate AI reply
         const aiReplyText = await getAIResponseForSupport(subject, message);
-        
-        // Store AI reply as a system message
         const aiReply = {
             id: Date.now(),
             message: aiReplyText,
@@ -3046,10 +2595,10 @@ app.post('/api/support/tickets', isAuthenticated, async (req, res) => {
             created_at: new Date().toISOString()
         };
         
-        await pool.request()
-            .input('id', sql.Int, ticketId)
-            .input('replies', sql.NVarChar, JSON.stringify([aiReply]))
-            .query(`UPDATE support_tickets SET replies = @replies, ai_handled = true WHERE id = @id`);
+        await pool.query(
+            `UPDATE support_tickets SET replies = $1, ai_handled = true WHERE id = $2`,
+            [JSON.stringify([aiReply]), ticketId]
+        );
         
         res.status(201).json({ success: true, ticketId: ticketId, aiReply: aiReplyText });
     } catch (err) {
@@ -3058,59 +2607,45 @@ app.post('/api/support/tickets', isAuthenticated, async (req, res) => {
     }
 });
 
-// Escalate to human moderator
 app.post('/api/support/tickets/:id/escalate', isAuthenticated, async (req, res) => {
     const ticketId = req.params.id;
     try {
-        await poolConnect;
+        const ticket = await pool.query('SELECT * FROM support_tickets WHERE id = $1', [ticketId]);
+        if (ticket.rows.length === 0) return res.status(404).json({ error: 'Ticket not found' });
+        const ticketData = ticket.rows[0];
         
-        // Find ticket
-        const ticket = await pool.request()
-            .input('id', sql.Int, ticketId)
-            .query('SELECT * FROM support_tickets WHERE id = @id');
-        if (ticket.recordset.length === 0) return res.status(404).json({ error: 'Ticket not found' });
-        const ticketData = ticket.recordset[0];
-        
-        // Check if user is the owner or admin/moderator
         if (ticketData.user_id !== req.session.userId && req.session.role !== 'admin' && req.session.role !== 'moderator') {
             return res.status(403).json({ error: 'Access denied' });
         }
         
-        // Find a free moderator (role = 'moderator' only, NOT admin)
-        const moderator = await pool.request()
-            .query(`
-                SELECT TOP 1 u.id, u.username, u.email
-                FROM users u
-                LEFT JOIN moderator_status ms ON u.id = ms.user_id
-                WHERE u.role = 'moderator'
-                AND (ms.is_online = 1 OR ms.is_online IS NULL)
-                ORDER BY ISNULL(ms.current_tickets, 0) ASC
-            `);
+        const moderator = await pool.query(`
+            SELECT u.id, u.username, u.email
+            FROM users u
+            LEFT JOIN moderator_status ms ON u.id = ms.user_id
+            WHERE u.role = 'moderator'
+            AND (ms.is_online = true OR ms.is_online IS NULL)
+            ORDER BY COALESCE(ms.current_tickets, 0) ASC
+            LIMIT 1
+        `);
         
-        if (moderator.recordset.length === 0) {
+        if (moderator.rows.length === 0) {
             return res.status(503).json({ error: 'No moderator available. Please try again later.' });
         }
         
-        const moderatorId = moderator.recordset[0].id;
-        const moderatorName = moderator.recordset[0].username;
+        const moderatorId = moderator.rows[0].id;
+        const moderatorName = moderator.rows[0].username;
         
-        // Assign ticket to moderator
-        await pool.request()
-            .input('id', sql.Int, ticketId)
-            .input('assigned_to', sql.Int, moderatorId)
-            .input('escalated_at', sql.DateTime, new Date())
-            .query(`UPDATE support_tickets SET assigned_to = @assigned_to, escalated_at = @escalated_at, ai_handled = false WHERE id = @id`);
+        await pool.query(
+            `UPDATE support_tickets SET assigned_to = $1, escalated_at = NOW(), ai_handled = false WHERE id = $2`,
+            [moderatorId, ticketId]
+        );
         
-        // Update moderator status
-        await pool.request()
-            .input('user_id', sql.Int, moderatorId)
-            .query(`MERGE INTO moderator_status AS target
-                    USING (SELECT @user_id AS user_id) AS source
-                    ON target.user_id = source.user_id
-                    WHEN MATCHED THEN UPDATE SET current_tickets = current_tickets + 1, last_active = NOW()
-                    WHEN NOT MATCHED THEN INSERT (user_id, current_tickets) VALUES (@user_id, 1);`);
+        await pool.query(`
+            INSERT INTO moderator_status (user_id, current_tickets, is_online, last_active)
+            VALUES ($1, 1, true, NOW())
+            ON CONFLICT (user_id) DO UPDATE SET current_tickets = moderator_status.current_tickets + 1, last_active = NOW()
+        `, [moderatorId]);
         
-        // Notify moderator via Socket.IO
         const moderatorEntry = onlineUsers.get(moderatorId);
         if (moderatorEntry && moderatorEntry.socketId) {
             io.to(moderatorEntry.socketId).emit('new_support_ticket', {
@@ -3122,21 +2657,20 @@ app.post('/api/support/tickets/:id/escalate', isAuthenticated, async (req, res) 
 
         io.emit('ticket_escalated', { ticketId, subject: ticketData.subject, userId: req.session.userId, username: req.session.username });
         
-        // Return the assigned moderator's name
         res.json({ success: true, moderatorName });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
     }
 });
-// Get all tickets (admin/moderator sees all, user sees own)
+
 app.get('/api/support/tickets', isAuthenticated, async (req, res) => {
     try {
-        await poolConnect;
-        const userRole = await pool.query('SELECT * FROM users WHERE id = $1', [req.session.userId]);
+        const userRole = await pool.query('SELECT role FROM users WHERE id = $1', [req.session.userId]);
         const isModOrAdmin = ['admin', 'moderator'].includes(userRole.rows[0]?.role);
 
         let query;
+        let params = [];
         if (isModOrAdmin) {
             query = `
                 SELECT t.*, u.username as user_name, u.email as user_email
@@ -3149,15 +2683,14 @@ app.get('/api/support/tickets', isAuthenticated, async (req, res) => {
                 SELECT t.*, u.username as user_name, u.email as user_email
                 FROM support_tickets t
                 LEFT JOIN users u ON t.user_id = u.id
-                WHERE t.user_id = @userId
+                WHERE t.user_id = $1
                 ORDER BY t.created_at DESC
             `;
+            params.push(req.session.userId);
         }
-        const request = pool.request();
-        if (!isModOrAdmin) request.input('userId', sql.Int, req.session.userId);
-        const result = await request.query(query);
+        const result = await pool.query(query, params);
         
-        const tickets = result.recordset.map(t => {
+        const tickets = result.rows.map(t => {
             let replies = [];
             if (t.replies) {
                 try { replies = JSON.parse(t.replies); } catch(e) {}
@@ -3174,11 +2707,8 @@ app.get('/api/support/tickets', isAuthenticated, async (req, res) => {
 app.get('/api/support/tickets/:id', isAuthenticated, async (req, res) => {
     const ticketId = req.params.id;
     try {
-        await poolConnect;
-        const userRole = await pool.request()
-            .input('userId', sql.Int, req.session.userId)
-            .query('SELECT role FROM users WHERE id = @userId');
-        const isModOrAdmin = ['admin', 'moderator'].includes(userRole.recordset[0]?.role);
+        const userRole = await pool.query('SELECT role FROM users WHERE id = $1', [req.session.userId]);
+        const isModOrAdmin = ['admin', 'moderator'].includes(userRole.rows[0]?.role);
         
         const ticketData = await getTicketWithReplies(ticketId, req.session.userId, isModOrAdmin);
         if (!ticketData) return res.status(404).json({ error: 'Ticket not found or access denied' });
@@ -3188,13 +2718,12 @@ app.get('/api/support/tickets/:id', isAuthenticated, async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+
 app.get('/api/support/tickets/debug/:id', isAuthenticated, async (req, res) => {
     const ticketId = req.params.id;
     try {
-        const result = await pool.request()
-            .input('id', sql.Int, ticketId)
-            .query('SELECT * FROM support_tickets WHERE id = @id');
-        res.json(result.recordset[0]);
+        const result = await pool.query('SELECT * FROM support_tickets WHERE id = $1', [ticketId]);
+        res.json(result.rows[0]);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -3206,17 +2735,15 @@ app.post('/api/support/tickets/:id/reply', isAuthenticated, async (req, res) => 
     if (!message) return res.status(400).json({ error: 'Message is required' });
     
     try {
-        await poolConnect;
-        const userRole = await pool.request()
-            .input('userId', sql.Int, req.session.userId)
-            .query('SELECT role FROM users WHERE id = @userId');
-        const isModOrAdmin = ['admin', 'moderator'].includes(userRole.recordset[0]?.role);
+        const userRole = await pool.query('SELECT role FROM users WHERE id = $1', [req.session.userId]);
+        const isModOrAdmin = ['admin', 'moderator'].includes(userRole.rows[0]?.role);
         
-        const ticket = await pool.request()
-            .input('id', sql.Int, ticketId)
-            .query('SELECT user_id, status, replies, assigned_to FROM support_tickets WHERE id = @id');
-        if (ticket.recordset.length === 0) return res.status(404).json({ error: 'Ticket not found' });
-        const ticketData = ticket.recordset[0];
+        const ticket = await pool.query(
+            'SELECT user_id, status, replies, assigned_to FROM support_tickets WHERE id = $1',
+            [ticketId]
+        );
+        if (ticket.rows.length === 0) return res.status(404).json({ error: 'Ticket not found' });
+        const ticketData = ticket.rows[0];
         
         if (!isModOrAdmin && ticketData.user_id !== req.session.userId) {
             return res.status(403).json({ error: 'Access denied' });
@@ -3235,27 +2762,23 @@ app.post('/api/support/tickets/:id/reply', isAuthenticated, async (req, res) => 
             message: message,
             sender_id: req.session.userId,
             sender_name: req.session.username,
-            sender_role: isModOrAdmin ? (userRole.recordset[0]?.role || 'moderator') : 'user',
+            sender_role: isModOrAdmin ? (userRole.rows[0]?.role || 'moderator') : 'user',
             created_at: new Date().toISOString()
         };
         replies.push(newReply);
         
-        // If this is a moderator reply, update assigned_to if not already
         if (isModOrAdmin && !ticketData.assigned_to) {
-            await pool.request()
-                .input('id', sql.Int, ticketId)
-                .input('assigned_to', sql.Int, req.session.userId)
-                .input('last_reminder_sent', null)
-                .query(`UPDATE support_tickets SET assigned_to = @assigned_to, last_reminder_sent = NULL, replies = @replies, updated_at = NOW() WHERE id = @id`);
+            await pool.query(
+                `UPDATE support_tickets SET assigned_to = $1, last_reminder_sent = NULL, replies = $2, updated_at = NOW() WHERE id = $3`,
+                [req.session.userId, JSON.stringify(replies), ticketId]
+            );
         } else {
-            await pool.request()
-                .input('id', sql.Int, ticketId)
-                .input('replies', sql.NVarChar, JSON.stringify(replies))
-                .input('last_reminder_sent', null)
-                .query(`UPDATE support_tickets SET replies = @replies, last_reminder_sent = NULL, updated_at = NOW() WHERE id = @id`);
+            await pool.query(
+                `UPDATE support_tickets SET replies = $1, last_reminder_sent = NULL, updated_at = NOW() WHERE id = $2`,
+                [JSON.stringify(replies), ticketId]
+            );
         }
         
-        // Notify user if reply is from moderator, or notify moderator if reply is from user
         if (isModOrAdmin) {
             const userEntry = onlineUsers.get(ticketData.user_id);
             if (userEntry && userEntry.socketId) io.to(userEntry.socketId).emit('ticket_reply', { ticketId, message });
@@ -3271,53 +2794,39 @@ app.post('/api/support/tickets/:id/reply', isAuthenticated, async (req, res) => 
     }
 });
 
-// Forward ticket to another moderator (reassign)
 app.post('/api/support/tickets/:id/forward', isAuthenticated, async (req, res) => {
     const ticketId = req.params.id;
     const { newModeratorId } = req.body;
     if (!newModeratorId) return res.status(400).json({ error: 'New moderator ID required' });
     try {
-        await poolConnect;
-        // Check current user is admin or the assigned moderator
-        const ticket = await pool.request()
-            .input('id', sql.Int, ticketId)
-            .query('SELECT assigned_to FROM support_tickets WHERE id = @id');
-        if (ticket.recordset.length === 0) return res.status(404).json({ error: 'Ticket not found' });
-        const currentAssigned = ticket.recordset[0].assigned_to;
+        const ticket = await pool.query('SELECT assigned_to FROM support_tickets WHERE id = $1', [ticketId]);
+        if (ticket.rows.length === 0) return res.status(404).json({ error: 'Ticket not found' });
+        const currentAssigned = ticket.rows[0].assigned_to;
         if (currentAssigned !== req.session.userId && req.session.role !== 'admin') {
             return res.status(403).json({ error: 'Only assigned moderator can forward this ticket' });
         }
-        // Verify new moderator exists and has role 'moderator'
-        const newMod = await pool.request()
-            .input('id', sql.Int, newModeratorId)
-            .query('SELECT id FROM users WHERE id = @id AND role = \'moderator\'');
-        if (newMod.recordset.length === 0) return res.status(404).json({ error: 'Moderator not found' });
-        // Update ticket
-        await pool.request()
-            .input('id', sql.Int, ticketId)
-            .input('assigned_to', sql.Int, newModeratorId)
-            .input('escalated_at', sql.DateTime, new Date())
-            .query('UPDATE support_tickets SET assigned_to = @assigned_to, escalated_at = @escalated_at WHERE id = @id');
-        // Update moderator_status counts
+        const newMod = await pool.query('SELECT id FROM users WHERE id = $1 AND role = $2', [newModeratorId, 'moderator']);
+        if (newMod.rows.length === 0) return res.status(404).json({ error: 'Moderator not found' });
+        
+        await pool.query(
+            'UPDATE support_tickets SET assigned_to = $1, escalated_at = NOW() WHERE id = $2',
+            [newModeratorId, ticketId]
+        );
         if (currentAssigned) {
-            await pool.request()
-                .input('user_id', sql.Int, currentAssigned)
-                .query('UPDATE moderator_status SET current_tickets = current_tickets - 1 WHERE user_id = @user_id');
+            await pool.query('UPDATE moderator_status SET current_tickets = current_tickets - 1 WHERE user_id = $1', [currentAssigned]);
         }
-        await pool.request()
-            .input('user_id', sql.Int, newModeratorId)
-            .query(`MERGE INTO moderator_status AS target
-                    USING (SELECT @user_id AS user_id) AS source
-                    ON target.user_id = source.user_id
-                    WHEN MATCHED THEN UPDATE SET current_tickets = current_tickets + 1, last_active = NOW()
-                    WHEN NOT MATCHED THEN INSERT (user_id, current_tickets) VALUES (@user_id, 1);`);
-        // Notify new moderator via Socket.IO
+        await pool.query(`
+            INSERT INTO moderator_status (user_id, current_tickets, last_active)
+            VALUES ($1, 1, NOW())
+            ON CONFLICT (user_id) DO UPDATE SET current_tickets = moderator_status.current_tickets + 1, last_active = NOW()
+        `, [newModeratorId]);
+        
         const newModEntry = onlineUsers.get(parseInt(newModeratorId));
         if (newModEntry && newModEntry.socketId) {
             io.to(newModEntry.socketId).emit('new_support_ticket', {
                 ticketId,
                 fromUser: req.session.username,
-                subject: ticket.recordset[0]?.subject || 'Forwarded ticket'
+                subject: ticket.rows[0]?.subject || 'Forwarded ticket'
             });
         }
         res.json({ success: true, message: 'Ticket forwarded' });
@@ -3327,26 +2836,18 @@ app.post('/api/support/tickets/:id/forward', isAuthenticated, async (req, res) =
     }
 });
 
-// Unassign ticket (put back to unassigned)
 app.post('/api/support/tickets/:id/unassign', isAuthenticated, async (req, res) => {
     const ticketId = req.params.id;
     try {
-        await poolConnect;
-        const ticket = await pool.request()
-            .input('id', sql.Int, ticketId)
-            .query('SELECT assigned_to FROM support_tickets WHERE id = @id');
-        if (ticket.recordset.length === 0) return res.status(404).json({ error: 'Ticket not found' });
-        const currentAssigned = ticket.recordset[0].assigned_to;
+        const ticket = await pool.query('SELECT assigned_to FROM support_tickets WHERE id = $1', [ticketId]);
+        if (ticket.rows.length === 0) return res.status(404).json({ error: 'Ticket not found' });
+        const currentAssigned = ticket.rows[0].assigned_to;
         if (currentAssigned !== req.session.userId && req.session.role !== 'admin') {
             return res.status(403).json({ error: 'Only assigned moderator can unassign this ticket' });
         }
-        await pool.request()
-            .input('id', sql.Int, ticketId)
-            .query('UPDATE support_tickets SET assigned_to = NULL WHERE id = @id');
+        await pool.query('UPDATE support_tickets SET assigned_to = NULL WHERE id = $1', [ticketId]);
         if (currentAssigned) {
-            await pool.request()
-                .input('user_id', sql.Int, currentAssigned)
-                .query('UPDATE moderator_status SET current_tickets = current_tickets - 1 WHERE user_id = @user_id');
+            await pool.query('UPDATE moderator_status SET current_tickets = current_tickets - 1 WHERE user_id = $1', [currentAssigned]);
         }
         res.json({ success: true, message: 'Ticket unassigned' });
     } catch (err) {
@@ -3358,17 +2859,12 @@ app.post('/api/support/tickets/:id/unassign', isAuthenticated, async (req, res) 
 app.post('/api/support/tickets/:id/close', isAuthenticated, async (req, res) => {
     const ticketId = req.params.id;
     try {
-        await poolConnect;
-        const userRole = await pool.request()
-            .input('userId', sql.Int, req.session.userId)
-            .query('SELECT role FROM users WHERE id = @userId');
-        const isModOrAdmin = ['admin', 'moderator'].includes(userRole.recordset[0]?.role);
+        const userRole = await pool.query('SELECT role FROM users WHERE id = $1', [req.session.userId]);
+        const isModOrAdmin = ['admin', 'moderator'].includes(userRole.rows[0]?.role);
         if (!isModOrAdmin) return res.status(403).json({ error: 'Only moderators and admins can close tickets' });
         
-        const result = await pool.request()
-            .input('id', sql.Int, ticketId)
-            .query('UPDATE support_tickets SET status = \'closed\', updated_at = NOW() WHERE id = @id');
-        if (result.rowsAffected[0] === 0) return res.status(404).json({ error: 'Ticket not found' });
+        const result = await pool.query('UPDATE support_tickets SET status = $1, updated_at = NOW() WHERE id = $2', ['closed', ticketId]);
+        if (result.rowCount === 0) return res.status(404).json({ error: 'Ticket not found' });
         res.json({ success: true, message: 'Ticket closed' });
     } catch (err) {
         console.error(err);
@@ -3379,17 +2875,12 @@ app.post('/api/support/tickets/:id/close', isAuthenticated, async (req, res) => 
 app.delete('/api/support/tickets/:id', isAuthenticated, async (req, res) => {
     const ticketId = req.params.id;
     try {
-        await poolConnect;
-        const userRole = await pool.request()
-            .input('userId', sql.Int, req.session.userId)
-            .query('SELECT role FROM users WHERE id = @userId');
-        const isModOrAdmin = ['admin', 'moderator'].includes(userRole.recordset[0]?.role);
+        const userRole = await pool.query('SELECT role FROM users WHERE id = $1', [req.session.userId]);
+        const isModOrAdmin = ['admin', 'moderator'].includes(userRole.rows[0]?.role);
         if (!isModOrAdmin) return res.status(403).json({ error: 'Only moderators and admins can delete tickets' });
         
-        const result = await pool.request()
-            .input('id', sql.Int, ticketId)
-            .query('DELETE FROM support_tickets WHERE id = @id');
-        if (result.rowsAffected[0] === 0) return res.status(404).json({ error: 'Ticket not found' });
+        const result = await pool.query('DELETE FROM support_tickets WHERE id = $1', [ticketId]);
+        if (result.rowCount === 0) return res.status(404).json({ error: 'Ticket not found' });
         res.json({ success: true, message: 'Ticket deleted' });
     } catch (err) {
         console.error(err);
@@ -3404,7 +2895,6 @@ cron.schedule('*/5 * * * *', async () => {
     const BATCH_LIMIT = parseInt(process.env.REMINDER_BATCH_LIMIT) || 50;
 
     try {
-        // Query stale tickets with a batch limit
         const staleTickets = await pool.query(`
             SELECT t.id, t.subject, t.assigned_to, u.username as moderator_name, u.email as moderator_email,
                    t.escalated_at, t.last_reminder_sent
@@ -3431,7 +2921,6 @@ cron.schedule('*/5 * * * *', async () => {
 
         for (const ticket of staleTickets.rows) {
             try {
-                // Emit Socket.IO reminder to online moderator
                 const moderatorEntry = onlineUsers.get(ticket.assigned_to);
                 if (moderatorEntry && moderatorEntry.socketId) {
                     io.to(moderatorEntry.socketId).emit('support_reminder', {
@@ -3441,14 +2930,12 @@ cron.schedule('*/5 * * * *', async () => {
                     });
                 }
 
-                // Send email reminder
                 await sendEmail(
                     ticket.moderator_email,
                     `Support Ticket Reminder #${ticket.id}`,
                     `<p>You have a pending support ticket <strong>#${ticket.id}: "${escapeHtml(ticket.subject)}"</strong> that was escalated ${Math.floor((Date.now() - new Date(ticket.escalated_at).getTime()) / 60000)} minutes ago.</p><p>Please respond soon.</p>`
                 );
 
-                // Update last_reminder_sent
                 await pool.query(
                     `UPDATE support_tickets SET last_reminder_sent = NOW() WHERE id = $1`,
                     [ticket.id]
@@ -3466,7 +2953,6 @@ cron.schedule('*/5 * * * *', async () => {
         console.error('❌ Reminder cron error (query level):', err);
     }
 }, { scheduled: true, recoverMissedExecutions: false });
-
 
 // ==================== STATS, USER STATUS, USAGE ANALYTICS ====================
 app.get('/api/stats', isAuthenticated, async (req, res) => {
@@ -3500,7 +2986,7 @@ app.get('/api/stats', isAuthenticated, async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
-// ==================== USER STATUS ====================
+
 app.get('/api/user-status', isAuthenticated, async (req, res) => {
     try {
         const result = await pool.query(
@@ -3514,23 +3000,20 @@ app.get('/api/user-status', isAuthenticated, async (req, res) => {
     }
 });
 
-
 app.get('/api/usage/analytics', isAuthenticated, async (req, res) => {
     try {
-        await poolConnect;
         const userId = req.session.userId;
-        const result = await pool.request()
-            .input('userId', sql.Int, userId)
-            .query(`
-                SELECT 
-                    tool_name as name,
-                    COUNT(*) as count
-                FROM tool_usage
-                WHERE user_id = @userId
-                GROUP BY tool_name
-                ORDER BY count DESC
-            `);
-        const tools = result.recordset.map(t => ({
+        const result = await pool.query(
+            `SELECT 
+                tool_name as name,
+                COUNT(*) as count
+             FROM tool_usage
+             WHERE user_id = $1
+             GROUP BY tool_name
+             ORDER BY count DESC`,
+            [userId]
+        );
+        const tools = result.rows.map(t => ({
             name: t.name,
             count: t.count,
             totalTime: t.count * 30
@@ -3664,17 +3147,15 @@ app.get('/api/friends/requests', isAuthenticated, async (req, res) => {
 
 app.get('/api/friends/outgoing-requests', isAuthenticated, async (req, res) => {
     try {
-        await poolConnect;
         const userId = req.session.userId;
-        const result = await pool.request()
-            .input('userId', sql.Int, userId)
-            .query(`
-                SELECT f.id, u.id as friend_id, u.username, u.display_name, u.avatar_url
-                FROM friendships f
-                JOIN users u ON f.friend_id = u.id
-                WHERE f.user_id = @userId AND f.status = 'pending'
-            `);
-        res.json(result.recordset);
+        const result = await pool.query(
+            `SELECT f.id, u.id as friend_id, u.username, u.display_name, u.avatar_url
+             FROM friendships f
+             JOIN users u ON f.friend_id = u.id
+             WHERE f.user_id = $1 AND f.status = 'pending'`,
+            [userId]
+        );
+        res.json(result.rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -3717,32 +3198,6 @@ app.delete('/api/friends/:friendId', isAuthenticated, async (req, res) => {
     }
 });
 
-app.get('/api/messages/:friendId', isAuthenticated, async (req, res) => {
-    const friendId = req.params.friendId;
-    const offset = parseInt(req.query.offset) || 0;
-    const limit = parseInt(req.query.limit) || 30;
-    try {
-        await poolConnect;
-        const result = await pool.request()
-            .input('user_id', sql.Int, req.session.userId)
-            .input('friend_id', sql.Int, friendId)
-            .input('offset', sql.Int, offset)
-            .input('limit', sql.Int, limit)
-            .query(`
-                SELECT * FROM messages
-                WHERE (sender_id = @user_id AND receiver_id = @friend_id)
-                   OR (sender_id = @friend_id AND receiver_id = @user_id)
-                ORDER BY created_at DESC
-                OFFSET @offset ROWS
-                FETCH NEXT @limit ROWS ONLY
-            `);
-        res.json(result.recordset);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
 app.post('/api/messages/read/:friendId', isAuthenticated, async (req, res) => {
     const friendId = req.params.friendId;
     try {
@@ -3758,7 +3213,6 @@ app.post('/api/messages/read/:friendId', isAuthenticated, async (req, res) => {
     }
 });
 
-// ==================== NETWORK ENDPOINTS ====================
 app.get('/api/network/stats', isAuthenticated, async (req, res) => {
     try {
         const userId = req.session.userId;
@@ -3786,21 +3240,21 @@ app.get('/api/network/stats', isAuthenticated, async (req, res) => {
 app.get('/api/network/requests', isAuthenticated, async (req, res) => {
     try {
         const userId = req.session.userId;
-        const result = await pool.request()
-            .input('userId', sql.Int, userId)
-            .query(`
-                SELECT f.id, u.id as user_id, u.username, u.display_name, u.avatar_url, f.created_at
-                FROM friendships f
-                JOIN users u ON f.user_id = u.id
-                WHERE f.friend_id = @userId AND f.status = 'pending'
-                ORDER BY f.created_at DESC
-            `);
-        res.json(result.recordset);
+        const result = await pool.query(
+            `SELECT f.id, u.id as user_id, u.username, u.display_name, u.avatar_url, f.created_at
+             FROM friendships f
+             JOIN users u ON f.user_id = u.id
+             WHERE f.friend_id = $1 AND f.status = 'pending'
+             ORDER BY f.created_at DESC`,
+            [userId]
+        );
+        res.json(result.rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
     }
 });
+
 app.get('/api/trending/professionals', isAuthenticated, async (req, res) => {
     try {
         const userId = req.session.userId;
@@ -3824,13 +3278,9 @@ app.get('/api/trending/professionals', isAuthenticated, async (req, res) => {
 app.get('/api/network/unread', isAuthenticated, async (req, res) => {
     try {
         const userId = req.session.userId;
-        const unread = await pool.request()
-            .input('userId', sql.Int, userId)
-            .query('SELECT COUNT(*) as count FROM messages WHERE receiver_id = @userId AND is_read = false');
-        const pending = await pool.request()
-            .input('userId', sql.Int, userId)
-            .query('SELECT COUNT(*) as count FROM friendships WHERE friend_id = @userId AND status = \'pending\'');
-        const total = unread.recordset[0].count + pending.recordset[0].count;
+        const unread = await pool.query('SELECT COUNT(*) as count FROM messages WHERE receiver_id = $1 AND is_read = false', [userId]);
+        const pending = await pool.query('SELECT COUNT(*) as count FROM friendships WHERE friend_id = $1 AND status = $2', [userId, 'pending']);
+        const total = (unread.rows[0]?.count || 0) + (pending.rows[0]?.count || 0);
         res.json({ total });
     } catch (err) {
         console.error(err);
@@ -3841,16 +3291,15 @@ app.get('/api/network/unread', isAuthenticated, async (req, res) => {
 app.get('/api/network/export', isAuthenticated, async (req, res) => {
     try {
         const userId = req.session.userId;
-        const result = await pool.request()
-            .input('userId', sql.Int, userId)
-            .query(`
-                SELECT u.username, u.display_name, u.email, u.status
-                FROM friendships f
-                JOIN users u ON (f.user_id = u.id OR f.friend_id = u.id)
-                WHERE (f.user_id = @userId OR f.friend_id = @userId) AND f.status = 'accepted' AND u.id != @userId
-            `);
+        const result = await pool.query(
+            `SELECT u.username, u.display_name, u.email, u.status
+             FROM friendships f
+             JOIN users u ON (f.user_id = u.id OR f.friend_id = u.id)
+             WHERE (f.user_id = $1 OR f.friend_id = $1) AND f.status = 'accepted' AND u.id != $1`,
+            [userId]
+        );
         const csvRows = [['Username', 'Display Name', 'Email', 'Status']];
-        result.recordset.forEach(row => {
+        result.rows.forEach(row => {
             csvRows.push([row.username, row.display_name || '', row.email, row.status]);
         });
         const csv = csvRows.map(row => row.join(',')).join('\n');
@@ -3867,16 +3316,12 @@ app.delete('/api/network/:friendId', isAuthenticated, async (req, res) => {
     const friendId = parseInt(req.params.friendId);
     if (isNaN(friendId)) return res.status(400).send('Invalid friend ID');
     try {
-        await poolConnect;
-        const result = await pool.request()
-            .input('user_id', sql.Int, req.session.userId)
-            .input('friend_id', sql.Int, friendId)
-            .query(`
-                DELETE FROM friendships
-                WHERE (user_id = @user_id AND friend_id = @friend_id)
-                   OR (user_id = @friend_id AND friend_id = @user_id)
-            `);
-        if (result.rowsAffected[0] === 0) return res.status(404).send('Connection not found');
+        const result = await pool.query(
+            `DELETE FROM friendships
+             WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1)`,
+            [req.session.userId, friendId]
+        );
+        if (result.rowCount === 0) return res.status(404).send('Connection not found');
         res.send('Connection removed');
     } catch (err) {
         console.error(err);
@@ -3887,16 +3332,13 @@ app.delete('/api/network/:friendId', isAuthenticated, async (req, res) => {
 app.post('/api/network/accept/:requestId', isAuthenticated, async (req, res) => {
     const requestId = req.params.requestId;
     try {
-        await poolConnect;
-        const result = await pool.request()
-            .input('id', sql.Int, requestId)
-            .input('friend_id', sql.Int, req.session.userId)
-            .query('UPDATE friendships SET status = \'accepted\' WHERE id = @id AND friend_id = @friend_id AND status = \'pending\'');
-        if (result.rowsAffected[0] === 0) return res.status(404).send('Request not found');
-        const request = await pool.request()
-            .input('id', sql.Int, requestId)
-            .query('SELECT user_id FROM friendships WHERE id = @id');
-        const otherUserId = request.recordset[0]?.user_id;
+        const result = await pool.query(
+            `UPDATE friendships SET status = 'accepted' WHERE id = $1 AND friend_id = $2 AND status = 'pending'`,
+            [requestId, req.session.userId]
+        );
+        if (result.rowCount === 0) return res.status(404).send('Request not found');
+        const request = await pool.query('SELECT user_id FROM friendships WHERE id = $1', [requestId]);
+        const otherUserId = request.rows[0]?.user_id;
         if (otherUserId) {
             const otherEntry = onlineUsers.get(otherUserId);
             if (otherEntry && otherEntry.socketId) io.to(otherEntry.socketId).emit('connection_accepted', {
@@ -3914,12 +3356,11 @@ app.post('/api/network/accept/:requestId', isAuthenticated, async (req, res) => 
 app.post('/api/network/decline/:requestId', isAuthenticated, async (req, res) => {
     const requestId = req.params.requestId;
     try {
-        await poolConnect;
-        const result = await pool.request()
-            .input('id', sql.Int, requestId)
-            .input('friend_id', sql.Int, req.session.userId)
-            .query('UPDATE friendships SET status = \'declined\' WHERE id = @id AND friend_id = @friend_id AND status = \'pending\'');
-        if (result.rowsAffected[0] === 0) return res.status(404).send('Request not found');
+        const result = await pool.query(
+            `UPDATE friendships SET status = 'declined' WHERE id = $1 AND friend_id = $2 AND status = 'pending'`,
+            [requestId, req.session.userId]
+        );
+        if (result.rowCount === 0) return res.status(404).send('Request not found');
         res.send('Request declined');
     } catch (err) {
         console.error(err);
@@ -3927,7 +3368,6 @@ app.post('/api/network/decline/:requestId', isAuthenticated, async (req, res) =>
     }
 });
 
-// ==================== USER STATUS UPDATE ====================
 app.post('/api/update-status', isAuthenticated, async (req, res) => {
     const { status } = req.body;
     if (!['online', 'away', 'busy', 'offline'].includes(status)) {
@@ -3945,7 +3385,7 @@ app.post('/api/update-status', isAuthenticated, async (req, res) => {
     }
 });
 
-// ==================== ADMIN ROUTES (with moderator view access) ====================
+// ==================== ADMIN ROUTES ====================
 app.get('/admin/users', isAdminOrModerator, async (req, res) => {
     try {
         const result = await pool.query(
@@ -3963,34 +3403,29 @@ app.delete('/admin/users/:id', isAdmin, async (req, res) => {
     const userId = req.params.id;
     if (userId == req.session.userId) return res.status(400).send('Cannot delete yourself');
     try {
-        await poolConnect;
-
-        // Delete all dependent records (order matters only for self-referential FKs)
-        await pool.request().input('id', sql.Int, userId).query('DELETE FROM user_streak WHERE user_id = @id');
-        await pool.request().input('id', sql.Int, userId).query('DELETE FROM user_daily_quests WHERE user_id = @id');
-        await pool.request().input('id', sql.Int, userId).query('DELETE FROM user_achievements WHERE user_id = @id');
-        await pool.request().input('id', sql.Int, userId).query('DELETE FROM credit_transactions WHERE user_id = @id');
-        await pool.request().input('id', sql.Int, userId).query('DELETE FROM user_credits WHERE user_id = @id');
-        await pool.request().input('id', sql.Int, userId).query('DELETE FROM tool_usage WHERE user_id = @id');
-        await pool.request().input('id', sql.Int, userId).query('DELETE FROM messages WHERE sender_id = @id OR receiver_id = @id');
-        await pool.request().input('id', sql.Int, userId).query('DELETE FROM friendships WHERE user_id = @id OR friend_id = @id');
-        await pool.request().input('id', sql.Int, userId).query('DELETE FROM group_members WHERE user_id = @id');
-        await pool.request().input('id', sql.Int, userId).query('DELETE FROM group_messages WHERE sender_id = @id');
-        await pool.request().input('id', sql.Int, userId).query('DELETE FROM support_tickets WHERE user_id = @id');
-        await pool.request().input('id', sql.Int, userId).query('DELETE FROM user_feedback WHERE user_id = @id');
-        await pool.request().input('id', sql.Int, userId).query('DELETE FROM moderator_activity WHERE moderator_id = @id');
-        await pool.request().input('id', sql.Int, userId).query('DELETE FROM tools WHERE user_id = @id');
-        await pool.request().input('id', sql.Int, userId).query('DELETE FROM password_resets WHERE email IN (SELECT email FROM users WHERE id = @id)');
-        await pool.request().input('id', sql.Int, userId).query('DELETE FROM otp_store WHERE email IN (SELECT email FROM users WHERE id = @id)');
-        await pool.request().input('id', sql.Int, userId).query('DELETE FROM category_reviews WHERE user_id = @id');
-        await pool.request().input('id', sql.Int, userId).query('DELETE FROM tool_reviews WHERE user_id = @id');
-        await pool.request().input('id', sql.Int, userId).query('DELETE FROM user_events WHERE user_id = @id');
-        await pool.request().input('id', sql.Int, userId).query('DELETE FROM credit_purchases WHERE user_id = @id');
-        await pool.request().input('id', sql.Int, userId).query('DELETE FROM announcements WHERE created_by = @id');
-        await pool.request().input('id', sql.Int, userId).query('DELETE FROM user_notes WHERE user_id = @id OR updated_by = @id');
-
-        // Finally delete the user
-        await pool.request().input('id', sql.Int, userId).query('DELETE FROM users WHERE id = @id');
+        await pool.query('DELETE FROM user_streak WHERE user_id = $1', [userId]);
+        await pool.query('DELETE FROM user_daily_quests WHERE user_id = $1', [userId]);
+        await pool.query('DELETE FROM user_achievements WHERE user_id = $1', [userId]);
+        await pool.query('DELETE FROM credit_transactions WHERE user_id = $1', [userId]);
+        await pool.query('DELETE FROM user_credits WHERE user_id = $1', [userId]);
+        await pool.query('DELETE FROM tool_usage WHERE user_id = $1', [userId]);
+        await pool.query('DELETE FROM messages WHERE sender_id = $1 OR receiver_id = $1', [userId]);
+        await pool.query('DELETE FROM friendships WHERE user_id = $1 OR friend_id = $1', [userId]);
+        await pool.query('DELETE FROM group_members WHERE user_id = $1', [userId]);
+        await pool.query('DELETE FROM group_messages WHERE sender_id = $1', [userId]);
+        await pool.query('DELETE FROM support_tickets WHERE user_id = $1', [userId]);
+        await pool.query('DELETE FROM user_feedback WHERE user_id = $1', [userId]);
+        await pool.query('DELETE FROM moderator_activity WHERE moderator_id = $1', [userId]);
+        await pool.query('DELETE FROM tools WHERE user_id = $1', [userId]);
+        await pool.query('DELETE FROM password_resets WHERE email IN (SELECT email FROM users WHERE id = $1)', [userId]);
+        await pool.query('DELETE FROM otp_store WHERE email IN (SELECT email FROM users WHERE id = $1)', [userId]);
+        await pool.query('DELETE FROM category_reviews WHERE user_id = $1', [userId]);
+        await pool.query('DELETE FROM tool_reviews WHERE user_id = $1', [userId]);
+        await pool.query('DELETE FROM user_events WHERE user_id = $1', [userId]);
+        await pool.query('DELETE FROM credit_purchases WHERE user_id = $1', [userId]);
+        await pool.query('DELETE FROM announcements WHERE created_by = $1', [userId]);
+        await pool.query('DELETE FROM user_notes WHERE user_id = $1 OR updated_by = $1', [userId]);
+        await pool.query('DELETE FROM users WHERE id = $1', [userId]);
 
         res.send('User deleted');
     } catch (err) {
@@ -4013,7 +3448,6 @@ app.patch('/admin/users/:id', isAdmin, async (req, res) => {
         }
         if (is_banned !== undefined) {
             updateFields.push(`is_banned = $${paramIndex}`);
-            // Convert to boolean: true if 1 or true, false otherwise
             values.push(is_banned === true || is_banned === 1 ? true : false);
             paramIndex++;
         }
@@ -4024,7 +3458,6 @@ app.patch('/admin/users/:id', isAdmin, async (req, res) => {
         const query = `UPDATE users SET ${updateFields.join(', ')} WHERE id = $${paramIndex}`;
         await pool.query(query, values);
 
-        // Auto‑enroll into Staff Lounge if role becomes admin or moderator
         if (role && (role === 'admin' || role === 'moderator')) {
             const groupResult = await pool.query(`SELECT id FROM groups WHERE name = 'Staff Lounge'`);
             if (groupResult.rows.length > 0) {
@@ -4050,7 +3483,7 @@ app.post('/api/admin/users/:id/toggle', isAdmin, async (req, res) => {
         const user = await pool.query('SELECT is_banned FROM users WHERE id = $1', [userId]);
         if (user.rows.length === 0) return res.status(404).send('User not found');
         const currentBanned = user.rows[0].is_banned;
-        const newBanned = !currentBanned; // toggle boolean
+        const newBanned = !currentBanned;
         await pool.query('UPDATE users SET is_banned = $1 WHERE id = $2', [newBanned, userId]);
         res.send('Status toggled');
     } catch (err) {
@@ -4087,7 +3520,6 @@ app.post('/api/forgot-password', authLimiter, async (req, res) => {
         res.status(500).send('Server error');
     }
 });
- 
 
 app.post('/api/reset-password', authLimiter, async (req, res) => {
     const { email, otp, newPassword } = req.body;
@@ -4118,8 +3550,8 @@ app.post('/api/reset-password', authLimiter, async (req, res) => {
         res.status(500).send('Server error');
     }
 });
- 
-// ==================== USER SEARCH, PROFILE, ETC. ====================
+
+// ==================== USER SEARCH, PROFILE ====================
 app.get('/api/users/search', isAuthenticated, async (req, res) => {
     const query = req.query.q;
     if (!query || query.length < 2) return res.json([]);
@@ -4138,7 +3570,6 @@ app.get('/api/users/search', isAuthenticated, async (req, res) => {
     }
 });
 
-
 app.get('/profile', isAuthenticated, async (req, res) => {
     try {
         const result = await pool.query(
@@ -4154,8 +3585,6 @@ app.get('/profile', isAuthenticated, async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
-
-//profile/update
 
 app.put('/profile/update', isAuthenticated, async (req, res) => {
     const { display_name, bio, phone, github, twitter, linkedin } = req.body;
@@ -4190,7 +3619,6 @@ app.put('/profile/update', isAuthenticated, async (req, res) => {
     }
 });
 
-// ==================== AVATAR UPLOAD ====================
 app.post('/profile/avatar', isAuthenticated, upload.single('avatar'), async (req, res) => {
     if (!req.file) return res.status(400).send('No file uploaded');
     try {
@@ -4213,7 +3641,6 @@ app.post('/profile/avatar', isAuthenticated, upload.single('avatar'), async (req
     }
 });
 
-// ==================== CHANGE PASSWORD ====================
 app.put('/profile/password', isAuthenticated, async (req, res) => {
     const { currentPassword, newPassword } = req.body;
     if (!currentPassword || !newPassword) return res.status(400).send('All fields required');
@@ -4241,7 +3668,6 @@ app.put('/profile/password', isAuthenticated, async (req, res) => {
     }
 });
 
-// ==================== TOGGLE 2FA ====================
 app.post('/profile/toggle-2fa', isAuthenticated, async (req, res) => {
     try {
         await pool.query(
@@ -4255,7 +3681,6 @@ app.post('/profile/toggle-2fa', isAuthenticated, async (req, res) => {
     }
 });
 
-// ==================== FIXED DELETE ACCOUNT (Fully functional) ====================
 app.delete('/profile/delete', isAuthenticated, async (req, res) => {
     try {
         const userId = req.session.userId;
@@ -4297,7 +3722,6 @@ app.delete('/profile/delete', isAuthenticated, async (req, res) => {
     }
 });
 
-// ==================== LEGACY ADMIN BAN / UNBAN ====================
 app.put('/api/admin/users/:id/ban', isAdmin, async (req, res) => {
     const userId = req.params.id;
     try {
@@ -4308,7 +3732,7 @@ app.put('/api/admin/users/:id/ban', isAdmin, async (req, res) => {
         res.status(500).send('Server error');
     }
 });
- 
+
 app.put('/api/admin/users/:id/unban', isAdmin, async (req, res) => {
     const userId = req.params.id;
     try {
@@ -4320,7 +3744,6 @@ app.put('/api/admin/users/:id/unban', isAdmin, async (req, res) => {
     }
 });
 
-// ==================== MESSAGE DELETE & CLEAR ====================
 app.delete('/api/messages/:messageId', isAuthenticated, async (req, res) => {
     try {
         const result = await pool.query(
@@ -4350,7 +3773,6 @@ app.delete('/api/messages/clear/:friendId', isAuthenticated, async (req, res) =>
     }
 });
 
-// ==================== UNREAD COUNTS ====================
 app.get('/api/unread', isAuthenticated, async (req, res) => {
     try {
         const unread = await pool.query(
@@ -4409,7 +3831,6 @@ app.get('/api/admin/analytics', isAdmin, async (req, res) => {
     }
 });
 
-
 app.get('/api/admin/analytics/top-tools', isAdmin, async (req, res) => {
     try {
         const topTools = await pool.query(`
@@ -4442,8 +3863,6 @@ app.get('/api/admin/analytics/top-tools', isAdmin, async (req, res) => {
     }
 });
 
-
-
 app.get('/api/admin/analytics/category-distribution', isAdmin, async (req, res) => {
     try {
         const result = await pool.query(`
@@ -4459,8 +3878,6 @@ app.get('/api/admin/analytics/category-distribution', isAdmin, async (req, res) 
         res.status(500).json({ error: 'Server error' });
     }
 });
-
-
 
 app.get('/api/analytics/user-activity', isAuthenticated, async (req, res) => {
     try {
@@ -4526,55 +3943,6 @@ app.get('/api/admin/activity', isAdmin, async (req, res) => {
     }
 });
 
-// ==================== USER ANALYTICS FEATURES ====================
-app.get('/api/analytics/user-activity', isAuthenticated, async (req, res) => {
-    try {
-        const userId = req.session.userId;
-        const { days = 30 } = req.query;
-        const daysInt = parseInt(days);
-        
-        const daily = await pool.query(`
-            SELECT 
-                DATE(used_at) as date,
-                COUNT(*) as count
-            FROM tool_usage
-            WHERE user_id = $1
-                AND used_at >= NOW() - $2 * INTERVAL '1 day'
-            GROUP BY DATE(used_at)
-            ORDER BY date
-        `, [userId, daysInt]);
-        
-        const categories = await pool.query(`
-            SELECT 
-                tool_category,
-                COUNT(*) as count
-            FROM tool_usage
-            WHERE user_id = $1 AND tool_category IS NOT NULL
-            GROUP BY tool_category
-            ORDER BY count DESC
-        `, [userId]);
-        
-        const stats = await pool.query(`
-            SELECT 
-                COUNT(*) as total_uses,
-                MIN(used_at) as first_use,
-                MAX(used_at) as last_use
-            FROM tool_usage
-            WHERE user_id = $1
-        `, [userId]);
-        
-        res.json({
-            daily_usage: daily.rows,
-            favorite_categories: categories.rows,
-            total_uses: stats.rows[0]?.total_uses || 0,
-            first_activity: stats.rows[0]?.first_use,
-            last_activity: stats.rows[0]?.last_use
-        });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
 app.get('/api/analytics/trending-tools', isAuthenticated, async (req, res) => {
     try {
         const { period = 'week', limit = 10 } = req.query;
@@ -4589,7 +3957,6 @@ app.get('/api/analytics/trending-tools', isAuthenticated, async (req, res) => {
     } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
 });
 
-
 app.get('/api/analytics/user-stats', isAuthenticated, async (req, res) => {
     try {
         const userId = req.session.userId;
@@ -4598,13 +3965,13 @@ app.get('/api/analytics/user-stats', isAuthenticated, async (req, res) => {
                    COUNT(DISTINCT DATE(used_at)) as active_days
             FROM tool_usage WHERE user_id = $1
         `, [userId]);
-        const result = await pool.query(
-          `SELECT 
-           COALESCE(balance, 0) as balance,
-           COALESCE(lifetime_earned, 0) as lifetime_earned,
-           COALESCE(lifetime_spent, 0) as lifetime_spent
-           FROM user_credits WHERE user_id = $1`,
-    [req.session.userId]
+        const credits = await pool.query(
+            `SELECT 
+                COALESCE(balance, 0) as current_balance,
+                COALESCE(lifetime_earned, 0) as total_earned,
+                COALESCE(lifetime_spent, 0) as total_spent
+             FROM user_credits WHERE user_id = $1`,
+            [userId]
         );
         const friends = await pool.query(`
             SELECT COUNT(*) as total_friends
@@ -4634,6 +4001,7 @@ app.get('/api/analytics/user-stats', isAuthenticated, async (req, res) => {
         });
     } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
 });
+
 app.get('/api/analytics/usage-by-category', isAuthenticated, async (req, res) => {
     try {
         const userId = req.session.userId;
@@ -4645,9 +4013,7 @@ app.get('/api/analytics/usage-by-category', isAuthenticated, async (req, res) =>
         res.json(result.rows);
     } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
 });
-// ==================== TOP USERS (most active tool users, 48h cache) ==================
-// Public endpoint – does not require authentication
-// ==================== TOP USERS (by LEVEL & XP) ====================
+
 app.get('/api/top-users', async (req, res) => {
     const limit = parseInt(req.query.limit) || 5;
     try {
@@ -4664,46 +4030,32 @@ app.get('/api/top-users', async (req, res) => {
             ORDER BY u.level DESC, u.xp DESC
             LIMIT $1
         `, [limit]);
-        const users = result.rows || [];
-        res.json(users);
+        res.json(result.rows);
     } catch (err) {
         console.error('❌ Error fetching top users by level:', err);
         res.status(200).json([]);
     }
 });
-// ==================== AI TOOL RECOMMENDATIONS (Collaborative Filtering) ====================
+
 app.get('/api/recommendations/:toolName', isAuthenticated, async (req, res) => {
     const { toolName } = req.params;
     const limit = parseInt(req.query.limit) || 5;
     try {
-        await poolConnect;
-        const result = await pool.request()
-            .input('toolName', sql.NVarChar, toolName)
-            .input('limit', sql.Int, limit)
-            .query(`
-                SELECT TOP (@limit) t2.tool_name, COUNT(*) as affinity
-                FROM tool_usage t1
-                JOIN tool_usage t2 ON t1.user_id = t2.user_id AND t1.tool_name != t2.tool_name
-                WHERE t1.tool_name = @toolName
-                GROUP BY t2.tool_name
-                ORDER BY affinity DESC
-            `);
-        res.json(result.recordset);
+        const result = await pool.query(`
+            SELECT t2.tool_name, COUNT(*) as affinity
+            FROM tool_usage t1
+            JOIN tool_usage t2 ON t1.user_id = t2.user_id AND t1.tool_name != t2.tool_name
+            WHERE t1.tool_name = $1
+            GROUP BY t2.tool_name
+            ORDER BY affinity DESC
+            LIMIT $2
+        `, [toolName, limit]);
+        res.json(result.rows);
     } catch (err) {
         console.error('Recommendations error:', err);
         res.status(500).json({ error: 'Failed to fetch recommendations' });
     }
 });
-
-// ==================== GROUP CHAT ENDPOINTS (Already added above) ====================
-// The endpoints are already included before the public routes section.
-// They remain untouched.
-
-// ==================== USER PREFERENCES TABLE (Optional) ====================
-
-
-// ==================== MODERATOR FEATURES ====================
-
 
 // ==================== ACTIVITY LOG ====================
 app.post('/api/activity-log', isAuthenticated, async (req, res) => {
@@ -4730,21 +4082,16 @@ app.get('/api/activity-log', isAdminOrModerator, async (req, res) => {
     }
 });
 
-
-
 // ==================== USER NOTES ====================
 app.get('/api/user-notes/:userId', isAdminOrModerator, async (req, res) => {
     try {
-        const result = await pool.query(
-            'SELECT notes FROM user_notes WHERE user_id = $1',
-            [req.params.userId]
-        );
+        const result = await pool.query('SELECT notes FROM user_notes WHERE user_id = $1', [req.params.userId]);
         res.json(result.rows[0]?.notes || '');
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
- 
+
 app.post('/api/user-notes/:userId', isAdminOrModerator, async (req, res) => {
     const { notes } = req.body;
     try {
@@ -4759,9 +4106,6 @@ app.post('/api/user-notes/:userId', isAdminOrModerator, async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
-
-
-
 
 app.post('/api/users/:id/suspend', isAdminOrModerator, async (req, res) => {
     const userId = req.params.id;
@@ -4802,9 +4146,6 @@ app.get('/api/users/:id/activity', isAdminOrModerator, async (req, res) => {
             `SELECT 'Created ticket' as action, subject as details, created_at as time FROM support_tickets WHERE user_id = $1`,
             [userId]
         );
-        // For replies, we need to parse the JSON array in 'replies' column.
-        // Assuming 'replies' is a JSON array of objects with 'message' and 'created_at'.
-        // PostgreSQL can unnest jsonb.
         const replies = await pool.query(`
             SELECT 'Replied to ticket' as action, 
                    r->>'message' as details, 
@@ -4845,7 +4186,7 @@ app.post('/api/announcements', isAdminOrModerator, async (req, res) => {
     const { title, content } = req.body;
     try {
         await pool.query(
-            'INSERT INTO announcements (title, content, created_by) VALUES ($1, $2, $3)',
+            'INSERT INTO announcements (title, content, created_by, created_at) VALUES ($1, $2, $3, NOW())',
             [title, content, req.session.userId]
         );
         res.json({ success: true });
@@ -4868,9 +4209,8 @@ app.post('/api/support/tickets/bulk-close', isAdminOrModerator, async (req, res)
     const { ticketIds } = req.body;
     if (!ticketIds || !ticketIds.length) return res.status(400).json({ error: 'No tickets selected' });
     try {
-        for (const id of ticketIds) {
-            await pool.query('UPDATE support_tickets SET status = $1 WHERE id = $2', ['closed', id]);
-        }
+        const placeholders = ticketIds.map((_, i) => `$${i+1}`).join(',');
+        await pool.query(`UPDATE support_tickets SET status = 'closed' WHERE id IN (${placeholders})`, ticketIds);
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -4881,9 +4221,8 @@ app.post('/api/support/tickets/bulk-delete', isAdminOrModerator, async (req, res
     const { ticketIds } = req.body;
     if (!ticketIds || !ticketIds.length) return res.status(400).json({ error: 'No tickets selected' });
     try {
-        for (const id of ticketIds) {
-            await pool.query('DELETE FROM support_tickets WHERE id = $1', [id]);
-        }
+        const placeholders = ticketIds.map((_, i) => `$${i+1}`).join(',');
+        await pool.query(`DELETE FROM support_tickets WHERE id IN (${placeholders})`, ticketIds);
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -4904,15 +4243,7 @@ app.get('/api/moderator-stats', isAdminOrModerator, async (req, res) => {
     }
 });
 
-// ==================== GAMIFICATION API ENDPOINTS ====================
-
-/**
- * GET /api/gamification/status
- * Returns the user's current level, XP, streak, daily quests, and achievements.
- */
-// ==================== GAMIFICATION API ENDPOINTS ====================
-// ==================== GAMIFICATION API ENDPOINTS ====================
-// ==================== GAMIFICATION STATUS ====================
+// ==================== GAMIFICATION API ====================
 app.get('/api/gamification/status', isAuthenticated, async (req, res) => {
     const userId = req.session.userId;
     try {
@@ -5003,30 +4334,7 @@ app.get('/api/gamification/leaderboard', async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
-/**
- * GET /api/gamification/leaderboard
- * Returns the top users by XP (unauthenticated).
- */
-app.get('/api/gamification/leaderboard', async (req, res) => {
-    const { limit = 20 } = req.query;
-    try {
-        const result = await pool.request()
-            .input('limit', sql.Int, Math.min(parseInt(limit), 100))
-            .query(`
-                SELECT TOP (@limit) u.id, u.username, u.level, u.xp, u.avatar_url,
-                    RANK() OVER (ORDER BY u.xp DESC) as rank
-                FROM users u
-                WHERE u.is_banned = false
-                ORDER BY u.xp DESC
-            `);
-        res.json(result.recordset);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-// ==================== CLAIM QUEST ENDPOINT ====================
-// ==================== CLAIM QUEST ENDPOINT ====================
+
 app.post('/api/quests/:questId/claim', isAuthenticated, async (req, res) => {
     const userId = req.session.userId;
     const questId = parseInt(req.params.questId);
@@ -5050,10 +4358,8 @@ app.post('/api/quests/:questId/claim', isAuthenticated, async (req, res) => {
             return res.status(400).json({ error: 'Quest already claimed' });
         }
 
-        // Award XP and update level
         await addXP(userId, quest.xp_reward, `Daily quest: ${quest.name}`);
 
-        // Add credits
         await pool.query(
             'UPDATE user_credits SET balance = balance + $1 WHERE user_id = $2',
             [quest.credits_reward, userId]
@@ -5064,14 +4370,12 @@ app.post('/api/quests/:questId/claim', isAuthenticated, async (req, res) => {
             [userId, quest.credits_reward, `Claimed quest: ${quest.name}`]
         );
 
-        // Mark as claimed
         await pool.query(
             `UPDATE user_daily_quests SET claimed = true 
              WHERE user_id = $1 AND quest_id = $2 AND date = $3`,
             [userId, questId, today]
         );
 
-        // Notify frontend
         const userEntry = onlineUsers.get(userId);
         if (userEntry && userEntry.socketId) {
             io.to(userEntry.socketId).emit('quest_claimed', {
@@ -5092,13 +4396,7 @@ app.post('/api/quests/:questId/claim', isAuthenticated, async (req, res) => {
     }
 });
 
-// ==================== DATABASE INITIALIZATION (GAMIFICATION TABLES) ====================
-
-// ==================== USER FEEDBACK SYSTEM ==================
-// Create table if not exists
-
-
-// Submit feedback endpoint
+// ==================== USER FEEDBACK ====================
 app.post('/api/feedback', isAuthenticated, async (req, res) => {
     const { rating, comment } = req.body;
     if (!rating || rating < 1 || rating > 5) {
@@ -5106,7 +4404,7 @@ app.post('/api/feedback', isAuthenticated, async (req, res) => {
     }
     try {
         await pool.query(
-            'INSERT INTO user_feedback (user_id, rating, comment) VALUES ($1, $2, $3)',
+            'INSERT INTO user_feedback (user_id, rating, comment, created_at) VALUES ($1, $2, $3, NOW())',
             [req.session.userId, rating, comment || null]
         );
         res.json({ success: true, message: 'Thank you for your feedback!' });
@@ -5116,7 +4414,6 @@ app.post('/api/feedback', isAuthenticated, async (req, res) => {
     }
 });
 
-// ==================== GET USER FEEDBACK (ADMIN ONLY) ====================
 app.get('/api/admin/feedback', isAdmin, async (req, res) => {
     try {
         const result = await pool.query(
@@ -5132,41 +4429,25 @@ app.get('/api/admin/feedback', isAdmin, async (req, res) => {
     }
 });
 
-// ==================== FRONTEND ROUTE ====================
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// ==================== ADD is_featured COLUMN TO TOOLS TABLE ====================
-
-
-// ==================== ADD GROUPS AND RELATED TABLES (IF MISSING) ====================
-
-
 // ==================== CSRF TOKEN ENDPOINT ====================
 app.get('/api/csrf-token', (req, res) => {
-    // In production, generate a real CSRF token. For development, a dummy.
-    const token = require('crypto').randomBytes(32).toString('hex');
+    const token = crypto.randomBytes(32).toString('hex');
     req.session.csrfToken = token;
     res.json({ csrfToken: token });
 });
 
-// ==================== START SERVER ====================
-// ==================== HEALTH CHECK ENDPOINT ====================
-app.get('/health', (req, res) => res.status(200).send('OK'));
-
-// ==================== DATABASE CONNECTION TEST (optional) ====================
+// ==================== DATABASE CONNECTION TEST ====================
 (async () => {
     try {
         await pool.query('SELECT NOW()');
         console.log('✅ Database connection verified');
     } catch (err) {
         console.error('❌ Database connection failed:', err.message);
-        process.exit(1); // Do not start if DB is unreachable
+        process.exit(1);
     }
 })();
 
-// ==================== START SERVER WITH ENHANCED LOGGING ====================
+// ==================== START SERVER ====================
 const PORT = process.env.PORT || 3000;
 const HOST = '0.0.0.0';
 
@@ -5209,31 +4490,25 @@ process.on('SIGINT', () => {
         process.exit(0);
     });
 });
+
 // ==================== WEEKLY DIGEST CRON ====================
 cron.schedule('0 9 * * 1', async () => {
     console.log('📧 Running weekly digest cron job...');
     try {
-        await poolConnect;
-        const users = await pool.request().query('SELECT id, username, email FROM users');
-        for (const user of users.recordset) {
+        const users = await pool.query('SELECT id, username, email FROM users');
+        for (const user of users.rows) {
             let newToolsCount = 0;
             try {
                 const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-                const newToolsResult = await pool.request()
-                    .input('weekAgo', sql.DateTime, weekAgo)
-                    .query('SELECT COUNT(*) as count FROM tools WHERE created_at >= @weekAgo');
-                newToolsCount = newToolsResult.recordset[0].count;
+                const newToolsResult = await pool.query('SELECT COUNT(*) as count FROM tools WHERE created_at >= $1', [weekAgo]);
+                newToolsCount = newToolsResult.rows[0].count;
             } catch (err) { }
 
-            const pendingResult = await pool.request()
-                .input('userId', sql.Int, user.id)
-                .query('SELECT COUNT(*) as count FROM friendships WHERE friend_id = @userId AND status = \'pending\'');
-            const pendingRequestsCount = pendingResult.recordset[0].count;
+            const pendingResult = await pool.query('SELECT COUNT(*) as count FROM friendships WHERE friend_id = $1 AND status = $2', [user.id, 'pending']);
+            const pendingRequestsCount = pendingResult.rows[0]?.count || 0;
 
-            const unreadResult = await pool.request()
-                .input('userId', sql.Int, user.id)
-                .query('SELECT COUNT(*) as count FROM messages WHERE receiver_id = @userId AND is_read = false');
-            const unreadMessagesCount = unreadResult.recordset[0].count;
+            const unreadResult = await pool.query('SELECT COUNT(*) as count FROM messages WHERE receiver_id = $1 AND is_read = false', [user.id]);
+            const unreadMessagesCount = unreadResult.rows[0]?.count || 0;
 
             await sendWeeklyDigest(user.email, user.username, newToolsCount, pendingRequestsCount, unreadMessagesCount);
         }
