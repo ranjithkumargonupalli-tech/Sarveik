@@ -1,7 +1,5 @@
 require('dotenv').config();
-app.get('/health', (req, res) => {
-    res.status(200).send('OK');
-});
+
 
 // ==================== ENVIRONMENT CHECKS ====================
 // FIXED: session secret length check operator precedence
