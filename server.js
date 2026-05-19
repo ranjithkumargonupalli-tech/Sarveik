@@ -2592,22 +2592,9 @@ app.post('/api/support/tickets', isAuthenticated, async (req, res) => {
             [req.session.userId, subject, message]
         );
         const ticketId = result.rows[0].id;
-        
-        // Optional: Add a static system message (e.g., "Ticket received")
-const systemReply = {
-    id: Date.now(),
-    message: 'Your ticket has been submitted. A moderator will respond soon.',
-    sender_id: null,
-    sender_name: 'System',
-    sender_role: 'system',
-    created_at: new Date().toISOString()
-};
-await pool.query(
-    `UPDATE support_tickets SET replies = $1, ai_handled = false WHERE id = $2`,
-    [JSON.stringify([systemReply]), ticketId]
-);
-        
-        res.status(201).json({ success: true, ticketId: ticketId, aiReply: aiReplyText });
+
+        // ✅ No AI call – just return success
+        res.status(201).json({ success: true, ticketId: ticketId });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -2778,11 +2765,6 @@ app.post('/api/support/tickets/:id/reply', isAuthenticated, async (req, res) => 
             await pool.query(
                 `UPDATE support_tickets SET assigned_to = $1, last_reminder_sent = NULL, replies = $2, updated_at = NOW() WHERE id = $3`,
                 [req.session.userId, JSON.stringify(replies), ticketId]
-            );
-        } else {
-            await pool.query(
-                `UPDATE support_tickets SET replies = $1, last_reminder_sent = NULL, updated_at = NOW() WHERE id = $2`,
-                [JSON.stringify(replies), ticketId]
             );
         }
         
