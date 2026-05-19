@@ -5376,9 +5376,26 @@ app.get('/api/csrf-token', (req, res) => {
 });
 
 // ==================== START SERVER ====================
+// ==================== HEALTH CHECK ENDPOINT ====================
+app.get('/health', (req, res) => res.status(200).send('OK'));
+
+// ==================== DATABASE CONNECTION TEST (optional) ====================
+(async () => {
+    try {
+        await pool.query('SELECT NOW()');
+        console.log('✅ Database connection verified');
+    } catch (err) {
+        console.error('❌ Database connection failed:', err.message);
+        process.exit(1); // Do not start if DB is unreachable
+    }
+})();
+
+// ==================== START SERVER WITH ENHANCED LOGGING ====================
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Server running on port ${PORT}`);
+const HOST = '0.0.0.0';
+
+server.listen(PORT, HOST, () => {
+    console.log(`🚀 Server running at http://${HOST}:${PORT}/`);
     console.log(`📧 Email service ready`);
     console.log(`⭐ Credits system active (atomic spends, PhonePe purchases)`);
     console.log(`👥 Referral system active`);
@@ -5398,11 +5415,24 @@ server.listen(PORT, '0.0.0.0', () => {
     console.log(`✅ Username uniqueness check fixed during registration`);
     console.log(`✅ Account deletion fully fixed with cascade deletion of all related data`);
     console.log(`✅ CSRF token endpoint added for state‑changing requests`);
-
-    // Ensure Staff Lounge group exists and members are enrolled
-    //ensureStaffLoungeGroup().catch(err => console.error('Staff Lounge init failed:', err));
 });
 
+// ==================== GRACEFUL SHUTDOWN ====================
+process.on('SIGTERM', () => {
+    console.log('SIGTERM received, closing server...');
+    server.close(() => {
+        console.log('Server closed');
+        process.exit(0);
+    });
+});
+
+process.on('SIGINT', () => {
+    console.log('SIGINT received, closing server...');
+    server.close(() => {
+        console.log('Server closed');
+        process.exit(0);
+    });
+});
 // ==================== WEEKLY DIGEST CRON ====================
 cron.schedule('0 9 * * 1', async () => {
     console.log('📧 Running weekly digest cron job...');
