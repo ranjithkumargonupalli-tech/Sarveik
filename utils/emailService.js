@@ -1,10 +1,8 @@
 // utils/emailService.js - Resend version (drop-in replacement)
 const { Resend } = require('resend');
-
-// Initialize Resend with API key from environment
 const resend = new Resend(process.env.RESEND_API_KEY);
 
-// Helper function for HTML escaping (copied from your original)
+// ========== HTML ESCAPING (same as original) ==========
 const escapeHtml = (str) => {
     if (!str) return '';
     return str
@@ -15,38 +13,30 @@ const escapeHtml = (str) => {
         .replace(/'/g, '&#39;');
 };
 
-// ========== CORE SEND FUNCTION ==========
+// ========== CORE SEND FUNCTION (using Resend) ==========
 const sendEmail = async (to, subject, html) => {
     if (!process.env.RESEND_API_KEY) {
-        console.error('❌ RESEND_API_KEY is missing. Emails will not be sent.');
+        console.error('❌ RESEND_API_KEY missing. Emails will not be sent.');
         return { success: false, error: 'Email service not configured' };
     }
-
-    // Use EMAIL_FROM environment variable if set, otherwise fallback to Resend's sandbox
     const from = process.env.EMAIL_FROM || 'Acme <onboarding@resend.dev>';
-
     try {
         const { data, error } = await resend.emails.send({
-            from: from,
+            from,
             to: [to],
-            subject: subject,
-            html: html,
+            subject,
+            html,
         });
-
-        if (error) {
-            console.error('Resend error:', error);
-            return { success: false, error: error.message };
-        }
-
+        if (error) throw error;
         console.log(`📧 Email sent to ${to} [${data?.id}]`);
         return { success: true, messageId: data?.id };
     } catch (err) {
-        console.error('Failed to send email:', err);
+        console.error('Resend error:', err);
         return { success: false, error: err.message };
     }
 };
 
-// ========== EXPORTED FUNCTIONS (identical signatures) ==========
+// ========== EXPORTED FUNCTIONS (exactly as original) ==========
 
 const sendWelcomeEmail = async (userEmail, username) => {
     const safeUsername = escapeHtml(username);
@@ -179,7 +169,7 @@ const sendAccountDeletionAlert = async (deletedUser) => {
     return sendEmail(adminEmail, '⚠️ User Account Deleted', html);
 };
 
-// Additional utilities (same as your original)
+// ========== UTILITY EXPORTS (matching original) ==========
 const getEmailQueueStats = () => ({ queueLength: 0, activeJobs: 0, totalResults: 0 });
 const isEmailServiceReady = () => true;
 
