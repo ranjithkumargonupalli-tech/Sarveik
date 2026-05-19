@@ -226,9 +226,8 @@ function validateIntParam(value, paramName) {
 // Clean expired OTPs every 10 minutes
 setInterval(async () => {
     try {
-        await poolConnect;
-        await pool.request().query('DELETE FROM otp_store WHERE expires_at < NOW()');
-        await pool.request().query('DELETE FROM password_resets WHERE expires_at < NOW()');
+        await pool.query('DELETE FROM otp_store WHERE expires_at < NOW()');
+        await pool.query('DELETE FROM password_resets WHERE expires_at < NOW()');
     } catch (err) { console.error('OTP cleanup error:', err); }
 }, 10 * 60 * 1000);
 
