@@ -2766,6 +2766,11 @@ app.post('/api/support/tickets/:id/reply', isAuthenticated, async (req, res) => 
                 `UPDATE support_tickets SET assigned_to = $1, last_reminder_sent = NULL, replies = $2, updated_at = NOW() WHERE id = $3`,
                 [req.session.userId, JSON.stringify(replies), ticketId]
             );
+        } else {
+            await pool.query(
+                `UPDATE support_tickets SET replies = $1, last_reminder_sent = NULL, updated_at = NOW() WHERE id = $2`,
+                [JSON.stringify(replies), ticketId]
+            );
         }
         
         if (isModOrAdmin) {
