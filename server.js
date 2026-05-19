@@ -3510,10 +3510,9 @@ app.post('/api/forgot-password', authLimiter, async (req, res) => {
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const expires = new Date(Date.now() + 10 * 60 * 1000);
  
+        await pool.query('DELETE FROM password_resets WHERE email = $1', [email]);
         await pool.query(
-            `INSERT INTO password_resets (email, otp, expires_at)
-             VALUES ($1, $2, $3)
-             ON CONFLICT (email) DO UPDATE SET otp = $2, expires_at = $3`,
+            'INSERT INTO password_resets (email, otp, expires_at) VALUES ($1, $2, $3)',
             [email, otp, expires]
         );
  
@@ -3548,17 +3547,13 @@ app.post('/api/reset-password', authLimiter, async (req, res) => {
             'UPDATE users SET password = $1 WHERE LOWER(email) = LOWER($2)',
             [hashedPassword, email]
         );
-        await pool.query(
-            'DELETE FROM password_resets WHERE LOWER(email) = LOWER($1)',
-            [email]
-        );
+        await pool.query('DELETE FROM password_resets WHERE LOWER(email) = LOWER($1)', [email]);
         res.send('Password reset successfully');
     } catch (err) {
         console.error('Reset error:', err);
         res.status(500).send('Server error');
     }
 });
-
 // ==================== USER SEARCH, PROFILE ====================
 app.get('/api/users/search', isAuthenticated, async (req, res) => {
     const query = req.query.q;
