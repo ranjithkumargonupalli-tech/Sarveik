@@ -158,6 +158,7 @@ async function sendToolSubmissionAlert(details) {
 }
 
 const app = express();
+app.set('trust proxy', 1);
 app.get('/health', (req, res) => res.send('OK'));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
