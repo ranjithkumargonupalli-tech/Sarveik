@@ -15,6 +15,9 @@ const session = require('express-session');
 const bcrypt = require('bcrypt');
 const multer = require('multer');
 const path = require('path');
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 const fs = require('fs');
 const cors = require('cors');
 const http = require('http');
