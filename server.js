@@ -132,7 +132,7 @@ async function sendToolSubmissionAlert(details) {
     try {
         await poolConnect;
         const admins = await pool.request().query("SELECT email, username FROM users WHERE role = 'admin'");
-        for (let admin of admins.recordset) {
+        for (let admin of admins.rows) {
             const html = `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f4f4f4; border-radius: 10px;">
                     <h2 style="color: #667eea;">New Tool Submission</h2>
@@ -373,7 +373,7 @@ async function grantLevelRewards(userId, oldLevel, newLevel) {
         .input('minLevel', sql.Int, oldLevel + 1)
         .input('maxLevel', sql.Int, newLevel)
         .query('SELECT * FROM level_rewards WHERE level BETWEEN @minLevel AND @maxLevel');
-    for (const reward of rewards.recordset) {
+    for (const reward of rewards.rows) {
         if (reward.reward_type === 'credits') {
             await pool.request()
                 .input('userId', sql.Int, userId)
@@ -388,7 +388,7 @@ async function grantLevelRewards(userId, oldLevel, newLevel) {
             const user = await pool.request()
                 .input('userId', sql.Int, userId)
                 .query('SELECT premium_until FROM users WHERE id = @userId');
-            let current = user.recordset[0].premium_until;
+            let current = user.rows[0].premium_until;
             let newExpiry;
             if (current && new Date(current) > new Date()) {
                 newExpiry = new Date(new Date(current).getTime() + reward.reward_value * 24 * 60 * 60 * 1000);
@@ -471,7 +471,7 @@ async function getDailyQuests(userId) {
             FROM daily_quests q
             LEFT JOIN user_daily_quests uqd ON q.id = uqd.quest_id AND uqd.user_id = @userId AND uqd.date = @today
         `);
-    for (const q of quests.recordset) {
+    for (const q of quests.rows) {
         if (q.progress === undefined) {
             await pool.request()
                 .input('userId', sql.Int, userId)
@@ -483,7 +483,7 @@ async function getDailyQuests(userId) {
             q.claimed = 0;
         }
     }
-    return quests.recordset;
+    return quests.rows;
 }
 
 /**
@@ -1051,8 +1051,8 @@ app.post('/api/phonepe-webhook', async (req, res) => {
             const purchase = await pool.request()
                 .input('merchant_order_id', sql.NVarChar, merchantOrderId)
                 .query('SELECT * FROM credit_purchases WHERE merchant_order_id = @merchant_order_id AND status = \'PENDING\'');
-            if (purchase.recordset.length > 0) {
-                const { user_id, credits } = purchase.recordset[0];
+            if (purchase.rows.length > 0) {
+                const { user_id, credits } = purchase.rows[0];
                 await ensureUserCredits(user_id);
                 await pool.request()
                     .input('user_id', sql.Int, user_id)
@@ -1104,11 +1104,11 @@ app.get('/api/verify-payment', isAuthenticated, async (req, res) => {
                   AND status = 'PENDING'
             `);
 
-        if (purchase.recordset.length === 0) {
+        if (purchase.rows.length === 0) {
             return res.json({ status: 'not_found', message: 'No pending purchase found' });
         }
 
-        const { id, credits, amount, merchant_order_id, user_id } = purchase.recordset[0];
+        const { id, credits, amount, merchant_order_id, user_id } = purchase.rows[0];
 
         // Add credits to user's wallet
         await pool.request()
@@ -1279,7 +1279,7 @@ io.on('connection', (socket) => {
                 .input('receiver_id', sql.Int, to)
                 .input('content', sql.NVarChar, message)
                 .query('INSERT INTO messages (sender_id, receiver_id, content) VALUES (@sender_id, @receiver_id, @content)');
-            const newMessageId = result.rowsAffected[0] ? result.recordset?.[0]?.id : null;
+            const newMessageId = result.rowsAffected[0] ? result.rows?.[0]?.id : null;
             const realMessage = {
                 id: newMessageId,
                 sender_id: userId,
@@ -1371,7 +1371,7 @@ app.get('/api/groups/:id/messages', isAuthenticated, async (req, res) => {
             .input('groupId', sql.Int, groupId)
             .input('userId', sql.Int, req.session.userId)
             .query('SELECT 1 FROM group_members WHERE group_id = @groupId AND user_id = @userId');
-        if (membership.recordset.length === 0) {
+        if (membership.rows.length === 0) {
             return res.status(403).json({ error: 'You are not a member of this group' });
         }
         const result = await pool.request()
@@ -1387,7 +1387,7 @@ app.get('/api/groups/:id/messages', isAuthenticated, async (req, res) => {
                 OFFSET @offset ROWS
                 FETCH NEXT @limit ROWS ONLY
             `);
-        res.json(result.recordset);
+        res.json(result.rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to fetch group messages' });
@@ -1404,7 +1404,7 @@ app.get('/api/groups/:id/members', isAuthenticated, async (req, res) => {
             .input('groupId', sql.Int, groupId)
             .input('userId', sql.Int, req.session.userId)
             .query('SELECT 1 FROM group_members WHERE group_id = @groupId AND user_id = @userId');
-        if (membership.recordset.length === 0) {
+        if (membership.rows.length === 0) {
             return res.status(403).json({ error: 'You are not a member of this group' });
         }
         const result = await pool.request()
@@ -1415,7 +1415,7 @@ app.get('/api/groups/:id/members', isAuthenticated, async (req, res) => {
                 JOIN users u ON gm.user_id = u.id
                 WHERE gm.group_id = @groupId
             `);
-        res.json(result.recordset);
+        res.json(result.rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to fetch group members' });
@@ -1433,8 +1433,8 @@ app.post('/api/groups/:id/members', isAuthenticated, async (req, res) => {
         const group = await pool.request()
             .input('groupId', sql.Int, groupId)
             .query('SELECT created_by FROM groups WHERE id = @groupId');
-        if (group.recordset.length === 0) return res.status(404).json({ error: 'Group not found' });
-        if (group.recordset[0].created_by !== req.session.userId && req.session.role !== 'admin') {
+        if (group.rows.length === 0) return res.status(404).json({ error: 'Group not found' });
+        if (group.rows[0].created_by !== req.session.userId && req.session.role !== 'admin') {
             return res.status(403).json({ error: 'Only group creator can add members' });
         }
         // Check if user exists and not already a member
@@ -1442,7 +1442,7 @@ app.post('/api/groups/:id/members', isAuthenticated, async (req, res) => {
             .input('groupId', sql.Int, groupId)
             .input('userId', sql.Int, userId)
             .query('SELECT 1 FROM group_members WHERE group_id = @groupId AND user_id = @userId');
-        if (existing.recordset.length > 0) {
+        if (existing.rows.length > 0) {
             return res.status(409).json({ error: 'User is already a member' });
         }
         await pool.request()
@@ -1466,12 +1466,12 @@ app.delete('/api/groups/:id/members/:userId', isAuthenticated, async (req, res) 
         const group = await pool.request()
             .input('groupId', sql.Int, groupId)
             .query('SELECT created_by FROM groups WHERE id = @groupId');
-        if (group.recordset.length === 0) return res.status(404).json({ error: 'Group not found' });
-        if (group.recordset[0].created_by !== req.session.userId && req.session.role !== 'admin') {
+        if (group.rows.length === 0) return res.status(404).json({ error: 'Group not found' });
+        if (group.rows[0].created_by !== req.session.userId && req.session.role !== 'admin') {
             return res.status(403).json({ error: 'Only group creator can remove members' });
         }
         // Cannot remove creator
-        if (memberId === group.recordset[0].created_by) {
+        if (memberId === group.rows[0].created_by) {
             return res.status(400).json({ error: 'Cannot remove group creator' });
         }
         await pool.request()
@@ -1497,9 +1497,9 @@ app.post('/api/groups/:id/leave', isAuthenticated, async (req, res) => {
         const group = await pool.request()
             .input('groupId', sql.Int, groupId)
             .query('SELECT created_by FROM groups WHERE id = @groupId');
-        if (group.recordset.length === 0) return res.status(404).json({ error: 'Group not found' });
+        if (group.rows.length === 0) return res.status(404).json({ error: 'Group not found' });
 
-        const isCreator = (group.recordset[0].created_by === req.session.userId);
+        const isCreator = (group.rows[0].created_by === req.session.userId);
 
         // ──────────────────────────────────────────────
         // OPTION 1: Creator can leave → group is deleted
@@ -1514,7 +1514,7 @@ app.post('/api/groups/:id/leave', isAuthenticated, async (req, res) => {
             const members = await pool.request()
                 .input('groupId', sql.Int, groupId)
                 .query('SELECT user_id FROM group_members WHERE group_id = @groupId');
-            for (const member of members.recordset) {
+            for (const member of members.rows) {
                 const userEntry = onlineUsers.get(member.user_id);
                 if (userEntry && userEntry.socketId) {
                     io.to(userEntry.socketId).emit('group_deleted', { groupId });
@@ -1562,9 +1562,9 @@ app.post('/api/admin/groups', isAdminOrModerator, async (req, res) => {
             const roleCheck = await pool.request()
                 .input('userId', sql.Int, userId)
                 .query('SELECT role FROM users WHERE id = @userId');
-            if (roleCheck.recordset.length === 0)
+            if (roleCheck.rows.length === 0)
                 return res.status(400).json({ error: `User ${userId} does not exist` });
-            const role = roleCheck.recordset[0].role;
+            const role = roleCheck.rows[0].role;
             if (role !== 'admin' && role !== 'moderator') {
                 return res.status(403).json({ error: 'Only admins and moderators can be added to staff groups' });
             }
@@ -1575,7 +1575,7 @@ app.post('/api/admin/groups', isAdminOrModerator, async (req, res) => {
             .input('name', sql.NVarChar, name)
             .input('created_by', sql.Int, req.session.userId)
             .query(`INSERT INTO groups (name, created_by) OUTPUT INSERTED.id VALUES (@name, @created_by)`);
-        const groupId = result.recordset[0].id;
+        const groupId = result.rows[0].id;
 
         // Add creator
         await pool.request()
@@ -1593,7 +1593,7 @@ app.post('/api/admin/groups', isAdminOrModerator, async (req, res) => {
                 WHERE (user_id = @userId AND friend_id = @friendId)
                    OR (user_id = @friendId AND friend_id = @userId)
                   AND status = 'accepted'`);
-            if (isFriend.recordset.length === 0) {
+            if (isFriend.rows.length === 0) {
                  return res.status(403).json({ error: 'You can only add friends to a group' });
                 }
         }
@@ -1630,7 +1630,7 @@ app.get('/api/groups', isAuthenticated, async (req, res) => {
                 JOIN group_members gm ON g.id = gm.group_id
                 WHERE gm.user_id = @userId
             `);
-        res.json(result.recordset);
+        res.json(result.rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to fetch groups' });
@@ -1642,8 +1642,8 @@ app.delete('/api/groups/:id', isAuthenticated, async (req, res) => {
         const group = await pool.request()
             .input('id', groupId)
             .query('SELECT created_by FROM groups WHERE id = @id');
-        if (group.recordset.length === 0) return res.status(404).json({ error: 'Group not found' });
-        if (group.recordset[0].created_by !== req.session.userId && req.session.role !== 'admin') {
+        if (group.rows.length === 0) return res.status(404).json({ error: 'Group not found' });
+        if (group.rows[0].created_by !== req.session.userId && req.session.role !== 'admin') {
             return res.status(403).json({ error: 'Only creator or admin can delete' });
         }
         await pool.request().input('id', groupId).query('DELETE FROM groups WHERE id = @id');
@@ -1659,10 +1659,10 @@ app.get('/api/staff-lounge', isAdminOrModerator, async (req, res) => {
         await poolConnect;
         const groupResult = await pool.request()
             .query(`SELECT id FROM groups WHERE name = 'Staff Lounge'`);
-        if (groupResult.recordset.length === 0) {
+        if (groupResult.rows.length === 0) {
             return res.status(404).json({ error: 'Staff Lounge not found' });
         }
-        const groupId = groupResult.recordset[0].id;
+        const groupId = groupResult.rows[0].id;
         res.json({
             groupId,
             name: 'Staff Lounge',
@@ -2074,7 +2074,7 @@ app.post('/api/user/set-badge', isAuthenticated, async (req, res) => {
         const user = await pool.request()
             .input('userId', req.session.userId)
             .query('SELECT has_custom_badge FROM users WHERE id = @userId');
-        if (!user.recordset[0]?.has_custom_badge) {
+        if (!user.rows[0]?.has_custom_badge) {
             return res.status(403).json({ error: 'You have not purchased a custom badge' });
         }
         await pool.request()
@@ -2100,7 +2100,7 @@ app.get('/api/credits/admin-rewards', isAuthenticated, async (req, res) => {
                 WHERE user_id = @userId AND type = 'earn' AND (description LIKE '%admin%' OR description LIKE '%reward%')
                 ORDER BY created_at DESC
             `);
-        res.json(result.recordset);
+        res.json(result.rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -2187,7 +2187,7 @@ app.put('/profile/update', isAuthenticated, async (req, res) => {
                        avatar_url
                 FROM users WHERE id = @id
             `);
-        res.json(updated.recordset[0]);
+        res.json(updated.rows[0]);
     } catch (err) {
         console.error(err);
         res.status(500).send('Server error');
@@ -2296,7 +2296,7 @@ app.get('/api/admin/tools', isAdminOrModerator, async (req, res) => {
         const result = await pool.query(
             `SELECT t.*, u.username as submitted_by,
                     (SELECT COUNT(*) FROM tool_usage WHERE tool_name = t.name) as usage_count,
-                    COALESCE(t.is_featured, false) as is_featured
+                    COALESCE(t.is_featured, 0) as is_featured
              FROM tools t LEFT JOIN users u ON t.user_id = u.id
              ORDER BY t.id DESC`
         );
@@ -2388,7 +2388,7 @@ app.post('/api/admin/bulk-email', isAdmin, async (req, res) => {
         const users = await pool.request()
             .query(`SELECT id, email, username FROM users WHERE id IN (${userIds.join(',')})`);
         let successCount = 0, failCount = 0;
-        for (const user of users.recordset) {
+        for (const user of users.rows) {
             const ok = await sendEmail(user.email, subject, htmlContent);
             if (ok.success) successCount++;
             else failCount++;
@@ -2428,7 +2428,7 @@ app.post('/api/admin/users/:id/credits', isAdmin, async (req, res) => {
         const userCheck = await pool.request()
             .input('id', sql.Int, userId)
             .query('SELECT id FROM users WHERE id = @id');
-        if (userCheck.recordset.length === 0) {
+        if (userCheck.rows.length === 0) {
             return res.status(404).json({ error: 'User not found' });
         }
 
@@ -2531,7 +2531,7 @@ app.get('/api/tools/recent', isAuthenticated, async (req, res) => {
             request.input('page_type', sql.NVarChar, page);
         }
         const result = await request.query(query);
-        res.json(result.recordset);
+        res.json(result.rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -2596,7 +2596,7 @@ app.get('/api/cards', async (req, res) => {
         const result = await pool.request().query(`
             SELECT * FROM cards ORDER BY display_order ASC, id ASC
         `);
-        res.json(result.recordset);
+        res.json(result.rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to fetch cards' });
@@ -2611,8 +2611,8 @@ app.get('/api/cards/:id', isAdmin, async (req, res) => {
         const result = await pool.request()
             .input('id', sql.Int, cardId)
             .query('SELECT * FROM cards WHERE id = @id');
-        if (result.recordset.length === 0) return res.status(404).json({ error: 'Card not found' });
-        res.json(result.recordset[0]);
+        if (result.rows.length === 0) return res.status(404).json({ error: 'Card not found' });
+        res.json(result.rows[0]);
     } catch (err) {
         res.status(500).json({ error: 'Failed to fetch card' });
     }
@@ -2638,7 +2638,7 @@ app.post('/api/cards', isAdmin, async (req, res) => {
                 OUTPUT INSERTED.id
                 VALUES (@title, @description, @icon, @link, @category, @display_order)
             `);
-        res.status(201).json({ success: true, id: result.recordset[0].id });
+        res.status(201).json({ success: true, id: result.rows[0].id });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Failed to create card' });
@@ -2853,7 +2853,7 @@ app.post('/api/user/use-boost', isAuthenticated, async (req, res) => {
         const result = await pool.request()
             .input('userId', req.session.userId)
             .query('SELECT message_boosts_remaining FROM users WHERE id = @userId');
-        const remaining = result.recordset[0]?.message_boosts_remaining || 0;
+        const remaining = result.rows[0]?.message_boosts_remaining || 0;
         if (remaining <= 0) {
             return res.status(400).json({ error: 'No boosts remaining' });
         }
@@ -2894,14 +2894,14 @@ app.post('/api/messages/boost/:messageId', isAuthenticated, async (req, res) => 
             .input('id', messageId)
             .input('userId', userId)
             .query('SELECT sender_id FROM messages WHERE id = @id AND sender_id = @userId');
-        if (msg.recordset.length === 0) {
+        if (msg.rows.length === 0) {
             return res.status(404).json({ error: 'Message not found or not yours' });
         }
         
         const boostsResult = await pool.request()
             .input('userId', userId)
             .query('SELECT message_boosts_remaining FROM users WHERE id = @userId');
-        let boostsRemaining = boostsResult.recordset[0]?.message_boosts_remaining || 0;
+        let boostsRemaining = boostsResult.rows[0]?.message_boosts_remaining || 0;
         
         if (boostsRemaining > 0) {
             await pool.request()
@@ -2911,7 +2911,7 @@ app.post('/api/messages/boost/:messageId', isAuthenticated, async (req, res) => 
             const balanceCheck = await pool.request()
                 .input('userId', userId)
                 .query('SELECT balance FROM user_credits WHERE user_id = @userId');
-            const balance = balanceCheck.recordset[0]?.balance || 0;
+            const balance = balanceCheck.rows[0]?.balance || 0;
             if (balance < 10) {
                 return res.status(400).json({ error: 'Insufficient credits (need 10) and no boosts left' });
             }
@@ -2938,10 +2938,10 @@ app.post('/api/messages/boost/:messageId', isAuthenticated, async (req, res) => 
 
 app.get('/api/referrals/list', isAuthenticated, async (req, res) => {
     try {
-        const result = await pool.request()
+        const result = await pool.query()
             .input('referrerId', req.session.userId)
             .query('SELECT id, username, email, created_at FROM users WHERE referrer_id = @referrerId ORDER BY created_at DESC');
-        res.json(result.recordset);
+        res.json(result.rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -3003,8 +3003,8 @@ async function getTicketWithReplies(ticketId, userId, isModOrAdmin) {
             JOIN users u ON t.user_id = u.id
             WHERE t.id = @id
         `);
-    if (ticket.recordset.length === 0) return null;
-    const ticketData = ticket.recordset[0];
+    if (ticket.rows.length === 0) return null;
+    const ticketData = ticket.rows[0];
     if (!isModOrAdmin && ticketData.user_id !== userId) return null;
     
     let replies = [];
@@ -3031,7 +3031,7 @@ app.post('/api/support/tickets', isAuthenticated, async (req, res) => {
                 OUTPUT INSERTED.id
                 VALUES (@user_id, @subject, @message, '[]', 'open')
             `);
-        const ticketId = result.recordset[0].id;
+        const ticketId = result.rows[0].id;
         
         // Generate AI reply
         const aiReplyText = await getAIResponseForSupport(subject, message);
@@ -3068,8 +3068,8 @@ app.post('/api/support/tickets/:id/escalate', isAuthenticated, async (req, res) 
         const ticket = await pool.request()
             .input('id', sql.Int, ticketId)
             .query('SELECT * FROM support_tickets WHERE id = @id');
-        if (ticket.recordset.length === 0) return res.status(404).json({ error: 'Ticket not found' });
-        const ticketData = ticket.recordset[0];
+        if (ticket.rows.length === 0) return res.status(404).json({ error: 'Ticket not found' });
+        const ticketData = ticket.rows[0];
         
         // Check if user is the owner or admin/moderator
         if (ticketData.user_id !== req.session.userId && req.session.role !== 'admin' && req.session.role !== 'moderator') {
@@ -3087,12 +3087,12 @@ app.post('/api/support/tickets/:id/escalate', isAuthenticated, async (req, res) 
                 ORDER BY ISNULL(ms.current_tickets, 0) ASC
             `);
         
-        if (moderator.recordset.length === 0) {
+        if (moderator.rows.length === 0) {
             return res.status(503).json({ error: 'No moderator available. Please try again later.' });
         }
         
-        const moderatorId = moderator.recordset[0].id;
-        const moderatorName = moderator.recordset[0].username;
+        const moderatorId = moderator.rows[0].id;
+        const moderatorName = moderator.rows[0].username;
         
         // Assign ticket to moderator
         await pool.request()
@@ -3134,7 +3134,7 @@ app.get('/api/support/tickets', isAuthenticated, async (req, res) => {
     try {
         await poolConnect;
         const userRole = await pool.query('SELECT * FROM users WHERE id = $1', [req.session.userId]);
-        const isModOrAdmin = ['admin', 'moderator'].includes(userRole.recordset[0]?.role);
+        const isModOrAdmin = ['admin', 'moderator'].includes(userRole.rows[0]?.role);
 
         let query;
         if (isModOrAdmin) {
@@ -3157,7 +3157,7 @@ app.get('/api/support/tickets', isAuthenticated, async (req, res) => {
         if (!isModOrAdmin) request.input('userId', sql.Int, req.session.userId);
         const result = await request.query(query);
         
-        const tickets = result.recordset.map(t => {
+        const tickets = result.rows.map(t => {
             let replies = [];
             if (t.replies) {
                 try { replies = JSON.parse(t.replies); } catch(e) {}
@@ -3178,7 +3178,7 @@ app.get('/api/support/tickets/:id', isAuthenticated, async (req, res) => {
         const userRole = await pool.request()
             .input('userId', sql.Int, req.session.userId)
             .query('SELECT role FROM users WHERE id = @userId');
-        const isModOrAdmin = ['admin', 'moderator'].includes(userRole.recordset[0]?.role);
+        const isModOrAdmin = ['admin', 'moderator'].includes(userRole.rows[0]?.role);
         
         const ticketData = await getTicketWithReplies(ticketId, req.session.userId, isModOrAdmin);
         if (!ticketData) return res.status(404).json({ error: 'Ticket not found or access denied' });
@@ -3194,7 +3194,7 @@ app.get('/api/support/tickets/debug/:id', isAuthenticated, async (req, res) => {
         const result = await pool.request()
             .input('id', sql.Int, ticketId)
             .query('SELECT * FROM support_tickets WHERE id = @id');
-        res.json(result.recordset[0]);
+        res.json(result.rows[0]);
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
@@ -3210,13 +3210,13 @@ app.post('/api/support/tickets/:id/reply', isAuthenticated, async (req, res) => 
         const userRole = await pool.request()
             .input('userId', sql.Int, req.session.userId)
             .query('SELECT role FROM users WHERE id = @userId');
-        const isModOrAdmin = ['admin', 'moderator'].includes(userRole.recordset[0]?.role);
+        const isModOrAdmin = ['admin', 'moderator'].includes(userRole.rows[0]?.role);
         
         const ticket = await pool.request()
             .input('id', sql.Int, ticketId)
             .query('SELECT user_id, status, replies, assigned_to FROM support_tickets WHERE id = @id');
-        if (ticket.recordset.length === 0) return res.status(404).json({ error: 'Ticket not found' });
-        const ticketData = ticket.recordset[0];
+        if (ticket.rows.length === 0) return res.status(404).json({ error: 'Ticket not found' });
+        const ticketData = ticket.rows[0];
         
         if (!isModOrAdmin && ticketData.user_id !== req.session.userId) {
             return res.status(403).json({ error: 'Access denied' });
@@ -3235,7 +3235,7 @@ app.post('/api/support/tickets/:id/reply', isAuthenticated, async (req, res) => 
             message: message,
             sender_id: req.session.userId,
             sender_name: req.session.username,
-            sender_role: isModOrAdmin ? (userRole.recordset[0]?.role || 'moderator') : 'user',
+            sender_role: isModOrAdmin ? (userRole.rows[0]?.role || 'moderator') : 'user',
             created_at: new Date().toISOString()
         };
         replies.push(newReply);
@@ -3282,8 +3282,8 @@ app.post('/api/support/tickets/:id/forward', isAuthenticated, async (req, res) =
         const ticket = await pool.request()
             .input('id', sql.Int, ticketId)
             .query('SELECT assigned_to FROM support_tickets WHERE id = @id');
-        if (ticket.recordset.length === 0) return res.status(404).json({ error: 'Ticket not found' });
-        const currentAssigned = ticket.recordset[0].assigned_to;
+        if (ticket.rows.length === 0) return res.status(404).json({ error: 'Ticket not found' });
+        const currentAssigned = ticket.rows[0].assigned_to;
         if (currentAssigned !== req.session.userId && req.session.role !== 'admin') {
             return res.status(403).json({ error: 'Only assigned moderator can forward this ticket' });
         }
@@ -3291,7 +3291,7 @@ app.post('/api/support/tickets/:id/forward', isAuthenticated, async (req, res) =
         const newMod = await pool.request()
             .input('id', sql.Int, newModeratorId)
             .query('SELECT id FROM users WHERE id = @id AND role = \'moderator\'');
-        if (newMod.recordset.length === 0) return res.status(404).json({ error: 'Moderator not found' });
+        if (newMod.rows.length === 0) return res.status(404).json({ error: 'Moderator not found' });
         // Update ticket
         await pool.request()
             .input('id', sql.Int, ticketId)
@@ -3317,7 +3317,7 @@ app.post('/api/support/tickets/:id/forward', isAuthenticated, async (req, res) =
             io.to(newModEntry.socketId).emit('new_support_ticket', {
                 ticketId,
                 fromUser: req.session.username,
-                subject: ticket.recordset[0]?.subject || 'Forwarded ticket'
+                subject: ticket.rows[0]?.subject || 'Forwarded ticket'
             });
         }
         res.json({ success: true, message: 'Ticket forwarded' });
@@ -3335,8 +3335,8 @@ app.post('/api/support/tickets/:id/unassign', isAuthenticated, async (req, res) 
         const ticket = await pool.request()
             .input('id', sql.Int, ticketId)
             .query('SELECT assigned_to FROM support_tickets WHERE id = @id');
-        if (ticket.recordset.length === 0) return res.status(404).json({ error: 'Ticket not found' });
-        const currentAssigned = ticket.recordset[0].assigned_to;
+        if (ticket.rows.length === 0) return res.status(404).json({ error: 'Ticket not found' });
+        const currentAssigned = ticket.rows[0].assigned_to;
         if (currentAssigned !== req.session.userId && req.session.role !== 'admin') {
             return res.status(403).json({ error: 'Only assigned moderator can unassign this ticket' });
         }
@@ -3362,7 +3362,7 @@ app.post('/api/support/tickets/:id/close', isAuthenticated, async (req, res) => 
         const userRole = await pool.request()
             .input('userId', sql.Int, req.session.userId)
             .query('SELECT role FROM users WHERE id = @userId');
-        const isModOrAdmin = ['admin', 'moderator'].includes(userRole.recordset[0]?.role);
+        const isModOrAdmin = ['admin', 'moderator'].includes(userRole.rows[0]?.role);
         if (!isModOrAdmin) return res.status(403).json({ error: 'Only moderators and admins can close tickets' });
         
         const result = await pool.request()
@@ -3383,7 +3383,7 @@ app.delete('/api/support/tickets/:id', isAuthenticated, async (req, res) => {
         const userRole = await pool.request()
             .input('userId', sql.Int, req.session.userId)
             .query('SELECT role FROM users WHERE id = @userId');
-        const isModOrAdmin = ['admin', 'moderator'].includes(userRole.recordset[0]?.role);
+        const isModOrAdmin = ['admin', 'moderator'].includes(userRole.rows[0]?.role);
         if (!isModOrAdmin) return res.status(403).json({ error: 'Only moderators and admins can delete tickets' });
         
         const result = await pool.request()
@@ -3519,7 +3519,7 @@ app.get('/api/usage/analytics', isAuthenticated, async (req, res) => {
     try {
         await poolConnect;
         const userId = req.session.userId;
-        const result = await pool.request()
+        const result = await pool.query()
             .input('userId', sql.Int, userId)
             .query(`
                 SELECT 
@@ -3530,7 +3530,7 @@ app.get('/api/usage/analytics', isAuthenticated, async (req, res) => {
                 GROUP BY tool_name
                 ORDER BY count DESC
             `);
-        const tools = result.recordset.map(t => ({
+        const tools = result.rows.map(t => ({
             name: t.name,
             count: t.count,
             totalTime: t.count * 30
@@ -3674,7 +3674,7 @@ app.get('/api/friends/outgoing-requests', isAuthenticated, async (req, res) => {
                 JOIN users u ON f.friend_id = u.id
                 WHERE f.user_id = @userId AND f.status = 'pending'
             `);
-        res.json(result.recordset);
+        res.json(result.rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -3736,7 +3736,7 @@ app.get('/api/messages/:friendId', isAuthenticated, async (req, res) => {
                 OFFSET @offset ROWS
                 FETCH NEXT @limit ROWS ONLY
             `);
-        res.json(result.recordset);
+        res.json(result.rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -3795,7 +3795,7 @@ app.get('/api/network/requests', isAuthenticated, async (req, res) => {
                 WHERE f.friend_id = @userId AND f.status = 'pending'
                 ORDER BY f.created_at DESC
             `);
-        res.json(result.recordset);
+        res.json(result.rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -3830,7 +3830,7 @@ app.get('/api/network/unread', isAuthenticated, async (req, res) => {
         const pending = await pool.request()
             .input('userId', sql.Int, userId)
             .query('SELECT COUNT(*) as count FROM friendships WHERE friend_id = @userId AND status = \'pending\'');
-        const total = unread.recordset[0].count + pending.recordset[0].count;
+        const total = unread.rows[0].count + pending.rows[0].count;
         res.json({ total });
     } catch (err) {
         console.error(err);
@@ -3850,7 +3850,7 @@ app.get('/api/network/export', isAuthenticated, async (req, res) => {
                 WHERE (f.user_id = @userId OR f.friend_id = @userId) AND f.status = 'accepted' AND u.id != @userId
             `);
         const csvRows = [['Username', 'Display Name', 'Email', 'Status']];
-        result.recordset.forEach(row => {
+        result.rows.forEach(row => {
             csvRows.push([row.username, row.display_name || '', row.email, row.status]);
         });
         const csv = csvRows.map(row => row.join(',')).join('\n');
@@ -3896,7 +3896,7 @@ app.post('/api/network/accept/:requestId', isAuthenticated, async (req, res) => 
         const request = await pool.request()
             .input('id', sql.Int, requestId)
             .query('SELECT user_id FROM friendships WHERE id = @id');
-        const otherUserId = request.recordset[0]?.user_id;
+        const otherUserId = request.rows[0]?.user_id;
         if (otherUserId) {
             const otherEntry = onlineUsers.get(otherUserId);
             if (otherEntry && otherEntry.socketId) io.to(otherEntry.socketId).emit('connection_accepted', {
@@ -4598,11 +4598,14 @@ app.get('/api/analytics/user-stats', isAuthenticated, async (req, res) => {
                    COUNT(DISTINCT DATE(used_at)) as active_days
             FROM tool_usage WHERE user_id = $1
         `, [userId]);
-        const credits = await pool.query(`
-            SELECT COALESCE(balance, false) as current_balance, COALESCE(lifetime_earned, false) as total_earned,
-                   COALESCE(lifetime_spent, false) as total_spent
-            FROM user_credits WHERE user_id = $1
-        `, [userId]);
+        const result = await pool.query(
+          `SELECT 
+           COALESCE(balance, 0) as balance,
+           COALESCE(lifetime_earned, 0) as lifetime_earned,
+           COALESCE(lifetime_spent, 0) as lifetime_spent
+           FROM user_credits WHERE user_id = $1`,
+           [req.session.userId]
+           );
         const friends = await pool.query(`
             SELECT COUNT(*) as total_friends
             FROM friendships WHERE (user_id = $1 OR friend_id = $1) AND status = 'accepted'
@@ -4685,7 +4688,7 @@ app.get('/api/recommendations/:toolName', isAuthenticated, async (req, res) => {
                 GROUP BY t2.tool_name
                 ORDER BY affinity DESC
             `);
-        res.json(result.recordset);
+        res.json(result.rows);
     } catch (err) {
         console.error('Recommendations error:', err);
         res.status(500).json({ error: 'Failed to fetch recommendations' });
@@ -4942,8 +4945,8 @@ app.get('/api/gamification/status', isAuthenticated, async (req, res) => {
         const quests = await pool.query(
             `SELECT q.id, q.name, q.description, q.target_count, q.xp_reward, q.credits_reward,
                     COALESCE(uqd.progress, 0) as progress,
-                    COALESCE(uqd.completed, false) as completed,
-                    COALESCE(uqd.claimed, false) as claimed
+                    COALESCE(uqd.completed, 0) as completed,
+                    COALESCE(uqd.claimed, 0) as claimed
              FROM daily_quests q
              LEFT JOIN user_daily_quests uqd ON q.id = uqd.quest_id
                AND uqd.user_id = $1 AND uqd.date = $2`,
@@ -5016,7 +5019,7 @@ app.get('/api/gamification/leaderboard', async (req, res) => {
                 WHERE u.is_banned = false
                 ORDER BY u.xp DESC
             `);
-        res.json(result.recordset);
+        res.json(result.rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -5212,25 +5215,25 @@ cron.schedule('0 9 * * 1', async () => {
     try {
         await poolConnect;
         const users = await pool.request().query('SELECT id, username, email FROM users');
-        for (const user of users.recordset) {
+        for (const user of users.rows) {
             let newToolsCount = 0;
             try {
                 const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
                 const newToolsResult = await pool.request()
                     .input('weekAgo', sql.DateTime, weekAgo)
                     .query('SELECT COUNT(*) as count FROM tools WHERE created_at >= @weekAgo');
-                newToolsCount = newToolsResult.recordset[0].count;
+                newToolsCount = newToolsResult.rows[0].count;
             } catch (err) { }
 
             const pendingResult = await pool.request()
                 .input('userId', sql.Int, user.id)
                 .query('SELECT COUNT(*) as count FROM friendships WHERE friend_id = @userId AND status = \'pending\'');
-            const pendingRequestsCount = pendingResult.recordset[0].count;
+            const pendingRequestsCount = pendingResult.rows[0].count;
 
             const unreadResult = await pool.request()
                 .input('userId', sql.Int, user.id)
                 .query('SELECT COUNT(*) as count FROM messages WHERE receiver_id = @userId AND is_read = false');
-            const unreadMessagesCount = unreadResult.recordset[0].count;
+            const unreadMessagesCount = unreadResult.rows[0].count;
 
             await sendWeeklyDigest(user.email, user.username, newToolsCount, pendingRequestsCount, unreadMessagesCount);
         }
