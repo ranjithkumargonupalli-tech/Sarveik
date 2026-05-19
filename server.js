@@ -19,7 +19,7 @@ const cors = require('cors');
 const http = require('http');
 const socketIo = require('socket.io');
 const sharedsession = require('express-socket.io-session');
-const { sql, pool, poolConnect } = require('./database');
+const { pool } = require('./database');
 const passport = require('passport');
 const GoogleStrategy = require('passport-google-oauth20').Strategy;
 const { rateLimit, ipKeyGenerator } = require('express-rate-limit');
@@ -959,12 +959,22 @@ async function awardCreditsForToolApproval(userId, toolName) {
 
 // ==================== PHONEPE PAYMENT GATEWAY ====================
 // Initialize PhonePe Client
-const phonepeClient = StandardCheckoutClient.getInstance(
-    process.env.PHONEPE_CLIENT_ID,
-    process.env.PHONEPE_CLIENT_SECRET,
-    parseInt(process.env.PHONEPE_CLIENT_VERSION),
-    process.env.PHONEPE_ENV === 'sandbox' ? Env.SANDBOX : Env.PRODUCTION
-);
+let phonepeClient = null;
+if (process.env.PHONEPE_CLIENT_ID && process.env.PHONEPE_CLIENT_SECRET) {
+    try {
+        phonepeClient = StandardCheckoutClient.getInstance(
+            process.env.PHONEPE_CLIENT_ID,
+            process.env.PHONEPE_CLIENT_SECRET,
+            parseInt(process.env.PHONEPE_CLIENT_VERSION) || 1,
+            process.env.PHONEPE_ENV === 'sandbox' ? Env.SANDBOX : Env.PRODUCTION
+        );
+        console.log('✅ PhonePe client initialized');
+    } catch (err) {
+        console.error('❌ PhonePe initialization failed:', err.message);
+    }
+} else {
+    console.log('⚠️ PhonePe credentials missing, payments disabled');
+}
 
 // Credit packs for purchase
 const CREDIT_PACKS = [
@@ -3588,6 +3598,8 @@ cron.schedule('*/5 * * * *', async () => {
         console.error('❌ Reminder cron error (query level):', err);
     }
 }, { scheduled: true, recoverMissedExecutions: false });
+
+
 // ==================== STATS, USER STATUS, USAGE ANALYTICS ====================
 app.get('/api/stats', isAuthenticated, async (req, res) => {
     try {

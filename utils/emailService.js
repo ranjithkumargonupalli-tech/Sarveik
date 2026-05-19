@@ -44,10 +44,11 @@ const isValidEmail = (email) => {
 // ========== TRANSPORTER WITH CONNECTION POOLING ==========
 const transporter = nodemailer.createTransport({
     service: 'gmail',
+    family: 4,            // <-- ADD THIS LINE
     pool: true,
     maxConnections: EMAIL_CONFIG.poolMaxConnections,
     maxMessages: EMAIL_CONFIG.poolMaxMessages,
-    rateDelta: 60000, // 1 minute
+    rateDelta: 60000,
     rateLimit: EMAIL_CONFIG.rateLimitPerMinute,
     connectionTimeout: EMAIL_CONFIG.sendTimeoutMs,
     greetingTimeout: 10000,
@@ -83,18 +84,18 @@ const verifyTransporter = async () => {
     return false;
 };
 
-verifyTransporter();
+//verifyTransporter();
 
 // Periodically re-verify every hour to detect connection drops
-setInterval(() => {
-    if (transporterReady) {
-        transporter.verify().catch(() => {
-            transporterReady = false;
-            console.warn('⚠️ Email connection lost, re-verifying...');
-            verifyTransporter();
-        });
-    }
-}, 3600000);
+//setInterval(() => {
+    //if (transporterReady) {
+      //  transporter.verify().catch(() => {
+        //    transporterReady = false;
+          //  console.warn('⚠️ Email connection lost, re-verifying...');
+            //verifyTransporter();
+       // });
+   // }
+//}, 3600000);
 
 // ========== RETRY & QUEUE SYSTEM ==========
 class EmailQueue {
