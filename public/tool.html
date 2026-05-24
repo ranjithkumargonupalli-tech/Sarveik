@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Serveik Voice AI – Tool Assistant</title>
+  <title>Sarveik Voice AI – Tool Assistant</title>
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
@@ -835,7 +835,7 @@
 <nav class="navbar">
   <div class="nav-brand">
     <div class="nav-brand-icon">🎙️</div>
-    Serveik Voice AI
+    Sarveik Voice AI
   </div>
   <button class="hamburger" id="hamburgerBtn" aria-label="Open menu">
     <i class="fas fa-bars"></i>
@@ -854,7 +854,7 @@
   <div class="drawer-header">
     <div class="nav-brand" style="font-size:1rem;">
       <div class="nav-brand-icon" style="width:28px;height:28px;font-size:0.85rem;">🎙️</div>
-      Serveik  Voice AI
+      Sarveik  Voice AI
     </div>
     <button class="drawer-close" id="drawerClose" aria-label="Close menu">✕</button>
   </div>
@@ -887,7 +887,7 @@
       <div class="chat-identity">
         <div class="chat-avatar">🎙️</div>
         <div class="chat-meta">
-          <strong>Serveik  Voice Assistant</strong>
+          <strong>Sarveik  Voice Assistant</strong>
           <span>English · High-quality speech synthesis</span>
         </div>
       </div>
@@ -977,7 +977,7 @@
 
 <script>
 // ============================================================
-//  Serveik  VOICE AI – Enhanced JS
+//  Sarveik  VOICE AI – Enhanced JS
 // ============================================================
 
 /* ---------- STATE ---------- */
@@ -1005,7 +1005,7 @@ marked.setOptions({
 
 /* ---------- URL PARAMS ---------- */
 const params = new URLSearchParams(window.location.search);
-const toolName = params.get('name') || 'Serveik  Assistant';
+const toolName = params.get('name') || 'Sarveik  Assistant';
 const toolDesc = params.get('desc') || 'Smart tool with lifelike speech synthesis';
 
 document.getElementById('tool-name').textContent = toolName;
@@ -1055,7 +1055,7 @@ function buildLocalReply(msg, tool, cat) {
     if (cat === 'teacher')  return `**${tool}** empowers educators with lesson planning, auto-grading, and engaging student activities. Save hours every week. 🍎`;
     if (cat === 'developer') return `**${tool}** is a developer essential — whether it's an IDE, version control system, or API client. Check the official docs to get started quickly. 💻`;
     if (cat === 'gamer')    return `**${tool}** enhances your gaming experience with streaming, modding, or community tools. 🎮`;
-    return `**${tool}** is a verified tool on Serveik  Platform. I can tell you about its features, pricing, or how to get started. Just ask!`;
+    return `**${tool}** is a verified tool on Sarveik  Platform. I can tell you about its features, pricing, or how to get started. Just ask!`;
   }
   if (/how to use|getting started|guide/i.test(m)) {
     return `**Getting started with ${tool}:**\n1. Visit the official website.\n2. Create a free account.\n3. Follow the quick-start tutorial.\n4. Explore the core features step by step.\n\n💡 Tip: Most tools have a free tier — great for testing before committing.`;
@@ -1067,9 +1067,9 @@ function buildLocalReply(msg, tool, cat) {
     return `**Pricing overview:**\nMost tools offer a **free tier** or freemium model. Student discounts and open-source options are common. Always check the official pricing page for the most accurate info. 💰`;
   }
   if (/alternative|similar|compare/i.test(m)) {
-    return `Looking for alternatives to **${tool}**? Serveik  Platform categorises tools by purpose. Browse the Tools section or describe your specific workflow and I'll suggest options. 🔍`;
+    return `Looking for alternatives to **${tool}**? Sarveik  Platform categorises tools by purpose. Browse the Tools section or describe your specific workflow and I'll suggest options. 🔍`;
   }
-  return `I'm Serveik  AI. For **${tool}**, you can ask:\n• "What is ${tool}?"\n• "How do I use ${tool}?"\n• "Key features of ${tool}"\n• "Is ${tool} free?"\n\nI'm ready to answer — and speak! 😊`;
+  return `I'm Sarveik  AI. For **${tool}**, you can ask:\n• "What is ${tool}?"\n• "How do I use ${tool}?"\n• "Key features of ${tool}"\n• "Is ${tool} free?"\n\nI'm ready to answer — and speak! 😊`;
 }
 
 /* ---------- VOICE SYSTEM ---------- */
@@ -1326,12 +1326,12 @@ function exportChat() {
   if (!state.messageHistory.length) { showToast('No messages to export', 'error'); return; }
   const ts = new Date().toLocaleString();
   const content = state.messageHistory
-    .map(m => `[${ts}] ${m.role === 'user' ? 'You' : 'Serveik '}: ${m.content}`)
+    .map(m => `[${ts}] ${m.role === 'user' ? 'You' : 'Sarveik '}: ${m.content}`)
     .join('\n\n---\n\n');
   const blob = new Blob([content], { type: 'text/plain' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = `Serveik -chat-${Date.now()}.txt`;
+  a.download = `Sarveik -chat-${Date.now()}.txt`;
   a.click(); URL.revokeObjectURL(a.href);
   showToast('Chat exported!', 'success');
 }
@@ -1407,7 +1407,7 @@ voiceSelect.addEventListener('change', () => { if (state.isSpeaking) stopSpeakin
 
 testVoiceBtn.addEventListener('click', async () => {
   if (!state.voiceEnabled) { showToast('Voice is off — enable it first', 'warning'); return; }
-  await speakText(`Hello! Serveik  AI voice is working perfectly. You can ask me anything about ${toolName}.`);
+  await speakText(`Hello! Sarveik  AI voice is working perfectly. You can ask me anything about ${toolName}.`);
   showToast('🔊 Test voice played', 'success');
 });
 

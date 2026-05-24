@@ -53,7 +53,7 @@ const transporter = nodemailer.createTransport({
 async function sendEmail(to, subject, html) {
     try {
         await transporter.sendMail({
-            from: process.env.EMAIL_USER || 'noreply@novaplatform.com',
+            from: process.env.EMAIL_USER || 'noreply@Sarveik.com',
             to,
             subject,
             html
@@ -1831,13 +1831,15 @@ app.get('/api/credits/admin-rewards', isAuthenticated, async (req, res) => {
         const result = await pool.query(
             `SELECT id, amount, type, description, created_at
              FROM credit_transactions
-             WHERE user_id = $1 AND type = 'earn' AND (description LIKE '%admin%' OR description LIKE '%reward%')
+             WHERE user_id = $1 
+               AND type = 'earn' 
+               AND (description ILIKE '%admin%' OR description ILIKE '%reward%')
              ORDER BY created_at DESC`,
             [req.session.userId]
         );
         res.json(result.rows);
     } catch (err) {
-        console.error(err);
+        console.error('Admin rewards error:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -2538,47 +2540,51 @@ app.post('/api/messages/send', isAuthenticated, async (req, res) => {
 });
 
 // ==================== SUPPORT TICKETS SYSTEM ====================
-async function getAIResponseForSupport(subject, message, conversationHistory = []) {
+// ==================== ENHANCED SUPPORT TICKET SYSTEM ====================
+
+/**
+ * Helper: send email notification for ticket events
+ */
+async function sendTicketNotification(email, subject, html) {
     try {
-        const prompt = `You are a support assistant for Sraveik . 
-        User subject: ${subject}
-        User message: ${message}
-        Previous conversation: ${JSON.stringify(conversationHistory)}
-        Provide a helpful, concise answer. If you cannot answer, say "I cannot answer this. A human moderator will assist you shortly."`;
-        
-        const response = await fetch('http://localhost:8080/api/chat', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ message: prompt })
-        });
-        const data = await response.json();
-        return data.choices?.[0]?.message?.content || "I'm unable to answer right now. A moderator will assist you shortly.";
+        await sendEmail(email, subject, html);
     } catch (err) {
-        console.error('AI support error:', err);
-        return "Our AI assistant is currently unavailable. Please click 'Talk to Human' to connect with a moderator.";
+        console.error('Ticket notification email failed:', err.message);
     }
 }
 
-async function getTicketWithReplies(ticketId, userId, isModOrAdmin) {
-    const ticket = await pool.query(
-        `SELECT t.*, u.username as user_name, u.email as user_email
-         FROM support_tickets t
-         JOIN users u ON t.user_id = u.id
-         WHERE t.id = $1`,
-        [ticketId]
-    );
-    if (ticket.rows.length === 0) return null;
-    const ticketData = ticket.rows[0];
-    if (!isModOrAdmin && ticketData.user_id !== userId) return null;
-    
-    let replies = [];
-    if (ticketData.replies) {
-        try { replies = JSON.parse(ticketData.replies); } catch(e) { replies = []; }
-    }
-    ticketData.replies = replies;
-    return ticketData;
+/**
+ * Helper: get available moderator (least current tickets, online or recently active)
+ */
+async function getAvailableModerator() {
+    const result = await pool.query(`
+        SELECT u.id, u.username, u.email, COALESCE(ms.current_tickets, 0) as current_tickets
+        FROM users u
+        LEFT JOIN moderator_status ms ON u.id = ms.user_id
+        WHERE u.role = 'moderator'
+          AND (u.is_banned = false OR u.is_banned IS NULL)
+          AND (ms.is_online = true OR ms.is_online IS NULL)
+        ORDER BY COALESCE(ms.current_tickets, 0) ASC, ms.last_active DESC NULLS LAST
+        LIMIT 1
+    `);
+    return result.rows[0] || null;
 }
 
+/**
+ * Helper: update moderator ticket count (increment/decrement)
+ */
+async function updateModeratorTicketCount(moderatorId, increment = true) {
+    const delta = increment ? 1 : -1;
+    await pool.query(`
+        INSERT INTO moderator_status (user_id, current_tickets, is_online, last_active)
+        VALUES ($1, 1, true, NOW())
+        ON CONFLICT (user_id) DO UPDATE
+        SET current_tickets = GREATEST(0, moderator_status.current_tickets + $2),
+            last_active = NOW()
+    `, [moderatorId, delta]);
+}
+
+// ---------- CREATE TICKET (with priority, category) ----------
 app.post('/api/support/tickets', isAuthenticated, async (req, res) => {
     const { subject, message } = req.body;
     if (!subject || !message) {
@@ -2593,164 +2599,233 @@ app.post('/api/support/tickets', isAuthenticated, async (req, res) => {
         );
         const ticketId = result.rows[0].id;
 
-        // ✅ No AI call – just return success
-        res.status(201).json({ success: true, ticketId: ticketId });
+        // (Optional) Add a static system reply instead of AI
+        const systemReply = {
+            id: Date.now(),
+            message: 'Your ticket has been submitted. A moderator will respond soon.',
+            sender_id: null,
+            sender_name: 'System',
+            sender_role: 'system',
+            created_at: new Date().toISOString()
+        };
+        await pool.query(
+            `UPDATE support_tickets SET replies = $1 WHERE id = $2`,
+            [JSON.stringify([systemReply]), ticketId]
+        );
+
+        res.status(201).json({ success: true, ticketId });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
     }
 });
 
+// ---------- ESCALATE / ASSIGN TICKET (improved) ----------
 app.post('/api/support/tickets/:id/escalate', isAuthenticated, async (req, res) => {
     const ticketId = req.params.id;
     try {
         const ticket = await pool.query('SELECT * FROM support_tickets WHERE id = $1', [ticketId]);
         if (ticket.rows.length === 0) return res.status(404).json({ error: 'Ticket not found' });
         const ticketData = ticket.rows[0];
-        
-        if (ticketData.user_id !== req.session.userId && req.session.role !== 'admin' && req.session.role !== 'moderator') {
+
+        // Permissions: ticket owner OR admin/moderator
+        if (ticketData.user_id !== req.session.userId && !['admin', 'moderator'].includes(req.session.role)) {
             return res.status(403).json({ error: 'Access denied' });
         }
-        
-        const moderator = await pool.query(`
-            SELECT u.id, u.username, u.email
-            FROM users u
-            LEFT JOIN moderator_status ms ON u.id = ms.user_id
-            WHERE u.role = 'moderator'
-            AND (ms.is_online = true OR ms.is_online IS NULL)
-            ORDER BY COALESCE(ms.current_tickets, 0) ASC
-            LIMIT 1
-        `);
-        
-        if (moderator.rows.length === 0) {
+
+        // If already assigned, just notify
+        if (ticketData.assigned_to) {
+            return res.json({ success: true, message: 'Ticket already assigned', moderatorName: ticketData.assigned_to });
+        }
+
+        const moderator = await getAvailableModerator();
+        if (!moderator) {
             return res.status(503).json({ error: 'No moderator available. Please try again later.' });
         }
-        
-        const moderatorId = moderator.rows[0].id;
-        const moderatorName = moderator.rows[0].username;
-        
+
         await pool.query(
-            `UPDATE support_tickets SET assigned_to = $1, escalated_at = NOW(), ai_handled = false WHERE id = $2`,
-            [moderatorId, ticketId]
+            `UPDATE support_tickets SET assigned_to = $1, escalated_at = NOW(), status = 'in_progress' WHERE id = $2`,
+            [moderator.id, ticketId]
         );
-        
-        await pool.query(`
-            INSERT INTO moderator_status (user_id, current_tickets, is_online, last_active)
-            VALUES ($1, 1, true, NOW())
-            ON CONFLICT (user_id) DO UPDATE SET current_tickets = moderator_status.current_tickets + 1, last_active = NOW()
-        `, [moderatorId]);
-        
-        const moderatorEntry = onlineUsers.get(moderatorId);
-        if (moderatorEntry && moderatorEntry.socketId) {
-            io.to(moderatorEntry.socketId).emit('new_support_ticket', {
+        await updateModeratorTicketCount(moderator.id, true);
+
+        // Notify moderator via socket
+        const modSocket = onlineUsers.get(moderator.id);
+        if (modSocket?.socketId) {
+            io.to(modSocket.socketId).emit('new_support_ticket', {
                 ticketId,
                 fromUser: req.session.username,
-                subject: ticketData.subject
+                subject: ticketData.subject,
+                priority: ticketData.priority
             });
         }
 
-        io.emit('ticket_escalated', { ticketId, subject: ticketData.subject, userId: req.session.userId, username: req.session.username });
-        
-        res.json({ success: true, moderatorName });
+        // Notify user that ticket is now handled
+        const user = await pool.query('SELECT email, username FROM users WHERE id = $1', [ticketData.user_id]);
+        if (user.rows[0]) {
+            await sendTicketNotification(
+                user.rows[0].email,
+                `[Sarveik] Ticket #${ticketId} is now being handled`,
+                `<p>Hello ${user.rows[0].username},</p>
+                 <p>Your ticket <strong>#${ticketId}</strong> has been assigned to a moderator. You will receive a reply soon.</p>`
+            );
+        }
+
+        res.json({ success: true, moderatorName: moderator.username });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
     }
 });
 
+// ---------- GET ALL TICKETS (with filtering, search) ----------
 app.get('/api/support/tickets', isAuthenticated, async (req, res) => {
     try {
+        const { status, priority, category, search, limit = 50, offset = 0 } = req.query;
         const userRole = await pool.query('SELECT role FROM users WHERE id = $1', [req.session.userId]);
         const isModOrAdmin = ['admin', 'moderator'].includes(userRole.rows[0]?.role);
 
-        let query;
-        let params = [];
-        if (isModOrAdmin) {
-            query = `
-                SELECT t.*, u.username as user_name, u.email as user_email
-                FROM support_tickets t
-                LEFT JOIN users u ON t.user_id = u.id
-                ORDER BY t.created_at DESC
-            `;
-        } else {
-            query = `
-                SELECT t.*, u.username as user_name, u.email as user_email
-                FROM support_tickets t
-                LEFT JOIN users u ON t.user_id = u.id
-                WHERE t.user_id = $1
-                ORDER BY t.created_at DESC
-            `;
+        let baseQuery = `
+            SELECT t.*, u.username as user_name, u.email as user_email
+            FROM support_tickets t
+            LEFT JOIN users u ON t.user_id = u.id
+        `;
+        const conditions = [];
+        const params = [];
+        let paramIndex = 1;
+
+        if (!isModOrAdmin) {
+            conditions.push(`t.user_id = $${paramIndex++}`);
             params.push(req.session.userId);
         }
-        const result = await pool.query(query, params);
-        
+        if (status && ['new', 'in_progress', 'resolved', 'closed'].includes(status)) {
+            conditions.push(`t.status = $${paramIndex++}`);
+            params.push(status);
+        }
+        if (priority && ['low', 'medium', 'high', 'urgent'].includes(priority)) {
+            conditions.push(`t.priority = $${paramIndex++}`);
+            params.push(priority);
+        }
+        if (category && ['general', 'bug', 'feature', 'account', 'payment', 'other'].includes(category)) {
+            conditions.push(`t.category = $${paramIndex++}`);
+            params.push(category);
+        }
+        if (search) {
+            conditions.push(`(t.subject ILIKE $${paramIndex} OR t.message ILIKE $${paramIndex})`);
+            params.push(`%${search}%`);
+            paramIndex++;
+        }
+
+        if (conditions.length) {
+            baseQuery += ' WHERE ' + conditions.join(' AND ');
+        }
+
+        // Order by priority and created_at
+        baseQuery += ` ORDER BY 
+            CASE t.priority 
+                WHEN 'urgent' THEN 1
+                WHEN 'high' THEN 2
+                WHEN 'medium' THEN 3
+                WHEN 'low' THEN 4
+            END,
+            t.created_at DESC
+            LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
+        params.push(parseInt(limit), parseInt(offset));
+
+        const result = await pool.query(baseQuery, params);
         const tickets = result.rows.map(t => {
             let replies = [];
             if (t.replies) {
-                try { replies = JSON.parse(t.replies); } catch(e) {}
+                try { replies = JSON.parse(t.replies); } catch(e) { replies = []; }
             }
             return { ...t, replies };
         });
-        res.json(tickets);
+
+        // Count total (for pagination)
+        let countQuery = `SELECT COUNT(*) FROM support_tickets t`;
+        if (!isModOrAdmin) countQuery += ` WHERE t.user_id = $1`;
+        const countRes = await pool.query(countQuery, !isModOrAdmin ? [req.session.userId] : []);
+        const total = parseInt(countRes.rows[0].count);
+
+        res.json({ tickets, total, limit: parseInt(limit), offset: parseInt(offset) });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
     }
 });
 
+// ---------- GET SINGLE TICKET (with internal notes) ----------
 app.get('/api/support/tickets/:id', isAuthenticated, async (req, res) => {
     const ticketId = req.params.id;
     try {
         const userRole = await pool.query('SELECT role FROM users WHERE id = $1', [req.session.userId]);
         const isModOrAdmin = ['admin', 'moderator'].includes(userRole.rows[0]?.role);
-        
-        const ticketData = await getTicketWithReplies(ticketId, req.session.userId, isModOrAdmin);
-        if (!ticketData) return res.status(404).json({ error: 'Ticket not found or access denied' });
+
+        const query = `
+            SELECT t.*, u.username as user_name, u.email as user_email
+            FROM support_tickets t
+            JOIN users u ON t.user_id = u.id
+            WHERE t.id = $1
+        `;
+        const result = await pool.query(query, [ticketId]);
+        if (result.rows.length === 0) return res.status(404).json({ error: 'Ticket not found' });
+        const ticketData = result.rows[0];
+
+        if (!isModOrAdmin && ticketData.user_id !== req.session.userId) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        let replies = [];
+        if (ticketData.replies) {
+            try { replies = JSON.parse(ticketData.replies); } catch(e) { replies = []; }
+        }
+        ticketData.replies = replies;
+
+        // Add internal notes (only for mods/admins)
+        let internalNotes = [];
+        if (isModOrAdmin && ticketData.internal_notes) {
+            try { internalNotes = JSON.parse(ticketData.internal_notes); } catch(e) { internalNotes = []; }
+            ticketData.internal_notes = internalNotes;
+        } else {
+            delete ticketData.internal_notes;
+        }
+
         res.json(ticketData);
     } catch (err) {
-        console.error('Error in /api/support/tickets/:id', err);
+        console.error(err);
         res.status(500).json({ error: err.message });
     }
 });
 
-app.get('/api/support/tickets/debug/:id', isAuthenticated, async (req, res) => {
-    const ticketId = req.params.id;
-    try {
-        const result = await pool.query('SELECT * FROM support_tickets WHERE id = $1', [ticketId]);
-        res.json(result.rows[0]);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
-});
-
+// ---------- REPLY TO TICKET (with status update) ----------
 app.post('/api/support/tickets/:id/reply', isAuthenticated, async (req, res) => {
     const ticketId = req.params.id;
-    const { message } = req.body;
+    const { message, changeStatusTo } = req.body;
     if (!message) return res.status(400).json({ error: 'Message is required' });
-    
+
     try {
         const userRole = await pool.query('SELECT role FROM users WHERE id = $1', [req.session.userId]);
         const isModOrAdmin = ['admin', 'moderator'].includes(userRole.rows[0]?.role);
-        
+
         const ticket = await pool.query(
-            'SELECT user_id, status, replies, assigned_to FROM support_tickets WHERE id = $1',
+            'SELECT user_id, status, replies, assigned_to, priority FROM support_tickets WHERE id = $1',
             [ticketId]
         );
         if (ticket.rows.length === 0) return res.status(404).json({ error: 'Ticket not found' });
         const ticketData = ticket.rows[0];
-        
+
         if (!isModOrAdmin && ticketData.user_id !== req.session.userId) {
             return res.status(403).json({ error: 'Access denied' });
         }
         if (ticketData.status === 'closed') {
             return res.status(400).json({ error: 'Cannot reply to a closed ticket' });
         }
-        
+
         let replies = [];
         if (ticketData.replies) {
             try { replies = JSON.parse(ticketData.replies); } catch(e) { replies = []; }
         }
-        
+
         const newReply = {
             id: replies.length + 1,
             message: message,
@@ -2760,27 +2835,60 @@ app.post('/api/support/tickets/:id/reply', isAuthenticated, async (req, res) => 
             created_at: new Date().toISOString()
         };
         replies.push(newReply);
-        
+
+        // Update ticket status if requested (moderators only)
+        let newStatus = ticketData.status;
+        if (isModOrAdmin && changeStatusTo && ['new', 'in_progress', 'resolved', 'closed'].includes(changeStatusTo)) {
+            newStatus = changeStatusTo;
+        } else if (!isModOrAdmin && ticketData.status === 'new') {
+            newStatus = 'in_progress'; // user reply moves from new to in_progress
+        }
+
+        // Auto‑assign if not assigned yet and moderator replies
+        let assignMod = null;
         if (isModOrAdmin && !ticketData.assigned_to) {
-            await pool.query(
-                `UPDATE support_tickets SET assigned_to = $1, last_reminder_sent = NULL, replies = $2, updated_at = NOW() WHERE id = $3`,
-                [req.session.userId, JSON.stringify(replies), ticketId]
-            );
-        } else {
-            await pool.query(
-                `UPDATE support_tickets SET replies = $1, last_reminder_sent = NULL, updated_at = NOW() WHERE id = $2`,
-                [JSON.stringify(replies), ticketId]
-            );
+            assignMod = req.session.userId;
+            await updateModeratorTicketCount(assignMod, true);
         }
-        
+
+        await pool.query(
+            `UPDATE support_tickets 
+             SET replies = $1, 
+                 status = $2,
+                 assigned_to = COALESCE(assigned_to, $3),
+                 last_reminder_sent = NULL,
+                 updated_at = NOW()
+             WHERE id = $4`,
+            [JSON.stringify(replies), newStatus, assignMod, ticketId]
+        );
+
+        // Notify the other party via socket
         if (isModOrAdmin) {
-            const userEntry = onlineUsers.get(ticketData.user_id);
-            if (userEntry && userEntry.socketId) io.to(userEntry.socketId).emit('ticket_reply', { ticketId, message });
-        } else if (ticketData.assigned_to) {
-            const modEntry = onlineUsers.get(ticketData.assigned_to);
-            if (modEntry && modEntry.socketId) io.to(modEntry.socketId).emit('ticket_reply', { ticketId, message });
+            const userSocket = onlineUsers.get(ticketData.user_id);
+            if (userSocket?.socketId) {
+                io.to(userSocket.socketId).emit('ticket_reply', { ticketId, message });
+            }
+            // Send email to user
+            const user = await pool.query('SELECT email, username FROM users WHERE id = $1', [ticketData.user_id]);
+            if (user.rows[0]) {
+                await sendTicketNotification(
+                    user.rows[0].email,
+                    `[Sarveik] New reply on ticket #${ticketId}`,
+                    `<p>Hello ${user.rows[0].username},</p>
+                     <p>A moderator has replied to your ticket <strong>#${ticketId}</strong>.</p>
+                     <a href="${process.env.FRONTEND_URL}/profile.html?tab=support">View reply</a>`
+                );
+            }
+        } else {
+            const modId = ticketData.assigned_to || assignMod;
+            if (modId) {
+                const modSocket = onlineUsers.get(modId);
+                if (modSocket?.socketId) {
+                    io.to(modSocket.socketId).emit('ticket_reply', { ticketId, message });
+                }
+            }
         }
-        
+
         res.json({ success: true, reply: newReply });
     } catch (err) {
         console.error(err);
@@ -2788,99 +2896,105 @@ app.post('/api/support/tickets/:id/reply', isAuthenticated, async (req, res) => 
     }
 });
 
-app.post('/api/support/tickets/:id/forward', isAuthenticated, async (req, res) => {
+// ---------- ADD INTERNAL NOTE (moderators only) ----------
+app.post('/api/support/tickets/:id/note', isAdminOrModerator, async (req, res) => {
     const ticketId = req.params.id;
-    const { newModeratorId } = req.body;
-    if (!newModeratorId) return res.status(400).json({ error: 'New moderator ID required' });
+    const { note } = req.body;
+    if (!note) return res.status(400).json({ error: 'Note is required' });
+
     try {
-        const ticket = await pool.query('SELECT assigned_to FROM support_tickets WHERE id = $1', [ticketId]);
+        const ticket = await pool.query('SELECT internal_notes FROM support_tickets WHERE id = $1', [ticketId]);
         if (ticket.rows.length === 0) return res.status(404).json({ error: 'Ticket not found' });
-        const currentAssigned = ticket.rows[0].assigned_to;
-        if (currentAssigned !== req.session.userId && req.session.role !== 'admin') {
-            return res.status(403).json({ error: 'Only assigned moderator can forward this ticket' });
+
+        let notes = [];
+        if (ticket.rows[0].internal_notes) {
+            try { notes = JSON.parse(ticket.rows[0].internal_notes); } catch(e) { notes = []; }
         }
-        const newMod = await pool.query('SELECT id FROM users WHERE id = $1 AND role = $2', [newModeratorId, 'moderator']);
-        if (newMod.rows.length === 0) return res.status(404).json({ error: 'Moderator not found' });
-        
+        notes.push({
+            id: notes.length + 1,
+            note: note,
+            created_by: req.session.userId,
+            created_by_name: req.session.username,
+            created_at: new Date().toISOString()
+        });
+
         await pool.query(
-            'UPDATE support_tickets SET assigned_to = $1, escalated_at = NOW() WHERE id = $2',
-            [newModeratorId, ticketId]
+            'UPDATE support_tickets SET internal_notes = $1, updated_at = NOW() WHERE id = $2',
+            [JSON.stringify(notes), ticketId]
         );
-        if (currentAssigned) {
-            await pool.query('UPDATE moderator_status SET current_tickets = current_tickets - 1 WHERE user_id = $1', [currentAssigned]);
-        }
-        await pool.query(`
-            INSERT INTO moderator_status (user_id, current_tickets, last_active)
-            VALUES ($1, 1, NOW())
-            ON CONFLICT (user_id) DO UPDATE SET current_tickets = moderator_status.current_tickets + 1, last_active = NOW()
-        `, [newModeratorId]);
-        
-        const newModEntry = onlineUsers.get(parseInt(newModeratorId));
-        if (newModEntry && newModEntry.socketId) {
-            io.to(newModEntry.socketId).emit('new_support_ticket', {
-                ticketId,
-                fromUser: req.session.username,
-                subject: ticket.rows[0]?.subject || 'Forwarded ticket'
-            });
-        }
-        res.json({ success: true, message: 'Ticket forwarded' });
+        res.json({ success: true });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
     }
 });
 
-app.post('/api/support/tickets/:id/unassign', isAuthenticated, async (req, res) => {
+// ---------- CHANGE TICKET STATUS (moderators only) ----------
+app.patch('/api/support/tickets/:id/status', isAdminOrModerator, async (req, res) => {
     const ticketId = req.params.id;
-    try {
-        const ticket = await pool.query('SELECT assigned_to FROM support_tickets WHERE id = $1', [ticketId]);
-        if (ticket.rows.length === 0) return res.status(404).json({ error: 'Ticket not found' });
-        const currentAssigned = ticket.rows[0].assigned_to;
-        if (currentAssigned !== req.session.userId && req.session.role !== 'admin') {
-            return res.status(403).json({ error: 'Only assigned moderator can unassign this ticket' });
-        }
-        await pool.query('UPDATE support_tickets SET assigned_to = NULL WHERE id = $1', [ticketId]);
-        if (currentAssigned) {
-            await pool.query('UPDATE moderator_status SET current_tickets = current_tickets - 1 WHERE user_id = $1', [currentAssigned]);
-        }
-        res.json({ success: true, message: 'Ticket unassigned' });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
+    const { status } = req.body;
+    const validStatuses = ['new', 'in_progress', 'resolved', 'closed'];
+    if (!status || !validStatuses.includes(status)) {
+        return res.status(400).json({ error: 'Invalid status' });
     }
-});
 
-app.post('/api/support/tickets/:id/close', isAuthenticated, async (req, res) => {
-    const ticketId = req.params.id;
     try {
-        const userRole = await pool.query('SELECT role FROM users WHERE id = $1', [req.session.userId]);
-        const isModOrAdmin = ['admin', 'moderator'].includes(userRole.rows[0]?.role);
-        if (!isModOrAdmin) return res.status(403).json({ error: 'Only moderators and admins can close tickets' });
-        
-        const result = await pool.query('UPDATE support_tickets SET status = $1, updated_at = NOW() WHERE id = $2', ['closed', ticketId]);
+        const result = await pool.query(
+            'UPDATE support_tickets SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING id',
+            [status, ticketId]
+        );
         if (result.rowCount === 0) return res.status(404).json({ error: 'Ticket not found' });
-        res.json({ success: true, message: 'Ticket closed' });
+        res.json({ success: true, status });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
     }
 });
 
-app.delete('/api/support/tickets/:id', isAuthenticated, async (req, res) => {
+// ---------- DELETE TICKET (moderators only) ----------
+app.delete('/api/support/tickets/:id', isAdminOrModerator, async (req, res) => {
     const ticketId = req.params.id;
     try {
-        const userRole = await pool.query('SELECT role FROM users WHERE id = $1', [req.session.userId]);
-        const isModOrAdmin = ['admin', 'moderator'].includes(userRole.rows[0]?.role);
-        if (!isModOrAdmin) return res.status(403).json({ error: 'Only moderators and admins can delete tickets' });
-        
         const result = await pool.query('DELETE FROM support_tickets WHERE id = $1', [ticketId]);
         if (result.rowCount === 0) return res.status(404).json({ error: 'Ticket not found' });
-        res.json({ success: true, message: 'Ticket deleted' });
+        res.json({ success: true });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
     }
 });
+
+// ---------- GET SUPPORT STATS (for admin dashboard) ----------
+app.get('/api/support/stats', isAdminOrModerator, async (req, res) => {
+    try {
+        const stats = await pool.query(`
+            SELECT 
+                COUNT(*) FILTER (WHERE status = 'new') AS new,
+                COUNT(*) FILTER (WHERE status = 'in_progress') AS in_progress,
+                COUNT(*) FILTER (WHERE status = 'resolved') AS resolved,
+                COUNT(*) FILTER (WHERE status = 'closed') AS closed,
+                AVG(EXTRACT(EPOCH FROM (resolved_at - created_at))/3600) FILTER (WHERE status IN ('resolved','closed')) AS avg_response_hours
+            FROM support_tickets
+        `);
+        const priorityStats = await pool.query(`
+            SELECT priority, COUNT(*) FROM support_tickets WHERE status NOT IN ('resolved','closed') GROUP BY priority
+        `);
+        const categoryStats = await pool.query(`
+            SELECT category, COUNT(*) FROM support_tickets WHERE status NOT IN ('resolved','closed') GROUP BY category
+        `);
+        res.json({
+            overview: stats.rows[0],
+            by_priority: priorityStats.rows,
+            by_category: categoryStats.rows
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// ---------- (Optional) Removed AI function – no longer needed ----------
+// getAIResponseForSupport is deleted – you can remove it entirely from your file.
 
 // ==================== MODERATOR REMINDERS CRON JOB ====================
 cron.schedule('*/5 * * * *', async () => {
