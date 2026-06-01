@@ -51,6 +51,7 @@
       --gradient-card12: linear-gradient(145deg, #14b8a6, #059669);
       --gradient-card13: linear-gradient(145deg, #1d4ed8, #2563eb);
       --gradient-card14: linear-gradient(145deg, #9333ea, #7e22ce);
+      --gradient-card15: linear-gradient(145deg, #0f766e, #14b8a6);
       --glow-cyan: rgba(0, 230, 255, 0.35);
       --glow-violet: rgba(124, 58, 237, 0.35);
       --shadow-card: 0 25px 60px rgba(0, 0, 0, 0.5);
@@ -431,7 +432,7 @@
 
     .hero-title {
       font-family: 'Syne', sans-serif;
-      font-size: clamp(2.5rem, 7vw, 1.0rem);
+      font-size: clamp(2.5rem, 7vw, 4.5rem);
       font-weight: 800;
       line-height: 1.05;
       letter-spacing: -0.04em;
@@ -549,7 +550,7 @@
     /* ───── TOOLS GRID ───── */
     .tools-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
       gap: 1.25rem;
       max-width: 1300px;
       margin: 0 auto;
@@ -585,6 +586,7 @@
     .tool-card:nth-child(12) { background: var(--gradient-card12); }
     .tool-card:nth-child(13) { background: var(--gradient-card13); }
     .tool-card:nth-child(14) { background: var(--gradient-card14); }
+    .tool-card:nth-child(15) { background: var(--gradient-card15); }
 
     /* Shimmer sweep overlay */
     .tool-card::before {
@@ -716,9 +718,10 @@
     .tool-card:nth-child(12) { animation-delay: 0.60s; }
     .tool-card:nth-child(13) { animation-delay: 0.65s; }
     .tool-card:nth-child(14) { animation-delay: 0.70s; }
+    .tool-card:nth-child(15) { animation-delay: 0.75s; }
 
     /* HIDDEN CLASS for search filter */
-    .tool-card.hidden { display: none; }
+    .tool-card.hidden { display: none !important; }
 
     /* ───── FABs ───── */
     .fab-container {
@@ -1045,53 +1048,11 @@
     }
     .no-results i { font-size: 2.5rem; display: block; margin-bottom: 1rem; opacity: 0.5; }
     .no-results.visible { display: block; }
-  .nav-links {
-  margin-left: auto;
-  gap: 0.5rem; /* already defined */
-  }
-  /* Additional gradient for Researcher card (15th child) */
-.tool-card:nth-child(15) {
-  background: linear-gradient(145deg, #0f766e, #14b8a6);
-}
-
-/* If you prefer a more "research‑themed" gradient, use this instead:
-.tool-card:nth-child(15) {
-  background: linear-gradient(145deg, #1e3a8a, #3b82f6);
-}
-*/
-
-/* Ensure the card respects the same hover transform, shimmer, and icon effects */
-.tool-card:nth-child(15)::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,0.22) 50%, transparent 70%);
-  transform: translateX(-100%) skewX(-10deg);
-  transition: transform 0.6s ease;
-  z-index: 1;
-}
-.tool-card:nth-child(15):hover::before {
-  transform: translateX(200%) skewX(-10deg);
-}
-
-/* Keep the icon wrap style consistent */
-.tool-card:nth-child(15) .tool-icon-wrap {
-  background: rgba(255,255,255,0.18);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255,255,255,0.3);
-}
-
-/* Hover effect on icon */
-.tool-card:nth-child(15):hover .tool-icon-wrap {
-  transform: scale(1.12) rotate(-3deg);
-  background: rgba(255,255,255,0.28);
-}
-
-/* Ensure card hover translate/scale matches others */
-.tool-card:nth-child(15):hover {
-  transform: translateY(-10px) scale(1.02);
-  box-shadow: 0 40px 80px rgba(0,0,0,0.55);
-}
+  
+    .nav-links {
+      margin-left: auto;
+      gap: 0.5rem;
+    }
   </style>
 </head>
 <body class="dark-mode">
@@ -1176,14 +1137,13 @@
       <!-- Stats -->
       <div class="stats-bar">
         <div class="stat">
-          <div class="stat-number" data-count="14">0</div>
+          <div class="stat-number" data-count="15">0</div>
           <div class="stat-label">Tool Hubs</div>
         </div>
         <div class="stat">
           <div class="stat-number" data-count="1500">0</div>
           <div class="stat-label">Free Tools</div>
         </div>
-
         <div class="stat">
           <div class="stat-number" data-count="99">0</div>
           <div class="stat-label">% Free</div>
@@ -1199,7 +1159,7 @@
 
     <!-- Tools Grid -->
     <div class="tools-grid" id="toolsGrid">
-      <a href="student1.html" class="tool-card" data-search="student study homework grade learning">
+      <a href="student1.html" class="tool-card" data-search="student study homework grade learning education ai">
         <div class="tool-icon-wrap">🎓</div>
         <div class="tool-title">Student Tools</div>
         <div class="tool-desc">Study aids, homework help & grade trackers</div>
@@ -1209,7 +1169,7 @@
         </div>
       </a>
 
-      <a href="teacher1.html" class="tool-card" data-search="teacher lesson plan grade student management">
+      <a href="teacher1.html" class="tool-card" data-search="teacher lesson plan grade student management classroom">
         <div class="tool-icon-wrap">👨‍🏫</div>
         <div class="tool-title">Teacher Tools</div>
         <div class="tool-desc">Lesson plans, grading & student management</div>
@@ -1219,7 +1179,7 @@
         </div>
       </a>
 
-      <a href="developer1.html" class="tool-card" data-search="developer code debug api programming tech">
+      <a href="developer1.html" class="tool-card" data-search="developer code debug api programming tech software">
         <div class="tool-icon-wrap">💻</div>
         <div class="tool-title">Developer Tools</div>
         <div class="tool-desc">Code assistant, debugging & API docs</div>
@@ -1229,7 +1189,7 @@
         </div>
       </a>
 
-      <a href="gamer1.html" class="tool-card" data-search="gamer game guide stats tips gaming">
+      <a href="gamer1.html" class="tool-card" data-search="gamer game guide stats tips gaming esports">
         <div class="tool-icon-wrap">🎮</div>
         <div class="tool-title">Gamer Tools</div>
         <div class="tool-desc">Game guides, stat trackers & pro tips</div>
@@ -1239,7 +1199,7 @@
         </div>
       </a>
 
-      <a href="entertainment1.html" class="tool-card" data-search="entertainment movie music fun content discover">
+      <a href="entertainment1.html" class="tool-card" data-search="entertainment movie music fun content discover streaming">
         <div class="tool-icon-wrap">🎬</div>
         <div class="tool-title">Entertainment</div>
         <div class="tool-desc">Movies, music & fun content discovery</div>
@@ -1249,7 +1209,7 @@
         </div>
       </a>
 
-      <a href="cartoons1.html" class="tool-card" data-search="cartoon animation character fan content">
+      <a href="cartoons1.html" class="tool-card" data-search="cartoon animation character fan content anime">
         <div class="tool-icon-wrap">🦸‍♂️</div>
         <div class="tool-title">Cartoons Tools</div>
         <div class="tool-desc">Animation, characters & fan content</div>
@@ -1259,7 +1219,7 @@
         </div>
       </a>
 
-      <a href="music-mega.html" class="tool-card" data-search="music streaming ai production compose">
+      <a href="music-mega.html" class="tool-card" data-search="music streaming ai production compose audio beats">
         <div class="tool-icon-wrap">🎵</div>
         <div class="tool-title">Music Tools</div>
         <div class="tool-desc">Streaming, AI music & production tools</div>
@@ -1269,7 +1229,7 @@
         </div>
       </a>
 
-      <a href="shopping.html" class="tool-card" data-search="shopping india fashion electronics grocery">
+      <a href="shopping.html" class="tool-card" data-search="shopping india fashion electronics grocery amazon flipkart">
         <div class="tool-icon-wrap">🛍️</div>
         <div class="tool-title">Shopping Directory</div>
         <div class="tool-desc">250+ Indian shopping sites – fashion, electronics & more</div>
@@ -1279,7 +1239,7 @@
         </div>
       </a>
 
-      <a href="custom1.html" class="tool-card" data-search="custom personalized workflow automation">
+      <a href="custom1.html" class="tool-card" data-search="custom personalized workflow automation integrate">
         <div class="tool-icon-wrap">⚙️</div>
         <div class="tool-title">Custom Tools</div>
         <div class="tool-desc">Personalized AI tools & workflows</div>
@@ -1289,7 +1249,7 @@
         </div>
       </a>
 
-      <a href="editing.html" class="tool-card" data-search="editing video audio graphic design photo">
+      <a href="editing.html" class="tool-card" data-search="editing video audio graphic design photo creative">
         <div class="tool-icon-wrap">🎬</div>
         <div class="tool-title">Editing Hub</div>
         <div class="tool-desc">Video • Audio • AI Tools • Graphics – 75+ free editing tools</div>
@@ -1299,7 +1259,7 @@
         </div>
       </a>
 
-      <a href="essentials.html" class="tool-card" data-search="essentials food travel housing budget life">
+      <a href="essentials.html" class="tool-card" data-search="essentials food travel housing budget life finance">
         <div class="tool-icon-wrap">🏠</div>
         <div class="tool-title">Life Essentials</div>
         <div class="tool-desc">Food • Travel • Housing – budget tips & free resources</div>
@@ -1309,7 +1269,7 @@
         </div>
       </a>
 
-      <a href="examkit.html" class="tool-card" data-search="exam neet jee eamcet study competitive 6th 12th">
+      <a href="examkit.html" class="tool-card" data-search="exam neet jee eamcet study competitive 6th 12th medical engineering">
         <div class="tool-icon-wrap">📚</div>
         <div class="tool-title">ExamKit</div>
         <div class="tool-desc">6th–12th & Competitive Exams (NEET, JEE, EAMCET) – Free AI Materials</div>
@@ -1319,7 +1279,7 @@
         </div>
       </a>
 
-      <a href="career.html" class="tool-card" data-search="career job government private scholarship portal">
+      <a href="career.html" class="tool-card" data-search="career job government private scholarship portal placement">
         <div class="tool-icon-wrap">🎯</div>
         <div class="tool-title">Career Gateway</div>
         <div class="tool-desc">Govt Jobs • Private Jobs • Scholarships • Career Resources</div>
@@ -1329,17 +1289,17 @@
         </div>
       </a>
 
-      <a href="researcher.html" class="tool-card" data-search="research paper journal ai citation reference">
+      <a href="researcher.html" class="tool-card" data-search="research paper journal ai citation reference academic">
         <div class="tool-icon-wrap">🔬</div>
         <div class="tool-title">Researcher Tools</div>
         <div class="tool-desc">Literature search • Reference managers • AI research assistants • Paper writing & presentations</div>
         <div class="tool-card-footer">
-         <span class="card-tag">Research</span>
-         <div class="card-arrow"><i class="fas fa-arrow-right"></i></div>
-       </div>
-     </a>
+          <span class="card-tag">Research</span>
+          <div class="card-arrow"><i class="fas fa-arrow-right"></i></div>
+        </div>
+      </a>
 
-      <a href="newtools.html" class="tool-card" data-search="new latest tools community submission pending">
+      <a href="newtools.html" class="tool-card" data-search="new latest tools community submission pending fresh">
         <span class="new-badge">✦ NEW</span>
         <div class="tool-icon-wrap">✨</div>
         <div class="tool-title">New Tools</div>
@@ -1408,7 +1368,7 @@
       </div>
       <textarea class="modal-textarea" id="reviewText" rows="4" placeholder="Write your review... (optional)"></textarea>
       <div class="modal-actions">
-        <button class="btn-primary" id="submitReview">Submit Review</button>
+        <button class="btn-primary" id="submitReviewBtn">Submit Review</button>
         <button class="btn-ghost" id="cancelReview">Cancel</button>
       </div>
     </div>
@@ -1439,21 +1399,60 @@
         <a href="terms.html">Terms of Service</a>
         <a href="dmca.html">DMCA</a>
       </div>
-      <p>&copy; 2024 Sarveik. All rights reserved.</p>
+      <p>&copy; 2025 Sarveik. All rights reserved.</p>
     </div>
     <div class="disclaimer">
       <strong>Disclaimer:</strong> Sarveik is a directory of third-party tools. We do not host any content. All trademarks, logos, and brand names are the property of their respective owners. If you believe any link infringes your rights, please <a href="dmca.html">contact us</a> for removal.
     </div>
   </footer>
 
-  <script src="script.js"></script>
   <script>
     // ═══════════════════════════════════════════════
     //   Sarveik – ENHANCED SCRIPT v3.0
     // ═══════════════════════════════════════════════
 
+    // ── API HELPER FUNCTION ──
+    async function apiCall(url, options = {}) {
+      try {
+        const fetchOptions = { 
+          ...options, 
+          headers: { 'Content-Type': 'application/json', ...options.headers }, 
+          credentials: 'include' 
+        };
+        if (options.body && typeof options.body === 'object') {
+          fetchOptions.body = JSON.stringify(options.body);
+        }
+        const response = await fetch(url, fetchOptions);
+        if (!response.ok) { 
+          const text = await response.text(); 
+          throw new Error(text || `HTTP ${response.status}`); 
+        }
+        const contentType = response.headers.get('content-type');
+        return contentType?.includes('application/json') ? response.json() : response.text();
+      } catch (e) { 
+        throw e; 
+      }
+    }
+
+    // ── SESSION CHECK ──
+    async function checkSession() {
+      try { 
+        const session = await apiCall('/check-session'); 
+        if (!session.loggedIn) { 
+          window.location.href = '/'; 
+          return false; 
+        } 
+        return true; 
+      } catch { 
+        window.location.href = '/'; 
+        return false; 
+      }
+    }
+
     // ── LOADING ──
-    window.addEventListener('load', () => {
+    window.addEventListener('load', async () => {
+      const isLoggedIn = await checkSession();
+      if (!isLoggedIn) return;
       setTimeout(() => document.getElementById('loadingScreen').classList.add('hidden'), 1100);
     });
 
@@ -1490,8 +1489,15 @@
     mobileOverlay?.addEventListener('click', closeDrawer);
     document.querySelectorAll('.drawer-nav a').forEach(a => a.addEventListener('click', closeDrawer));
 
+    // Close drawer on resize
+    window.addEventListener('resize', () => {
+      if (window.innerWidth > 992 && mobileDrawer?.classList.contains('open')) {
+        closeDrawer();
+      }
+    });
+
     // ── NOTIFICATIONS ──
-    function notify(msg, type = 'success') {
+    function showToast(msg, type = 'success') {
       const c = document.getElementById('notifContainer');
       const el = document.createElement('div');
       el.className = `notif ${type}`;
@@ -1509,7 +1515,7 @@
 
     // ── STATS COUNTER ──
     function animateCount(el, target, duration = 1800) {
-      const suffix = target >= 1000 ? 'K+' : (target === 99 ? '%' : '+');
+      const suffix = target >= 1000 ? 'K+' : (target === 99 ? '%' : '');
       const displayVal = target >= 1000 ? Math.round(target / 1000) : target;
       let start = null;
       function step(ts) {
@@ -1533,7 +1539,8 @@
         }
       });
     }, { threshold: 0.3 });
-    statsObserver.observe(document.querySelector('.stats-bar'));
+    const statsBar = document.querySelector('.stats-bar');
+    if (statsBar) statsObserver.observe(statsBar);
 
     // ── SEARCH ──
     const searchInput = document.getElementById('toolSearch');
@@ -1544,7 +1551,8 @@
       const q = searchInput.value.toLowerCase().trim();
       let visible = 0;
       document.querySelectorAll('.tool-card[data-search]').forEach(card => {
-        const matches = !q || card.dataset.search.includes(q) || card.querySelector('.tool-title').textContent.toLowerCase().includes(q);
+        const title = card.querySelector('.tool-title')?.textContent.toLowerCase() || '';
+        const matches = !q || card.dataset.search.includes(q) || title.includes(q);
         card.classList.toggle('hidden', !matches);
         if (matches) visible++;
       });
@@ -1556,7 +1564,7 @@
 
     // Keyboard shortcut: / to focus search
     document.addEventListener('keydown', e => {
-      if (e.key === '/' && e.target !== searchInput) {
+      if (e.key === '/' && e.target !== searchInput && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
         e.preventDefault();
         searchInput?.focus();
       }
@@ -1568,12 +1576,20 @@
     btt?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
     // ── MODAL HELPERS ──
-    function openModal(id) { document.getElementById(id).classList.add('open'); }
-    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+    function openModal(id) { 
+      const modal = document.getElementById(id);
+      if (modal) modal.classList.add('open'); 
+    }
+    function closeModal(id) { 
+      const modal = document.getElementById(id);
+      if (modal) modal.classList.remove('open'); 
+    }
 
+    // Close modals when clicking outside
     window.addEventListener('click', e => {
       ['feedbackModal', 'reviewModal', 'announcementModal'].forEach(id => {
-        if (e.target === document.getElementById(id)) closeModal(id);
+        const modal = document.getElementById(id);
+        if (e.target === modal) closeModal(id);
       });
     });
 
@@ -1586,15 +1602,25 @@
           selected = parseInt(star.dataset.r);
           stars.forEach(s => {
             const v = parseInt(s.dataset.r);
-            s.classList.toggle('fas', v <= selected);
-            s.classList.toggle('far', v > selected);
-            s.classList.toggle('active', v <= selected);
+            if (v <= selected) {
+              s.classList.add('fas');
+              s.classList.remove('far');
+              s.classList.add('active');
+            } else {
+              s.classList.add('far');
+              s.classList.remove('fas');
+              s.classList.remove('active');
+            }
           });
         });
       });
       return { getVal: () => selected, reset: () => {
         selected = 0;
-        stars.forEach(s => { s.classList.replace('fas', 'far'); s.classList.remove('active'); });
+        stars.forEach(s => { 
+          s.classList.add('far');
+          s.classList.remove('fas');
+          s.classList.remove('active');
+        });
       }};
     }
 
@@ -1608,102 +1634,107 @@
 
     document.getElementById('submitFeedback')?.addEventListener('click', async () => {
       const r = feedbackRating.getVal();
-      if (!r) { notify('Please select a rating!', 'error'); return; }
+      if (!r) { showToast('Please select a rating!', 'error'); return; }
       const comment = document.getElementById('feedbackText').value.trim();
       const btn = document.getElementById('submitFeedback');
       btn.disabled = true; btn.textContent = 'Submitting...';
       try {
-        const res = await fetch('/api/feedback', {
+        const data = await apiCall('/api/feedback', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ rating: r, comment: comment || null }),
-          credentials: 'include'
+          body: { rating: r, comment: comment || null }
         });
-        const data = await res.json();
-        if (res.ok) {
-          notify(data.message || 'Thank you for your feedback! 🎉', 'success');
-          closeModal('feedbackModal');
-          feedbackRating.reset();
-          document.getElementById('feedbackText').value = '';
-        } else {
-          notify(data.error || 'Failed to submit.', 'error');
-        }
-      } catch { notify('Network error. Please try again.', 'error'); }
-      finally { btn.disabled = false; btn.textContent = 'Submit Feedback'; }
+        showToast(data.message || 'Thank you for your feedback! 🎉', 'success');
+        closeModal('feedbackModal');
+        feedbackRating.reset();
+        document.getElementById('feedbackText').value = '';
+      } catch (error) {
+        showToast(error.message || 'Failed to submit feedback.', 'error');
+      } finally { 
+        btn.disabled = false; 
+        btn.textContent = 'Submit Feedback'; 
+      }
     });
 
     // ── REVIEW MODAL ──
-    async function loadTools() {
+    async function loadToolsForReview() {
       const sel = document.getElementById('toolSelect');
       sel.innerHTML = '<option value="">Loading...</option>';
       try {
-        const res = await fetch('/api/tools?page=student&premium=false', { credentials: 'include' });
-        if (!res.ok) throw new Error();
-        const tools = await res.json();
-        sel.innerHTML = tools?.length
-          ? '<option value="">Select a tool...</option>' + tools.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('')
-          : '<option value="">No tools available</option>';
-      } catch { sel.innerHTML = '<option value="">Error loading tools</option>'; }
+        const tools = await apiCall('/api/tools?page=all');
+        if (tools?.length) {
+          sel.innerHTML = '<option value="">Select a tool...</option>' + 
+            tools.map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
+        } else {
+          sel.innerHTML = '<option value="">No tools available</option>';
+        }
+      } catch { 
+        sel.innerHTML = '<option value="">Error loading tools</option>';
+      }
     }
 
-    function esc(s) { return s?.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])) ?? ''; }
+    function escapeHtml(s) { 
+      if (!s) return '';
+      return s.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); 
+    }
 
-    document.getElementById('reviewBtn')?.addEventListener('click', () => { loadTools(); openModal('reviewModal'); });
+    document.getElementById('reviewBtn')?.addEventListener('click', () => { 
+      loadToolsForReview(); 
+      openModal('reviewModal'); 
+    });
     document.getElementById('closeReview')?.addEventListener('click', () => closeModal('reviewModal'));
     document.getElementById('cancelReview')?.addEventListener('click', () => closeModal('reviewModal'));
 
-    document.getElementById('submitReview')?.addEventListener('click', async () => {
+    document.getElementById('submitReviewBtn')?.addEventListener('click', async () => {
       const toolId = document.getElementById('toolSelect').value;
       const r = reviewRating.getVal();
-      if (!toolId) { notify('Please select a tool!', 'error'); return; }
-      if (!r) { notify('Please select a rating!', 'error'); return; }
+      if (!toolId) { showToast('Please select a tool!', 'error'); return; }
+      if (!r) { showToast('Please select a rating!', 'error'); return; }
       const comment = document.getElementById('reviewText').value.trim();
-      const btn = document.getElementById('submitReview');
+      const btn = document.getElementById('submitReviewBtn');
       btn.disabled = true; btn.textContent = 'Submitting...';
       try {
-        const res = await fetch(`/api/tools/${toolId}/review`, {
+        const data = await apiCall(`/api/tools/${toolId}/review`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ rating: r, comment: comment || null }),
-          credentials: 'include'
+          body: { rating: r, comment: comment || null }
         });
-        const data = await res.json();
-        if (res.ok) {
-          notify(data.message || 'Review submitted! +10 XP 🎉', 'success');
-          closeModal('reviewModal');
-          reviewRating.reset();
-          document.getElementById('reviewText').value = '';
-        } else {
-          notify(data.error || 'Failed to submit review.', 'error');
-        }
-      } catch { notify('Network error. Please try again.', 'error'); }
-      finally { btn.disabled = false; btn.textContent = 'Submit Review'; }
+        showToast(data.message || 'Review submitted! +10 XP 🎉', 'success');
+        closeModal('reviewModal');
+        reviewRating.reset();
+        document.getElementById('reviewText').value = '';
+        document.getElementById('toolSelect').value = '';
+      } catch (error) {
+        showToast(error.message || 'Failed to submit review.', 'error');
+      } finally { 
+        btn.disabled = false; 
+        btn.textContent = 'Submit Review'; 
+      }
     });
 
     // ── ANNOUNCEMENTS ──
     async function loadAnnouncements() {
       const list = document.getElementById('announcementsList');
-      list.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted)"><i class="fas fa-spinner fa-spin"></i></div>';
+      list.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted)"><i class="fas fa-spinner fa-spin"></i> Loading announcements...</div>';
       try {
-        const res = await fetch('/api/announcements', { credentials: 'include' });
-        if (!res.ok) throw new Error();
-        const items = await res.json();
+        const items = await apiCall('/api/announcements');
         if (!items?.length) {
           list.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted)"><i class="fas fa-newspaper" style="font-size:2rem;opacity:0.4;display:block;margin-bottom:0.75rem"></i>No announcements yet.</div>';
           return;
         }
         list.innerHTML = items.map(a => `
           <div class="announcement-item">
-            <div class="ann-title">${esc(a.title)}</div>
-            <div class="ann-body">${esc(a.content)}</div>
+            <div class="ann-title">${escapeHtml(a.title)}</div>
+            <div class="ann-body">${escapeHtml(a.content)}</div>
             <div class="ann-date"><i class="fas fa-clock"></i> ${new Date(a.created_at).toLocaleString()}</div>
           </div>`).join('');
       } catch {
-        list.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted)"><i class="fas fa-exclamation-triangle"></i> Failed to load.</div>';
+        list.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted)"><i class="fas fa-exclamation-triangle"></i> Failed to load announcements.</div>';
       }
     }
 
-    document.getElementById('announcementBtn')?.addEventListener('click', () => { loadAnnouncements(); openModal('announcementModal'); });
+    document.getElementById('announcementBtn')?.addEventListener('click', () => { 
+      loadAnnouncements(); 
+      openModal('announcementModal'); 
+    });
     document.getElementById('closeAnnouncement')?.addEventListener('click', () => closeModal('announcementModal'));
 
     // ── VOICE CONTROL ──
@@ -1720,17 +1751,16 @@
         voiceBtn.classList.add('recording');
         voiceBtn.innerHTML = '<i class="fas fa-microphone-slash"></i>';
         recognition.start();
-        notify('Listening... Speak a tool name!', 'info');
+        showToast('Listening... Speak a tool name!', 'info');
       });
 
       const cmds = {
-        'student': 'student1.html', 'teacher': 'teacher1.html',
-        'developer': 'developer1.html', 'dev': 'developer1.html',
-        'gamer': 'gamer1.html', 'music': 'music-mega.html',
-        'shopping': 'shopping.html', 'chat': 'tool.html',
-        'assistant': 'tool.html', 'new': 'newtools.html',
-        'exam': 'examkit.html', 'career': 'career.html',
-        'editing': 'editing.html', 'essentials': 'essentials.html',
+        'student': 'student1.html', 'teacher': 'teacher1.html', 'study': 'student1.html',
+        'developer': 'developer1.html', 'dev': 'developer1.html', 'coding': 'developer1.html',
+        'gamer': 'gamer1.html', 'gaming': 'gamer1.html', 'music': 'music-mega.html',
+        'shopping': 'shopping.html', 'chat': 'tool.html', 'assistant': 'tool.html',
+        'new': 'newtools.html', 'exam': 'examkit.html', 'career': 'career.html',
+        'editing': 'editing.html', 'essentials': 'essentials.html', 'research': 'researcher.html'
       };
 
       recognition.onresult = e => {
@@ -1739,12 +1769,12 @@
         voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
         for (const [k, url] of Object.entries(cmds)) {
           if (cmd.includes(k)) {
-            notify(`Opening ${k} tools...`, 'success');
+            showToast(`Opening ${k} tools...`, 'success');
             setTimeout(() => window.location.href = url, 600);
             return;
           }
         }
-        notify(`"${cmd}" — Try: student, developer, music, exam, career...`, 'warning');
+        showToast(`"${cmd}" — Try: student, developer, music, exam, career...`, 'warning');
       };
 
       recognition.onend = () => {
@@ -1755,7 +1785,7 @@
       recognition.onerror = () => {
         voiceBtn.classList.remove('recording');
         voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
-        notify('Voice recognition unavailable.', 'error');
+        showToast('Voice recognition unavailable.', 'error');
       };
     } else if (voiceBtn) {
       voiceBtn.style.display = 'none';
@@ -1763,16 +1793,24 @@
 
     // ── LOGOUT ──
     async function logoutUser() {
-      await fetch('/logout', { method: 'POST', credentials: 'include' });
-      window.location.href = '/';
+      try {
+        await fetch('/logout', { method: 'POST', credentials: 'include' });
+        window.location.href = '/';
+      } catch(e) {
+        window.location.href = '/';
+      }
     }
     document.getElementById('logoutBtn')?.addEventListener('click', e => { e.preventDefault(); logoutUser(); });
     document.getElementById('mobileLogoutBtn')?.addEventListener('click', e => { e.preventDefault(); logoutUser(); });
 
-    // ── PWA ──
-    window.addEventListener('beforeinstallprompt', e => {
+    // ── PWA INSTALL PROMPT ──
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
-      notify('Install Sarveik as an app! Tap the install icon in your address bar.', 'info');
+      deferredPrompt = e;
+      setTimeout(() => {
+        showToast('📱 Install Sarveik as an app for easy access!', 'info');
+      }, 3000);
     });
 
     // ── SERVICE WORKER ──
@@ -1780,8 +1818,8 @@
       navigator.serviceWorker.register('/sw.js').catch(() => {});
     }
 
-    // ── WELCOME ──
-    setTimeout(() => notify('Welcome to Sarveik! 🚀 Press / to search tools.', 'success'), 1300);
+    // ── WELCOME MESSAGE ──
+    setTimeout(() => showToast('Welcome to Sarveik! 🚀 Press / to search tools.', 'success'), 1500);
   </script>
 </body>
 </html>

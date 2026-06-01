@@ -598,6 +598,26 @@
                 margin-left: auto;
             }
         }
+        
+        /* Email Log Modal Styles */
+        .email-log-item {
+            padding: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .email-log-item:hover { background: rgba(0,212,255,0.1); }
+        .email-subject { font-weight: 600; color: #00d4ff; }
+        .email-recipient { font-size: 0.75rem; opacity: 0.7; margin-top: 4px; }
+        .email-time { font-size: 0.7rem; opacity: 0.5; margin-top: 4px; }
+        .credits-transaction-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        .credits-amount { color: #fbbf24; font-weight: bold; }
+        .credits-date { font-size: 0.7rem; opacity: 0.6; }
     </style>
 </head>
 <body>
@@ -609,7 +629,6 @@
 
     <nav class="navbar">
         <div class="nav-brand"><i class="fas fa-shield-alt"></i>Sarveik Admin <span id="onlineUsersBadge" class="navbar-online-badge"><i class="fas fa-circle" style="font-size: 0.7rem;"></i> <span id="onlineCount">0</span> online</span></div>
-        <!-- HAMBURGER BUTTON (added) -->
         <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
             <span></span>
             <span></span>
@@ -624,7 +643,6 @@
             <li><a href="#" id="announcementNav"><i class="fas fa-bullhorn"></i> Announce</a></li>
             <li><a href="#" id="staffConferenceNav"><i class="fas fa-comments"></i> Staff Conference</a></li>
             <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
-            <!-- FEATURE 2: Global Search -->
             <li>
                 <div class="global-search-wrapper">
                     <i class="fas fa-search"></i>
@@ -632,7 +650,6 @@
                     <div id="globalSearchResults" class="global-search-results"></div>
                 </div>
             </li>
-            <!-- FEATURE 3: Dark Mode Toggle -->
             <li>
                 <button class="dark-toggle-btn" id="darkModeToggle"><i class="fas fa-moon"></i> Dark</button>
             </li>
@@ -648,7 +665,6 @@
     </nav>
 
     <div class="admin-container">
-        <!-- FEATURE 4: Quick Actions Bar -->
         <div class="quick-actions-bar" id="quickActionsBar">
             <div class="quick-action-card" onclick="document.querySelector('.tab-btn[data-tab=users]').click()"><i class="fas fa-user-plus"></i> Users</div>
             <div class="quick-action-card" onclick="document.querySelector('.tab-btn[data-tab=pending]').click()"><i class="fas fa-clock"></i> Pending Tools</div>
@@ -658,6 +674,7 @@
             <div class="quick-action-card" onclick="document.querySelector('.tab-btn[data-tab=sessions]').click()"><i class="fas fa-desktop"></i> Sessions</div>
             <div class="quick-action-card" onclick="window.adminDashboard.toggleMaintenance()"><i class="fas fa-tools"></i> Maintenance</div>
             <div class="quick-action-card" onclick="document.querySelector('.tab-btn[data-tab=leaderboard]').click()"><i class="fas fa-trophy"></i> Leaderboard</div>
+            <div class="quick-action-card" onclick="document.querySelector('.tab-btn[data-tab=emailLog]').click()"><i class="fas fa-envelope"></i> Email Log</div>
         </div>
 
         <div class="stats-grid" id="statsGrid">
@@ -676,7 +693,6 @@
             <button class="tab-btn" data-tab="analytics">📈 Advanced Analytics</button>
             <button class="tab-btn" data-tab="feedback">📝 Feedback</button>
             <button class="tab-btn" data-tab="staffconference">💬 Staff Conference</button>
-            <!-- NEW TABS -->
             <button class="tab-btn" data-tab="systemhealth">💚 System Health</button>
             <button class="tab-btn" data-tab="auditlog">📋 Audit Log</button>
             <button class="tab-btn" data-tab="ipbans">🚫 IP Bans</button>
@@ -687,6 +703,8 @@
             <button class="tab-btn" data-tab="ratelimits">⚡ Rate Limits</button>
             <button class="tab-btn" data-tab="purge">🗑️ Data Purge</button>
             <button class="tab-btn" data-tab="emailtemplates">📧 Email Templates</button>
+            <button class="tab-btn" data-tab="emailLog">📨 Email Log</button>
+            <button class="tab-btn" data-tab="creditsLog">💰 Credits Log</button>
         </div>
 
         <!-- Dashboard Tab -->
@@ -720,8 +738,8 @@
             </div>
             <div class="table-wrapper">
                 <table id="userTable">
-                    <thead><tr><th><input type="checkbox" id="selectAllHeader"></th><th>ID</th><th>Username</th><th>Email</th><th>Role</th><th>Status</th><th>💰 Credits</th><th>Notes</th><th>Created At</th><th>Actions</th> </thead>
-                    <tbody id="userTableBody"><td><td colspan="10" style="text-align:center;">Loading users...</td></tr></tbody>
+                    <thead><tr><th><input type="checkbox" id="selectAllHeader"></th><th>ID</th><th>Username</th><th>Email</th><th>Role</th><th>Status</th><th>💰 Credits</th><th>Notes</th><th>Created At</th><th>Actions</th> </tr></thead>
+                    <tbody id="userTableBody"><tr><td colspan="10" style="text-align:center;">Loading users...</td></tr></tbody>
                 </table>
             </div>
         </div>
@@ -737,7 +755,7 @@
             </div>
             <div class="table-wrapper">
                 <table id="toolsTable">
-                    <thead><tr><th>ID</th><th>Name</th><th>URL</th><th>Category</th><th>Submitted By</th><th>Approved</th><th>⭐ Featured</th><th>Usage</th><th>Actions</th> </thead>
+                    <thead><tr><th>ID</th><th>Name</th><th>URL</th><th>Category</th><th>Submitted By</th><th>Approved</th><th>⭐ Featured</th><th>Usage</th><th>Actions</th> </tr></thead>
                     <tbody id="toolsTableBody"><tr><td colspan="9" style="text-align:center;">Loading tools......</td></tr></tbody>
                 </table>
             </div>
@@ -753,7 +771,7 @@
             </div>
             <div class="table-wrapper">
                 <table id="pendingTable">
-                    <thead><tr><th><input type="checkbox" id="selectAllPending"></th><th>ID</th><th>Name</th><th>URL</th><th>Description</th><th>Category</th><th>Submitted By</th><th>Submitted At</th><th>Actions</th> </thead>
+                    <thead><tr><th><input type="checkbox" id="selectAllPending"></th><th>ID</th><th>Name</th><th>URL</th><th>Description</th><th>Category</th><th>Submitted By</th><th>Submitted At</th><th>Actions</th> </tr></thead>
                     <tbody id="pendingTableBody"><tr><td colspan="9" style="text-align:center;">Loading pending tools......</td></tr></tbody>
                 </table>
             </div>
@@ -769,7 +787,7 @@
             </div>
             <div class="table-wrapper">
                 <table id="cardsTable">
-                    <thead><tr><th>ID</th><th>Icon</th><th>Title</th><th>Description</th><th>Category</th><th>Link URL</th><th>Order</th><th>Actions</th> </thead>
+                    <thead><tr><th>ID</th><th>Icon</th><th>Title</th><th>Description</th><th>Category</th><th>Link URL</th><th>Order</th><th>Actions</th> </tr></thead>
                     <tbody id="cardsTableBody"><tr><td colspan="8" style="text-align:center;">Loading cards...</td></tr></tbody>
                 </table>
             </div>
@@ -799,7 +817,7 @@
             </div>
             <div class="table-wrapper">
                 <table id="feedbackTable">
-                    <thead><tr><th>ID</th><th>User</th><th>Rating</th><th>Comment</th><th>Submitted At</th> </thead>
+                    <thead><tr><th>ID</th><th>User</th><th>Rating</th><th>Comment</th><th>Submitted At</th> </tr></thead>
                     <tbody id="feedbackTableBody"><tr><td colspan="5" style="text-align:center;">Loading feedback......</td></tr></tbody>
                 </table>
             </div>
@@ -1036,6 +1054,34 @@
                 </div>
             </div>
         </div>
+
+        <!-- NEW FEATURE: Email Log Tab -->
+        <div id="emailLogTab" class="tab-content">
+            <div class="section-title"><i class="fas fa-envelope"></i> Email Log - Sent Notifications</div>
+            <div class="controls-bar">
+                <div class="search-box"><i class="fas fa-search"></i><input type="text" id="emailLogSearch" placeholder="Search by recipient or subject..."></div>
+                <button class="btn-primary" onclick="window.adminDashboard.loadEmailLog()"><i class="fas fa-sync-alt"></i> Refresh</button>
+                <button class="btn-warning" onclick="window.adminDashboard.exportEmailLog()"><i class="fas fa-download"></i> Export Log</button>
+            </div>
+            <div class="table-wrapper">
+                <div id="emailLogList"></div>
+                <div id="emailLogPagination" style="text-align:center;margin-top:1rem;"></div>
+            </div>
+        </div>
+
+        <!-- NEW FEATURE: Credits Log Tab -->
+        <div id="creditsLogTab" class="tab-content">
+            <div class="section-title"><i class="fas fa-coins"></i> Credits Transaction Log</div>
+            <div class="controls-bar">
+                <div class="search-box"><i class="fas fa-search"></i><input type="text" id="creditsLogSearch" placeholder="Search by user or reason..."></div>
+                <button class="btn-primary" onclick="window.adminDashboard.loadCreditsLog()"><i class="fas fa-sync-alt"></i> Refresh</button>
+                <button class="btn-warning" onclick="window.adminDashboard.exportCreditsLog()"><i class="fas fa-download"></i> Export Log</button>
+            </div>
+            <div class="table-wrapper">
+                <div id="creditsLogList"></div>
+                <div id="creditsLogPagination" style="text-align:center;margin-top:1rem;"></div>
+            </div>
+        </div>
     </div>
 
     <!-- EXISTING MODALS (unchanged) -->
@@ -1143,7 +1189,6 @@
     </div>
 
     <!-- NEW MODALS -->
-    <!-- FEATURE 15: User Notes Modal -->
     <div id="userNotesModal" class="modal">
         <div class="modal-content" style="max-width:520px;">
             <h3><i class="fas fa-sticky-note"></i> User Notes & Tags</h3>
@@ -1161,7 +1206,6 @@
         </div>
     </div>
 
-    <!-- FEATURE 16: User Impersonation Confirm Modal -->
     <div id="impersonateModal" class="modal">
         <div class="modal-content" style="max-width:480px;">
             <h3><i class="fas fa-user-secret"></i> Impersonate User</h3>
@@ -1174,8 +1218,19 @@
         </div>
     </div>
 
+    <!-- NEW: View Email Modal -->
+    <div id="viewEmailModal" class="modal">
+        <div class="modal-content" style="max-width:650px;">
+            <h3><i class="fas fa-envelope-open"></i> Email Details</h3>
+            <div id="emailDetailContent"></div>
+            <div style="display:flex; justify-content:flex-end; margin-top:20px;">
+                <button class="btn-small" onclick="document.getElementById('viewEmailModal').classList.remove('active')">Close</button>
+            </div>
+        </div>
+    </div>
+
     <div class="disclaimer">
-        <p><strong>Disclaimer:</strong> Sarveik  is a directory of third‑party tools. We do not host any content. All trademarks, logos, and brand names are the property of their respective owners. If you believe any link infringes your rights, please <a href="dmca.html">contact us</a> for removal.</p>
+        <p><strong>Disclaimer:</strong> Sarveik is a directory of third‑party tools. We do not host any content. All trademarks, logos, and brand names are the property of their respective owners. If you believe any link infringes your rights, please <a href="dmca.html">contact us</a> for removal.</p>
     </div>
     <button id="backToTop" title="Back to top">↑</button>
 
@@ -1232,6 +1287,9 @@
                 this.userNotes = {};
                 this.emailTemplates = [];
                 this.currentEditTemplate = null;
+                // NEW: Email and Credits Logs
+                this.emailLog = [];
+                this.creditsLog = [];
                 this.init();
             }
 
@@ -1256,12 +1314,12 @@
                 this.initGlobalSearch();
                 this.initEmailTemplates();
                 this.renderPermissionsMatrix();
-                // HAMBURGER MENU INIT
+                this.loadEmailLog();
+                this.loadCreditsLog();
                 this.initHamburgerMenu();
                 window.adminDashboard = this;
             }
 
-            // HAMBURGER MENU
             initHamburgerMenu() {
                 const hamburger = document.getElementById('hamburgerBtn');
                 const navLinks = document.getElementById('navLinks');
@@ -1271,7 +1329,6 @@
                     hamburger.classList.toggle('active');
                     navLinks.classList.toggle('active');
                 });
-                // Close menu when a link is clicked (optional, but good UX)
                 const links = navLinks.querySelectorAll('a');
                 links.forEach(link => {
                     link.addEventListener('click', () => {
@@ -1279,7 +1336,6 @@
                         navLinks.classList.remove('active');
                     });
                 });
-                // Close menu when clicking outside (optional)
                 document.addEventListener('click', (e) => {
                     if (!navLinks.contains(e.target) && !hamburger.contains(e.target)) {
                         hamburger.classList.remove('active');
@@ -1317,6 +1373,150 @@
                 const unseen = this.notifications.filter(n => !n.read).length;
                 const badge = document.getElementById('notificationBadge');
                 if (unseen > 0) { badge.style.display = 'flex'; badge.innerText = unseen; } else { badge.style.display = 'none'; }
+            }
+
+            // ========== EMAIL LOG SYSTEM ==========
+            async sendEmail(recipient, subject, content, type = 'notification') {
+                const emailRecord = {
+                    id: 'email_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+                    to: recipient,
+                    subject: subject,
+                    content: content,
+                    type: type,
+                    date: new Date().toISOString(),
+                    status: 'sent'
+                };
+                this.emailLog.unshift(emailRecord);
+                if (this.emailLog.length > 500) this.emailLog.pop();
+                localStorage.setItem('sarveik_admin_emails', JSON.stringify(this.emailLog));
+                this.addAuditLogEntry('email', this.currentUser?.username || 'admin', `Email sent to ${recipient}: ${subject}`);
+                console.log(`📧 Email sent to: ${recipient} - Subject: ${subject}`);
+                return true;
+            }
+
+            async loadEmailLog() {
+                const stored = localStorage.getItem('sarveik_admin_emails');
+                if (stored) {
+                    this.emailLog = JSON.parse(stored);
+                } else {
+                    this.emailLog = [
+                        { id: 'e1', to: 'user@example.com', subject: 'Welcome to Sarveik!', content: '<p>Welcome!</p>', type: 'welcome', date: new Date(Date.now() - 86400000).toISOString(), status: 'sent' },
+                        { id: 'e2', to: 'alex@example.com', subject: 'Your tool was approved', content: '<p>Your submission has been approved!</p>', type: 'approval', date: new Date(Date.now() - 172800000).toISOString(), status: 'sent' },
+                    ];
+                    localStorage.setItem('sarveik_admin_emails', JSON.stringify(this.emailLog));
+                }
+                this.renderEmailLog();
+            }
+
+            renderEmailLog() {
+                const search = document.getElementById('emailLogSearch')?.value.toLowerCase() || '';
+                let filtered = this.emailLog.filter(e => 
+                    !search || e.to.toLowerCase().includes(search) || e.subject.toLowerCase().includes(search)
+                );
+                const container = document.getElementById('emailLogList');
+                if (!filtered.length) {
+                    container.innerHTML = '<div style="text-align:center;padding:2rem;opacity:0.6;">No emails found</div>';
+                    return;
+                }
+                container.innerHTML = filtered.map(email => `
+                    <div class="email-log-item" onclick="window.adminDashboard.viewEmailDetails('${email.id}')">
+                        <div class="email-subject">📧 ${escapeHtml(email.subject)}</div>
+                        <div class="email-recipient"><i class="fas fa-user"></i> To: ${escapeHtml(email.to)}</div>
+                        <div class="email-time"><i class="fas fa-clock"></i> ${new Date(email.date).toLocaleString()}</div>
+                        <div class="email-recipient" style="margin-top:4px;"><span class="status-badge status-active" style="font-size:0.65rem;">${email.status}</span> <span class="status-badge" style="background:#6366f1;font-size:0.65rem;">${email.type}</span></div>
+                    </div>
+                `).join('');
+            }
+
+            viewEmailDetails(emailId) {
+                const email = this.emailLog.find(e => e.id === emailId);
+                if (!email) return;
+                const modal = document.getElementById('viewEmailModal');
+                const content = document.getElementById('emailDetailContent');
+                content.innerHTML = `
+                    <div style="margin-bottom:1rem;">
+                        <strong>To:</strong> ${escapeHtml(email.to)}<br>
+                        <strong>Subject:</strong> ${escapeHtml(email.subject)}<br>
+                        <strong>Sent:</strong> ${new Date(email.date).toLocaleString()}<br>
+                        <strong>Type:</strong> ${email.type}<br>
+                        <strong>Status:</strong> <span class="status-badge status-active">${email.status}</span>
+                    </div>
+                    <hr style="border-color:rgba(255,255,255,0.1);margin:1rem 0;">
+                    <div class="email-content" style="background:rgba(0,0,0,0.2);padding:1rem;border-radius:10px;">
+                        ${email.content}
+                    </div>
+                `;
+                modal.classList.add('active');
+            }
+
+            exportEmailLog() {
+                const data = JSON.stringify(this.emailLog, null, 2);
+                const blob = new Blob([data], {type:'application/json'});
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `email_log_${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                showToast('Email log exported', 'success');
+            }
+
+            // ========== CREDITS LOG SYSTEM ==========
+            addCreditsTransaction(userId, username, amount, reason, type = 'admin_grant') {
+                const transaction = {
+                    id: 'cred_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6),
+                    userId: userId,
+                    username: username,
+                    amount: amount,
+                    reason: reason,
+                    type: type,
+                    date: new Date().toISOString()
+                };
+                this.creditsLog.unshift(transaction);
+                if (this.creditsLog.length > 500) this.creditsLog.pop();
+                localStorage.setItem('sarveik_admin_credits', JSON.stringify(this.creditsLog));
+                this.addAuditLogEntry('credits', this.currentUser?.username || 'admin', `${amount} credits given to ${username}: ${reason}`);
+            }
+
+            async loadCreditsLog() {
+                const stored = localStorage.getItem('sarveik_admin_credits');
+                if (stored) {
+                    this.creditsLog = JSON.parse(stored);
+                } else {
+                    this.creditsLog = [];
+                    localStorage.setItem('sarveik_admin_credits', JSON.stringify(this.creditsLog));
+                }
+                this.renderCreditsLog();
+            }
+
+            renderCreditsLog() {
+                const search = document.getElementById('creditsLogSearch')?.value.toLowerCase() || '';
+                let filtered = this.creditsLog.filter(t => 
+                    !search || t.username.toLowerCase().includes(search) || t.reason.toLowerCase().includes(search)
+                );
+                const container = document.getElementById('creditsLogList');
+                if (!filtered.length) {
+                    container.innerHTML = '<div style="text-align:center;padding:2rem;opacity:0.6;">No credit transactions found</div>';
+                    return;
+                }
+                container.innerHTML = filtered.map(trans => `
+                    <div class="credits-transaction-item">
+                        <div>
+                            <strong>${escapeHtml(trans.username)}</strong><br>
+                            <span style="font-size:0.75rem;opacity:0.7;">${escapeHtml(trans.reason)}</span><br>
+                            <span style="font-size:0.7rem;opacity:0.5;">${new Date(trans.date).toLocaleString()}</span>
+                        </div>
+                        <div class="credits-amount">+${trans.amount} credits</div>
+                    </div>
+                `).join('');
+            }
+
+            exportCreditsLog() {
+                const data = JSON.stringify(this.creditsLog, null, 2);
+                const blob = new Blob([data], {type:'application/json'});
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `credits_log_${new Date().toISOString().split('T')[0]}.json`;
+                a.click();
+                showToast('Credits log exported', 'success');
             }
 
             // ========== SOCKET.IO ==========
@@ -1500,7 +1700,7 @@
             }
             renderUserTable(){
                 const tbody=document.getElementById('userTableBody');
-                if(!this.filteredUsers.length){tbody.innerHTML='<tr><td colspan="10" style="text-align:center;">No users found</td></tr>';return;}
+                if(!this.filteredUsers.length){tbody.innerHTML='<table><td colspan="10" style="text-align:center;">No users found</td></tr>';return;}
                 tbody.innerHTML=this.filteredUsers.map(u=>{
                     const notes = this.userNotes[u.id] || [];
                     const noteChips = notes.map(n=>`<span class="note-chip">${escapeHtml(n)}</span>`).join('');
@@ -1528,9 +1728,7 @@
                 `}).join('');
                 this.attachUserEvents();
                 document.querySelectorAll('.view-transactions').forEach(btn=>btn.addEventListener('click',()=>this.viewUserTransactions(parseInt(btn.dataset.id), btn.dataset.username)));
-                // FEATURE 15: Notes
                 document.querySelectorAll('.add-note-btn').forEach(btn=>btn.addEventListener('click',()=>this.openUserNotesModal(parseInt(btn.dataset.id), btn.dataset.username)));
-                // FEATURE 16: Impersonate
                 document.querySelectorAll('.impersonate-btn').forEach(btn=>btn.addEventListener('click',()=>this.openImpersonateModal(parseInt(btn.dataset.id), btn.dataset.username)));
             }
             attachUserEvents(){
@@ -1639,6 +1837,26 @@
                 if(!user) { showToast('User not found', 'error'); return; }
                 user.credits = (user.credits || 0) + amount;
                 this.filterUsers();
+                this.addCreditsTransaction(userId, user.username, amount, reason, 'admin_grant');
+                this.addAuditLogEntry('credits', this.currentUser?.username || 'admin', `Gave ${amount} credits to ${user.username}: ${reason}`);
+                const emailContent = `
+                    <div style="font-family: 'DM Sans', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                        <div style="text-align: center; margin-bottom: 20px;">
+                            <div style="font-size: 48px;">💰</div>
+                            <h2 style="color: #7c6cf0;">Credits Added to Your Account!</h2>
+                        </div>
+                        <p>Dear ${escapeHtml(user.username)},</p>
+                        <div style="background: rgba(124, 108, 240, 0.1); padding: 15px; border-radius: 12px; margin: 20px 0;">
+                            <p style="margin: 0;"><strong>✨ ${amount} Credits Added!</strong></p>
+                            <p style="margin: 5px 0 0; font-size: 0.85rem;">Reason: ${escapeHtml(reason)}</p>
+                        </div>
+                        <p>Your new credit balance: <strong>${user.credits} credits</strong></p>
+                        <p>Use your credits to access premium features and tools on Sarveik!</p>
+                        <hr style="border-color: var(--border); margin: 20px 0;">
+                        <p style="font-size: 0.8rem; color: #666;">Sarveik Team</p>
+                    </div>
+                `;
+                await this.sendEmail(user.email, `✨ You received ${amount} Credits!`, emailContent, 'credit_grant');
                 showToast(`✅ Successfully added ${amount} credits to ${user.username}. Reason: ${reason}`, 'success');
                 this.closeCreditsModal();
                 try {
@@ -1673,16 +1891,21 @@
                 const subject = document.getElementById('bulkEmailSubject').value.trim();
                 const content = document.getElementById('bulkEmailContent').value.trim();
                 if (!subject || !content) { showToast('Subject and content are required','error'); return; }
-                try {
-                    const res = await apiCall('/api/admin/bulk-email', { method: 'POST', body: JSON.stringify({ userIds, subject, htmlContent: content }) });
-                    showToast(`Email sent to ${res.successCount} users (${res.failCount} failed)`);
-                    document.getElementById('bulkEmailModal').classList.remove('active');
-                } catch(e) { showToast('Failed to send emails: '+e.message,'error'); }
+                let successCount = 0;
+                for (const userId of userIds) {
+                    const user = this.allUsers.find(u => u.id === userId);
+                    if (user && user.email) {
+                        await this.sendEmail(user.email, subject, content, 'bulk');
+                        successCount++;
+                    }
+                }
+                showToast(`Email sent to ${successCount} users`, 'success');
+                document.getElementById('bulkEmailModal').classList.remove('active');
             }
 
             // TOOLS (compact – most methods unchanged, kept from original)
             async loadTools(){ try{ this.allTools=await apiCall('/api/admin/tools'); this.renderToolsTable(); } catch(e){showToast('Failed to load tools: '+e.message,'error');} }
-            renderToolsTable(){ /* identical to your original */ const tbody=document.getElementById('toolsTableBody'); const search=document.getElementById('toolSearch').value.toLowerCase(); const catFilter=document.getElementById('toolCategoryFilter').value; const approvalFilter=document.getElementById('toolApprovalFilter').value; let filtered=this.allTools.filter(t=>{ if(search && !t.name.toLowerCase().includes(search) && !(t.category&&t.category.toLowerCase().includes(search))) return false; if(catFilter && t.category!==catFilter) return false; if(approvalFilter!=='' && ((approvalFilter==='1' && !t.approved) || (approvalFilter==='0' && t.approved))) return false; return true; }); if(!filtered.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;">No tools found</td></tr>';return;} tbody.innerHTML=filtered.map(tool=>{ const cat=categoryMap[tool.category]||{icon:'📦',name:tool.category||'Uncategorized'}; const isFeatured = tool.is_featured === 1 || tool.is_featured === true; return `<tr><td>${tool.id}</td><td><strong>${escapeHtml(tool.name)}</strong></td><td><a href="${escapeHtml(tool.url)}" target="_blank" style="color:#00d4ff;">${escapeHtml(tool.url.substring(0,50))}</a></td><td>${cat.icon} ${cat.name}</td><td>${tool.submitted_by || 'Admin'}</td><td><span class="status-badge ${tool.approved?'status-active':'status-pending'}">${tool.approved?'Approved':'Pending'}</span></td><td><button class="featured-toggle-btn ${isFeatured ? 'active' : ''}" data-id="${tool.id}" data-featured="${isFeatured ? '1' : '0'}"><i class="fas fa-star"></i> ${isFeatured ? 'Featured' : 'Not Featured'}</button></td><td>${tool.usage_count || 0}</td><td><button class="btn-small edit-tool" data-id="${tool.id}" title="Edit"><i class="fas fa-edit"></i></button> <button class="btn-small delete-tool" data-id="${tool.id}" title="Delete"><i class="fas fa-trash"></i></button></td></tr>`; }).join(''); document.querySelectorAll('.edit-tool').forEach(btn=>btn.addEventListener('click',()=>this.openToolModal(parseInt(btn.dataset.id)))); document.querySelectorAll('.delete-tool').forEach(btn=>btn.addEventListener('click',()=>this.deleteTool(parseInt(btn.dataset.id)))); document.querySelectorAll('.featured-toggle-btn').forEach(btn=>btn.addEventListener('click',()=>this.toggleFeaturedTool(parseInt(btn.dataset.id)))); }
+            renderToolsTable(){ const tbody=document.getElementById('toolsTableBody'); const search=document.getElementById('toolSearch').value.toLowerCase(); const catFilter=document.getElementById('toolCategoryFilter').value; const approvalFilter=document.getElementById('toolApprovalFilter').value; let filtered=this.allTools.filter(t=>{ if(search && !t.name.toLowerCase().includes(search) && !(t.category&&t.category.toLowerCase().includes(search))) return false; if(catFilter && t.category!==catFilter) return false; if(approvalFilter!=='' && ((approvalFilter==='1' && !t.approved) || (approvalFilter==='0' && t.approved))) return false; return true; }); if(!filtered.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;">No tools found</td></table>';return;} tbody.innerHTML=filtered.map(tool=>{ const cat=categoryMap[tool.category]||{icon:'📦',name:tool.category||'Uncategorized'}; const isFeatured = tool.is_featured === 1 || tool.is_featured === true; return `<tr><td>${tool.id}</td><td><strong>${escapeHtml(tool.name)}</strong></td><td><a href="${escapeHtml(tool.url)}" target="_blank" style="color:#00d4ff;">${escapeHtml(tool.url.substring(0,50))}</a></td><td>${cat.icon} ${cat.name}</td><td>${tool.submitted_by || 'Admin'}</td><td><span class="status-badge ${tool.approved?'status-active':'status-pending'}">${tool.approved?'Approved':'Pending'}</span></td><td><button class="featured-toggle-btn ${isFeatured ? 'active' : ''}" data-id="${tool.id}" data-featured="${isFeatured ? '1' : '0'}"><i class="fas fa-star"></i> ${isFeatured ? 'Featured' : 'Not Featured'}</button></td><td>${tool.usage_count || 0}</td><td><button class="btn-small edit-tool" data-id="${tool.id}" title="Edit"><i class="fas fa-edit"></i></button> <button class="btn-small delete-tool" data-id="${tool.id}" title="Delete"><i class="fas fa-trash"></i></button></td></tr>`; }).join(''); document.querySelectorAll('.edit-tool').forEach(btn=>btn.addEventListener('click',()=>this.openToolModal(parseInt(btn.dataset.id)))); document.querySelectorAll('.delete-tool').forEach(btn=>btn.addEventListener('click',()=>this.deleteTool(parseInt(btn.dataset.id)))); document.querySelectorAll('.featured-toggle-btn').forEach(btn=>btn.addEventListener('click',()=>this.toggleFeaturedTool(parseInt(btn.dataset.id)))); }
             async toggleFeaturedTool(toolId){ const tool=this.allTools.find(t=>t.id===toolId); if(!tool) return; const newFeatured = tool.is_featured ? 0 : 1; try{ await apiCall(`/api/admin/tools/${toolId}`,{method:'PUT',body:JSON.stringify({name:tool.name,url:tool.url,description:tool.description,category:tool.category,approved:tool.approved,pageType:tool.page_type,is_premium:tool.is_premium||0,is_featured:newFeatured})}); tool.is_featured = newFeatured; this.renderToolsTable(); showToast(`Tool ${newFeatured?'featured':'unfeatured'} successfully`); }catch(e){ showToast('Failed to update featured status','error'); } }
             async loadPendingTools(){ try{ this.pendingTools=await apiCall('/api/admin/tools/pending'); this.renderPendingTable(); }catch(e){showToast('Failed to load pending tools: '+e.message,'error');} }
             renderPendingTable(){ const tbody=document.getElementById('pendingTableBody'); const search=document.getElementById('pendingSearch').value.toLowerCase(); let filtered=this.pendingTools.filter(t=>!search||t.name.toLowerCase().includes(search)); if(!filtered.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;">No pending tools found</td></tr>';return;} tbody.innerHTML=filtered.map(tool=>{ const cat=categoryMap[tool.category]||{icon:'📦',name:tool.category||'Uncategorized'}; return `<tr><td><input type="checkbox" class="pending-checkbox" data-id="${tool.id}" ${this.selectedPending.has(tool.id)?'checked':''}></td><td>${tool.id}</td><td><strong>${escapeHtml(tool.name)}</strong></td><td><a href="${escapeHtml(tool.url)}" target="_blank" style="color:#00d4ff;">${escapeHtml(tool.url.substring(0,40))}</a></td><td>${escapeHtml(tool.description?.substring(0,60))||'No description'}</td><td>${cat.icon} ${cat.name}</td><td>${escapeHtml(tool.submitted_by)}</td><td>${new Date(tool.submitted_at).toLocaleDateString()}</td><td><button class="btn-small approve-tool" data-id="${tool.id}" style="background:#10b981;color:white;"><i class="fas fa-check"></i> Approve</button> <button class="btn-small reject-tool" data-id="${tool.id}" style="background:#ef4444;color:white;"><i class="fas fa-times"></i> Reject</button></td></tr>`; }).join(''); document.querySelectorAll('.approve-tool').forEach(btn=>btn.addEventListener('click',()=>this.approveTool(parseInt(btn.dataset.id)))); document.querySelectorAll('.reject-tool').forEach(btn=>btn.addEventListener('click',()=>this.rejectTool(parseInt(btn.dataset.id)))); document.querySelectorAll('.pending-checkbox').forEach(cb=>cb.addEventListener('change',()=>{ const id=parseInt(cb.dataset.id); if(cb.checked) this.selectedPending.add(id); else this.selectedPending.delete(id); this.updateSelectAllPending(); })); this.updateSelectAllPending(); }
@@ -1938,7 +2161,6 @@
                         <div><strong>${escapeHtml(u.username)}</strong><br><span class="status-badge status-${u.role}" style="font-size:0.65rem;">${u.role}</span></div>
                         <div class="leaderboard-credits"><i class="fas fa-coins"></i> ${u.credits||0}</div>
                     </div>`).join('');
-                // Activity leaderboard (mock: by ID desc for demo)
                 const byActivity = [...this.allUsers].sort((a,b)=>b.id-a.id);
                 document.getElementById('activityLeaderboardList').innerHTML = byActivity.slice(0,10).map((u,i)=>`
                     <div class="leaderboard-item">
@@ -2135,7 +2357,6 @@
                     if(id==='analytics') this.loadAdvancedAnalytics();
                     if(id==='feedback') this.filterFeedback();
                     if(id==='staffconference') this.loadStaffConference();
-                    // NEW TABS
                     if(id==='systemhealth') this.refreshSystemHealth();
                     if(id==='auditlog') this.loadAuditLog();
                     if(id==='ipbans') this.loadIpBans();
@@ -2146,6 +2367,8 @@
                     if(id==='ratelimits') this.loadRateLimits();
                     if(id==='purge') {}
                     if(id==='emailtemplates') this.renderEmailTemplates();
+                    if(id==='emailLog') this.loadEmailLog();
+                    if(id==='creditsLog') this.loadCreditsLog();
                 }));
                 document.getElementById('dashboardNav').addEventListener('click',(e)=>{e.preventDefault(); document.querySelector('.tab-btn[data-tab="dashboard"]').click();});
                 document.getElementById('usersNav').addEventListener('click',(e)=>{e.preventDefault(); document.querySelector('.tab-btn[data-tab="users"]').click();});
@@ -2204,11 +2427,12 @@
                 const dropdown = document.getElementById('notificationDropdown');
                 bell.addEventListener('click', (e) => { e.stopPropagation(); dropdown.classList.toggle('show'); });
                 document.addEventListener('click', () => dropdown.classList.remove('show'));
-                // NEW EVENT BINDINGS
                 const auditSearch = document.getElementById('auditSearch'); if(auditSearch) auditSearch.addEventListener('input',()=>this.renderAuditLog());
                 const auditActionF = document.getElementById('auditActionFilter'); if(auditActionF) auditActionF.addEventListener('change',()=>this.renderAuditLog());
                 const sessionSearch = document.getElementById('sessionSearch'); if(sessionSearch) sessionSearch.addEventListener('input',()=>this.loadSessions());
                 const rateLimitSearch = document.getElementById('rateLimitSearch'); if(rateLimitSearch) rateLimitSearch.addEventListener('input',()=>this.loadRateLimits());
+                const emailLogSearch = document.getElementById('emailLogSearch'); if(emailLogSearch) emailLogSearch.addEventListener('input',()=>this.renderEmailLog());
+                const creditsLogSearch = document.getElementById('creditsLogSearch'); if(creditsLogSearch) creditsLogSearch.addEventListener('input',()=>this.renderCreditsLog());
             }
             setupLogout(){
                 document.getElementById('logoutBtn').addEventListener('click',async(e)=>{e.preventDefault(); if(confirm('Logout?')){await fetch('/logout',{method:'POST',credentials:'include'}); window.location.href='/';}});
@@ -2222,4 +2446,4 @@
         new AdminDashboard();
     </script>
 </body>
-</html>                                            
+</html>
