@@ -2488,6 +2488,7 @@ app.get('/api/businesses/categories', async (req, res) => {
 });
 
 // AUTHENTICATED: Submit a new business
+// AUTHENTICATED: Submit a new business (FIXED - only uses existing columns)
 app.post('/api/businesses/submit', isAuthenticated, async (req, res) => {
     const {
         name, type, category, description, address, city, state, phone, email,
@@ -2499,21 +2500,57 @@ app.post('/api/businesses/submit', isAuthenticated, async (req, res) => {
     }
 
     try {
-        const result = await pool.query(`
-            INSERT INTO businesses (
-                name, type, category, description, address, city, state, phone, email,
-                website, whatsapp, maps, instagram, facebook, hours, amenities,
-                user_id, approved, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, false, NOW(), NOW())
-            RETURNING id
-        `, [
-            name, type, category || 'other', description || '', address, city, state || null, phone, email,
-            website || null, whatsapp || null, maps || null, instagram || null, facebook || null,
-            hours ? JSON.stringify(hours) : null,
-            amenities ? JSON.stringify(amenities) : null,
-            req.session.userId
-        ]);
-
+        // First, check what columns exist in the businesses table
+        const columnsCheck = await pool.query(`
+            SELECT column_name 
+            FROM information_schema.columns 
+            WHERE table_name = 'businesses'
+        `);
+        const existingColumns = columnsCheck.rows.map(c => c.column_name);
+        
+        // Build dynamic INSERT based on existing columns
+        const insertColumns = [];
+        const insertValues = [];
+        const placeholders = [];
+        let paramIndex = 1;
+        
+        // Only add columns that exist in the table
+        const columnMapping = {
+            name: name,
+            type: type,
+            category: category || 'other',
+            description: description || '',
+            address: address,
+            city: city,
+            state: state || null,
+            phone: phone,
+            email: email,
+            website: website || null,
+            whatsapp: whatsapp || null,
+            hours: hours ? JSON.stringify(hours) : null,
+            amenities: amenities ? JSON.stringify(amenities) : null,
+            user_id: req.session.userId,
+            approved: false,
+            created_at: new Date(),
+            updated_at: new Date()
+        };
+        
+        // Optional columns (only add if they exist)
+        if (existingColumns.includes('maps')) columnMapping.maps = maps || null;
+        if (existingColumns.includes('instagram')) columnMapping.instagram = instagram || null;
+        if (existingColumns.includes('facebook')) columnMapping.facebook = facebook || null;
+        
+        // Build the query dynamically
+        for (const [col, value] of Object.entries(columnMapping)) {
+            if (existingColumns.includes(col)) {
+                insertColumns.push(col);
+                insertValues.push(value);
+                placeholders.push(`$${paramIndex++}`);
+            }
+        }
+        
+        const query = `INSERT INTO businesses (${insertColumns.join(', ')}) VALUES (${placeholders.join(', ')}) RETURNING id`;
+        const result = await pool.query(query, insertValues);
         const businessId = result.rows[0].id;
 
         // Notify admins via Socket.IO
