@@ -529,6 +529,55 @@
             animation: spin 0.6s linear infinite;
         }
         @keyframes spin { to { transform: rotate(360deg); } }
+        
+        /* Stats Card Hover Effect */
+        .stat-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+        
+        /* Business Status Indicator */
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        .status-approved { background: #10b981; box-shadow: 0 0 5px #10b981; }
+        .status-pending { background: #f59e0b; box-shadow: 0 0 5px #f59e0b; }
+        .status-rejected { background: #ef4444; box-shadow: 0 0 5px #ef4444; }
+        
+        /* Business Card View Toggle */
+        .business-view-toggle {
+            display: flex;
+            gap: 4px;
+            background: var(--bg2);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 4px;
+        }
+        .business-view-btn {
+            width: 34px;
+            height: 30px;
+            border-radius: 7px;
+            border: none;
+            background: transparent;
+            color: var(--text3);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            transition: var(--transition);
+        }
+        .business-view-btn.active {
+            background: var(--accent);
+            color: #fff;
+        }
     </style>
 </head>
 <body>
@@ -585,6 +634,8 @@
             <div class="quick-action-card" onclick="window.adminDashboard.toggleMaintenance()"><i class="fas fa-tools"></i> Maintenance</div>
             <div class="quick-action-card" onclick="document.querySelector('.tab-btn[data-tab=leaderboard]').click()"><i class="fas fa-trophy"></i> Leaderboard</div>
             <div class="quick-action-card" onclick="document.querySelector('.tab-btn[data-tab=businesses]').click()"><i class="fas fa-store"></i> Businesses</div>
+            <div class="quick-action-card" onclick="window.adminDashboard.exportBusinessData()"><i class="fas fa-file-export"></i> Export Data</div>
+            <div class="quick-action-card" onclick="window.adminDashboard.showBusinessStats()"><i class="fas fa-chart-pie"></i> Stats</div>
         </div>
 
         <div class="stats-grid" id="statsGrid">
@@ -727,7 +778,7 @@
             <div class="table-wrapper">
                 <table id="feedbackTable">
                     <thead><tr><th>ID</th><th>User</th><th>Rating</th><th>Comment</th><th>Submitted At</th> </thead>
-                    <tbody id="feedbackTableBody"><td><td colspan="5" style="text-align:center;">Loading feedback...</td> </tbody>
+                    <tbody id="feedbackTableBody"><tr><td colspan="5" style="text-align:center;">Loading feedback...</td> </tbody>
                 </table>
             </div>
         </div>
@@ -889,24 +940,35 @@
             </div>
         </div>
 
-        <!-- Business Directory Tab -->
+        <!-- Business Directory Tab - Enhanced -->
         <div id="businessesTab" class="tab-content">
             <div class="section-title"><i class="fas fa-store"></i> Business Directory Management</div>
+            
+            <!-- Business Stats Summary -->
+            <div class="stats-grid" style="margin-bottom: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(180px,1fr));">
+                <div class="stat-card"><div class="stat-icon"><i class="fas fa-building"></i></div><div class="stat-number" id="businessTotalCount">0</div><div class="stat-label">Total Businesses</div></div>
+                <div class="stat-card"><div class="stat-icon"><i class="fas fa-check-circle"></i></div><div class="stat-number" id="businessApprovedCount">0</div><div class="stat-label">Approved</div></div>
+                <div class="stat-card"><div class="stat-icon"><i class="fas fa-clock"></i></div><div class="stat-number" id="businessPendingCount">0</div><div class="stat-label">Pending</div></div>
+                <div class="stat-card"><div class="stat-icon"><i class="fas fa-star"></i></div><div class="stat-number" id="businessFeaturedCount">0</div><div class="stat-label">Featured</div></div>
+                <div class="stat-card"><div class="stat-icon"><i class="fas fa-shield-alt"></i></div><div class="stat-number" id="businessVerifiedCount">0</div><div class="stat-label">Verified</div></div>
+            </div>
+            
             <div class="controls-bar">
                 <div class="search-box"><i class="fas fa-search"></i><input type="text" id="businessSearch" placeholder="Search by name, city, type..."></div>
                 <select id="businessStatusFilter"><option value="all">All Status</option><option value="pending">Pending</option><option value="approved">Approved</option></select>
                 <select id="businessCategoryFilter"><option value="all">All Categories</option><option value="retail">Retail</option><option value="food">Food & Dining</option><option value="health">Health</option><option value="education">Education</option><option value="finance">Finance</option><option value="technology">Technology</option><option value="automotive">Automotive</option><option value="beauty">Beauty</option><option value="services">Services</option></select>
                 <select id="businessCityFilter"><option value="all">All Cities</option></select>
+                <div class="business-view-toggle">
+                    <button class="business-view-btn active" id="businessTableViewBtn" title="Table view"><i class="fas fa-table"></i></button>
+                    <button class="business-view-btn" id="businessCardViewBtn" title="Card view"><i class="fas fa-th-large"></i></button>
+                </div>
                 <button class="btn-primary" id="refreshBusinessesBtn"><i class="fas fa-sync-alt"></i> Refresh</button>
-                <button class="btn-primary" id="syncFromLocalStorageBtn" style="margin-left:0.5rem;"><i class="fas fa-database"></i> Sync from localStorage</button>
-                <label style="display:flex;align-items:center;gap:0.5rem;margin-left:0.5rem;background:rgba(255,255,255,0.1);padding:0.3rem 0.8rem;border-radius:30px;">
-                    <input type="checkbox" id="forceLocalStorageMode"> <span style="font-size:0.75rem;">🔁 Force localStorage mode (bypass API)</span>
-                </label>
+                <button class="btn-primary" id="exportBusinessDataBtn"><i class="fas fa-download"></i> Export CSV</button>
             </div>
 
             <!-- Pending Businesses Section -->
             <div class="table-wrapper" style="margin-bottom: 2rem;">
-                <h3><i class="fas fa-clock"></i> Pending Business Submissions</h3>
+                <h3><i class="fas fa-clock"></i> Pending Business Submissions <span id="pendingCountBadge" style="background:#f59e0b; padding:2px 10px; border-radius:20px; font-size:0.7rem;">0</span></h3>
                 <div class="bulk-actions">
                     <input type="checkbox" id="selectAllPendingBusinesses" style="width:auto; margin-right:5px;"><label for="selectAllPendingBusinesses">Select All</label>
                     <button class="btn-success btn-small" id="bulkApproveBusinesses"><i class="fas fa-check-double"></i> Bulk Approve</button>
@@ -915,24 +977,26 @@
                 <div class="table-wrapper">
                     <table id="pendingBusinessesTable">
                         <thead><tr><th><input type="checkbox" id="selectAllPendingBusinessesHeader"></th><th>ID</th><th>Name</th><th>Type</th><th>Category</th><th>City</th><th>Submitted</th><th>Actions</th> </thead>
-                        <tbody id="pendingBusinessesBody"><td><td colspan="8">Loading pending businesses...</tbody>
+                        <tbody id="pendingBusinessesBody">发展<td colspan="8">Loading pending businesses...</tbody>
                     </table>
                 </div>
             </div>
 
             <!-- Approved Businesses Section -->
             <div class="table-wrapper">
-                <h3><i class="fas fa-check-circle"></i> Approved Businesses</h3>
+                <h3><i class="fas fa-check-circle"></i> Approved Businesses <span id="approvedCountBadge" style="background:#10b981; padding:2px 10px; border-radius:20px; font-size:0.7rem;">0</span></h3>
                 <div class="bulk-actions">
                     <input type="checkbox" id="selectAllApprovedBusinesses" style="width:auto; margin-right:5px;"><label for="selectAllApprovedBusinesses">Select All</label>
                     <button class="btn-danger btn-small" id="bulkDeleteApprovedBusinesses"><i class="fas fa-trash"></i> Bulk Delete</button>
                 </div>
-                <div class="table-wrapper">
+                <div class="table-wrapper" id="approvedBusinessesContainer">
                     <table id="approvedBusinessesTable">
-                        <thead><tr><th><input type="checkbox" id="selectAllApprovedBusinessesHeader"></th><th>ID</th><th>Name</th><th>Type</th><th>Category</th><th>City</th><th>Verified</th><th>Featured</th><th>Actions</th> </thead>
-                        <tbody id="approvedBusinessesBody"><table><td colspan="9">Loading approved businesses...</tbody>
+                        <thead><tr><th><input type="checkbox" id="selectAllApprovedBusinessesHeader"></th><th>ID</th><th>Name</th><th>Type</th><th>Category</th><th>City</th><th>Verified</th><th>Featured</th><th>Views</th><th>Rating</th><th>Actions</th> </thead>
+                        <tbody id="approvedBusinessesBody">发展<td colspan="11">Loading approved businesses...</tbody>
                     </table>
                 </div>
+                <!-- Card View Container -->
+                <div id="businessCardView" style="display:none; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-top: 1rem;"></div>
             </div>
         </div>
     </div>
@@ -949,6 +1013,7 @@
     <div id="impersonateModal" class="modal"><div class="modal-content" style="max-width:480px;"><h3><i class="fas fa-user-secret"></i> Impersonate User</h3><p id="impersonateLabel" style="margin-bottom:1rem;font-size:0.9rem;"></p><p style="font-size:0.82rem;color:#fca5a5;margin-bottom:1.5rem;"><i class="fas fa-exclamation-triangle"></i> You will be logged in as this user. All actions will be performed as them. Your admin session will be saved and can be restored.</p><div style="display:flex;gap:10px;justify-content:flex-end;"><button class="btn-small" onclick="document.getElementById('impersonateModal').classList.remove('active')">Cancel</button><button class="btn-warning btn-small" id="confirmImpersonateBtn"><i class="fas fa-sign-in-alt"></i> Confirm Impersonate</button></div></div></div>
     <div id="businessEditModal" class="modal"><div class="modal-content" style="max-width: 700px;"><h3><i class="fas fa-edit"></i> Edit Business</h3><input type="hidden" id="editBusinessId"><input type="hidden" id="editBusinessStatus"><label>Business Name</label><input type="text" id="editBusinessName" placeholder="Business name"><label>Type</label><select id="editBusinessType"><option value="company">🏢 Company</option><option value="shop">🛍️ Shop</option><option value="mart">🏪 Mart</option><option value="restaurant">🍽️ Restaurant</option><option value="hotel">🏨 Hotel</option><option value="hospital">🏥 Hospital</option><option value="school">🏫 School</option><option value="bank">🏦 Bank</option><option value="salon">💇 Salon</option><option value="gym">💪 Gym</option><option value="pharmacy">💊 Pharmacy</option><option value="garage">🔧 Garage</option><option value="real_estate">🏠 Real Estate</option><option value="tech">💻 Tech</option><option value="service">⚙️ Service</option></select><label>Category</label><select id="editBusinessCategory"><option value="retail">Retail</option><option value="food">Food & Dining</option><option value="health">Health</option><option value="education">Education</option><option value="finance">Finance</option><option value="technology">Technology</option><option value="automotive">Automotive</option><option value="beauty">Beauty</option><option value="services">Services</option></select><label>Description</label><textarea id="editBusinessDesc" rows="3" placeholder="Description"></textarea><label>Address</label><input type="text" id="editBusinessAddress" placeholder="Address"><label>City</label><input type="text" id="editBusinessCity" placeholder="City"><label>Phone</label><input type="text" id="editBusinessPhone" placeholder="Phone"><label>Email</label><input type="email" id="editBusinessEmail" placeholder="Email"><label>Website</label><input type="url" id="editBusinessWebsite" placeholder="Website"><label>WhatsApp</label><input type="text" id="editBusinessWhatsapp" placeholder="WhatsApp"><label>Verified</label><select id="editBusinessVerified"><option value="false">No</option><option value="true">Yes</option></select><label>Featured</label><select id="editBusinessFeatured"><option value="false">No</option><option value="true">Yes</option></select><div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;"><button id="closeBusinessModal" class="btn-small">Cancel</button><button id="saveBusinessChanges" class="btn-primary btn-small">Save Changes</button></div></div></div>
     <div id="businessDetailModal" class="modal"><div class="modal-content" style="max-width: 600px;"><h3><i class="fas fa-info-circle"></i> Business Details</h3><div id="businessDetailContent"></div><div style="display:flex; justify-content:flex-end; margin-top:1rem;"><button onclick="document.getElementById('businessDetailModal').classList.remove('active')" class="btn-small">Close</button></div></div></div>
+    <div id="businessStatsModal" class="modal"><div class="modal-content" style="max-width: 500px;"><h3><i class="fas fa-chart-pie"></i> Business Statistics</h3><div id="businessStatsContent"></div><div style="display:flex; justify-content:flex-end; margin-top:1rem;"><button onclick="document.getElementById('businessStatsModal').classList.remove('active')" class="btn-small">Close</button></div></div></div>
 
     <div class="disclaimer"><p><strong>Disclaimer:</strong> Sarveik is a directory of third‑party tools. We do not host any content. All trademarks, logos, and brand names are the property of their respective owners. If you believe any link infringes your rights, please <a href="dmca.html">contact us</a> for removal.</p></div>
     <button id="backToTop" title="Back to top">↑</button>
@@ -1008,6 +1073,7 @@
                 this.userNotes = {};
                 this.emailTemplates = [];
                 this.currentEditTemplate = null;
+                this.businessViewMode = 'table';
                 this.init();
             }
 
@@ -1309,7 +1375,7 @@
             
             async loadPendingTools(){ try{ this.pendingTools=await apiCall('/api/admin/tools/pending'); this.renderPendingTable(); }catch(e){showToast('Failed to load pending tools: '+e.message,'error');} }
             
-            renderPendingTable(){ const tbody=document.getElementById('pendingTableBody'); const search=document.getElementById('pendingSearch').value.toLowerCase(); let filtered=this.pendingTools.filter(t=>!search||t.name.toLowerCase().includes(search)); if(!filtered.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;">No pending tools found</td></tr>';return;} tbody.innerHTML=filtered.map(tool=>{ const cat=categoryMap[tool.category]||{icon:'📦',name:tool.category||'Uncategorized'}; return `<tr><td><input type="checkbox" class="pending-checkbox" data-id="${tool.id}" ${this.selectedPending.has(tool.id)?'checked':''}></td><td>${tool.id}</td><td><strong>${escapeHtml(tool.name)}</strong></td><td><a href="${escapeHtml(tool.url)}" target="_blank" style="color:#00d4ff;">${escapeHtml(tool.url.substring(0,40))}</a></td><td>${escapeHtml(tool.description?.substring(0,60))||'No description'}</td><td>${cat.icon} ${cat.name}</td><td>${escapeHtml(tool.submitted_by)}</td><td>${new Date(tool.submitted_at).toLocaleDateString()}</td><td><button class="btn-small approve-tool" data-id="${tool.id}" style="background:#10b981;color:white;"><i class="fas fa-check"></i> Approve</button> <button class="btn-small reject-tool" data-id="${tool.id}" style="background:#ef4444;color:white;"><i class="fas fa-times"></i> Reject</button></td></tr>`; }).join(''); document.querySelectorAll('.approve-tool').forEach(btn=>btn.addEventListener('click',()=>this.approveTool(parseInt(btn.dataset.id)))); document.querySelectorAll('.reject-tool').forEach(btn=>btn.addEventListener('click',()=>this.rejectTool(parseInt(btn.dataset.id)))); document.querySelectorAll('.pending-checkbox').forEach(cb=>cb.addEventListener('change',()=>{ const id=parseInt(cb.dataset.id); if(cb.checked) this.selectedPending.add(id); else this.selectedPending.delete(id); this.updateSelectAllPending(); })); this.updateSelectAllPending(); }
+            renderPendingTable(){ const tbody=document.getElementById('pendingTableBody'); const search=document.getElementById('pendingSearch').value.toLowerCase(); let filtered=this.pendingTools.filter(t=>!search||t.name.toLowerCase().includes(search)); if(!filtered.length){tbody.innerHTML='<table><td colspan="9" style="text-align:center;">No pending tools found</td></tr>';return;} tbody.innerHTML=filtered.map(tool=>{ const cat=categoryMap[tool.category]||{icon:'📦',name:tool.category||'Uncategorized'}; return `<tr><td><input type="checkbox" class="pending-checkbox" data-id="${tool.id}" ${this.selectedPending.has(tool.id)?'checked':''}></td><td>${tool.id}</td><td><strong>${escapeHtml(tool.name)}</strong></td><td><a href="${escapeHtml(tool.url)}" target="_blank" style="color:#00d4ff;">${escapeHtml(tool.url.substring(0,40))}</a></td><td>${escapeHtml(tool.description?.substring(0,60))||'No description'}</td><td>${cat.icon} ${cat.name}</td><td>${escapeHtml(tool.submitted_by)}</td><td>${new Date(tool.submitted_at).toLocaleDateString()}</td><td><button class="btn-small approve-tool" data-id="${tool.id}" style="background:#10b981;color:white;"><i class="fas fa-check"></i> Approve</button> <button class="btn-small reject-tool" data-id="${tool.id}" style="background:#ef4444;color:white;"><i class="fas fa-times"></i> Reject</button></td></tr>`; }).join(''); document.querySelectorAll('.approve-tool').forEach(btn=>btn.addEventListener('click',()=>this.approveTool(parseInt(btn.dataset.id)))); document.querySelectorAll('.reject-tool').forEach(btn=>btn.addEventListener('click',()=>this.rejectTool(parseInt(btn.dataset.id)))); document.querySelectorAll('.pending-checkbox').forEach(cb=>cb.addEventListener('change',()=>{ const id=parseInt(cb.dataset.id); if(cb.checked) this.selectedPending.add(id); else this.selectedPending.delete(id); this.updateSelectAllPending(); })); this.updateSelectAllPending(); }
             
             updateSelectAllPending(){ const all=document.querySelectorAll('.pending-checkbox'); const allChecked=all.length===this.selectedPending.size; document.getElementById('selectAllPending').checked=allChecked; }
             
@@ -1333,7 +1399,7 @@
             
             filterCards(){ const search = document.getElementById('cardSearch')?.value.toLowerCase() || ''; const cat = document.getElementById('cardCategoryFilter')?.value || ''; this.filteredCards = this.allCards.filter(c => (!search || c.title.toLowerCase().includes(search)) && (!cat || c.category === cat)); this.renderCardsTable(); }
             
-            renderCardsTable(){ const tbody = document.getElementById('cardsTableBody'); if(!this.filteredCards.length){ tbody.innerHTML = '<td><td colspan="8" style="text-align:center;">No cards found</td></tr>'; return; } tbody.innerHTML = this.filteredCards.map(card => `<tr><td>${card.id}</td><td style="font-size:1.5rem;"><i class="fas ${escapeHtml(card.icon)}"></i></td><td><strong>${escapeHtml(card.title)}</strong></td><td>${escapeHtml(card.description)}</td><td>${escapeHtml(card.category)}</td><td><a href="${escapeHtml(card.link)}" target="_blank" style="color:#00d4ff;">${escapeHtml(card.link.substring(0,30))}</a></td><td>${card.order}</td><td><button class="btn-small edit-card" data-id="${card.id}" title="Edit"><i class="fas fa-edit"></i></button> <button class="btn-small delete-card" data-id="${card.id}" title="Delete"><i class="fas fa-trash"></i></button></td></tr>`).join(''); document.querySelectorAll('.edit-card').forEach(btn=>btn.addEventListener('click',()=>this.openCardModal(parseInt(btn.dataset.id)))); document.querySelectorAll('.delete-card').forEach(btn=>btn.addEventListener('click',()=>this.deleteCard(parseInt(btn.dataset.id)))); }
+            renderCardsTable(){ const tbody = document.getElementById('cardsTableBody'); if(!this.filteredCards.length){ tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No cards found</td></tr>'; return; } tbody.innerHTML = this.filteredCards.map(card => `<tr><td>${card.id}</td><td style="font-size:1.5rem;"><i class="fas ${escapeHtml(card.icon)}"></i></td><td><strong>${escapeHtml(card.title)}</strong></td><td>${escapeHtml(card.description)}</td><td>${escapeHtml(card.category)}</td><td><a href="${escapeHtml(card.link)}" target="_blank" style="color:#00d4ff;">${escapeHtml(card.link.substring(0,30))}</a></td><td>${card.order}</td><td><button class="btn-small edit-card" data-id="${card.id}" title="Edit"><i class="fas fa-edit"></i></button> <button class="btn-small delete-card" data-id="${card.id}" title="Delete"><i class="fas fa-trash"></i></button></td></tr>`).join(''); document.querySelectorAll('.edit-card').forEach(btn=>btn.addEventListener('click',()=>this.openCardModal(parseInt(btn.dataset.id)))); document.querySelectorAll('.delete-card').forEach(btn=>btn.addEventListener('click',()=>this.deleteCard(parseInt(btn.dataset.id)))); }
             
             openCardModal(id=null){ const modal = document.getElementById('cardModal'); if(id){ const card = this.allCards.find(c=>c.id===id); if(card){ document.getElementById('cardModalTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Card'; document.getElementById('cardId').value = card.id; document.getElementById('cardTitle').value = card.title; document.getElementById('cardDesc').value = card.description; document.getElementById('cardIcon').value = card.icon; document.getElementById('cardLink').value = card.link; document.getElementById('cardCategory').value = card.category; document.getElementById('cardOrder').value = card.order; this.updateCardIconPreview(card.icon); } } else { document.getElementById('cardModalTitle').innerHTML = '<i class="fas fa-plus"></i> Add New Card'; document.getElementById('cardId').value = ''; document.getElementById('cardTitle').value = ''; document.getElementById('cardDesc').value = ''; document.getElementById('cardIcon').value = 'fa-cube'; document.getElementById('cardLink').value = ''; document.getElementById('cardCategory').value = 'featured'; document.getElementById('cardOrder').value = '0'; this.updateCardIconPreview('fa-cube'); } modal.classList.add('active'); }
             
@@ -1349,7 +1415,7 @@
             
             filterFeedback(){ const search = document.getElementById('feedbackSearch')?.value.toLowerCase() || ''; const rating = document.getElementById('ratingFilter')?.value || ''; this.filteredFeedback = this.allFeedback.filter(f => { if(search && !f.username.toLowerCase().includes(search) && !f.email.toLowerCase().includes(search) && !(f.comment && f.comment.toLowerCase().includes(search))) return false; if(rating && f.rating != rating) return false; return true; }); this.renderFeedbackTable(); }
             
-            renderFeedbackTable(){ const tbody = document.getElementById('feedbackTableBody'); if(!this.filteredFeedback.length){ tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No feedback found</td></tr>'; return; } const renderStars = (rating) => { let stars = ''; for(let i=1;i<=5;i++) stars += i<=rating ? '<i class="fas fa-star"></i>' : '<i class="far fa-star"></i>'; return `<span class="rating-stars-display">${stars}</span>`; }; tbody.innerHTML = this.filteredFeedback.map(f => `<tr><td>${f.id}</td><td><strong>${escapeHtml(f.username)}</strong><br><small>${escapeHtml(f.email)}</small></td><td>${renderStars(f.rating)} (${f.rating})</td><td>${escapeHtml(f.comment) || '<em>No comment</em>'}</td><td>${new Date(f.created_at).toLocaleString()}</td></tr>`).join(''); }
+            renderFeedbackTable(){ const tbody = document.getElementById('feedbackTableBody'); if(!this.filteredFeedback.length){ tbody.innerHTML = '<td><td colspan="5" style="text-align:center;">No feedback found</td></tr>'; return; } const renderStars = (rating) => { let stars = ''; for(let i=1;i<=5;i++) stars += i<=rating ? '<i class="fas fa-star"></i>' : '<i class="far fa-star"></i>'; return `<span class="rating-stars-display">${stars}</span>`; }; tbody.innerHTML = this.filteredFeedback.map(f => `<tr><td>${f.id}</td><td><strong>${escapeHtml(f.username)}</strong><br><small>${escapeHtml(f.email)}</small></td><td>${renderStars(f.rating)} (${f.rating})</td><td>${escapeHtml(f.comment) || '<em>No comment</em>'}</td><td>${new Date(f.created_at).toLocaleString()}</td>`).join(''); }
             
             openAnnouncementModal(){ document.getElementById('announceTitle').value = ''; document.getElementById('announceContent').value = ''; document.getElementById('announcementModal').classList.add('active'); }
             
@@ -1409,7 +1475,7 @@
             
             exportAuditLog(){ const data = JSON.stringify(this.auditLog, null, 2); const blob = new Blob([data], {type:'application/json'}); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `audit_log_${new Date().toISOString().split('T')[0]}.json`; a.click(); showToast('Audit log exported'); }
             
-            loadIpBans(){ this.ipBans = this.ipBans.length ? this.ipBans : [ { id:1, ip:'45.22.105.77', reason:'Brute force attack', banned_by:'alex_dev', date: new Date(Date.now()-86400000).toISOString() }, { id:2, ip:'192.168.99.10', reason:'Spam submissions', banned_by:'mod_sam', date: new Date(Date.now()-172800000).toISOString() }, ]; const tbody = document.getElementById('ipBanTableBody'); tbody.innerHTML = this.ipBans.map(b=>`<tr><td style="font-family:monospace;color:#00d4ff;">${escapeHtml(b.ip)}</td><td>${escapeHtml(b.reason||'No reason')}</td><td>${escapeHtml(b.banned_by||'Admin')}</td><td>${new Date(b.date).toLocaleDateString()}</td><td><button class="btn-danger btn-small" onclick="window.adminDashboard.removeIpBan(${b.id})"><i class="fas fa-times"></i> Unban</button></td>`).join(''); }
+            loadIpBans(){ this.ipBans = this.ipBans.length ? this.ipBans : [ { id:1, ip:'45.22.105.77', reason:'Brute force attack', banned_by:'alex_dev', date: new Date(Date.now()-86400000).toISOString() }, { id:2, ip:'192.168.99.10', reason:'Spam submissions', banned_by:'mod_sam', date: new Date(Date.now()-172800000).toISOString() }, ]; const tbody = document.getElementById('ipBanTableBody'); tbody.innerHTML = this.ipBans.map(b=>`<tr><td style="font-family:monospace;color:#00d4ff;">${escapeHtml(b.ip)}</td><td>${escapeHtml(b.reason||'No reason')}</td><td>${escapeHtml(b.banned_by||'Admin')}</td><td>${new Date(b.date).toLocaleDateString()}</td><td><button class="btn-danger btn-small" onclick="window.adminDashboard.removeIpBan(${b.id})"><i class="fas fa-times"></i> Unban</button></td></tr>`).join(''); }
             
             addIpBan(){ const ip = document.getElementById('newBanIp').value.trim(); const reason = document.getElementById('newBanReason').value.trim(); if(!ip){ showToast('Enter an IP address','error'); return; } const newBan = { id: Date.now(), ip, reason, banned_by: this.currentUser?.username||'admin', date: new Date().toISOString() }; this.ipBans.unshift(newBan); this.loadIpBans(); document.getElementById('newBanIp').value=''; document.getElementById('newBanReason').value=''; showToast(`IP ${ip} banned`,'success'); this.addAuditLogEntry('ban', this.currentUser?.username||'admin', `IP banned: ${ip}`); try { apiCall('/api/admin/ip-bans', { method:'POST', body:JSON.stringify({ip, reason}) }); } catch(e){} }
             
@@ -1463,13 +1529,18 @@
             
             async impersonateUser(userId, username){ document.getElementById('impersonateModal').classList.remove('active'); try { await apiCall(`/api/admin/impersonate/${userId}`, { method:'POST' }); showToast(`Now logged in as ${username}. Redirecting...`, 'warning'); setTimeout(()=>window.location.href='/', 1500); } catch(e){ showToast(`Impersonation API not available (demo). Would redirect as ${username}.`, 'info'); } this.addAuditLogEntry('login', this.currentUser?.username||'admin', `Impersonated user: ${username} (ID: ${userId})`); }
 
-            // ========== BUSINESS DIRECTORY MANAGEMENT (API‑based) ==========
+            // ========== ENHANCED BUSINESS DIRECTORY MANAGEMENT ==========
             async loadBusinesses() {
                 try {
-                    const pendingRes = await apiCall('/api/admin/businesses/pending');
-                    this.pendingBusinesses = pendingRes.businesses || pendingRes.data || [];
-                    const approvedRes = await apiCall('/api/admin/businesses/approved');
-                    this.approvedBusinesses = approvedRes.businesses || approvedRes.data || [];
+                    showToast('Loading businesses...', 'info');
+                    const [pendingRes, approvedRes] = await Promise.all([
+                        apiCall('/api/admin/businesses/pending').catch(() => ({ businesses: [] })),
+                        apiCall('/api/admin/businesses/approved').catch(() => ({ businesses: [] }))
+                    ]);
+                    this.pendingBusinesses = (pendingRes.businesses || pendingRes.data || []).map(b => ({ ...b, approved: false }));
+                    this.approvedBusinesses = (approvedRes.businesses || approvedRes.data || []).map(b => ({ ...b, approved: true }));
+                    
+                    this.updateBusinessStats();
                     this.renderPendingBusinesses();
                     this.renderApprovedBusinesses();
                     this.updateBusinessCityFilter();
@@ -1483,22 +1554,50 @@
                 }
             }
             
+            updateBusinessStats() {
+                const total = this.pendingBusinesses.length + this.approvedBusinesses.length;
+                const approved = this.approvedBusinesses.length;
+                const pending = this.pendingBusinesses.length;
+                const featured = this.approvedBusinesses.filter(b => b.featured).length;
+                const verified = this.approvedBusinesses.filter(b => b.verified).length;
+                
+                document.getElementById('businessTotalCount').innerText = total;
+                document.getElementById('businessApprovedCount').innerText = approved;
+                document.getElementById('businessPendingCount').innerText = pending;
+                document.getElementById('businessFeaturedCount').innerText = featured;
+                document.getElementById('businessVerifiedCount').innerText = verified;
+                document.getElementById('pendingCountBadge').innerText = pending;
+                document.getElementById('approvedCountBadge').innerText = approved;
+            }
+            
             renderPendingBusinesses() {
                 const tbody = document.getElementById('pendingBusinessesBody');
                 if (!tbody) return;
                 const search = document.getElementById('businessSearch')?.value.toLowerCase() || '';
-                const statusFilter = document.getElementById('businessStatusFilter')?.value || 'all';
                 const catFilter = document.getElementById('businessCategoryFilter')?.value || 'all';
                 const cityFilter = document.getElementById('businessCityFilter')?.value || 'all';
                 let filtered = this.pendingBusinesses.filter(b => {
-                    if (statusFilter !== 'all' && statusFilter !== 'pending') return false;
                     if (catFilter !== 'all' && b.category !== catFilter) return false;
                     if (cityFilter !== 'all' && b.city !== cityFilter) return false;
                     if (search && !b.name.toLowerCase().includes(search) && !(b.city && b.city.toLowerCase().includes(search))) return false;
                     return true;
                 });
                 if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No pending businesses found</td></tr>'; return; }
-                tbody.innerHTML = filtered.map(b => `<tr data-id="${b.id}"><td><input type="checkbox" class="pending-business-checkbox" data-id="${b.id}" ${this.selectedPendingBusinesses.has(b.id) ? 'checked' : ''}></td><td>${b.id}</td><td><strong>${escapeHtml(b.name)}</strong></td><td><span class="business-type-badge">${escapeHtml(b.type)}</span></td><td>${escapeHtml(b.category)}</td><td>${escapeHtml(b.city || '—')}</td><td>${new Date(b.created_at).toLocaleDateString()}</td><td><button class="btn-small approve-business" data-id="${b.id}"><i class="fas fa-check-circle"></i> Approve</button> <button class="btn-small reject-business" data-id="${b.id}"><i class="fas fa-times-circle"></i> Reject</button> <button class="btn-small edit-business" data-id="${b.id}" data-status="pending"><i class="fas fa-edit"></i> Edit</button> <button class="btn-small view-business-detail" data-id="${b.id}" data-status="pending"><i class="fas fa-eye"></i> View</button></td></tr>`).join('');
+                tbody.innerHTML = filtered.map(b => `<tr data-id="${b.id}">
+                    <td><input type="checkbox" class="pending-business-checkbox" data-id="${b.id}" ${this.selectedPendingBusinesses.has(b.id) ? 'checked' : ''}></td>
+                    <td>${b.id}</td>
+                    <td><strong>${escapeHtml(b.name)}</strong></td>
+                    <td><span class="business-type-badge">${escapeHtml(b.type)}</span></td>
+                    <td>${escapeHtml(b.category)}</td>
+                    <td>${escapeHtml(b.city || '—')}</td>
+                    <td>${new Date(b.created_at).toLocaleDateString()}</td>
+                    <td>
+                        <button class="btn-small approve-business" data-id="${b.id}" style="background:#10b981;color:white;"><i class="fas fa-check"></i> Approve</button>
+                        <button class="btn-small reject-business" data-id="${b.id}" style="background:#ef4444;color:white;"><i class="fas fa-times"></i> Reject</button>
+                        <button class="btn-small edit-business" data-id="${b.id}" data-status="pending"><i class="fas fa-edit"></i> Edit</button>
+                        <button class="btn-small view-business-detail" data-id="${b.id}" data-status="pending"><i class="fas fa-eye"></i> View</button>
+                    </td>
+                </tr>`).join('');
                 this.attachBusinessEvents();
                 this.updateSelectAllPendingBusinesses();
             }
@@ -1507,20 +1606,62 @@
                 const tbody = document.getElementById('approvedBusinessesBody');
                 if (!tbody) return;
                 const search = document.getElementById('businessSearch')?.value.toLowerCase() || '';
-                const statusFilter = document.getElementById('businessStatusFilter')?.value || 'all';
                 const catFilter = document.getElementById('businessCategoryFilter')?.value || 'all';
                 const cityFilter = document.getElementById('businessCityFilter')?.value || 'all';
                 let filtered = this.approvedBusinesses.filter(b => {
-                    if (statusFilter !== 'all' && statusFilter !== 'approved') return false;
                     if (catFilter !== 'all' && b.category !== catFilter) return false;
                     if (cityFilter !== 'all' && b.city !== cityFilter) return false;
                     if (search && !b.name.toLowerCase().includes(search) && !(b.city && b.city.toLowerCase().includes(search))) return false;
                     return true;
                 });
-                if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">No approved businesses found</td></tr>'; return; }
-                tbody.innerHTML = filtered.map(b => `<tr data-id="${b.id}"><td><input type="checkbox" class="approved-business-checkbox" data-id="${b.id}" ${this.selectedApprovedBusinesses.has(b.id) ? 'checked' : ''}></td><td>${b.id}</td><td><strong>${escapeHtml(b.name)}</strong></td><td><span class="business-type-badge">${escapeHtml(b.type)}</span></td><td>${escapeHtml(b.category)}</td><td>${escapeHtml(b.city || '—')}</td><td><i class="fas ${b.verified ? 'fa-check-circle business-verified' : 'fa-times-circle'}" style="cursor:pointer;" title="Toggle Verified" onclick="window.adminDashboard.toggleBusinessVerified('${b.id}')"></i> ${b.verified ? 'Verified' : 'Not'}</td><td><i class="fas ${b.featured ? 'fa-star business-featured' : 'fa-star-o'}" style="cursor:pointer;" title="Toggle Featured" onclick="window.adminDashboard.toggleBusinessFeatured('${b.id}')"></i> ${b.featured ? 'Featured' : 'Standard'}</td><td><button class="btn-small edit-business" data-id="${b.id}" data-status="approved"><i class="fas fa-edit"></i> Edit</button> <button class="btn-small delete-business" data-id="${b.id}"><i class="fas fa-trash"></i> Delete</button> <button class="btn-small view-business-detail" data-id="${b.id}" data-status="approved"><i class="fas fa-eye"></i> View</button></td></tr>`).join('');
+                if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="11" style="text-align:center;">No approved businesses found</td></tr>'; return; }
+                tbody.innerHTML = filtered.map(b => `<tr data-id="${b.id}">
+                    <td><input type="checkbox" class="approved-business-checkbox" data-id="${b.id}" ${this.selectedApprovedBusinesses.has(b.id) ? 'checked' : ''}></td>
+                    <td>${b.id}</td>
+                    <td><strong>${escapeHtml(b.name)}</strong></td>
+                    <td><span class="business-type-badge">${escapeHtml(b.type)}</span></td>
+                    <td>${escapeHtml(b.category)}</td>
+                    <td>${escapeHtml(b.city || '—')}</td>
+                    <td><i class="fas ${b.verified ? 'fa-check-circle business-verified' : 'fa-times-circle'}" style="cursor:pointer;" title="Toggle Verified" onclick="window.adminDashboard.toggleBusinessVerified('${b.id}')"></i> ${b.verified ? 'Verified' : 'Not'}</td>
+                    <td><i class="fas ${b.featured ? 'fa-star business-featured' : 'fa-star-o'}" style="cursor:pointer;" title="Toggle Featured" onclick="window.adminDashboard.toggleBusinessFeatured('${b.id}')"></i> ${b.featured ? 'Featured' : 'Standard'}</td>
+                    <td>${b.views || 0}</td>
+                    <td>${b.avg_rating ? b.avg_rating.toFixed(1) : 'N/A'} ★</td>
+                    <td>
+                        <button class="btn-small edit-business" data-id="${b.id}" data-status="approved"><i class="fas fa-edit"></i> Edit</button>
+                        <button class="btn-small delete-business" data-id="${b.id}" style="background:#ef4444;color:white;"><i class="fas fa-trash"></i> Delete</button>
+                        <button class="btn-small view-business-detail" data-id="${b.id}" data-status="approved"><i class="fas fa-eye"></i> View</button>
+                    </td>
+                </tr>`).join('');
                 this.attachBusinessEvents();
                 this.updateSelectAllApprovedBusinesses();
+                
+                // Render card view if active
+                if (this.businessViewMode === 'card') {
+                    this.renderBusinessCardView(filtered);
+                }
+            }
+            
+            renderBusinessCardView(businesses) {
+                const container = document.getElementById('businessCardView');
+                if (!container) return;
+                container.innerHTML = businesses.map(b => `
+                    <div class="biz-card" style="background:var(--card); border-radius:16px; overflow:hidden;">
+                        <div style="padding:1rem; background:linear-gradient(135deg, #7c6cf0, #f06c8a);">
+                            <div style="font-size:2rem;">${EMOJIS[b.type] || '🏢'}</div>
+                        </div>
+                        <div style="padding:1rem;">
+                            <h4>${escapeHtml(b.name)}</h4>
+                            <p style="font-size:0.8rem; opacity:0.7;">${escapeHtml(b.category)} · ${escapeHtml(b.city)}</p>
+                            <p style="font-size:0.75rem;">${escapeHtml((b.description || b.desc || '').substring(0, 100))}...</p>
+                            <div style="display:flex; gap:0.5rem; margin-top:1rem;">
+                                <button class="btn-small edit-business" data-id="${b.id}" data-status="approved"><i class="fas fa-edit"></i> Edit</button>
+                                <button class="btn-small delete-business" data-id="${b.id}" style="background:#ef4444;color:white;"><i class="fas fa-trash"></i> Delete</button>
+                                <button class="btn-small view-business-detail" data-id="${b.id}" data-status="approved"><i class="fas fa-eye"></i> View</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                this.attachBusinessEvents();
             }
             
             attachBusinessEvents() {
@@ -1542,23 +1683,38 @@
             
             async approveBusiness(bizId, showConfirm = true) {
                 if (showConfirm && !confirm('Approve this business? The user will receive credits and email notification.')) return;
-                try { await apiCall(`/api/admin/businesses/${bizId}/approve`, { method: 'PUT' }); showToast('Business approved successfully', 'success'); this.addAuditLogEntry('approve', this.currentUser?.username || 'admin', `Approved business ID: ${bizId}`); await this.loadBusinesses(); } catch (err) { showToast('Approval failed: ' + err.message, 'error'); }
+                try { 
+                    await apiCall(`/api/admin/businesses/${bizId}/approve`, { method: 'PUT' }); 
+                    showToast('Business approved successfully', 'success'); 
+                    this.addAuditLogEntry('approve', this.currentUser?.username || 'admin', `Approved business ID: ${bizId}`); 
+                    await this.loadBusinesses(); 
+                } catch (err) { showToast('Approval failed: ' + err.message, 'error'); }
             }
             
             async rejectBusiness(bizId, showConfirm = true) {
                 if (showConfirm && !confirm('Reject this business submission?')) return;
-                try { await apiCall(`/api/admin/businesses/${bizId}/reject`, { method: 'DELETE' }); showToast('Business rejected', 'warning'); this.addAuditLogEntry('delete', this.currentUser?.username || 'admin', `Rejected business ID: ${bizId}`); await this.loadBusinesses(); } catch (err) { showToast('Rejection failed: ' + err.message, 'error'); }
+                try { 
+                    await apiCall(`/api/admin/businesses/${bizId}/reject`, { method: 'DELETE' }); 
+                    showToast('Business rejected', 'warning'); 
+                    this.addAuditLogEntry('delete', this.currentUser?.username || 'admin', `Rejected business ID: ${bizId}`); 
+                    await this.loadBusinesses(); 
+                } catch (err) { showToast('Rejection failed: ' + err.message, 'error'); }
             }
             
             async deleteBusiness(bizId) {
                 if (!confirm('Delete this business permanently?')) return;
-                try { await apiCall(`/api/admin/businesses/${bizId}`, { method: 'DELETE' }); showToast('Business deleted', 'info'); this.addAuditLogEntry('delete', this.currentUser?.username || 'admin', `Deleted business ID: ${bizId}`); await this.loadBusinesses(); } catch (err) { showToast('Delete failed: ' + err.message, 'error'); }
+                try { 
+                    await apiCall(`/api/admin/businesses/${bizId}`, { method: 'DELETE' }); 
+                    showToast('Business deleted', 'info'); 
+                    this.addAuditLogEntry('delete', this.currentUser?.username || 'admin', `Deleted business ID: ${bizId}`); 
+                    await this.loadBusinesses(); 
+                } catch (err) { showToast('Delete failed: ' + err.message, 'error'); }
             }
             
             async openBusinessEditModal(bizId, status) {
                 let biz = null;
-                if (status === 'pending') biz = this.pendingBusinesses.find(b => b.id === bizId);
-                else biz = this.approvedBusinesses.find(b => b.id === bizId);
+                if (status === 'pending') biz = this.pendingBusinesses.find(b => b.id == bizId);
+                else biz = this.approvedBusinesses.find(b => b.id == bizId);
                 if (!biz) return;
                 document.getElementById('editBusinessId').value = biz.id;
                 document.getElementById('editBusinessStatus').value = status;
@@ -1580,42 +1736,189 @@
             async saveBusinessEdit() {
                 const id = document.getElementById('editBusinessId').value;
                 const status = document.getElementById('editBusinessStatus').value;
-                const updatedData = { name: document.getElementById('editBusinessName').value.trim(), type: document.getElementById('editBusinessType').value, category: document.getElementById('editBusinessCategory').value, desc: document.getElementById('editBusinessDesc').value.trim(), address: document.getElementById('editBusinessAddress').value.trim(), city: document.getElementById('editBusinessCity').value.trim(), phone: document.getElementById('editBusinessPhone').value.trim(), email: document.getElementById('editBusinessEmail').value.trim(), website: document.getElementById('editBusinessWebsite').value.trim(), whatsapp: document.getElementById('editBusinessWhatsapp').value.trim(), verified: document.getElementById('editBusinessVerified').value === 'true', featured: document.getElementById('editBusinessFeatured').value === 'true' };
-                try { await apiCall(`/api/admin/businesses/${id}`, { method: 'PUT', body: updatedData }); showToast('Business updated successfully', 'success'); this.addAuditLogEntry('edit', this.currentUser?.username || 'admin', `Updated business ID: ${id}`); document.getElementById('businessEditModal').classList.remove('active'); await this.loadBusinesses(); } catch (err) { showToast('Update failed: ' + err.message, 'error'); }
+                const updatedData = { 
+                    name: document.getElementById('editBusinessName').value.trim(), 
+                    type: document.getElementById('editBusinessType').value, 
+                    category: document.getElementById('editBusinessCategory').value, 
+                    desc: document.getElementById('editBusinessDesc').value.trim(), 
+                    address: document.getElementById('editBusinessAddress').value.trim(), 
+                    city: document.getElementById('editBusinessCity').value.trim(), 
+                    phone: document.getElementById('editBusinessPhone').value.trim(), 
+                    email: document.getElementById('editBusinessEmail').value.trim(), 
+                    website: document.getElementById('editBusinessWebsite').value.trim(), 
+                    whatsapp: document.getElementById('editBusinessWhatsapp').value.trim(), 
+                    verified: document.getElementById('editBusinessVerified').value === 'true', 
+                    featured: document.getElementById('editBusinessFeatured').value === 'true' 
+                };
+                try { 
+                    await apiCall(`/api/admin/businesses/${id}`, { method: 'PUT', body: updatedData }); 
+                    showToast('Business updated successfully', 'success'); 
+                    this.addAuditLogEntry('edit', this.currentUser?.username || 'admin', `Updated business ID: ${id}`); 
+                    document.getElementById('businessEditModal').classList.remove('active'); 
+                    await this.loadBusinesses(); 
+                } catch (err) { showToast('Update failed: ' + err.message, 'error'); }
             }
             
             viewBusinessDetail(bizId, status) {
                 let biz = null;
-                if (status === 'pending') biz = this.pendingBusinesses.find(b => b.id === bizId);
-                else biz = this.approvedBusinesses.find(b => b.id === bizId);
+                if (status === 'pending') biz = this.pendingBusinesses.find(b => b.id == bizId);
+                else biz = this.approvedBusinesses.find(b => b.id == bizId);
                 if (!biz) return;
-                const content = `<p><strong>Name:</strong> ${escapeHtml(biz.name)}</p><p><strong>Type:</strong> ${escapeHtml(biz.type)}</p><p><strong>Category:</strong> ${escapeHtml(biz.category)}</p><p><strong>Description:</strong> ${escapeHtml(biz.description || biz.desc)}</p><p><strong>Address:</strong> ${escapeHtml(biz.address)}</p><p><strong>City:</strong> ${escapeHtml(biz.city)}</p><p><strong>Phone:</strong> ${escapeHtml(biz.phone)}</p><p><strong>Email:</strong> ${escapeHtml(biz.email)}</p><p><strong>Website:</strong> <a href="${escapeHtml(biz.website)}" target="_blank">${escapeHtml(biz.website)}</a></p><p><strong>Verified:</strong> ${biz.verified ? 'Yes' : 'No'}</p><p><strong>Featured:</strong> ${biz.featured ? 'Yes' : 'No'}</p><p><strong>Submitted:</strong> ${new Date(biz.created_at).toLocaleString()}</p>`;
+                const content = `
+                    <p><strong>Name:</strong> ${escapeHtml(biz.name)}</p>
+                    <p><strong>Type:</strong> ${escapeHtml(biz.type)}</p>
+                    <p><strong>Category:</strong> ${escapeHtml(biz.category)}</p>
+                    <p><strong>Description:</strong> ${escapeHtml(biz.description || biz.desc)}</p>
+                    <p><strong>Address:</strong> ${escapeHtml(biz.address)}</p>
+                    <p><strong>City:</strong> ${escapeHtml(biz.city)}</p>
+                    <p><strong>Phone:</strong> ${escapeHtml(biz.phone)}</p>
+                    <p><strong>Email:</strong> ${escapeHtml(biz.email)}</p>
+                    <p><strong>Website:</strong> <a href="${escapeHtml(biz.website)}" target="_blank">${escapeHtml(biz.website)}</a></p>
+                    <p><strong>Verified:</strong> ${biz.verified ? 'Yes' : 'No'}</p>
+                    <p><strong>Featured:</strong> ${biz.featured ? 'Yes' : 'No'}</p>
+                    <p><strong>Views:</strong> ${biz.views || 0}</p>
+                    <p><strong>Rating:</strong> ${biz.avg_rating ? biz.avg_rating.toFixed(1) : 'N/A'} ★</p>
+                    <p><strong>Submitted:</strong> ${new Date(biz.created_at).toLocaleString()}</p>
+                `;
                 document.getElementById('businessDetailContent').innerHTML = content;
                 document.getElementById('businessDetailModal').classList.add('active');
             }
             
-            async toggleBusinessVerified(bizId) { try { await apiCall(`/api/admin/businesses/${bizId}/toggle-verified`, { method: 'PUT' }); showToast('Verified status toggled', 'info'); await this.loadBusinesses(); } catch (err) { showToast('Failed to toggle verified status', 'error'); } }
+            async toggleBusinessVerified(bizId) { 
+                try { await apiCall(`/api/admin/businesses/${bizId}/toggle-verified`, { method: 'PUT' }); showToast('Verified status toggled', 'info'); await this.loadBusinesses(); } catch (err) { showToast('Failed to toggle verified status', 'error'); } 
+            }
             
-            async toggleBusinessFeatured(bizId) { try { await apiCall(`/api/admin/businesses/${bizId}/toggle-featured`, { method: 'PUT' }); showToast('Featured status toggled', 'info'); await this.loadBusinesses(); } catch (err) { showToast('Failed to toggle featured status', 'error'); } }
+            async toggleBusinessFeatured(bizId) { 
+                try { await apiCall(`/api/admin/businesses/${bizId}/toggle-featured`, { method: 'PUT' }); showToast('Featured status toggled', 'info'); await this.loadBusinesses(); } catch (err) { showToast('Failed to toggle featured status', 'error'); } 
+            }
             
-            updateSelectAllPendingBusinesses() { const all = document.querySelectorAll('.pending-business-checkbox'); const allChecked = all.length === this.selectedPendingBusinesses.size; const header = document.getElementById('selectAllPendingBusinessesHeader'); const master = document.getElementById('selectAllPendingBusinesses'); if (header) header.checked = allChecked; if (master) master.checked = allChecked; }
+            updateSelectAllPendingBusinesses() { 
+                const all = document.querySelectorAll('.pending-business-checkbox'); 
+                const allChecked = all.length === this.selectedPendingBusinesses.size; 
+                const header = document.getElementById('selectAllPendingBusinessesHeader'); 
+                const master = document.getElementById('selectAllPendingBusinesses'); 
+                if (header) header.checked = allChecked; 
+                if (master) master.checked = allChecked; 
+            }
             
-            updateSelectAllApprovedBusinesses() { const all = document.querySelectorAll('.approved-business-checkbox'); const allChecked = all.length === this.selectedApprovedBusinesses.size; const header = document.getElementById('selectAllApprovedBusinessesHeader'); const master = document.getElementById('selectAllApprovedBusinesses'); if (header) header.checked = allChecked; if (master) master.checked = allChecked; }
+            updateSelectAllApprovedBusinesses() { 
+                const all = document.querySelectorAll('.approved-business-checkbox'); 
+                const allChecked = all.length === this.selectedApprovedBusinesses.size; 
+                const header = document.getElementById('selectAllApprovedBusinessesHeader'); 
+                const master = document.getElementById('selectAllApprovedBusinesses'); 
+                if (header) header.checked = allChecked; 
+                if (master) master.checked = allChecked; 
+            }
             
-            async bulkApproveBusinesses() { if (this.selectedPendingBusinesses.size === 0) { showToast('No pending businesses selected', 'warning'); return; } if (!confirm(`Approve ${this.selectedPendingBusinesses.size} business(es)?`)) return; for (let id of this.selectedPendingBusinesses) { await this.approveBusiness(id, false); } this.selectedPendingBusinesses.clear(); await this.loadBusinesses(); showToast('Bulk approve completed', 'success'); }
+            async bulkApproveBusinesses() { 
+                if (this.selectedPendingBusinesses.size === 0) { showToast('No pending businesses selected', 'warning'); return; } 
+                if (!confirm(`Approve ${this.selectedPendingBusinesses.size} business(es)?`)) return; 
+                for (let id of this.selectedPendingBusinesses) { await this.approveBusiness(id, false); } 
+                this.selectedPendingBusinesses.clear(); 
+                await this.loadBusinesses(); 
+                showToast('Bulk approve completed', 'success'); 
+            }
             
-            async bulkRejectBusinesses() { if (this.selectedPendingBusinesses.size === 0) { showToast('No pending businesses selected', 'warning'); return; } if (!confirm(`Reject ${this.selectedPendingBusinesses.size} business(es)?`)) return; for (let id of this.selectedPendingBusinesses) { await this.rejectBusiness(id, false); } this.selectedPendingBusinesses.clear(); await this.loadBusinesses(); showToast('Bulk reject completed', 'warning'); }
+            async bulkRejectBusinesses() { 
+                if (this.selectedPendingBusinesses.size === 0) { showToast('No pending businesses selected', 'warning'); return; } 
+                if (!confirm(`Reject ${this.selectedPendingBusinesses.size} business(es)?`)) return; 
+                for (let id of this.selectedPendingBusinesses) { await this.rejectBusiness(id, false); } 
+                this.selectedPendingBusinesses.clear(); 
+                await this.loadBusinesses(); 
+                showToast('Bulk reject completed', 'warning'); 
+            }
             
-            async bulkDeleteApprovedBusinesses() { if (this.selectedApprovedBusinesses.size === 0) { showToast('No approved businesses selected', 'warning'); return; } if (!confirm(`Delete ${this.selectedApprovedBusinesses.size} approved business(es)? This is permanent.`)) return; for (let id of this.selectedApprovedBusinesses) { await this.deleteBusiness(id); } this.selectedApprovedBusinesses.clear(); await this.loadBusinesses(); showToast('Bulk delete completed', 'info'); }
+            async bulkDeleteApprovedBusinesses() { 
+                if (this.selectedApprovedBusinesses.size === 0) { showToast('No approved businesses selected', 'warning'); return; } 
+                if (!confirm(`Delete ${this.selectedApprovedBusinesses.size} approved business(es)? This is permanent.`)) return; 
+                for (let id of this.selectedApprovedBusinesses) { await this.deleteBusiness(id); } 
+                this.selectedApprovedBusinesses.clear(); 
+                await this.loadBusinesses(); 
+                showToast('Bulk delete completed', 'info'); 
+            }
+            
+            exportBusinessData() {
+                const allBusinesses = [...this.pendingBusinesses, ...this.approvedBusinesses];
+                if (allBusinesses.length === 0) { showToast('No data to export', 'warning'); return; }
+                const headers = ['ID', 'Name', 'Type', 'Category', 'City', 'Phone', 'Email', 'Website', 'Address', 'Verified', 'Featured', 'Status', 'Views', 'Rating', 'Created At'];
+                const rows = allBusinesses.map(b => [
+                    b.id, b.name, b.type, b.category, b.city || '', b.phone || '', b.email || '', b.website || '',
+                    b.address || '', b.verified ? 'Yes' : 'No', b.featured ? 'Yes' : 'No', b.approved ? 'Approved' : 'Pending',
+                    b.views || 0, b.avg_rating || 'N/A', new Date(b.created_at).toLocaleDateString()
+                ]);
+                const csv = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+                const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `sarveik_businesses_${new Date().toISOString().split('T')[0]}.csv`;
+                link.click();
+                showToast('Export complete', 'success');
+            }
+            
+            showBusinessStats() {
+                const total = this.pendingBusinesses.length + this.approvedBusinesses.length;
+                const approved = this.approvedBusinesses.length;
+                const pending = this.pendingBusinesses.length;
+                const featured = this.approvedBusinesses.filter(b => b.featured).length;
+                const verified = this.approvedBusinesses.filter(b => b.verified).length;
+                const totalViews = this.approvedBusinesses.reduce((sum, b) => sum + (b.views || 0), 0);
+                const avgRating = this.approvedBusinesses.reduce((sum, b) => sum + (b.avg_rating || 0), 0) / (this.approvedBusinesses.length || 1);
+                const categories = [...new Set(this.approvedBusinesses.map(b => b.category))];
+                const cities = [...new Set(this.approvedBusinesses.map(b => b.city).filter(c => c))];
+                
+                const content = `
+                    <div class="stats-grid" style="grid-template-columns: 1fr; gap: 0.75rem;">
+                        <p><strong>📊 Total Businesses:</strong> ${total}</p>
+                        <p><strong>✅ Approved:</strong> ${approved}</p>
+                        <p><strong>⏳ Pending:</strong> ${pending}</p>
+                        <p><strong>⭐ Featured:</strong> ${featured}</p>
+                        <p><strong>🔒 Verified:</strong> ${verified}</p>
+                        <p><strong>👁️ Total Views:</strong> ${totalViews.toLocaleString()}</p>
+                        <p><strong>⭐ Average Rating:</strong> ${avgRating.toFixed(1)} ★</p>
+                        <p><strong>📂 Categories:</strong> ${categories.length}</p>
+                        <p><strong>📍 Cities:</strong> ${cities.length}</p>
+                        <hr>
+                        <p><strong>📈 Approval Rate:</strong> ${total ? Math.round((approved / total) * 100) : 0}%</p>
+                        <p><strong>🎯 Featured Rate:</strong> ${approved ? Math.round((featured / approved) * 100) : 0}%</p>
+                        <p><strong>✅ Verification Rate:</strong> ${approved ? Math.round((verified / approved) * 100) : 0}%</p>
+                    </div>
+                `;
+                document.getElementById('businessStatsContent').innerHTML = content;
+                document.getElementById('businessStatsModal').classList.add('active');
+            }
             
             initBusinessEvents() {
                 document.getElementById('refreshBusinessesBtn')?.addEventListener('click', () => this.loadBusinesses());
-                document.getElementById('syncFromLocalStorageBtn')?.addEventListener('click', () => { this.loadBusinessesFromLocalStorage(); });
-                document.getElementById('forceLocalStorageMode')?.addEventListener('change', () => this.loadBusinesses());
+                document.getElementById('exportBusinessDataBtn')?.addEventListener('click', () => this.exportBusinessData());
                 document.getElementById('businessSearch')?.addEventListener('input', () => { this.renderPendingBusinesses(); this.renderApprovedBusinesses(); });
                 document.getElementById('businessStatusFilter')?.addEventListener('change', () => { this.renderPendingBusinesses(); this.renderApprovedBusinesses(); });
                 document.getElementById('businessCategoryFilter')?.addEventListener('change', () => { this.renderPendingBusinesses(); this.renderApprovedBusinesses(); });
                 document.getElementById('businessCityFilter')?.addEventListener('change', () => { this.renderPendingBusinesses(); this.renderApprovedBusinesses(); });
+                document.getElementById('businessTableViewBtn')?.addEventListener('click', () => {
+                    this.businessViewMode = 'table';
+                    document.getElementById('businessTableViewBtn').classList.add('active');
+                    document.getElementById('businessCardViewBtn').classList.remove('active');
+                    document.getElementById('approvedBusinessesContainer').style.display = 'block';
+                    document.getElementById('businessCardView').style.display = 'none';
+                    this.renderApprovedBusinesses();
+                });
+                document.getElementById('businessCardViewBtn')?.addEventListener('click', () => {
+                    this.businessViewMode = 'card';
+                    document.getElementById('businessCardViewBtn').classList.add('active');
+                    document.getElementById('businessTableViewBtn').classList.remove('active');
+                    document.getElementById('approvedBusinessesContainer').style.display = 'none';
+                    document.getElementById('businessCardView').style.display = 'grid';
+                    const search = document.getElementById('businessSearch')?.value.toLowerCase() || '';
+                    const catFilter = document.getElementById('businessCategoryFilter')?.value || 'all';
+                    const cityFilter = document.getElementById('businessCityFilter')?.value || 'all';
+                    let filtered = this.approvedBusinesses.filter(b => {
+                        if (catFilter !== 'all' && b.category !== catFilter) return false;
+                        if (cityFilter !== 'all' && b.city !== cityFilter) return false;
+                        if (search && !b.name.toLowerCase().includes(search) && !(b.city && b.city.toLowerCase().includes(search))) return false;
+                        return true;
+                    });
+                    this.renderBusinessCardView(filtered);
+                });
                 document.getElementById('selectAllPendingBusinesses')?.addEventListener('change', (e) => { const isChecked = e.target.checked; document.querySelectorAll('.pending-business-checkbox').forEach(cb => { cb.checked = isChecked; const id = cb.dataset.id; if (isChecked) this.selectedPendingBusinesses.add(id); else this.selectedPendingBusinesses.delete(id); }); this.updateSelectAllPendingBusinesses(); });
                 document.getElementById('selectAllPendingBusinessesHeader')?.addEventListener('change', (e) => { const isChecked = e.target.checked; document.querySelectorAll('.pending-business-checkbox').forEach(cb => { cb.checked = isChecked; const id = cb.dataset.id; if (isChecked) this.selectedPendingBusinesses.add(id); else this.selectedPendingBusinesses.delete(id); }); this.updateSelectAllPendingBusinesses(); });
                 document.getElementById('selectAllApprovedBusinesses')?.addEventListener('change', (e) => { const isChecked = e.target.checked; document.querySelectorAll('.approved-business-checkbox').forEach(cb => { cb.checked = isChecked; const id = cb.dataset.id; if (isChecked) this.selectedApprovedBusinesses.add(id); else this.selectedApprovedBusinesses.delete(id); }); this.updateSelectAllApprovedBusinesses(); });
@@ -1625,21 +1928,6 @@
                 document.getElementById('bulkDeleteApprovedBusinesses')?.addEventListener('click', () => this.bulkDeleteApprovedBusinesses());
                 document.getElementById('closeBusinessModal')?.addEventListener('click', () => document.getElementById('businessEditModal').classList.remove('active'));
                 document.getElementById('saveBusinessChanges')?.addEventListener('click', () => this.saveBusinessEdit());
-            }
-            
-            loadBusinessesFromLocalStorage() {
-                try {
-                    const pendingRaw = localStorage.getItem('sarveik_biz_pending');
-                    const approvedRaw = localStorage.getItem('sarveik_biz_approved');
-                    this.pendingBusinesses = pendingRaw ? JSON.parse(pendingRaw) : [];
-                    this.approvedBusinesses = approvedRaw ? JSON.parse(approvedRaw) : [];
-                    this.pendingBusinesses.forEach(b => { if (!b.created_at) b.created_at = new Date().toISOString(); });
-                    this.approvedBusinesses.forEach(b => { if (!b.created_at) b.created_at = new Date().toISOString(); });
-                    this.renderPendingBusinesses();
-                    this.renderApprovedBusinesses();
-                    this.updateBusinessCityFilter();
-                    showToast(`Loaded ${this.pendingBusinesses.length} pending, ${this.approvedBusinesses.length} approved from localStorage`, 'success');
-                } catch (err) { showToast('Failed to load from localStorage', 'error'); }
             }
 
             initTabs(){
@@ -1709,6 +1997,13 @@
             
             initBackToTop(){ const btn=document.getElementById('backToTop'); window.addEventListener('scroll',()=>{btn.classList.toggle('visible',window.scrollY>300);}); btn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'})); }
         }
+        
+        const EMOJIS = {
+            company: '🏢', shop: '🛍️', mart: '🏪', restaurant: '🍽️', hotel: '🏨', hospital: '🏥',
+            school: '🏫', bank: '🏦', salon: '💇', gym: '💪', pharmacy: '💊', garage: '🔧',
+            real_estate: '🏠', tech: '💻', service: '⚙️', market: '🛒', other: '📦'
+        };
+        
         new AdminDashboard();
     </script>
 </body>
