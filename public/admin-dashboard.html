@@ -517,6 +517,18 @@
         }
         .business-verified { color: #10b981; }
         .business-featured { color: #fbbf24; }
+        
+        /* Loading spinner */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #00d4ff;
+            animation: spin 0.6s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
     </style>
 </head>
 <body>
@@ -529,9 +541,7 @@
     <nav class="navbar">
         <div class="nav-brand"><i class="fas fa-shield-alt"></i>Sarveik Admin <span id="onlineUsersBadge" class="navbar-online-badge"><i class="fas fa-circle" style="font-size: 0.7rem;"></i> <span id="onlineCount">0</span> online</span></div>
         <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
-            <span></span>
-            <span></span>
-            <span></span>
+            <span></span><span></span><span></span>
         </button>
         <ul class="nav-links" id="navLinks">
             <li><a href="#" id="dashboardNav"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
@@ -637,8 +647,8 @@
             </div>
             <div class="table-wrapper">
                 <table id="userTable">
-                    <thead><tr><th><input type="checkbox" id="selectAllHeader"></th><th>ID</th><th>Username</th><th>Email</th><th>Role</th><th>Status</th><th>💰 Credits</th><th>Notes</th><th>Created At</th><th>Actions</th></tr></thead>
-                    <tbody id="userTableBody"><tr><td colspan="10" style="text-align:center;">Loading users...</td></tr></tbody>
+                    <thead><tr><th><input type="checkbox" id="selectAllHeader"></th><th>ID</th><th>Username</th><th>Email</th><th>Role</th><th>Status</th><th>💰 Credits</th><th>Notes</th><th>Created At</th><th>Actions</th> </thead>
+                    <tbody id="userTableBody"><tr><td colspan="10" style="text-align:center;">Loading users...</td> </tbody>
                 </table>
             </div>
         </div>
@@ -654,8 +664,8 @@
             </div>
             <div class="table-wrapper">
                 <table id="toolsTable">
-                    <thead><tr><th>ID</th><th>Name</th><th>URL</th><th>Category</th><th>Submitted By</th><th>Approved</th><th>⭐ Featured</th><th>Usage</th><th>Actions</th></tr></thead>
-                    <tbody id="toolsTableBody"><tr><td colspan="9" style="text-align:center;">Loading tools......</td></tr></tbody>
+                    <thead><tr><th>ID</th><th>Name</th><th>URL</th><th>Category</th><th>Submitted By</th><th>Approved</th><th>⭐ Featured</th><th>Usage</th><th>Actions</th> </thead>
+                    <tbody id="toolsTableBody"><tr><td colspan="9" style="text-align:center;">Loading tools...</td> </tbody>
                 </table>
             </div>
         </div>
@@ -670,8 +680,8 @@
             </div>
             <div class="table-wrapper">
                 <table id="pendingTable">
-                    <thead><tr><th><input type="checkbox" id="selectAllPending"></th><th>ID</th><th>Name</th><th>URL</th><th>Description</th><th>Category</th><th>Submitted By</th><th>Submitted At</th><th>Actions</th></tr></thead>
-                    <tbody id="pendingTableBody"><tr><td colspan="9" style="text-align:center;">Loading pending tools......</td></tr></tbody>
+                    <thead><tr><th><input type="checkbox" id="selectAllPending"></th><th>ID</th><th>Name</th><th>URL</th><th>Description</th><th>Category</th><th>Submitted By</th><th>Submitted At</th><th>Actions</th> </thead>
+                    <tbody id="pendingTableBody"><tr><td colspan="9" style="text-align:center;">Loading pending tools...</td> </tbody>
                 </table>
             </div>
         </div>
@@ -686,8 +696,8 @@
             </div>
             <div class="table-wrapper">
                 <table id="cardsTable">
-                    <thead><tr><th>ID</th><th>Icon</th><th>Title</th><th>Description</th><th>Category</th><th>Link URL</th><th>Order</th><th>Actions</th></tr></thead>
-                    <tbody id="cardsTableBody"><tr><td colspan="8" style="text-align:center;">Loading cards...</td></tr></tbody>
+                    <thead><tr><th>ID</th><th>Icon</th><th>Title</th><th>Description</th><th>Category</th><th>Link URL</th><th>Order</th><th>Actions</th> </thead>
+                    <tbody id="cardsTableBody"><tr><td colspan="8" style="text-align:center;">Loading cards...</td> </tbody>
                 </table>
             </div>
         </div>
@@ -716,8 +726,8 @@
             </div>
             <div class="table-wrapper">
                 <table id="feedbackTable">
-                    <thead><tr><th>ID</th><th>User</th><th>Rating</th><th>Comment</th><th>Submitted At</th></tr></thead>
-                    <tbody id="feedbackTableBody"><tr><td colspan="5" style="text-align:center;">Loading feedback......</td></tr></tbody>
+                    <thead><tr><th>ID</th><th>User</th><th>Rating</th><th>Comment</th><th>Submitted At</th> </thead>
+                    <tbody id="feedbackTableBody"><td><td colspan="5" style="text-align:center;">Loading feedback...</td> </tbody>
                 </table>
             </div>
         </div>
@@ -783,7 +793,10 @@
                 <button class="btn-danger" onclick="window.adminDashboard.addIpBan()"><i class="fas fa-plus"></i> Ban IP</button>
             </div>
             <div class="table-wrapper">
-                <table><thead><tr><th>IP Address</th><th>Reason</th><th>Banned By</th><th>Date</th><th>Actions</th></tr></thead><tbody id="ipBanTableBody"></tbody></table>
+                <table>
+                    <thead><tr><th>IP Address</th><th>Reason</th><th>Banned By</th><th>Date</th><th>Actions</th></tr></thead>
+                    <tbody id="ipBanTableBody"></tbody>
+                </table>
             </div>
         </div>
 
@@ -821,7 +834,10 @@
         <div id="permissionsTab" class="tab-content">
             <div class="section-title"><i class="fas fa-lock"></i> Role Permissions Matrix</div>
             <div class="table-wrapper permissions-matrix">
-                <table><thead><tr><th>Permission</th><th>👤 User</th><th>🛡️ Moderator</th><th>👑 Admin</th></tr></thead><tbody id="permissionsMatrixBody"></tbody></table>
+                <table>
+                    <thead><tr><th>Permission</th><th>👤 User</th><th>🛡️ Moderator</th><th>👑 Admin</th></tr></thead>
+                    <tbody id="permissionsMatrixBody"></tbody>
+                </table>
             </div>
             <div style="margin-top:1rem;font-size:0.8rem;opacity:0.7;"><i class="fas fa-info-circle"></i> This matrix is read-only. To change permissions, update your backend role middleware.</div>
         </div>
@@ -835,7 +851,10 @@
                 <button class="btn-primary" onclick="window.adminDashboard.saveRateLimits()"><i class="fas fa-save"></i> Save Changes</button>
             </div>
             <div class="table-wrapper">
-                <table><thead><tr><th>User</th><th>Role</th><th>Req/Min (0=default)</th><th>Max Submissions/Day</th><th>Status</th></tr></thead><tbody id="rateLimitTableBody"></tbody></table>
+                <table>
+                    <thead><tr><th>User</th><th>Role</th><th>Req/Min (0=default)</th><th>Max Submissions/Day</th><th>Status</th></tr></thead>
+                    <tbody id="rateLimitTableBody"></tbody>
+                </table>
             </div>
         </div>
 
@@ -879,7 +898,13 @@
                 <select id="businessCategoryFilter"><option value="all">All Categories</option><option value="retail">Retail</option><option value="food">Food & Dining</option><option value="health">Health</option><option value="education">Education</option><option value="finance">Finance</option><option value="technology">Technology</option><option value="automotive">Automotive</option><option value="beauty">Beauty</option><option value="services">Services</option></select>
                 <select id="businessCityFilter"><option value="all">All Cities</option></select>
                 <button class="btn-primary" id="refreshBusinessesBtn"><i class="fas fa-sync-alt"></i> Refresh</button>
+                <button class="btn-primary" id="syncFromLocalStorageBtn" style="margin-left:0.5rem;"><i class="fas fa-database"></i> Sync from localStorage</button>
+                <label style="display:flex;align-items:center;gap:0.5rem;margin-left:0.5rem;background:rgba(255,255,255,0.1);padding:0.3rem 0.8rem;border-radius:30px;">
+                    <input type="checkbox" id="forceLocalStorageMode"> <span style="font-size:0.75rem;">🔁 Force localStorage mode (bypass API)</span>
+                </label>
             </div>
+
+            <!-- Pending Businesses Section -->
             <div class="table-wrapper" style="margin-bottom: 2rem;">
                 <h3><i class="fas fa-clock"></i> Pending Business Submissions</h3>
                 <div class="bulk-actions">
@@ -888,9 +913,14 @@
                     <button class="btn-danger btn-small" id="bulkRejectBusinesses"><i class="fas fa-times"></i> Bulk Reject</button>
                 </div>
                 <div class="table-wrapper">
-                    <table id="pendingBusinessesTable"><thead><tr><th><input type="checkbox" id="selectAllPendingBusinessesHeader"></th><th>ID</th><th>Name</th><th>Type</th><th>Category</th><th>City</th><th>Submitted</th><th>Actions</th></tr></thead><tbody id="pendingBusinessesBody"><tr><td colspan="8">Loading pending businesses...</td></tbody></table>
+                    <table id="pendingBusinessesTable">
+                        <thead><tr><th><input type="checkbox" id="selectAllPendingBusinessesHeader"></th><th>ID</th><th>Name</th><th>Type</th><th>Category</th><th>City</th><th>Submitted</th><th>Actions</th> </thead>
+                        <tbody id="pendingBusinessesBody"><td><td colspan="8">Loading pending businesses...</tbody>
+                    </table>
                 </div>
             </div>
+
+            <!-- Approved Businesses Section -->
             <div class="table-wrapper">
                 <h3><i class="fas fa-check-circle"></i> Approved Businesses</h3>
                 <div class="bulk-actions">
@@ -898,13 +928,16 @@
                     <button class="btn-danger btn-small" id="bulkDeleteApprovedBusinesses"><i class="fas fa-trash"></i> Bulk Delete</button>
                 </div>
                 <div class="table-wrapper">
-                    <table id="approvedBusinessesTable"><thead><tr><th><input type="checkbox" id="selectAllApprovedBusinessesHeader"></th><th>ID</th><th>Name</th><th>Type</th><th>Category</th><th>City</th><th>Verified</th><th>Featured</th><th>Actions</th></tr></thead><tbody id="approvedBusinessesBody"><td><td colspan="9">Loading approved businesses......</tbody></table>
+                    <table id="approvedBusinessesTable">
+                        <thead><tr><th><input type="checkbox" id="selectAllApprovedBusinessesHeader"></th><th>ID</th><th>Name</th><th>Type</th><th>Category</th><th>City</th><th>Verified</th><th>Featured</th><th>Actions</th> </thead>
+                        <tbody id="approvedBusinessesBody"><table><td colspan="9">Loading approved businesses...</tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modals -->
+    <!-- All Modals (Preserved) -->
     <div id="userModal" class="modal"><div class="modal-content"><h3><i class="fas fa-user-edit"></i> Edit User</h3><input type="hidden" id="editUserId"><label>Username</label><input type="text" id="editUsername"><label>Email</label><input type="email" id="editEmail"><label>Role</label><select id="editRole"><option value="user">User</option><option value="moderator">Moderator</option><option value="admin">Admin</option></select><label>Status</label><select id="editStatus"><option value="active">Active</option><option value="suspended">Suspended</option></select><div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;"><button id="closeModal" class="btn-small">Cancel</button><button id="saveUserChanges" class="btn-primary btn-small">Save Changes</button></div></div></div>
     <div id="creditsModal" class="modal"><div class="modal-content"><h3><i class="fas fa-coins"></i> Give Credits</h3><input type="hidden" id="creditUserId"><label>Amount (credits)</label><input type="number" id="creditAmount" min="1" step="1" placeholder="Enter credit amount" required><label>Reason (optional)</label><input type="text" id="creditReason" placeholder="e.g., Reward, Compensation, Bonus"><div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;"><button id="closeCreditsModal" class="btn-small">Cancel</button><button id="giveCreditsBtn" class="btn-primary btn-small">Give Credits</button></div></div></div>
     <div id="transactionModal" class="modal"><div class="modal-content"><h3><i class="fas fa-history"></i> Credit Transactions</h3><div id="transactionList" style="max-height: 400px; overflow-y: auto;"></div><div id="transactionPagination" style="margin-top: 1rem; text-align: center;"></div><button id="closeTransactionModal" class="btn-small btn-primary" style="margin-top: 1rem;">Close</button></div></div>
@@ -1300,7 +1333,7 @@
             
             filterCards(){ const search = document.getElementById('cardSearch')?.value.toLowerCase() || ''; const cat = document.getElementById('cardCategoryFilter')?.value || ''; this.filteredCards = this.allCards.filter(c => (!search || c.title.toLowerCase().includes(search)) && (!cat || c.category === cat)); this.renderCardsTable(); }
             
-            renderCardsTable(){ const tbody = document.getElementById('cardsTableBody'); if(!this.filteredCards.length){ tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No cards found</td></tr>'; return; } tbody.innerHTML = this.filteredCards.map(card => `<tr><td>${card.id}</td><td style="font-size:1.5rem;"><i class="fas ${escapeHtml(card.icon)}"></i></td><td><strong>${escapeHtml(card.title)}</strong></td><td>${escapeHtml(card.description)}</td><td>${escapeHtml(card.category)}</td><td><a href="${escapeHtml(card.link)}" target="_blank" style="color:#00d4ff;">${escapeHtml(card.link.substring(0,30))}</a></td><td>${card.order}</td><td><button class="btn-small edit-card" data-id="${card.id}" title="Edit"><i class="fas fa-edit"></i></button> <button class="btn-small delete-card" data-id="${card.id}" title="Delete"><i class="fas fa-trash"></i></button></td></tr>`).join(''); document.querySelectorAll('.edit-card').forEach(btn=>btn.addEventListener('click',()=>this.openCardModal(parseInt(btn.dataset.id)))); document.querySelectorAll('.delete-card').forEach(btn=>btn.addEventListener('click',()=>this.deleteCard(parseInt(btn.dataset.id)))); }
+            renderCardsTable(){ const tbody = document.getElementById('cardsTableBody'); if(!this.filteredCards.length){ tbody.innerHTML = '<td><td colspan="8" style="text-align:center;">No cards found</td></tr>'; return; } tbody.innerHTML = this.filteredCards.map(card => `<tr><td>${card.id}</td><td style="font-size:1.5rem;"><i class="fas ${escapeHtml(card.icon)}"></i></td><td><strong>${escapeHtml(card.title)}</strong></td><td>${escapeHtml(card.description)}</td><td>${escapeHtml(card.category)}</td><td><a href="${escapeHtml(card.link)}" target="_blank" style="color:#00d4ff;">${escapeHtml(card.link.substring(0,30))}</a></td><td>${card.order}</td><td><button class="btn-small edit-card" data-id="${card.id}" title="Edit"><i class="fas fa-edit"></i></button> <button class="btn-small delete-card" data-id="${card.id}" title="Delete"><i class="fas fa-trash"></i></button></td></tr>`).join(''); document.querySelectorAll('.edit-card').forEach(btn=>btn.addEventListener('click',()=>this.openCardModal(parseInt(btn.dataset.id)))); document.querySelectorAll('.delete-card').forEach(btn=>btn.addEventListener('click',()=>this.deleteCard(parseInt(btn.dataset.id)))); }
             
             openCardModal(id=null){ const modal = document.getElementById('cardModal'); if(id){ const card = this.allCards.find(c=>c.id===id); if(card){ document.getElementById('cardModalTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Card'; document.getElementById('cardId').value = card.id; document.getElementById('cardTitle').value = card.title; document.getElementById('cardDesc').value = card.description; document.getElementById('cardIcon').value = card.icon; document.getElementById('cardLink').value = card.link; document.getElementById('cardCategory').value = card.category; document.getElementById('cardOrder').value = card.order; this.updateCardIconPreview(card.icon); } } else { document.getElementById('cardModalTitle').innerHTML = '<i class="fas fa-plus"></i> Add New Card'; document.getElementById('cardId').value = ''; document.getElementById('cardTitle').value = ''; document.getElementById('cardDesc').value = ''; document.getElementById('cardIcon').value = 'fa-cube'; document.getElementById('cardLink').value = ''; document.getElementById('cardCategory').value = 'featured'; document.getElementById('cardOrder').value = '0'; this.updateCardIconPreview('fa-cube'); } modal.classList.add('active'); }
             
@@ -1430,7 +1463,7 @@
             
             async impersonateUser(userId, username){ document.getElementById('impersonateModal').classList.remove('active'); try { await apiCall(`/api/admin/impersonate/${userId}`, { method:'POST' }); showToast(`Now logged in as ${username}. Redirecting...`, 'warning'); setTimeout(()=>window.location.href='/', 1500); } catch(e){ showToast(`Impersonation API not available (demo). Would redirect as ${username}.`, 'info'); } this.addAuditLogEntry('login', this.currentUser?.username||'admin', `Impersonated user: ${username} (ID: ${userId})`); }
 
-            // ========== BUSINESS DIRECTORY MANAGEMENT (API‑based, NO localStorage) ==========
+            // ========== BUSINESS DIRECTORY MANAGEMENT (API‑based) ==========
             async loadBusinesses() {
                 try {
                     const pendingRes = await apiCall('/api/admin/businesses/pending');
@@ -1464,7 +1497,7 @@
                     if (search && !b.name.toLowerCase().includes(search) && !(b.city && b.city.toLowerCase().includes(search))) return false;
                     return true;
                 });
-                if (filtered.length === 0) { tbody.innerHTML = '</table><td colspan="8" style="text-align:center;">No pending businesses found</td></tr>'; return; }
+                if (filtered.length === 0) { tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No pending businesses found</td></tr>'; return; }
                 tbody.innerHTML = filtered.map(b => `<tr data-id="${b.id}"><td><input type="checkbox" class="pending-business-checkbox" data-id="${b.id}" ${this.selectedPendingBusinesses.has(b.id) ? 'checked' : ''}></td><td>${b.id}</td><td><strong>${escapeHtml(b.name)}</strong></td><td><span class="business-type-badge">${escapeHtml(b.type)}</span></td><td>${escapeHtml(b.category)}</td><td>${escapeHtml(b.city || '—')}</td><td>${new Date(b.created_at).toLocaleDateString()}</td><td><button class="btn-small approve-business" data-id="${b.id}"><i class="fas fa-check-circle"></i> Approve</button> <button class="btn-small reject-business" data-id="${b.id}"><i class="fas fa-times-circle"></i> Reject</button> <button class="btn-small edit-business" data-id="${b.id}" data-status="pending"><i class="fas fa-edit"></i> Edit</button> <button class="btn-small view-business-detail" data-id="${b.id}" data-status="pending"><i class="fas fa-eye"></i> View</button></td></tr>`).join('');
                 this.attachBusinessEvents();
                 this.updateSelectAllPendingBusinesses();
@@ -1577,6 +1610,8 @@
             
             initBusinessEvents() {
                 document.getElementById('refreshBusinessesBtn')?.addEventListener('click', () => this.loadBusinesses());
+                document.getElementById('syncFromLocalStorageBtn')?.addEventListener('click', () => { this.loadBusinessesFromLocalStorage(); });
+                document.getElementById('forceLocalStorageMode')?.addEventListener('change', () => this.loadBusinesses());
                 document.getElementById('businessSearch')?.addEventListener('input', () => { this.renderPendingBusinesses(); this.renderApprovedBusinesses(); });
                 document.getElementById('businessStatusFilter')?.addEventListener('change', () => { this.renderPendingBusinesses(); this.renderApprovedBusinesses(); });
                 document.getElementById('businessCategoryFilter')?.addEventListener('change', () => { this.renderPendingBusinesses(); this.renderApprovedBusinesses(); });
@@ -1590,6 +1625,21 @@
                 document.getElementById('bulkDeleteApprovedBusinesses')?.addEventListener('click', () => this.bulkDeleteApprovedBusinesses());
                 document.getElementById('closeBusinessModal')?.addEventListener('click', () => document.getElementById('businessEditModal').classList.remove('active'));
                 document.getElementById('saveBusinessChanges')?.addEventListener('click', () => this.saveBusinessEdit());
+            }
+            
+            loadBusinessesFromLocalStorage() {
+                try {
+                    const pendingRaw = localStorage.getItem('sarveik_biz_pending');
+                    const approvedRaw = localStorage.getItem('sarveik_biz_approved');
+                    this.pendingBusinesses = pendingRaw ? JSON.parse(pendingRaw) : [];
+                    this.approvedBusinesses = approvedRaw ? JSON.parse(approvedRaw) : [];
+                    this.pendingBusinesses.forEach(b => { if (!b.created_at) b.created_at = new Date().toISOString(); });
+                    this.approvedBusinesses.forEach(b => { if (!b.created_at) b.created_at = new Date().toISOString(); });
+                    this.renderPendingBusinesses();
+                    this.renderApprovedBusinesses();
+                    this.updateBusinessCityFilter();
+                    showToast(`Loaded ${this.pendingBusinesses.length} pending, ${this.approvedBusinesses.length} approved from localStorage`, 'success');
+                } catch (err) { showToast('Failed to load from localStorage', 'error'); }
             }
 
             initTabs(){
