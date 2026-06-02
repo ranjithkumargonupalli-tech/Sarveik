@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/apexcharts@3.44.0/dist/apexcharts.css">
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
-        /* ========== YOUR EXISTING STYLES (unchanged) ========== */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
             font-family: 'Poppins', sans-serif;
@@ -146,286 +145,28 @@
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         @media (max-width: 768px) { .admin-container { padding: 1rem; } .stats-grid { grid-template-columns: 1fr; } .controls-bar { flex-direction: column; align-items: stretch; } .tabs { flex-wrap: wrap; } }
 
-        /* ========== ENHANCEMENT STYLES (kept) ========== */
-        .activity-feed {
-            max-height: 300px;
-            overflow-y: auto;
-            margin-top: 1rem;
-        }
-        .activity-item {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-            padding: 0.75rem;
-            background: rgba(255,255,255,0.05);
-            border-radius: 12px;
-            margin-bottom: 0.5rem;
-            transition: all 0.2s;
-        }
+        /* Additional styles */
+        .activity-feed { max-height: 300px; overflow-y: auto; margin-top: 1rem; }
+        .activity-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 0.5rem; transition: all 0.2s; }
         .activity-item:hover { background: rgba(0,212,255,0.1); transform: translateX(5px); }
         .activity-icon { width: 32px; height: 32px; border-radius: 8px; background: rgba(0,212,255,0.2); display: flex; align-items: center; justify-content: center; color: #00d4ff; }
         .activity-detail { flex: 1; }
         .activity-text { font-size: 0.85rem; }
-        .activity-time { font-size: 0.7rem; color: var(--text-secondary, #94a3b8); }
-        .tooltip-icon { cursor: help; margin-left: 0.25rem; color: #00d4ff; font-size: 0.7rem; }
-        .disclaimer {
-            background: rgba(0,0,0,0.3);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            padding: 1rem 1.5rem;
-            margin-top: 2rem;
-            text-align: center;
-            font-size: 0.75rem;
-            color: rgba(255,255,255,0.7);
-        }
-        .disclaimer a { color: #00d4ff; text-decoration: none; }
-        #backToTop {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            width: 45px;
-            height: 45px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, #00d4ff, #7c3aed);
-            color: white;
-            border: none;
-            cursor: pointer;
-            display: none;
-            font-size: 1.2rem;
-            z-index: 999;
-            transition: all 0.3s;
-        }
-        #backToTop:hover { transform: scale(1.1); }
-        #backToTop.visible { display: block; }
-        .badge-pending { background: #f59e0b; }
-        .badge-approved { background: #10b981; }
-        .credits-cell { font-weight: 600; color: #fbbf24; }
-        .rating-stars-display { color: #fbbf24; letter-spacing: 2px; }
-        .card-icon-preview { font-size: 2rem; text-align: center; margin: 10px 0; padding: 10px; background: rgba(0,212,255,0.1); border-radius: 12px; }
-        .is-featured-badge { background: #f59e0b; color: white; font-size: 0.7rem; padding: 2px 8px; border-radius: 20px; }
-        .featured-toggle-btn { background: rgba(0,212,255,0.2); border: 1px solid #00d4ff; color: #00d4ff; padding: 2px 8px; border-radius: 20px; font-size: 0.7rem; cursor: pointer; }
-        .featured-toggle-btn.active { background: #00d4ff; color: white; }
-        .navbar-online-badge { background: #10b981; color: white; padding: 5px 12px; border-radius: 30px; font-size: 0.8rem; font-weight: 600; margin-left: 15px; }
-
-        /* ========== STAFF CONFERENCE CHAT STYLES ========== */
-        .staff-chat-container {
-            display: flex;
-            gap: 1.5rem;
-            height: calc(100vh - 250px);
-            min-height: 500px;
-        }
-        .chat-messages {
-            flex: 3;
-            background: rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            border: 1px solid rgba(255,255,255,0.2);
-        }
-        .chat-messages-header {
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid rgba(255,255,255,0.2);
-            font-weight: 700;
-            background: rgba(0,0,0,0.1);
-        }
-        .messages-area {
-            flex: 1;
-            overflow-y: auto;
-            padding: 1rem;
-            display: flex;
-            flex-direction: column;
-            gap: 0.75rem;
-        }
-        .chat-message {
-            display: flex;
-            flex-direction: column;
-            max-width: 80%;
-        }
-        .chat-message.own {
-            align-self: flex-end;
-        }
-        .chat-message.other {
-            align-self: flex-start;
-        }
-        .chat-message-bubble {
-            padding: 0.6rem 1rem;
-            border-radius: 18px;
-            background: rgba(255,255,255,0.2);
-            color: #f8fafc;
-            word-wrap: break-word;
-        }
-        .own .chat-message-bubble {
-            background: linear-gradient(135deg, #00d4ff, #7c3aed);
-            color: white;
-        }
-        .chat-message-meta {
-            font-size: 0.7rem;
-            opacity: 0.7;
-            margin-top: 0.2rem;
-            margin-left: 0.5rem;
-            margin-right: 0.5rem;
-        }
-        .chat-input-area {
-            padding: 1rem;
-            border-top: 1px solid rgba(255,255,255,0.2);
-            display: flex;
-            gap: 0.75rem;
-        }
-        .chat-input-area input {
-            flex: 1;
-            padding: 0.7rem 1rem;
-            border-radius: 40px;
-            background: rgba(255,255,255,0.1);
-            border: 1px solid rgba(255,255,255,0.3);
-            color: white;
-        }
-        .chat-members {
-            flex: 1;
-            background: rgba(255,255,255,0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.2);
-            overflow-y: auto;
-            padding: 1rem;
-        }
-        .chat-members h4 {
-            margin-bottom: 1rem;
-            font-size: 1rem;
-            border-left: 3px solid #00d4ff;
-            padding-left: 0.5rem;
-        }
-        .member-item {
-            padding: 0.5rem 0;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-        body.dark .chat-messages,
-        body.dark .chat-members {
-            background: rgba(15,23,42,0.8);
-            border-color: rgba(148,163,184,0.3);
-        }
-        body.dark .chat-message-bubble {
-            background: rgba(255,255,255,0.1);
-            color: #e0e0e0;
-        }
-        body.dark .own .chat-message-bubble {
-            background: linear-gradient(135deg, #00d4ff, #7c3aed);
-            color: white;
-        }
-
-        /* ========== NEW FEATURE STYLES ========== */
-        .dark-toggle-btn {
-            background: rgba(255,255,255,0.15);
-            border: 1px solid rgba(255,255,255,0.3);
-            border-radius: 50px;
-            padding: 6px 14px;
-            color: white;
-            cursor: pointer;
-            font-size: 0.85rem;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            transition: all 0.3s;
-            margin-left: 10px;
-        }
-        .dark-toggle-btn:hover { background: rgba(255,255,255,0.25); transform: none; }
-        .maintenance-banner {
-            background: linear-gradient(90deg, #ef4444, #b91c1c);
-            color: white;
-            text-align: center;
-            padding: 10px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            display: none;
-            position: sticky;
-            top: 0;
-            z-index: 1001;
-            animation: pulse-banner 2s infinite;
-        }
-        .maintenance-banner.active { display: block; }
-        @keyframes pulse-banner { 0%,100%{opacity:1} 50%{opacity:0.85} }
-        .global-search-wrapper {
-            position: relative;
-            margin-left: 10px;
-        }
-        .global-search-wrapper input {
-            padding: 8px 16px 8px 38px;
-            border-radius: 30px;
-            background: rgba(255,255,255,0.15);
-            border: 1px solid rgba(255,255,255,0.3);
-            color: white;
-            font-size: 0.85rem;
-            width: 220px;
-            transition: width 0.3s;
-        }
-        .global-search-wrapper input:focus { width: 280px; outline: none; background: rgba(255,255,255,0.2); }
-        .global-search-wrapper i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.7); font-size: 0.85rem; }
-        .global-search-results {
-            position: absolute;
-            top: 44px;
-            left: 0;
-            width: 100%;
-            background: rgba(15,23,42,0.97);
-            border-radius: 12px;
-            border: 1px solid rgba(0,212,255,0.3);
-            z-index: 2000;
-            max-height: 300px;
-            overflow-y: auto;
-            display: none;
-        }
-        .global-search-results.show { display: block; }
-        .global-result-item { padding: 10px 15px; border-bottom: 1px solid rgba(255,255,255,0.08); cursor: pointer; font-size: 0.82rem; color: #e0e0e0; }
-        .global-result-item:hover { background: rgba(0,212,255,0.15); }
-        .global-result-type { font-size: 0.68rem; color: #00d4ff; text-transform: uppercase; font-weight: 700; }
-        .quick-actions-bar {
-            display: flex;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-            margin-bottom: 1.5rem;
-        }
-        .quick-action-card {
-            background: rgba(255,255,255,0.08);
-            border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 14px;
-            padding: 0.75rem 1.2rem;
-            cursor: pointer;
-            transition: all 0.25s;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.85rem;
-            color: white;
-        }
-        .quick-action-card:hover { background: rgba(0,212,255,0.2); border-color: #00d4ff; transform: translateY(-2px); }
-        .quick-action-card i { color: #00d4ff; font-size: 1rem; }
+        .activity-time { font-size: 0.7rem; color: #94a3b8; }
         .health-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 1rem; margin-bottom: 1.5rem; }
         .health-card { background: rgba(255,255,255,0.08); border-radius: 16px; padding: 1.25rem; border: 1px solid rgba(255,255,255,0.15); }
         .health-card h5 { font-size: 0.8rem; color: rgba(255,255,255,0.6); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 1px; }
         .health-value { font-size: 1.6rem; font-weight: 700; color: #00d4ff; }
         .health-bar { height: 6px; border-radius: 10px; background: rgba(255,255,255,0.15); margin-top: 0.5rem; overflow: hidden; }
         .health-bar-fill { height: 100%; border-radius: 10px; background: linear-gradient(90deg,#00d4ff,#7c3aed); transition: width 1s ease; }
-        .health-bar-fill.warning { background: linear-gradient(90deg,#f59e0b,#ef4444); }
         .health-status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; }
-        .dot-green { background: #10b981; box-shadow: 0 0 6px #10b981; }
-        .dot-yellow { background: #f59e0b; box-shadow: 0 0 6px #f59e0b; }
-        .dot-red { background: #ef4444; box-shadow: 0 0 6px #ef4444; }
-        .ip-input-row { display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1rem; }
-        .ip-input-row input { flex: 1; padding: 10px 16px; border-radius: 30px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; }
-        .audit-filter-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center; }
-        .audit-log-entry { display: flex; gap: 1rem; padding: 0.75rem; background: rgba(255,255,255,0.04); border-radius: 10px; margin-bottom: 0.4rem; font-size: 0.82rem; border-left: 3px solid #00d4ff; transition: 0.2s; }
-        .audit-log-entry:hover { background: rgba(0,212,255,0.08); }
-        .audit-action { font-weight: 600; }
-        .audit-user { color: #00d4ff; }
-        .audit-time { color: rgba(255,255,255,0.5); font-size: 0.72rem; }
+        .dot-green { background: #10b981; }
+        .dot-yellow { background: #f59e0b; }
+        .dot-red { background: #ef4444; }
         .session-item { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 1rem; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 0.5rem; }
         .session-info { font-size: 0.82rem; }
         .session-ip { color: #00d4ff; font-family: monospace; }
         .session-badge { font-size: 0.7rem; padding: 3px 10px; border-radius: 20px; background: #10b981; color: white; }
-        .session-badge.idle { background: #f59e0b; }
         .leaderboard-item { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1rem; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 0.5rem; }
         .leaderboard-rank { font-size: 1.2rem; font-weight: 700; width: 28px; text-align: center; }
         .rank-1 { color: #fbbf24; }
@@ -434,7 +175,6 @@
         .leaderboard-credits { margin-left: auto; font-weight: 700; color: #fbbf24; }
         .note-chip { display: inline-block; padding: 2px 10px; border-radius: 20px; background: rgba(99,102,241,0.3); border: 1px solid #6366f1; color: #a5b4fc; font-size: 0.7rem; margin: 2px; }
         .permissions-matrix table th { color: #00d4ff; font-size: 0.8rem; }
-        .permissions-matrix table td { font-size: 0.82rem; }
         .perm-yes { color: #10b981; font-size: 1.1rem; }
         .perm-no { color: #ef4444; font-size: 1.1rem; }
         .api-key-row { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1rem; background: rgba(255,255,255,0.05); border-radius: 12px; margin-bottom: 0.5rem; }
@@ -443,20 +183,9 @@
         .api-key-status.active { background: #10b981; color: white; }
         .api-key-status.revoked { background: #ef4444; color: white; }
         .rate-limit-row { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 1rem; background: rgba(255,255,255,0.05); border-radius: 10px; margin-bottom: 0.4rem; font-size: 0.82rem; }
-        .rate-limit-row input[type=number] { width: 80px; padding: 5px 10px; border-radius: 20px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; text-align: center; }
         .template-card { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15); border-radius: 14px; padding: 1rem 1.25rem; margin-bottom: 0.75rem; cursor: pointer; transition: all 0.2s; }
         .template-card:hover { background: rgba(0,212,255,0.1); border-color: #00d4ff; }
-        .template-card h5 { font-size: 0.9rem; margin-bottom: 0.3rem; }
-        .template-card p { font-size: 0.75rem; opacity: 0.7; }
         .purge-option { display: flex; align-items: center; justify-content: space-between; padding: 1rem; background: rgba(239,68,68,0.07); border: 1px solid rgba(239,68,68,0.25); border-radius: 12px; margin-bottom: 0.75rem; }
-        .purge-option-info h5 { font-size: 0.9rem; margin-bottom: 0.2rem; }
-        .purge-option-info p { font-size: 0.75rem; opacity: 0.7; }
-        .toggle-switch { position: relative; display: inline-block; width: 50px; height: 26px; }
-        .toggle-switch input { opacity: 0; width: 0; height: 0; }
-        .toggle-slider { position: absolute; cursor: pointer; inset: 0; background: rgba(255,255,255,0.2); border-radius: 26px; transition: .4s; }
-        .toggle-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background: white; border-radius: 50%; transition: .4s; }
-        input:checked + .toggle-slider { background: #10b981; }
-        input:checked + .toggle-slider:before { transform: translateX(24px); }
         .section-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 1rem; color: #00d4ff; display: flex; align-items: center; gap: 0.5rem; border-left: 3px solid #00d4ff; padding-left: 0.75rem; }
         .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
         @media(max-width:900px){ .two-col { grid-template-columns: 1fr; } }
@@ -480,19 +209,64 @@
             .admin-container { padding: 0 1rem; }
             .navbar-online-badge { margin-left: auto; }
         }
-        .business-type-badge {
-            background: rgba(0,212,255,0.2);
-            border-radius: 20px;
-            padding: 2px 8px;
-            font-size: 0.7rem;
-            display: inline-block;
-        }
+        .business-type-badge { background: rgba(0,212,255,0.2); border-radius: 20px; padding: 2px 8px; font-size: 0.7rem; display: inline-block; }
         .business-verified { color: #10b981; }
         .business-featured { color: #fbbf24; }
+        .dark-toggle-btn { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 50px; padding: 6px 14px; color: white; cursor: pointer; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; transition: all 0.3s; margin-left: 10px; }
+        .global-search-wrapper { position: relative; margin-left: 10px; }
+        .global-search-wrapper input { padding: 8px 16px 8px 38px; border-radius: 30px; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; font-size: 0.85rem; width: 220px; transition: width 0.3s; }
+        .global-search-wrapper input:focus { width: 280px; outline: none; background: rgba(255,255,255,0.2); }
+        .global-search-wrapper i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: rgba(255,255,255,0.7); font-size: 0.85rem; }
+        .global-search-results { position: absolute; top: 44px; left: 0; width: 100%; background: rgba(15,23,42,0.97); border-radius: 12px; border: 1px solid rgba(0,212,255,0.3); z-index: 2000; max-height: 300px; overflow-y: auto; display: none; }
+        .global-search-results.show { display: block; }
+        .global-result-item { padding: 10px 15px; border-bottom: 1px solid rgba(255,255,255,0.08); cursor: pointer; font-size: 0.82rem; color: #e0e0e0; }
+        .global-result-item:hover { background: rgba(0,212,255,0.15); }
+        .global-result-type { font-size: 0.68rem; color: #00d4ff; text-transform: uppercase; font-weight: 700; }
+        .quick-actions-bar { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+        .quick-action-card { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); border-radius: 14px; padding: 0.75rem 1.2rem; cursor: pointer; transition: all 0.25s; display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: white; }
+        .quick-action-card:hover { background: rgba(0,212,255,0.2); border-color: #00d4ff; transform: translateY(-2px); }
+        .maintenance-banner { background: linear-gradient(90deg, #ef4444, #b91c1c); color: white; text-align: center; padding: 10px; font-weight: 600; font-size: 0.9rem; display: none; position: sticky; top: 0; z-index: 1001; animation: pulse-banner 2s infinite; }
+        .maintenance-banner.active { display: block; }
+        @keyframes pulse-banner { 0%,100%{opacity:1} 50%{opacity:0.85} }
+        .ip-input-row { display: flex; gap: 0.75rem; align-items: center; margin-bottom: 1rem; }
+        .audit-filter-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: center; }
+        .audit-log-entry { display: flex; gap: 1rem; padding: 0.75rem; background: rgba(255,255,255,0.04); border-radius: 10px; margin-bottom: 0.4rem; font-size: 0.82rem; border-left: 3px solid #00d4ff; transition: 0.2s; }
+        .staff-chat-container { display: flex; gap: 1.5rem; height: calc(100vh - 250px); min-height: 500px; }
+        .chat-messages { flex: 3; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; border: 1px solid rgba(255,255,255,0.2); }
+        .chat-messages-header { padding: 1rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.2); font-weight: 700; background: rgba(0,0,0,0.1); }
+        .messages-area { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
+        .chat-message { display: flex; flex-direction: column; max-width: 80%; }
+        .chat-message.own { align-self: flex-end; }
+        .chat-message.other { align-self: flex-start; }
+        .chat-message-bubble { padding: 0.6rem 1rem; border-radius: 18px; background: rgba(255,255,255,0.2); color: #f8fafc; word-wrap: break-word; }
+        .own .chat-message-bubble { background: linear-gradient(135deg, #00d4ff, #7c3aed); color: white; }
+        .chat-message-meta { font-size: 0.7rem; opacity: 0.7; margin-top: 0.2rem; margin-left: 0.5rem; margin-right: 0.5rem; }
+        .chat-input-area { padding: 1rem; border-top: 1px solid rgba(255,255,255,0.2); display: flex; gap: 0.75rem; }
+        .chat-input-area input { flex: 1; padding: 0.7rem 1rem; border-radius: 40px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3); color: white; }
+        .chat-members { flex: 1; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); overflow-y: auto; padding: 1rem; }
+        .chat-members h4 { margin-bottom: 1rem; font-size: 1rem; border-left: 3px solid #00d4ff; padding-left: 0.5rem; }
+        .member-item { padding: 0.5rem 0; display: flex; align-items: center; gap: 0.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        body.dark .chat-messages, body.dark .chat-members { background: rgba(15,23,42,0.8); border-color: rgba(148,163,184,0.3); }
+        body.dark .chat-message-bubble { background: rgba(255,255,255,0.1); color: #e0e0e0; }
+        body.dark .own .chat-message-bubble { background: linear-gradient(135deg, #00d4ff, #7c3aed); color: white; }
+        .card-icon-preview { font-size: 2rem; text-align: center; margin: 10px 0; padding: 10px; background: rgba(0,212,255,0.1); border-radius: 12px; }
+        .featured-toggle-btn { background: rgba(0,212,255,0.2); border: 1px solid #00d4ff; color: #00d4ff; padding: 2px 8px; border-radius: 20px; font-size: 0.7rem; cursor: pointer; }
+        .featured-toggle-btn.active { background: #00d4ff; color: white; }
+        .navbar-online-badge { background: #10b981; color: white; padding: 5px 12px; border-radius: 30px; font-size: 0.8rem; font-weight: 600; margin-left: 15px; }
+        .toggle-switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; cursor: pointer; inset: 0; background: rgba(255,255,255,0.2); border-radius: 26px; transition: .4s; }
+        .toggle-slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background: white; border-radius: 50%; transition: .4s; }
+        input:checked + .toggle-slider { background: #10b981; }
+        input:checked + .toggle-slider:before { transform: translateX(24px); }
+        .disclaimer { background: rgba(0,0,0,0.3); backdrop-filter: blur(10px); border-radius: 16px; padding: 1rem 1.5rem; margin-top: 2rem; text-align: center; font-size: 0.75rem; color: rgba(255,255,255,0.7); }
+        .disclaimer a { color: #00d4ff; text-decoration: none; }
+        #backToTop { position: fixed; bottom: 30px; right: 30px; width: 45px; height: 45px; border-radius: 50%; background: linear-gradient(135deg, #00d4ff, #7c3aed); color: white; border: none; cursor: pointer; display: none; font-size: 1.2rem; z-index: 999; transition: all 0.3s; }
+        #backToTop:hover { transform: scale(1.1); }
+        #backToTop.visible { display: block; }
     </style>
 </head>
 <body>
-    <!-- FEATURE 1: Maintenance Mode Banner -->
     <div id="maintenanceBanner" class="maintenance-banner">
         🔧 MAINTENANCE MODE IS ACTIVE — The platform is currently in maintenance. Users see a maintenance page.
         <button onclick="window.adminDashboard.toggleMaintenance()" style="margin-left:15px;padding:4px 12px;font-size:0.8rem;" class="btn-small">Disable</button>
@@ -500,9 +274,7 @@
 
     <nav class="navbar">
         <div class="nav-brand"><i class="fas fa-shield-alt"></i>Sarveik Admin <span id="onlineUsersBadge" class="navbar-online-badge"><i class="fas fa-circle" style="font-size: 0.7rem;"></i> <span id="onlineCount">0</span> online</span></div>
-        <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
-            <span></span><span></span><span></span>
-        </button>
+        <button class="hamburger" id="hamburgerBtn" aria-label="Menu"><span></span><span></span><span></span></button>
         <ul class="nav-links" id="navLinks">
             <li><a href="#" id="dashboardNav"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
             <li><a href="#" id="usersNav"><i class="fas fa-users"></i> Users</a></li>
@@ -530,7 +302,7 @@
             <div class="quick-action-card" onclick="document.querySelector('.tab-btn[data-tab=leaderboard]').click()"><i class="fas fa-trophy"></i> Leaderboard</div>
         </div>
 
-        <div class="stats-grid" id="statsGrid">
+        <div class="stats-grid">
             <div class="stat-card"><div class="stat-icon"><i class="fas fa-users"></i></div><div class="stat-number" id="totalUsers">0</div><div class="stat-label">Total Users</div></div>
             <div class="stat-card"><div class="stat-icon"><i class="fas fa-user-check"></i></div><div class="stat-number" id="activeUsers">0</div><div class="stat-label">Active Users</div></div>
             <div class="stat-card"><div class="stat-icon"><i class="fas fa-user-slash"></i></div><div class="stat-number" id="suspendedUsers">0</div><div class="stat-label">Suspended Users</div></div>
@@ -541,7 +313,7 @@
             <button class="tab-btn active" data-tab="dashboard">📊 Dashboard</button>
             <button class="tab-btn" data-tab="users">👥 Users</button>
             <button class="tab-btn" data-tab="tools">🛠️ All Tools</button>
-            <button class="tab-btn" data-tab="pending">⏳ Pending Approval</button>
+            <button class="tab-btn" data-tab="pending">⏳ Pending Tools</button>
             <button class="tab-btn" data-tab="cards">🃏 Cards</button>
             <button class="tab-btn" data-tab="analytics">📈 Advanced Analytics</button>
             <button class="tab-btn" data-tab="feedback">📝 Feedback</button>
@@ -559,13 +331,13 @@
             <button class="tab-btn" data-tab="businesses">🏢 Businesses</button>
         </div>
 
-        <!-- Dashboard Tab (unchanged) -->
+        <!-- Dashboard Tab -->
         <div id="dashboardTab" class="tab-content active">
             <div class="table-wrapper"><h3>Weekly Tool Usage</h3><div id="usageChart" class="chart-container"></div></div>
             <div class="table-wrapper" style="margin-top: 1.5rem;"><h3><i class="fas fa-bell"></i> Recent Admin Activity</h3><div id="adminActivityFeed" class="activity-feed"><div style="text-align:center; padding:1rem;">Loading activity...</div></div></div>
         </div>
 
-        <!-- Users Tab (unchanged) -->
+        <!-- Users Tab -->
         <div id="usersTab" class="tab-content">
             <div class="controls-bar">
                 <div class="search-box"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="Search by username, email or ID..."></div>
@@ -584,14 +356,11 @@
                 <button id="exportJSON" class="btn-primary"><i class="fas fa-file-code"></i> JSON</button>
             </div>
             <div class="table-wrapper">
-                <table id="userTable">
-                    <thead><tr><th><input type="checkbox" id="selectAllHeader"></th><th>ID</th><th>Username</th><th>Email</th><th>Role</th><th>Status</th><th>💰 Credits</th><th>Notes</th><th>Created At</th><th>Actions</th> </thead>
-                    <tbody id="userTableBody"><tr><td colspan="10" style="text-align:center;">Loading users...</tr> </tbody>
-                </table>
+                <table id="userTable"><thead><tr><th><input type="checkbox" id="selectAllHeader"></th><th>ID</th><th>Username</th><th>Email</th><th>Role</th><th>Status</th><th>💰 Credits</th><th>Notes</th><th>Created At</th><th>Actions</th> </thead><tbody id="userTableBody"><tr><td colspan="10" style="text-align:center;">Loading users...</td></tr></tbody></table>
             </div>
         </div>
 
-        <!-- All Tools Tab (unchanged) -->
+        <!-- Tools Tab -->
         <div id="toolsTab" class="tab-content">
             <div class="controls-bar">
                 <div class="search-box"><i class="fas fa-search"></i><input type="text" id="toolSearch" placeholder="Search tools..."></div>
@@ -601,14 +370,11 @@
                 <button id="refreshToolsBtn" class="btn-primary"><i class="fas fa-sync-alt"></i> Refresh</button>
             </div>
             <div class="table-wrapper">
-                <table id="toolsTable">
-                    <thead><tr><th>ID</th><th>Name</th><th>URL</th><th>Category</th><th>Submitted By</th><th>Approved</th><th>⭐ Featured</th><th>Usage</th><th>Actions</th> </thead>
-                    <tbody id="toolsTableBody"><tr><td colspan="9" style="text-align:center;">Loading tools......</td> </tbody>
-                </table>
+                <table id="toolsTable"><thead><tr><th>ID</th><th>Name</th><th>URL</th><th>Category</th><th>Submitted By</th><th>Approved</th><th>⭐ Featured</th><th>Usage</th><th>Actions</th> </thead><tbody id="toolsTableBody"><tr><td colspan="9" style="text-align:center;">Loading tools......</td></tr></tbody></table>
             </div>
         </div>
 
-        <!-- Pending Tools Tab (unchanged) -->
+        <!-- Pending Tools Tab -->
         <div id="pendingTab" class="tab-content">
             <div class="controls-bar">
                 <div class="search-box"><i class="fas fa-search"></i><input type="text" id="pendingSearch" placeholder="Search pending tools..."></div>
@@ -617,14 +383,11 @@
                 <button id="refreshPendingBtn" class="btn-primary"><i class="fas fa-sync-alt"></i> Refresh</button>
             </div>
             <div class="table-wrapper">
-                <table id="pendingTable">
-                    <thead><tr><th><input type="checkbox" id="selectAllPending"></th><th>ID</th><th>Name</th><th>URL</th><th>Description</th><th>Category</th><th>Submitted By</th><th>Submitted At</th><th>Actions</th> </thead>
-                    <tbody id="pendingTableBody"><tr><td colspan="9" style="text-align:center;">Loading pending tools......</td> </tbody>
-                </table>
+                <table id="pendingTable"><thead><tr><th><input type="checkbox" id="selectAllPending"></th><th>ID</th><th>Name</th><th>URL</th><th>Description</th><th>Category</th><th>Submitted By</th><th>Submitted At</th><th>Actions</th> </thead><tbody id="pendingTableBody"><tr><td colspan="9" style="text-align:center;">Loading pending tools......</td></tr></tbody></table>
             </div>
         </div>
 
-        <!-- Cards Management Tab (unchanged) -->
+        <!-- Cards Tab -->
         <div id="cardsTab" class="tab-content">
             <div class="controls-bar">
                 <div class="search-box"><i class="fas fa-search"></i><input type="text" id="cardSearch" placeholder="Search cards by title..."></div>
@@ -633,14 +396,11 @@
                 <button id="refreshCardsBtn" class="btn-primary"><i class="fas fa-sync-alt"></i> Refresh</button>
             </div>
             <div class="table-wrapper">
-                <table id="cardsTable">
-                    <thead><tr><th>ID</th><th>Icon</th><th>Title</th><th>Description</th><th>Category</th><th>Link URL</th><th>Order</th><th>Actions</th> </thead>
-                    <tbody id="cardsTableBody"><tr><td colspan="8" style="text-align:center;">Loading cards...</td> </tbody>
-                </table>
+                <table id="cardsTable"><thead><tr><th>ID</th><th>Icon</th><th>Title</th><th>Description</th><th>Category</th><th>Link URL</th><th>Order</th><th>Actions</th> </thead><tbody id="cardsTableBody"><tr><td colspan="8" style="text-align:center;">Loading cards...</td></tr></tbody></table>
             </div>
         </div>
 
-        <!-- Advanced Analytics Tab (unchanged) -->
+        <!-- Analytics Tab -->
         <div id="analyticsTab" class="tab-content">
             <div class="stats-grid" style="margin-bottom: 1rem;">
                 <div class="stat-card"><div class="stat-icon"><i class="fas fa-tools"></i></div><div class="stat-number" id="totalToolsCount">0</div><div class="stat-label">Total Tools</div></div>
@@ -655,7 +415,7 @@
             </div>
         </div>
 
-        <!-- Feedback Tab (unchanged) -->
+        <!-- Feedback Tab -->
         <div id="feedbackTab" class="tab-content">
             <div class="controls-bar">
                 <div class="search-box"><i class="fas fa-search"></i><input type="text" id="feedbackSearch" placeholder="Search by username, email or comment..."></div>
@@ -663,14 +423,11 @@
                 <button id="refreshFeedbackBtn" class="btn-primary"><i class="fas fa-sync-alt"></i> Refresh</button>
             </div>
             <div class="table-wrapper">
-                <table id="feedbackTable">
-                    <thead><tr><th>ID</th><th>User</th><th>Rating</th><th>Comment</th><th>Submitted At</th> </thead>
-                    <tbody id="feedbackTableBody"><tr><td colspan="5" style="text-align:center;">Loading feedback......</td> </tbody>
-                </table>
+                <table id="feedbackTable"><thead><tr><th>ID</th><th>User</th><th>Rating</th><th>Comment</th><th>Submitted At</th> </thead><tbody id="feedbackTableBody"><tr><td colspan="5" style="text-align:center;">Loading feedback......</td></tr></tbody></table>
             </div>
         </div>
 
-        <!-- Staff Conference Tab (unchanged) -->
+        <!-- Staff Conference Tab -->
         <div id="staffconferenceTab" class="tab-content">
             <div class="staff-chat-container">
                 <div class="chat-messages"><div class="chat-messages-header"><i class="fas fa-users"></i> Staff Lounge – Real-time Conference</div><div id="staffMessagesArea" class="messages-area">Loading conversation...</div><div class="chat-input-area"><input type="text" id="staffMessageInput" placeholder="Type your message..." onkeypress="if(event.key==='Enter') window.adminDashboard.sendStaffMessage()"><button class="btn-primary" onclick="window.adminDashboard.sendStaffMessage()"><i class="fas fa-paper-plane"></i> Send</button></div></div>
@@ -678,10 +435,10 @@
             </div>
         </div>
 
-        <!-- System Health Tab (unchanged) -->
+        <!-- System Health Tab -->
         <div id="systemhealthTab" class="tab-content">
             <div class="section-title"><i class="fas fa-heartbeat"></i> System Health Monitor</div>
-            <div class="health-grid" id="healthGrid">
+            <div class="health-grid">
                 <div class="health-card"><h5>CPU Usage</h5><div class="health-value" id="cpuValue">—</div><div class="health-bar"><div class="health-bar-fill" id="cpuBar" style="width:0%"></div></div></div>
                 <div class="health-card"><h5>Memory Usage</h5><div class="health-value" id="memValue">—</div><div class="health-bar"><div class="health-bar-fill" id="memBar" style="width:0%"></div></div></div>
                 <div class="health-card"><h5>Disk Usage</h5><div class="health-value" id="diskValue">—</div><div class="health-bar"><div class="health-bar-fill" id="diskBar" style="width:0%"></div></div></div>
@@ -693,122 +450,102 @@
             <div style="margin-top:1rem;"><button class="btn-primary" onclick="window.adminDashboard.refreshSystemHealth()"><i class="fas fa-sync-alt"></i> Refresh Health Data</button></div>
         </div>
 
-        <!-- Audit Log Tab (unchanged) -->
+        <!-- Audit Log Tab -->
         <div id="auditlogTab" class="tab-content">
             <div class="section-title"><i class="fas fa-list-alt"></i> Audit Log</div>
             <div class="audit-filter-row"><div class="search-box" style="max-width:280px;"><i class="fas fa-search"></i><input type="text" id="auditSearch" placeholder="Search actions, users..."></div><select id="auditActionFilter"><option value="">All Actions</option><option value="login">Login</option><option value="ban">Ban/Suspend</option><option value="delete">Delete</option><option value="approve">Approve</option><option value="credits">Credits</option><option value="role">Role Change</option></select><select id="auditPeriodFilter"><option value="24h">Last 24 Hours</option><option value="7d">Last 7 Days</option><option value="30d">Last 30 Days</option></select><button class="btn-primary" onclick="window.adminDashboard.loadAuditLog()"><i class="fas fa-sync-alt"></i> Refresh</button><button class="btn-warning" onclick="window.adminDashboard.exportAuditLog()"><i class="fas fa-download"></i> Export</button></div>
             <div class="table-wrapper"><div id="auditLogList"></div><div id="auditLogPagination" style="text-align:center;margin-top:1rem;"></div></div>
         </div>
 
-        <!-- IP Bans Tab (unchanged) -->
+        <!-- IP Bans Tab -->
         <div id="ipbansTab" class="tab-content">
             <div class="section-title"><i class="fas fa-ban"></i> IP Ban Management</div>
             <div class="ip-input-row"><input type="text" id="newBanIp" placeholder="Enter IP address e.g. 192.168.1.1" style="max-width:280px;"><input type="text" id="newBanReason" placeholder="Reason (optional)" style="max-width:280px;"><button class="btn-danger" onclick="window.adminDashboard.addIpBan()"><i class="fas fa-plus"></i> Ban IP</button></div>
-            <div class="table-wrapper"><table><thead><tr><th>IP Address</th><th>Reason</th><th>Banned By</th><th>Date</th><th>Actions</th> </thead><tbody id="ipBanTableBody"></tbody> </table></div>
+            <div class="table-wrapper"><table><thead><tr><th>IP Address</th><th>Reason</th><th>Banned By</th><th>Date</th><th>Actions</th></tr></thead><tbody id="ipBanTableBody"></tbody></table></div>
         </div>
 
-        <!-- Sessions Tab (unchanged) -->
+        <!-- Sessions Tab -->
         <div id="sessionsTab" class="tab-content">
             <div class="section-title"><i class="fas fa-desktop"></i> Active Sessions</div>
             <div class="controls-bar"><div class="search-box"><i class="fas fa-search"></i><input type="text" id="sessionSearch" placeholder="Search by username or IP..."></div><button class="btn-danger" onclick="window.adminDashboard.killAllSessions()"><i class="fas fa-power-off"></i> Kill All Sessions</button><button class="btn-primary" onclick="window.adminDashboard.loadSessions()"><i class="fas fa-sync-alt"></i> Refresh</button></div>
             <div id="sessionsList"></div>
         </div>
 
-        <!-- API Keys Tab (unchanged) -->
+        <!-- API Keys Tab -->
         <div id="apikeysTab" class="tab-content">
             <div class="section-title"><i class="fas fa-key"></i> API Key Manager</div>
             <div class="controls-bar"><button class="btn-primary" onclick="window.adminDashboard.generateApiKey()"><i class="fas fa-plus"></i> Generate New Key</button><button class="btn-primary" onclick="window.adminDashboard.loadApiKeys()"><i class="fas fa-sync-alt"></i> Refresh</button></div>
             <div id="apiKeysList"></div>
         </div>
 
-        <!-- Leaderboard Tab (unchanged) -->
+        <!-- Leaderboard Tab -->
         <div id="leaderboardTab" class="tab-content">
             <div class="section-title"><i class="fas fa-trophy"></i> Credit Leaderboard</div>
             <div class="two-col"><div class="table-wrapper"><div class="section-title" style="font-size:0.95rem;"><i class="fas fa-medal"></i> Top 10 by Credits</div><div id="creditLeaderboardList"></div></div><div class="table-wrapper"><div class="section-title" style="font-size:0.95rem;"><i class="fas fa-fire"></i> Most Active Users</div><div id="activityLeaderboardList"></div></div></div>
         </div>
 
-        <!-- Permissions Matrix Tab (unchanged) -->
+        <!-- Permissions Tab -->
         <div id="permissionsTab" class="tab-content">
             <div class="section-title"><i class="fas fa-lock"></i> Role Permissions Matrix</div>
-            <div class="table-wrapper permissions-matrix"><table><thead><tr><th>Permission</th><th>👤 User</th><th>🛡️ Moderator</th><th>👑 Admin</th> </thead><tbody id="permissionsMatrixBody"></tbody> </table></div>
+            <div class="table-wrapper permissions-matrix"><table><thead><tr><th>Permission</th><th>👤 User</th><th>🛡️ Moderator</th><th>👑 Admin</th></tr></thead><tbody id="permissionsMatrixBody"></tbody></table></div>
             <div style="margin-top:1rem;font-size:0.8rem;opacity:0.7;"><i class="fas fa-info-circle"></i> This matrix is read-only. To change permissions, update your backend role middleware.</div>
         </div>
 
-        <!-- Rate Limits Tab (unchanged) -->
+        <!-- Rate Limits Tab -->
         <div id="ratelimitsTab" class="tab-content">
             <div class="section-title"><i class="fas fa-tachometer-alt"></i> Rate Limit Overrides</div>
             <p style="font-size:0.85rem;opacity:0.7;margin-bottom:1rem;">Override default rate limits per user. Leave at 0 to use global default.</p>
             <div class="controls-bar"><div class="search-box"><i class="fas fa-search"></i><input type="text" id="rateLimitSearch" placeholder="Search users..."></div><button class="btn-primary" onclick="window.adminDashboard.saveRateLimits()"><i class="fas fa-save"></i> Save Changes</button></div>
-            <div class="table-wrapper"><table><thead><tr><th>User</th><th>Role</th><th>Req/Min (0=default)</th><th>Max Submissions/Day</th><th>Status</th> </thead><tbody id="rateLimitTableBody"></tbody> </table></div>
+            <div class="table-wrapper"><table><thead><tr><th>User</th><th>Role</th><th>Req/Min (0=default)</th><th>Max Submissions/Day</th><th>Status</th></tr></thead><tbody id="rateLimitTableBody"></tbody></table></div>
         </div>
 
-        <!-- Data Purge Tab (unchanged) -->
+        <!-- Data Purge Tab -->
         <div id="purgeTab" class="tab-content">
             <div class="section-title"><i class="fas fa-trash-alt"></i> Data Purge Tools</div>
             <p style="font-size:0.85rem;color:#fca5a5;margin-bottom:1.5rem;"><i class="fas fa-exclamation-triangle"></i> <strong>Warning:</strong> All purge operations are irreversible. Proceed with caution.</p>
-            <div id="purgeOptions"><div class="purge-option"><div class="purge-option-info"><h5>🧹 Inactive Users (90+ days)</h5><p>Remove accounts that have never logged in after 90 days</p></div><button class="btn-danger btn-small" onclick="window.adminDashboard.purgeData('inactive_users')">Purge</button></div><div class="purge-option"><div class="purge-option-info"><h5>🗑️ Rejected Tool Submissions</h5><p>Permanently delete all rejected tool submissions</p></div><button class="btn-danger btn-small" onclick="window.adminDashboard.purgeData('rejected_tools')">Purge</button></div><div class="purge-option"><div class="purge-option-info"><h5>📋 Old Audit Logs (180+ days)</h5><p>Clear audit log entries older than 6 months</p></div><button class="btn-danger btn-small" onclick="window.adminDashboard.purgeData('old_audit_logs')">Purge</button></div><div class="purge-option"><div class="purge-option-info"><h5>🔔 Read Notifications</h5><p>Remove all read notification records from the database</p></div><button class="btn-danger btn-small" onclick="window.adminDashboard.purgeData('read_notifications')">Purge</button></div><div class="purge-option"><div class="purge-option-info"><h5>💬 Old Chat Messages (30+ days)</h5><p>Delete staff conference messages older than 30 days</p></div><button class="btn-danger btn-small" onclick="window.adminDashboard.purgeData('old_messages')">Purge</button></div></div>
+            <div id="purgeOptions">
+                <div class="purge-option"><div class="purge-option-info"><h5>🧹 Inactive Users (90+ days)</h5><p>Remove accounts that have never logged in after 90 days</p></div><button class="btn-danger btn-small" onclick="window.adminDashboard.purgeData('inactive_users')">Purge</button></div>
+                <div class="purge-option"><div class="purge-option-info"><h5>🗑️ Rejected Tool Submissions</h5><p>Permanently delete all rejected tool submissions</p></div><button class="btn-danger btn-small" onclick="window.adminDashboard.purgeData('rejected_tools')">Purge</button></div>
+                <div class="purge-option"><div class="purge-option-info"><h5>📋 Old Audit Logs (180+ days)</h5><p>Clear audit log entries older than 6 months</p></div><button class="btn-danger btn-small" onclick="window.adminDashboard.purgeData('old_audit_logs')">Purge</button></div>
+                <div class="purge-option"><div class="purge-option-info"><h5>🔔 Read Notifications</h5><p>Remove all read notification records from the database</p></div><button class="btn-danger btn-small" onclick="window.adminDashboard.purgeData('read_notifications')">Purge</button></div>
+                <div class="purge-option"><div class="purge-option-info"><h5>💬 Old Chat Messages (30+ days)</h5><p>Delete staff conference messages older than 30 days</p></div><button class="btn-danger btn-small" onclick="window.adminDashboard.purgeData('old_messages')">Purge</button></div>
+            </div>
         </div>
 
-        <!-- Email Templates Tab (unchanged) -->
+        <!-- Email Templates Tab -->
         <div id="emailtemplatesTab" class="tab-content">
             <div class="section-title"><i class="fas fa-envelope-open-text"></i> Email Templates</div>
             <div class="two-col"><div><div class="section-title" style="font-size:0.9rem;">Saved Templates</div><div id="emailTemplatesList"></div><button class="btn-primary" style="margin-top:0.75rem;" onclick="window.adminDashboard.openNewTemplateEditor()"><i class="fas fa-plus"></i> New Template</button></div><div class="table-wrapper" id="templateEditorPanel"><div class="section-title" style="font-size:0.9rem;"><i class="fas fa-edit"></i> Template Editor</div><label style="font-size:0.82rem;">Template Name</label><input type="text" id="tmplName" placeholder="e.g. Welcome Email" style="width:100%;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.3);color:white;margin-bottom:0.75rem;"><label style="font-size:0.82rem;">Subject</label><input type="text" id="tmplSubject" placeholder="Email subject line" style="width:100%;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.3);color:white;margin-bottom:0.75rem;"><label style="font-size:0.82rem;">Body (HTML supported)</label><textarea id="tmplBody" rows="7" placeholder="Email body content..." style="width:100%;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.3);color:white;margin-bottom:0.75rem;resize:vertical;"></textarea><div style="display:flex;gap:0.5rem;"><button class="btn-primary btn-small" onclick="window.adminDashboard.saveEmailTemplate()"><i class="fas fa-save"></i> Save</button><button class="btn-success btn-small" onclick="window.adminDashboard.useTemplate()"><i class="fas fa-paper-plane"></i> Use in Bulk Email</button></div></div></div>
         </div>
 
-        <!-- ========== NEW BUSINESS DIRECTORY TAB (localStorage based) ========== -->
+        <!-- BUSINESSES TAB (Enhanced with localStorage fallback) -->
         <div id="businessesTab" class="tab-content">
             <div class="section-title"><i class="fas fa-store"></i> Business Directory Management</div>
             <div class="controls-bar">
                 <div class="search-box"><i class="fas fa-search"></i><input type="text" id="businessSearch" placeholder="Search by name, city, type..."></div>
-                <select id="businessStatusFilter">
-                    <option value="all">All Status</option>
-                    <option value="pending">Pending</option>
-                    <option value="approved">Approved</option>
-                </select>
-                <select id="businessCategoryFilter">
-                    <option value="all">All Categories</option>
-                    <option value="retail">Retail</option><option value="food">Food & Dining</option><option value="health">Health</option>
-                    <option value="education">Education</option><option value="finance">Finance</option><option value="technology">Technology</option>
-                    <option value="automotive">Automotive</option><option value="beauty">Beauty</option><option value="services">Services</option>
-                </select>
+                <select id="businessStatusFilter"><option value="all">All Status</option><option value="pending">Pending</option><option value="approved">Approved</option></select>
+                <select id="businessCategoryFilter"><option value="all">All Categories</option><option value="retail">Retail</option><option value="food">Food & Dining</option><option value="health">Health</option><option value="education">Education</option><option value="finance">Finance</option><option value="technology">Technology</option><option value="automotive">Automotive</option><option value="beauty">Beauty</option><option value="services">Services</option></select>
                 <select id="businessCityFilter"><option value="all">All Cities</option></select>
                 <button class="btn-primary" id="refreshBusinessesBtn"><i class="fas fa-sync-alt"></i> Refresh</button>
+                <button class="btn-success" id="syncFromLocalStorageBtn" style="margin-left:0.5rem;"><i class="fas fa-database"></i> Sync from localStorage</button>
+                <label style="display:flex;align-items:center;gap:0.5rem;margin-left:0.5rem;background:rgba(255,255,255,0.1);padding:0.3rem 0.8rem;border-radius:30px;"><input type="checkbox" id="forceLocalStorageMode"> <span style="font-size:0.75rem;">🔁 Force localStorage mode (bypass API)</span></label>
             </div>
 
-            <!-- Pending Businesses Section -->
             <div class="table-wrapper" style="margin-bottom: 2rem;">
                 <h3><i class="fas fa-clock"></i> Pending Business Submissions</h3>
-                <div class="bulk-actions">
-                    <input type="checkbox" id="selectAllPendingBusinesses" style="width:auto; margin-right:5px;"><label for="selectAllPendingBusinesses">Select All</label>
-                    <button class="btn-success btn-small" id="bulkApproveBusinesses"><i class="fas fa-check-double"></i> Bulk Approve</button>
-                    <button class="btn-danger btn-small" id="bulkRejectBusinesses"><i class="fas fa-times"></i> Bulk Reject</button>
-                </div>
-                <div class="table-wrapper">
-                    <table id="pendingBusinessesTable">
-                        <thead><tr><th><input type="checkbox" id="selectAllPendingBusinessesHeader"></th><th>ID</th><th>Name</th><th>Type</th><th>Category</th><th>City</th><th>Submitted</th><th>Actions</th> </thead>
-                        <tbody id="pendingBusinessesBody"><tr><td colspan="8">Loading pending businesses... </tr> </tbody>
-                    </table>
-                </div>
+                <div class="bulk-actions"><input type="checkbox" id="selectAllPendingBusinesses" style="width:auto; margin-right:5px;"><label for="selectAllPendingBusinesses">Select All</label><button class="btn-success btn-small" id="bulkApproveBusinesses"><i class="fas fa-check-double"></i> Bulk Approve</button><button class="btn-danger btn-small" id="bulkRejectBusinesses"><i class="fas fa-times"></i> Bulk Reject</button></div>
+                <div class="table-wrapper"><table id="pendingBusinessesTable"><thead><tr><th><input type="checkbox" id="selectAllPendingBusinessesHeader"></th><th>ID</th><th>Name</th><th>Type</th><th>Category</th><th>City</th><th>Submitted</th><th>Actions</th></tr></thead><tbody id="pendingBusinessesBody"><tr><td colspan="8">Loading pending businesses...</td></tr></tbody></table></div>
             </div>
 
-            <!-- Approved Businesses Section -->
             <div class="table-wrapper">
                 <h3><i class="fas fa-check-circle"></i> Approved Businesses</h3>
-                <div class="bulk-actions">
-                    <input type="checkbox" id="selectAllApprovedBusinesses" style="width:auto; margin-right:5px;"><label for="selectAllApprovedBusinesses">Select All</label>
-                    <button class="btn-danger btn-small" id="bulkDeleteApprovedBusinesses"><i class="fas fa-trash"></i> Bulk Delete</button>
-                </div>
-                <div class="table-wrapper">
-                    <table id="approvedBusinessesTable">
-                        <thead><tr><th><input type="checkbox" id="selectAllApprovedBusinessesHeader"></th><th>ID</th><th>Name</th><th>Type</th><th>Category</th><th>City</th><th>Verified</th><th>Featured</th><th>Actions</th> </thead>
-                        <tbody id="approvedBusinessesBody"><tr><td colspan="9">Loading approved businesses... </tr> </tbody>
-                    </table>
-                </div>
+                <div class="bulk-actions"><input type="checkbox" id="selectAllApprovedBusinesses" style="width:auto; margin-right:5px;"><label for="selectAllApprovedBusinesses">Select All</label><button class="btn-danger btn-small" id="bulkDeleteApprovedBusinesses"><i class="fas fa-trash"></i> Bulk Delete</button></div>
+                <div class="table-wrapper"><table id="approvedBusinessesTable"><thead><tr><th><input type="checkbox" id="selectAllApprovedBusinessesHeader"></th><th>ID</th><th>Name</th><th>Type</th><th>Category</th><th>City</th><th>Verified</th><th>Featured</th><th>Actions</th></tr></thead><tbody id="approvedBusinessesBody"><tr><td colspan="9">Loading approved businesses...</td></tr></tbody></table></div>
             </div>
         </div>
     </div>
 
-    <!-- EXISTING MODALS (unchanged) -->
+    <!-- Modals (unchanged) -->
     <div id="userModal" class="modal"><div class="modal-content"><h3><i class="fas fa-user-edit"></i> Edit User</h3><input type="hidden" id="editUserId"><label>Username</label><input type="text" id="editUsername"><label>Email</label><input type="email" id="editEmail"><label>Role</label><select id="editRole"><option value="user">User</option><option value="moderator">Moderator</option><option value="admin">Admin</option></select><label>Status</label><select id="editStatus"><option value="active">Active</option><option value="suspended">Suspended</option></select><div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;"><button id="closeModal" class="btn-small">Cancel</button><button id="saveUserChanges" class="btn-primary btn-small">Save Changes</button></div></div></div>
     <div id="creditsModal" class="modal"><div class="modal-content"><h3><i class="fas fa-coins"></i> Give Credits</h3><input type="hidden" id="creditUserId"><label>Amount (credits)</label><input type="number" id="creditAmount" min="1" step="1" placeholder="Enter credit amount" required><label>Reason (optional)</label><input type="text" id="creditReason" placeholder="e.g., Reward, Compensation, Bonus"><div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;"><button id="closeCreditsModal" class="btn-small">Cancel</button><button id="giveCreditsBtn" class="btn-primary btn-small">Give Credits</button></div></div></div>
     <div id="transactionModal" class="modal"><div class="modal-content"><h3><i class="fas fa-history"></i> Credit Transactions</h3><div id="transactionList" style="max-height: 400px; overflow-y: auto;"></div><div id="transactionPagination" style="margin-top: 1rem; text-align: center;"></div><button id="closeTransactionModal" class="btn-small btn-primary" style="margin-top: 1rem;">Close</button></div></div>
@@ -816,10 +553,8 @@
     <div id="toolModal" class="modal"><div class="modal-content"><h3 id="toolModalTitle"><i class="fas fa-tools"></i> Add/Edit Tool</h3><input type="hidden" id="toolId"><label>Tool Name</label><input type="text" id="toolName" placeholder="Tool name"><label>URL</label><input type="url" id="toolUrl" placeholder="https://..."><label>Description</label><textarea id="toolDesc" rows="3" placeholder="Short description"></textarea><label>Category</label><select id="toolCategory"><option value="study">📚 Study Tools</option><option value="ai">🤖 AI Tools</option><option value="writing">✍️ Writing Tools</option><option value="coding">💻 Coding Tools</option><option value="productivity">⚡ Productivity</option><option value="utilities">🛠️ Utilities</option></select><div class="category-preview" id="categoryPreview"><div class="category-preview-icon">📚</div><div class="category-preview-text">Will appear under: <strong>Study Tools</strong></div></div><label>Approved</label><select id="toolApproved"><option value="1">✅ Approved</option><option value="0">⏳ Pending</option></select><div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;"><button id="closeToolModal" class="btn-small">Cancel</button><button id="saveToolChanges" class="btn-primary btn-small">Save Tool</button></div></div></div>
     <div id="cardModal" class="modal"><div class="modal-content" style="max-width: 600px;"><h3 id="cardModalTitle"><i class="fas fa-id-card"></i> Add/Edit Card</h3><input type="hidden" id="cardId"><label>Title</label><input type="text" id="cardTitle" placeholder="Card title" required><label>Description</label><textarea id="cardDesc" rows="3" placeholder="Short description of the card"></textarea><label>Icon Class (FontAwesome)</label><input type="text" id="cardIcon" placeholder="e.g., fa-robot, fa-chart-line" value="fa-cube"><div class="card-icon-preview" id="cardIconPreview"><i class="fas fa-cube"></i> Preview</div><label>Link URL</label><input type="url" id="cardLink" placeholder="https://... or /page.html"><label>Category</label><select id="cardCategory"><option value="featured">✨ Featured</option><option value="ai">🤖 AI Tools</option><option value="design">🎨 Design</option><option value="coding">💻 Coding</option><option value="productivity">⚡ Productivity</option><option value="other">📦 Other</option></select><label>Display Order</label><input type="number" id="cardOrder" placeholder="Lower numbers appear first" value="0"><div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;"><button id="closeCardModal" class="btn-small">Cancel</button><button id="saveCardChanges" class="btn-primary btn-small">Save Card</button></div></div></div>
     <div id="announcementModal" class="modal"><div class="modal-content"><h3><i class="fas fa-bullhorn"></i> Create Announcement</h3><label>Title</label><input type="text" id="announceTitle" placeholder="Announcement title"><label>Content</label><textarea id="announceContent" rows="4" placeholder="Write your announcement here..."></textarea><div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;"><button id="closeAnnounceModal" class="btn-small">Cancel</button><button id="postAnnounceBtn" class="btn-primary btn-small"><i class="fas fa-paper-plane"></i> Post Announcement</button></div></div></div>
-    <!-- NEW MODALS -->
     <div id="userNotesModal" class="modal"><div class="modal-content" style="max-width:520px;"><h3><i class="fas fa-sticky-note"></i> User Notes & Tags</h3><input type="hidden" id="noteUserId"><p id="noteUserLabel" style="margin-bottom:1rem;font-size:0.9rem;color:#00d4ff;"></p><label>Add Note / Tag</label><div style="display:flex;gap:0.5rem;margin-bottom:1rem;"><input type="text" id="noteInput" placeholder="e.g. VIP, Spam Risk, Beta Tester..." style="flex:1;padding:8px 14px;border-radius:30px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.3);color:white;"><button class="btn-primary btn-small" onclick="window.adminDashboard.addUserNote()"><i class="fas fa-plus"></i> Add</button></div><div id="currentNotesList" style="margin-bottom:1rem;"></div><div style="display:flex;justify-content:flex-end;"><button class="btn-small" onclick="document.getElementById('userNotesModal').classList.remove('active')">Close</button></div></div></div>
     <div id="impersonateModal" class="modal"><div class="modal-content" style="max-width:480px;"><h3><i class="fas fa-user-secret"></i> Impersonate User</h3><p id="impersonateLabel" style="margin-bottom:1rem;font-size:0.9rem;"></p><p style="font-size:0.82rem;color:#fca5a5;margin-bottom:1.5rem;"><i class="fas fa-exclamation-triangle"></i> You will be logged in as this user. All actions will be performed as them. Your admin session will be saved and can be restored.</p><div style="display:flex;gap:10px;justify-content:flex-end;"><button class="btn-small" onclick="document.getElementById('impersonateModal').classList.remove('active')">Cancel</button><button class="btn-warning btn-small" id="confirmImpersonateBtn"><i class="fas fa-sign-in-alt"></i> Confirm Impersonate</button></div></div></div>
-    <!-- NEW BUSINESS MODALS -->
     <div id="businessEditModal" class="modal"><div class="modal-content" style="max-width: 700px;"><h3><i class="fas fa-edit"></i> Edit Business</h3><input type="hidden" id="editBusinessId"><input type="hidden" id="editBusinessStatus"><label>Business Name</label><input type="text" id="editBusinessName" placeholder="Business name"><label>Type</label><select id="editBusinessType"><option value="company">🏢 Company</option><option value="shop">🛍️ Shop</option><option value="mart">🏪 Mart</option><option value="restaurant">🍽️ Restaurant</option><option value="hotel">🏨 Hotel</option><option value="hospital">🏥 Hospital</option><option value="school">🏫 School</option><option value="bank">🏦 Bank</option><option value="salon">💇 Salon</option><option value="gym">💪 Gym</option><option value="pharmacy">💊 Pharmacy</option><option value="garage">🔧 Garage</option><option value="real_estate">🏠 Real Estate</option><option value="tech">💻 Tech</option><option value="service">⚙️ Service</option></select><label>Category</label><select id="editBusinessCategory"><option value="retail">Retail</option><option value="food">Food & Dining</option><option value="health">Health</option><option value="education">Education</option><option value="finance">Finance</option><option value="technology">Technology</option><option value="automotive">Automotive</option><option value="beauty">Beauty</option><option value="services">Services</option></select><label>Description</label><textarea id="editBusinessDesc" rows="3" placeholder="Description"></textarea><label>Address</label><input type="text" id="editBusinessAddress" placeholder="Address"><label>City</label><input type="text" id="editBusinessCity" placeholder="City"><label>Phone</label><input type="text" id="editBusinessPhone" placeholder="Phone"><label>Email</label><input type="email" id="editBusinessEmail" placeholder="Email"><label>Website</label><input type="url" id="editBusinessWebsite" placeholder="Website"><label>WhatsApp</label><input type="text" id="editBusinessWhatsapp" placeholder="WhatsApp"><label>Verified</label><select id="editBusinessVerified"><option value="false">No</option><option value="true">Yes</option></select><label>Featured</label><select id="editBusinessFeatured"><option value="false">No</option><option value="true">Yes</option></select><div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;"><button id="closeBusinessModal" class="btn-small">Cancel</button><button id="saveBusinessChanges" class="btn-primary btn-small">Save Changes</button></div></div></div>
     <div id="businessDetailModal" class="modal"><div class="modal-content" style="max-width: 600px;"><h3><i class="fas fa-info-circle"></i> Business Details</h3><div id="businessDetailContent"></div><div style="display:flex; justify-content:flex-end; margin-top:1rem;"><button onclick="document.getElementById('businessDetailModal').classList.remove('active')" class="btn-small">Close</button></div></div></div>
 
@@ -828,7 +563,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/apexcharts@3.44.0/dist/apexcharts.min.js"></script>
     <script>
-        // Helper functions
         function showToast(msg, type='success'){
             const t=document.createElement('div'); t.className=`toast ${type}`; t.innerHTML=`<i class="fas ${type==='success'?'fa-check-circle':type==='error'?'fa-exclamation-circle':'fa-info-circle'}"></i> ${msg}`;
             document.body.appendChild(t); setTimeout(()=>t.remove(),4000);
@@ -857,16 +591,6 @@
             productivity:{icon:'⚡',name:'Productivity'}, utilities:{icon:'🛠️',name:'Utilities'}
         };
 
-        // ========== LOCALSTORAGE FUNCTIONS FOR BUSINESS ==========
-        function getDataLS(key, defaultValue = []) {
-            try {
-                const raw = localStorage.getItem(key);
-                return raw ? JSON.parse(raw) : defaultValue;
-            } catch { return defaultValue; }
-        }
-        function setDataLS(key, value) { localStorage.setItem(key, JSON.stringify(value)); }
-        function uidLS() { return 'biz_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6); }
-
         class AdminDashboard {
             constructor(){
                 this.allUsers=[]; this.filteredUsers=[]; this.selectedUsers=new Set();
@@ -878,12 +602,10 @@
                 this.staffGroupId = null;
                 this.staffMessages = [];
                 this.notifications = [];
-                // NEW STATE for Business Directory (localStorage based)
                 this.pendingBusinesses = [];
                 this.approvedBusinesses = [];
                 this.selectedPendingBusinesses = new Set();
                 this.selectedApprovedBusinesses = new Set();
-                // NEW STATE
                 this.maintenanceMode = false;
                 this.darkMode = false;
                 this.ipBans = [];
@@ -913,10 +635,8 @@
                 this.initTabs(); 
                 this.initCategoryPreview();
                 this.initBackToTop();
-                // NEW INIT for Business (localStorage)
-                this.loadBusinesses();
+                await this.loadBusinesses();
                 this.initBusinessEvents();
-                // NEW INITS
                 this.initDarkMode();
                 this.initGlobalSearch();
                 this.initEmailTemplates();
@@ -925,7 +645,6 @@
                 window.adminDashboard = this;
             }
 
-            // HAMBURGER MENU
             initHamburgerMenu() {
                 const hamburger = document.getElementById('hamburgerBtn');
                 const navLinks = document.getElementById('navLinks');
@@ -950,7 +669,6 @@
                 });
             }
 
-            // ========== NOTIFICATIONS ==========
             addNotification(type, title, message){
                 this.notifications.unshift({ id: Date.now(), type, title, message, time: new Date().toISOString(), read: false });
                 if (this.notifications.length > 20) this.notifications.pop();
@@ -981,7 +699,6 @@
                 if (unseen > 0) { badge.style.display = 'flex'; badge.innerText = unseen; } else { badge.style.display = 'none'; }
             }
 
-            // ========== SOCKET.IO (unchanged) ==========
             initSocket(){
                 if (typeof io !== 'undefined') {
                     this.socket = io();
@@ -998,7 +715,6 @@
                 } else { console.warn('Socket.IO not loaded'); }
             }
 
-            // ========== STAFF CONFERENCE (unchanged) ==========
             async loadStaffConference() {
                 try {
                     const loungeInfo = await apiCall('/api/staff-lounge');
@@ -1061,7 +777,6 @@
                 if (input) input.value = '';
             }
 
-            // ========== ADMIN ACCESS (unchanged) ==========
             async checkAdminAccess(){
                 try{
                     const profile=await apiCall('/profile');
@@ -1175,7 +890,7 @@
                         <td><span class="status-badge status-${u.role}">${u.role}</span></td>
                         <td><span class="status-badge status-${u.status}">${u.status}</span></td>
                         <td class="credits-cell"><i class="fas fa-coins"></i> ${u.credits ?? 0}</td>
-                        <td>${noteChips || '<span style="opacity:0.4;font-size:0.75rem;">none</span>'} </td>
+                        <td>${noteChips || '<span style="opacity:0.4;font-size:0.75rem;">none</span>'}</td>
                         <td>${new Date(u.created_at).toLocaleDateString()}</td>
                         <td>
                             <button class="btn-small edit-user" data-id="${u.id}" title="Edit"><i class="fas fa-edit"></i></button>
@@ -1185,9 +900,8 @@
                             <button class="btn-small view-transactions" data-id="${u.id}" data-username="${escapeHtml(u.username)}" title="Credit History"><i class="fas fa-history"></i> History</button>
                             <button class="btn-small add-note-btn" data-id="${u.id}" data-username="${escapeHtml(u.username)}" title="Notes"><i class="fas fa-sticky-note"></i></button>
                             <button class="btn-small impersonate-btn" data-id="${u.id}" data-username="${escapeHtml(u.username)}" title="Impersonate"><i class="fas fa-user-secret"></i></button>
-                         </td>
-                    </tr>
-                `}).join('');
+                        </td>
+                    `}).join('');
                 this.attachUserEvents();
                 document.querySelectorAll('.view-transactions').forEach(btn=>btn.addEventListener('click',()=>this.viewUserTransactions(parseInt(btn.dataset.id), btn.dataset.username)));
                 document.querySelectorAll('.add-note-btn').forEach(btn=>btn.addEventListener('click',()=>this.openUserNotesModal(parseInt(btn.dataset.id), btn.dataset.username)));
@@ -1282,7 +996,6 @@
             }
             convertToCSV(users){ const headers=['ID','Username','Email','Role','Status','Credits','Created At']; const rows=users.map(u=>`${u.id},"${u.username}","${u.email}",${u.role},${u.status},${u.credits??0},"${new Date(u.created_at).toLocaleString()}"`); return headers.join(',')+'\n'+rows.join('\n'); }
             
-            // CREDITS (unchanged)
             openGiveCreditsModal(userId){
                 document.getElementById('creditUserId').value=userId;
                 document.getElementById('creditAmount').value='';
@@ -1307,7 +1020,6 @@
             }
             closeCreditsModal(){ document.getElementById('creditsModal').classList.remove('active'); }
 
-            // CREDIT HISTORY (unchanged)
             async viewUserTransactions(userId, username){
                 try{
                     const data = await apiCall(`/api/admin/users/${userId}/credits/transactions`);
@@ -1315,13 +1027,12 @@
                     const container = document.getElementById('transactionList');
                     if(!transactions.length){ container.innerHTML = '<div>No transactions found</div>'; }
                     else {
-                        container.innerHTML = `<table style="width:100%;"><thead></td><th>Date</th><th>Amount</th><th>Type</th><th>Description</th> </thead><tbody>${transactions.map(t => `<tr><td>${new Date(t.created_at).toLocaleString()}</td><td class="${t.sign === '+' ? 'credits-cell' : ''}">${t.sign}${t.amount}</td><td>${t.type}</td><td>${escapeHtml(t.description)}</td></tr>`).join('')}</tbody> </table>`;
+                        container.innerHTML = `<table style="width:100%;"><thead><tr><th>Date</th><th>Amount</th><th>Type</th><th>Description</th></tr></thead><tbody>${transactions.map(t => `<tr><td>${new Date(t.created_at).toLocaleString()}</td><td class="${t.sign === '+' ? 'credits-cell' : ''}">${t.sign}${t.amount}</td><td>${t.type}</td><td>${escapeHtml(t.description)}</td></tr>`).join('')}</tbody></table>`;
                     }
                     document.getElementById('transactionModal').classList.add('active');
                 } catch(e){ showToast('Failed to load transactions','error'); }
             }
 
-            // BULK EMAIL (unchanged)
             showBulkEmailModal(){
                 document.getElementById('bulkEmailSubject').value = '';
                 document.getElementById('bulkEmailContent').value = '';
@@ -1340,7 +1051,6 @@
                 } catch(e) { showToast('Failed to send emails: '+e.message,'error'); }
             }
 
-            // TOOLS (unchanged)
             async loadTools(){ try{ this.allTools=await apiCall('/api/admin/tools'); this.renderToolsTable(); } catch(e){showToast('Failed to load tools: '+e.message,'error');} }
             renderToolsTable(){ const tbody=document.getElementById('toolsTableBody'); const search=document.getElementById('toolSearch').value.toLowerCase(); const catFilter=document.getElementById('toolCategoryFilter').value; const approvalFilter=document.getElementById('toolApprovalFilter').value; let filtered=this.allTools.filter(t=>{ if(search && !t.name.toLowerCase().includes(search) && !(t.category&&t.category.toLowerCase().includes(search))) return false; if(catFilter && t.category!==catFilter) return false; if(approvalFilter!=='' && ((approvalFilter==='1' && !t.approved) || (approvalFilter==='0' && t.approved))) return false; return true; }); if(!filtered.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;">No tools found</td></tr>';return;} tbody.innerHTML=filtered.map(tool=>{ const cat=categoryMap[tool.category]||{icon:'📦',name:tool.category||'Uncategorized'}; const isFeatured = tool.is_featured === 1 || tool.is_featured === true; return `<tr><td>${tool.id}</td><td><strong>${escapeHtml(tool.name)}</strong></td><td><a href="${escapeHtml(tool.url)}" target="_blank" style="color:#00d4ff;">${escapeHtml(tool.url.substring(0,50))}</a></td><td>${cat.icon} ${cat.name}</td><td>${tool.submitted_by || 'Admin'}</td><td><span class="status-badge ${tool.approved?'status-active':'status-pending'}">${tool.approved?'Approved':'Pending'}</span></td><td><button class="featured-toggle-btn ${isFeatured ? 'active' : ''}" data-id="${tool.id}" data-featured="${isFeatured ? '1' : '0'}"><i class="fas fa-star"></i> ${isFeatured ? 'Featured' : 'Not Featured'}</button></td><td>${tool.usage_count || 0}</td><td><button class="btn-small edit-tool" data-id="${tool.id}" title="Edit"><i class="fas fa-edit"></i></button> <button class="btn-small delete-tool" data-id="${tool.id}" title="Delete"><i class="fas fa-trash"></i></button></td></tr>`; }).join(''); document.querySelectorAll('.edit-tool').forEach(btn=>btn.addEventListener('click',()=>this.openToolModal(parseInt(btn.dataset.id)))); document.querySelectorAll('.delete-tool').forEach(btn=>btn.addEventListener('click',()=>this.deleteTool(parseInt(btn.dataset.id)))); document.querySelectorAll('.featured-toggle-btn').forEach(btn=>btn.addEventListener('click',()=>this.toggleFeaturedTool(parseInt(btn.dataset.id)))); }
             async toggleFeaturedTool(toolId){ const tool=this.allTools.find(t=>t.id===toolId); if(!tool) return; const newFeatured = tool.is_featured ? 0 : 1; try{ await apiCall(`/api/admin/tools/${toolId}`,{method:'PUT',body:JSON.stringify({name:tool.name,url:tool.url,description:tool.description,category:tool.category,approved:tool.approved,pageType:tool.page_type,is_premium:tool.is_premium||0,is_featured:newFeatured})}); tool.is_featured = newFeatured; this.renderToolsTable(); showToast(`Tool ${newFeatured?'featured':'unfeatured'} successfully`); }catch(e){ showToast('Failed to update featured status','error'); } }
@@ -1356,7 +1066,6 @@
             async deleteTool(toolId){ if(!confirm('Delete this tool?'))return; try{ await apiCall(`/api/admin/tools/${toolId}`,{method:'DELETE'}); showToast('Tool deleted'); await this.loadTools(); await this.loadPendingTools(); }catch(e){showToast('Delete failed: '+e.message,'error');} }
             closeToolModal(){ document.getElementById('toolModal').classList.remove('active'); }
             
-            // CARDS (unchanged)
             async loadCards(){ try{ const cards = await apiCall('/api/cards'); this.allCards = cards; this.filterCards(); }catch(e){ console.warn('Cards API not available, using demo data'); this.allCards = [ { id:1, title:"AI Assistant", description:"Smart AI chat for your tasks", icon:"fa-robot", link:"/ai-chat.html", category:"ai", order:1 }, { id:2, title:"Code Editor", description:"Write and test code online", icon:"fa-code", link:"/editor.html", category:"coding", order:2 }, { id:3, title:"Design Kit", description:"Create stunning visuals", icon:"fa-palette", link:"/design.html", category:"design", order:3 } ]; this.filterCards(); } }
             filterCards(){ const search = document.getElementById('cardSearch')?.value.toLowerCase() || ''; const cat = document.getElementById('cardCategoryFilter')?.value || ''; this.filteredCards = this.allCards.filter(c => (!search || c.title.toLowerCase().includes(search)) && (!cat || c.category === cat)); this.renderCardsTable(); }
             renderCardsTable(){ const tbody = document.getElementById('cardsTableBody'); if(!this.filteredCards.length){ tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No cards found</td></tr>'; return; } tbody.innerHTML = this.filteredCards.map(card => `<tr><td>${card.id}</td><td style="font-size:1.5rem;"><i class="fas ${escapeHtml(card.icon)}"></i></td><td><strong>${escapeHtml(card.title)}</strong></td><td>${escapeHtml(card.description)}</td><td>${escapeHtml(card.category)}</td><td><a href="${escapeHtml(card.link)}" target="_blank" style="color:#00d4ff;">${escapeHtml(card.link.substring(0,30))}</a></td><td>${card.order}</td><td><button class="btn-small edit-card" data-id="${card.id}" title="Edit"><i class="fas fa-edit"></i></button> <button class="btn-small delete-card" data-id="${card.id}" title="Delete"><i class="fas fa-trash"></i></button></td></tr>`).join(''); document.querySelectorAll('.edit-card').forEach(btn=>btn.addEventListener('click',()=>this.openCardModal(parseInt(btn.dataset.id)))); document.querySelectorAll('.delete-card').forEach(btn=>btn.addEventListener('click',()=>this.deleteCard(parseInt(btn.dataset.id)))); }
@@ -1366,18 +1075,13 @@
             async deleteCard(cardId){ if(!confirm('Delete this card? It will be removed from the main page.')) return; try{ await apiCall(`/api/cards/${cardId}`, { method:'DELETE' }); showToast('Card deleted'); await this.loadCards(); }catch(e){ showToast('Delete failed: '+e.message,'error'); } }
             closeCardModal(){ document.getElementById('cardModal').classList.remove('active'); }
             
-            // FEEDBACK (unchanged)
             async loadFeedback(){ try{ const feedback = await apiCall('/api/admin/feedback'); this.allFeedback = feedback; this.filterFeedback(); }catch(e){ console.error('Failed to load feedback:', e); this.allFeedback = []; this.filterFeedback(); } }
             filterFeedback(){ const search = document.getElementById('feedbackSearch')?.value.toLowerCase() || ''; const rating = document.getElementById('ratingFilter')?.value || ''; this.filteredFeedback = this.allFeedback.filter(f => { if(search && !f.username.toLowerCase().includes(search) && !f.email.toLowerCase().includes(search) && !(f.comment && f.comment.toLowerCase().includes(search))) return false; if(rating && f.rating != rating) return false; return true; }); this.renderFeedbackTable(); }
-            renderFeedbackTable(){ const tbody = document.getElementById('feedbackTableBody'); if(!this.filteredFeedback.length){ tbody.innerHTML = '</table><td colspan="5" style="text-align:center;">No feedback foundNeu </tr>'; return; } const renderStars = (rating) => { let stars = ''; for(let i=1;i<=5;i++) stars += i<=rating ? '<i class="fas fa-star"></i>' : '<i class="far fa-star"></i>'; return `<span class="rating-stars-display">${stars}</span>`; }; tbody.innerHTML = this.filteredFeedback.map(f => `<tr><td>${f.id}</td><td><strong>${escapeHtml(f.username)}</strong><br><small>${escapeHtml(f.email)}</small></td><td>${renderStars(f.rating)} (${f.rating})</td><td>${escapeHtml(f.comment) || '<em>No comment</em>'}</td><td>${new Date(f.created_at).toLocaleString()}</td></tr>`).join(''); }
+            renderFeedbackTable(){ const tbody = document.getElementById('feedbackTableBody'); if(!this.filteredFeedback.length){ tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No feedback found</td></tr>'; return; } const renderStars = (rating) => { let stars = ''; for(let i=1;i<=5;i++) stars += i<=rating ? '<i class="fas fa-star"></i>' : '<i class="far fa-star"></i>'; return `<span class="rating-stars-display">${stars}</span>`; }; tbody.innerHTML = this.filteredFeedback.map(f => `<tr><td>${f.id}</td><td><strong>${escapeHtml(f.username)}</strong><br><small>${escapeHtml(f.email)}</small></td><td>${renderStars(f.rating)} (${f.rating})</td><td>${escapeHtml(f.comment) || '<em>No comment</em>'}</td><td>${new Date(f.created_at).toLocaleString()}</td></tr>`).join(''); }
             
-            // ANNOUNCEMENTS (unchanged)
             openAnnouncementModal(){ document.getElementById('announceTitle').value = ''; document.getElementById('announceContent').value = ''; document.getElementById('announcementModal').classList.add('active'); }
             async postAnnouncement(){ const title = document.getElementById('announceTitle').value.trim(); const content = document.getElementById('announceContent').value.trim(); if (!title || !content) { showToast('Please fill both title and content', 'error'); return; } try{ await apiCall('/api/announcements', { method: 'POST', body: JSON.stringify({ title, content }) }); showToast('Announcement posted successfully!', 'success'); document.getElementById('announcementModal').classList.remove('active'); }catch(e){ showToast('Failed to post announcement: ' + e.message, 'error'); } }
 
-            // ====================================================
-            // ============= NEW FEATURE METHODS (unchanged) ==========
-            // ====================================================
             initDarkMode(){
                 const saved = localStorage.getItem('nova_admin_dark');
                 if(saved === '1') { document.body.classList.add('dark'); this.darkMode = true; this.updateDarkBtn(); }
@@ -1480,7 +1184,7 @@
                     { id:2, ip:'192.168.99.10', reason:'Spam submissions', banned_by:'mod_sam', date: new Date(Date.now()-172800000).toISOString() },
                 ];
                 const tbody = document.getElementById('ipBanTableBody');
-                tbody.innerHTML = this.ipBans.map(b=>`<tr><td style="font-family:monospace;color:#00d4ff;">${escapeHtml(b.ip)}</td><td>${escapeHtml(b.reason||'No reason')}</td><td>${escapeHtml(b.banned_by||'Admin')}</td><td>${new Date(b.date).toLocaleDateString()}</td><td><button class="btn-danger btn-small" onclick="window.adminDashboard.removeIpBan(${b.id})"><i class="fas fa-times"></i> Unban</button></td></tr>`).join('');
+                tbody.innerHTML = this.ipBans.map(b=>`<tr><td style="font-family:monospace;color:#00d4ff;">${escapeHtml(b.ip)}</td><td>${escapeHtml(b.reason||'No reason')}</td><td>${escapeHtml(b.banned_by||'Admin')}</td><td>${new Date(b.date).toLocaleDateString()}</td><td><button class="btn-danger btn-small" onclick="window.adminDashboard.removeIpBan(${b.id})"><i class="fas fa-times"></i> Unban</button></td>`).join('');
             }
             addIpBan(){
                 const ip = document.getElementById('newBanIp').value.trim();
@@ -1574,14 +1278,13 @@
                     ['Access staff lounge', false, true, true],
                     ['Ban IP addresses', false, false, true],
                 ];
-                document.getElementById('permissionsMatrixBody').innerHTML = perms.map(p=>`<tr><td>${p[0]}</td><td class="${p[1]?'perm-yes':'perm-no'}">${p[1]?'✓':'✗'}</td><td class="${p[2]?'perm-yes':'perm-no'}">${p[2]?'✓':'✗'}</td><td class="${p[3]?'perm-yes':'perm-no'}">${p[3]?'✓':'✗'}</td>`).join('');
+                document.getElementById('permissionsMatrixBody').innerHTML = perms.map(p=>`<tr><td>${p[0]}</td><td class="${p[1]?'perm-yes':'perm-no'}">${p[1]?'✓':'✗'}</td><td class="${p[2]?'perm-yes':'perm-no'}">${p[2]?'✓':'✗'}</td><td class="${p[3]?'perm-yes':'perm-no'}">${p[3]?'✓':'✗'}</td></td>`).join('');
             }
             loadRateLimits(){
                 const tbody = document.getElementById('rateLimitTableBody');
                 tbody.innerHTML = this.allUsers.map(u=>`
                     <tr class="rate-limit-row" style="background:none;padding:0;border-radius:0;">
-                        <td>${escapeHtml(u.username)}</td>
-                        <td><span class="status-badge status-${u.role}">${u.role}</span></td>
+                        <td>${escapeHtml(u.username)}</td><td><span class="status-badge status-${u.role}">${u.role}</span></td>
                         <td><input type="number" class="rl-rpm" data-id="${u.id}" value="${this.rateLimits[u.id]?.rpm||0}" min="0" max="1000" style="transform:none;"></td>
                         <td><input type="number" class="rl-maxsub" data-id="${u.id}" value="${this.rateLimits[u.id]?.maxSub||0}" min="0" max="100" style="transform:none;"></td>
                         <td><span class="status-badge ${this.rateLimits[u.id]?'status-active':'status-pending'}">${this.rateLimits[u.id]?'Override':'Default'}</span></td>
@@ -1636,17 +1339,51 @@
             openImpersonateModal(userId, username){ document.getElementById('impersonateLabel').innerHTML = `You are about to impersonate <strong style="color:#fbbf24;">${escapeHtml(username)}</strong> (ID: ${userId}).`; document.getElementById('confirmImpersonateBtn').onclick = () => this.impersonateUser(userId, username); document.getElementById('impersonateModal').classList.add('active'); }
             async impersonateUser(userId, username){ document.getElementById('impersonateModal').classList.remove('active'); try { await apiCall(`/api/admin/impersonate/${userId}`, { method:'POST' }); showToast(`Now logged in as ${username}. Redirecting...`, 'warning'); setTimeout(()=>window.location.href='/', 1500); } catch(e){ showToast(`Impersonation API not available (demo). Would redirect as ${username}.`, 'info'); } this.addAuditLogEntry('login', this.currentUser?.username||'admin', `Impersonated user: ${username} (ID: ${userId})`); }
 
-            // ========== BUSINESS DIRECTORY MANAGEMENT (localStorage based) ==========
-            loadBusinesses() {
-                // Read from localStorage keys used by businessdirectory.html
-                const pendingRaw = localStorage.getItem('sarveik_biz_pending');
-                const approvedRaw = localStorage.getItem('sarveik_biz_approved');
-                this.pendingBusinesses = pendingRaw ? JSON.parse(pendingRaw) : [];
-                this.approvedBusinesses = approvedRaw ? JSON.parse(approvedRaw) : [];
-                // Ensure each business has the required fields for display
-                this.renderPendingBusinesses();
-                this.renderApprovedBusinesses();
-                this.updateBusinessCityFilter();
+            // ========== BUSINESS MANAGEMENT (API first, localStorage fallback) ==========
+            async loadBusinesses() {
+                const forceLocalStorage = document.getElementById('forceLocalStorageMode')?.checked || false;
+                if (forceLocalStorage) {
+                    this.loadBusinessesFromLocalStorage();
+                    return;
+                }
+                try {
+                    const pendingRes = await apiCall('/api/admin/businesses/pending');
+                    this.pendingBusinesses = pendingRes.data || [];
+                    const approvedRes = await apiCall('/api/admin/businesses/approved');
+                    this.approvedBusinesses = approvedRes.data || [];
+                    this.renderPendingBusinesses();
+                    this.renderApprovedBusinesses();
+                    this.updateBusinessCityFilter();
+                } catch (err) {
+                    console.error('API failed, falling back to localStorage:', err);
+                    showToast('API failed – using localStorage. You can sync manually.', 'warning');
+                    this.loadBusinessesFromLocalStorage();
+                }
+            }
+
+            loadBusinessesFromLocalStorage() {
+                try {
+                    const pendingRaw = localStorage.getItem('sarveik_biz_pending');
+                    const approvedRaw = localStorage.getItem('sarveik_biz_approved');
+                    this.pendingBusinesses = pendingRaw ? JSON.parse(pendingRaw) : [];
+                    this.approvedBusinesses = approvedRaw ? JSON.parse(approvedRaw) : [];
+                    this.pendingBusinesses.forEach(b => { if (!b.created_at) b.created_at = new Date().toISOString(); });
+                    this.approvedBusinesses.forEach(b => { if (!b.created_at) b.created_at = new Date().toISOString(); });
+                    this.renderPendingBusinesses();
+                    this.renderApprovedBusinesses();
+                    this.updateBusinessCityFilter();
+                    showToast(`Loaded ${this.pendingBusinesses.length} pending, ${this.approvedBusinesses.length} approved from localStorage`, 'success');
+                } catch (err) {
+                    showToast('Failed to load from localStorage', 'error');
+                    this.pendingBusinesses = [];
+                    this.approvedBusinesses = [];
+                    this.renderPendingBusinesses();
+                    this.renderApprovedBusinesses();
+                }
+            }
+
+            syncFromLocalStorage() {
+                this.loadBusinessesFromLocalStorage();
             }
 
             renderPendingBusinesses() {
@@ -1664,7 +1401,7 @@
                     return true;
                 });
                 if (filtered.length === 0) {
-                    tbody.innerHTML = '</table><td colspan="8" style="text-align:center;">No pending businesses found</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No pending businesses found</td></tr>';
                     return;
                 }
                 tbody.innerHTML = filtered.map(b => `
@@ -1681,7 +1418,7 @@
                             <button class="btn-small reject-business" data-id="${b.id}"><i class="fas fa-times-circle"></i> Reject</button>
                             <button class="btn-small edit-business" data-id="${b.id}" data-status="pending"><i class="fas fa-edit"></i> Edit</button>
                             <button class="btn-small view-business-detail" data-id="${b.id}" data-status="pending"><i class="fas fa-eye"></i> View</button>
-                          </td>
+                        </td>
                     </tr>
                 `).join('');
                 this.attachBusinessEvents();
@@ -1703,7 +1440,7 @@
                     return true;
                 });
                 if (filtered.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">No approved businesses found</td></tr>';
+                    tbody.innerHTML = '<td><td colspan="9" style="text-align:center;">No approved businesses found</td></tr>';
                     return;
                 }
                 tbody.innerHTML = filtered.map(b => `
@@ -1720,7 +1457,7 @@
                             <button class="btn-small edit-business" data-id="${b.id}" data-status="approved"><i class="fas fa-edit"></i> Edit</button>
                             <button class="btn-small delete-business" data-id="${b.id}"><i class="fas fa-trash"></i> Delete</button>
                             <button class="btn-small view-business-detail" data-id="${b.id}" data-status="approved"><i class="fas fa-eye"></i> View</button>
-                          </td>
+                        </td>
                     </tr>
                 `).join('');
                 this.attachBusinessEvents();
@@ -1756,11 +1493,6 @@
                 }
             }
 
-            saveBusinessesToStorage() {
-                localStorage.setItem('sarveik_biz_pending', JSON.stringify(this.pendingBusinesses));
-                localStorage.setItem('sarveik_biz_approved', JSON.stringify(this.approvedBusinesses));
-            }
-
             async approveBusiness(bizId, showConfirm = true) {
                 if (showConfirm && !confirm('Approve this business? The user will receive credits and email notification.')) return;
                 const bizIndex = this.pendingBusinesses.findIndex(b => b.id === bizId);
@@ -1771,7 +1503,7 @@
                 biz.featured = biz.featured || false;
                 this.approvedBusinesses.push(biz);
                 this.pendingBusinesses.splice(bizIndex, 1);
-                this.saveBusinessesToStorage();
+                this.saveBusinessesToLocalStorage();
                 if (showConfirm) showToast(`✅ Business "${biz.name}" approved!`, 'success');
                 this.addAuditLogEntry('approve', this.currentUser?.username || 'admin', `Approved business: ${biz.name}`);
                 this.renderPendingBusinesses();
@@ -1782,7 +1514,7 @@
             async rejectBusiness(bizId, showConfirm = true) {
                 if (showConfirm && !confirm('Reject this business submission?')) return;
                 this.pendingBusinesses = this.pendingBusinesses.filter(b => b.id !== bizId);
-                this.saveBusinessesToStorage();
+                this.saveBusinessesToLocalStorage();
                 if (showConfirm) showToast(`Business rejected and removed.`, 'warning');
                 this.addAuditLogEntry('delete', this.currentUser?.username || 'admin', `Rejected business ID: ${bizId}`);
                 this.renderPendingBusinesses();
@@ -1792,7 +1524,7 @@
             async deleteBusiness(bizId) {
                 if (!confirm('Delete this business permanently?')) return;
                 this.approvedBusinesses = this.approvedBusinesses.filter(b => b.id !== bizId);
-                this.saveBusinessesToStorage();
+                this.saveBusinessesToLocalStorage();
                 showToast('Business deleted', 'info');
                 this.addAuditLogEntry('delete', this.currentUser?.username || 'admin', `Deleted business ID: ${bizId}`);
                 this.renderApprovedBusinesses();
@@ -1840,7 +1572,7 @@
                 biz.whatsapp = document.getElementById('editBusinessWhatsapp').value.trim();
                 biz.verified = document.getElementById('editBusinessVerified').value === 'true';
                 biz.featured = document.getElementById('editBusinessFeatured').value === 'true';
-                this.saveBusinessesToStorage();
+                this.saveBusinessesToLocalStorage();
                 showToast('Business updated successfully', 'success');
                 document.getElementById('businessEditModal').classList.remove('active');
                 this.renderPendingBusinesses();
@@ -1875,7 +1607,7 @@
                 const biz = this.approvedBusinesses.find(b => b.id === bizId);
                 if (biz) {
                     biz.verified = !biz.verified;
-                    this.saveBusinessesToStorage();
+                    this.saveBusinessesToLocalStorage();
                     this.renderApprovedBusinesses();
                     showToast(`Business ${biz.verified ? 'verified' : 'unverified'}`, 'info');
                 }
@@ -1885,10 +1617,15 @@
                 const biz = this.approvedBusinesses.find(b => b.id === bizId);
                 if (biz) {
                     biz.featured = !biz.featured;
-                    this.saveBusinessesToStorage();
+                    this.saveBusinessesToLocalStorage();
                     this.renderApprovedBusinesses();
                     showToast(`Business ${biz.featured ? 'featured' : 'unfeatured'}`, 'info');
                 }
+            }
+
+            saveBusinessesToLocalStorage() {
+                localStorage.setItem('sarveik_biz_pending', JSON.stringify(this.pendingBusinesses));
+                localStorage.setItem('sarveik_biz_approved', JSON.stringify(this.approvedBusinesses));
             }
 
             updateSelectAllPendingBusinesses() {
@@ -1914,7 +1651,7 @@
                 if (!confirm(`Approve ${this.selectedPendingBusinesses.size} business(es)?`)) return;
                 this.selectedPendingBusinesses.forEach(id => this.approveBusiness(id, false));
                 this.selectedPendingBusinesses.clear();
-                this.saveBusinessesToStorage();
+                this.saveBusinessesToLocalStorage();
                 this.renderPendingBusinesses();
                 this.renderApprovedBusinesses();
                 showToast('Bulk approve completed', 'success');
@@ -1925,7 +1662,7 @@
                 if (!confirm(`Reject ${this.selectedPendingBusinesses.size} business(es)?`)) return;
                 this.pendingBusinesses = this.pendingBusinesses.filter(b => !this.selectedPendingBusinesses.has(b.id));
                 this.selectedPendingBusinesses.clear();
-                this.saveBusinessesToStorage();
+                this.saveBusinessesToLocalStorage();
                 this.renderPendingBusinesses();
                 showToast('Bulk reject completed', 'warning');
             }
@@ -1935,13 +1672,14 @@
                 if (!confirm(`Delete ${this.selectedApprovedBusinesses.size} approved business(es)? This is permanent.`)) return;
                 this.approvedBusinesses = this.approvedBusinesses.filter(b => !this.selectedApprovedBusinesses.has(b.id));
                 this.selectedApprovedBusinesses.clear();
-                this.saveBusinessesToStorage();
+                this.saveBusinessesToLocalStorage();
                 this.renderApprovedBusinesses();
                 showToast('Bulk delete completed', 'info');
             }
 
             initBusinessEvents() {
                 document.getElementById('refreshBusinessesBtn')?.addEventListener('click', () => this.loadBusinesses());
+                document.getElementById('syncFromLocalStorageBtn')?.addEventListener('click', () => this.syncFromLocalStorage());
                 document.getElementById('businessSearch')?.addEventListener('input', () => { this.renderPendingBusinesses(); this.renderApprovedBusinesses(); });
                 document.getElementById('businessStatusFilter')?.addEventListener('change', () => { this.renderPendingBusinesses(); this.renderApprovedBusinesses(); });
                 document.getElementById('businessCategoryFilter')?.addEventListener('change', () => { this.renderPendingBusinesses(); this.renderApprovedBusinesses(); });
@@ -1991,9 +1729,9 @@
                 document.getElementById('bulkDeleteApprovedBusinesses')?.addEventListener('click', () => this.bulkDeleteApprovedBusinesses());
                 document.getElementById('closeBusinessModal')?.addEventListener('click', () => document.getElementById('businessEditModal').classList.remove('active'));
                 document.getElementById('saveBusinessChanges')?.addEventListener('click', () => this.saveBusinessEdit());
+                document.getElementById('forceLocalStorageMode')?.addEventListener('change', () => this.loadBusinesses());
             }
 
-            // TABS & BINDINGS (original)
             initTabs(){
                 document.querySelectorAll('.tab-btn').forEach(btn=>btn.addEventListener('click',()=>{
                     const id=btn.dataset.tab;

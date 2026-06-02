@@ -2299,6 +2299,136 @@ app.delete('/api/admin/tools/:id', isAdmin, async (req, res) => {
     }
 });
 
+// ==================== PUBLIC BUSINESS ENDPOINTS (Submit & List) ====================
+
+/**
+ * PUBLIC: Submit a new business (pending approval)
+ * Expects all business fields in request body.
+ * Stores hours, amenities, images as JSONB.
+ */
+app.post('/api/businesses/submit', isAuthenticated, async (req, res) => {
+    const {
+        name, type, category, description,
+        address, city, state, phone, email,
+        website, whatsapp, maps, instagram, facebook,
+        hours, amenities, images
+    } = req.body;
+
+    // Basic validation
+    if (!name || !type || !category || !address || !city || !phone || !email) {
+        return res.status(400).json({ error: 'Missing required fields (name, type, category, address, city, phone, email)' });
+    }
+
+    try {
+        const result = await pool.query(`
+            INSERT INTO businesses (
+                name, type, category, description,
+                address, city, state, phone, email,
+                website, whatsapp, maps, instagram, facebook,
+                hours, amenities, images,
+                user_id, approved, created_at, updated_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, false, NOW(), NOW())
+            RETURNING id
+        `, [
+            name, type, category, description || '',
+            address, city, state || null, phone, email,
+            website || null, whatsapp || null, maps || null, instagram || null, facebook || null,
+            hours ? JSON.stringify(hours) : null,
+            amenities ? JSON.stringify(amenities) : null,
+            images ? JSON.stringify(images) : null,
+            req.session.userId
+        ]);
+
+        const businessId = result.rows[0].id;
+
+        // Notify all admins via Socket.IO (admin_room)
+        io.to('admin_room').emit('new_pending', {
+            type: 'business',
+            id: businessId,
+            name: name,
+            submittedBy: req.session.username
+        });
+
+        // Optionally log to moderator_activity
+        await pool.query(`
+            INSERT INTO moderator_activity (moderator_id, moderator_name, action, target, details, created_at)
+            VALUES ($1, $2, $3, $4, $5, NOW())
+        `, [req.session.userId, req.session.username, 'Business submitted', `Business ID ${businessId}`, `Submitted ${name}`]);
+
+        res.status(201).json({
+            success: true,
+            message: 'Business submitted for review. You will receive credits and email upon approval.',
+            id: businessId
+        });
+    } catch (err) {
+        console.error('Business submission error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+/**
+ * PUBLIC: Get approved businesses with filters
+ * Query params:
+ *   - category (optional)
+ *   - city (optional)
+ *   - search (optional, searches name and description)
+ *   - verifiedOnly (optional)
+ */
+app.get('/api/businesses', async (req, res) => {
+    const { category, city, search, verifiedOnly } = req.query;
+
+    let query = `
+        SELECT id, name, type, category, description, address, city, state,
+               phone, email, website, whatsapp, maps, instagram, facebook,
+               hours, amenities, images, verified, featured, created_at
+        FROM businesses
+        WHERE approved = true
+    `;
+    const params = [];
+    let paramIndex = 1;
+
+    if (category && category !== 'all') {
+        query += ` AND category = $${paramIndex++}`;
+        params.push(category);
+    }
+    if (city && city !== 'all') {
+        query += ` AND city = $${paramIndex++}`;
+        params.push(city);
+    }
+    if (verifiedOnly === 'true') {
+        query += ` AND verified = true`;
+    }
+    if (search) {
+        query += ` AND (name ILIKE $${paramIndex} OR description ILIKE $${paramIndex})`;
+        params.push(`%${search}%`);
+        paramIndex++;
+    }
+
+    query += ` ORDER BY featured DESC, created_at DESC`;
+
+    try {
+        const result = await pool.query(query, params);
+        res.json(result.rows);
+    } catch (err) {
+        console.error('Error fetching businesses:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+/**
+ * PUBLIC: Get unique list of cities from approved businesses (for filter dropdown)
+ */
+app.get('/api/businesses/cities', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT DISTINCT city FROM businesses WHERE approved = true AND city IS NOT NULL ORDER BY city
+        `);
+        res.json(result.rows.map(r => r.city));
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
 // ==================== CARDS MANAGEMENT ====================
 app.get('/api/cards', async (req, res) => {
     try {
