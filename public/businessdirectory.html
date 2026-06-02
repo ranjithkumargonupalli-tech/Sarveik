@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <style>
-    /* ========== YOUR EXISTING STYLES (unchanged) ========== */
+    /* ========== FULL ORIGINAL STYLES (unchanged) ========== */
     *,
     *::before,
     *::after {
@@ -1839,7 +1839,6 @@
         <button class="btn-ghost" id="themeToggle" aria-label="Toggle theme"><i class="fas fa-moon"></i> Dark</button>
         <button class="btn-ghost" id="showFavBtn" aria-label="Saved businesses"><i class="fas fa-heart"></i> Saved</button>
         <button class="btn-primary" id="openAddModal" aria-label="Add business"><i class="fas fa-plus"></i> Add Business</button>
-        <button class="btn-ghost" id="refreshDataBtn" aria-label="Refresh data"><i class="fas fa-sync-alt"></i> Refresh</button>
       </div>
       <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
         <span></span><span></span><span></span>
@@ -1853,7 +1852,6 @@
   <button class="drawer-item" id="drawerThemeToggle"><i class="fas fa-moon"></i> Dark Mode</button>
   <button class="drawer-item" id="drawerFavBtn"><i class="fas fa-heart"></i> Saved</button>
   <button class="drawer-item" id="drawerAddBtn"><i class="fas fa-plus"></i> Add Business</button>
-  <button class="drawer-item" id="drawerRefreshBtn"><i class="fas fa-sync-alt"></i> Refresh Data</button>
 </div>
 <div class="drawer-overlay" id="drawerOverlay"></div>
 
@@ -1994,7 +1992,6 @@
           <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
             <div id="writeStars" style="display:flex;gap:4px;font-size:1.2rem;cursor:pointer;"></div>
             <button class="btn-primary" style="padding:8px 18px;" id="submitReview"><i class="fas fa-paper-plane"></i> Submit Review</button>
-            <button class="btn-ghost" id="sendReviewToAdmin" style="padding:8px 18px;"><i class="fas fa-envelope"></i> Send Review to Admin</button>
           </div>
         </div>
       </div>
@@ -2176,7 +2173,7 @@
 <button id="backToTop" title="Back to top"><i class="fas fa-arrow-up"></i></button>
 
 <div id="compareBar">
-  <span style="font-size:0.85rem;font-weight:600;color:var(--text2);white-space:nowrap;"><i class="fas fa-balance-scale"></i> Compare (<span id="compareCount">0</span>/3):</span>
+  <span style="font-size:0.85rem;font-weight:600;color:var(--text2);white-space:nowrap;"><i class="fas fa-balance-scale"></i> Compare:</span>
   <div class="compare-items" id="compareItems"></div>
   <button class="btn-primary" id="doCompare" style="padding:8px 18px;"><i class="fas fa-chart-bar"></i> Compare</button>
   <button class="btn-ghost" id="clearCompare" style="padding:8px 16px;"><i class="fas fa-times"></i></button>
@@ -2202,8 +2199,8 @@
     credits: 'sarveik_biz_credits',
     theme: 'biz_theme'
   };
-  const ADMIN_REVIEWS_KEY = 'sarveik_admin_reviews';
-  const CREDITS_REWARD = 50;
+
+  const CREDITS_REWARD = 50; // Credits earned for approved business submission
 
   // Helper functions
   function getData(key, defaultValue = []) {
@@ -2214,12 +2211,15 @@
       return defaultValue;
     }
   }
+  
   function setData(key, value) {
     localStorage.setItem(key, JSON.stringify(value));
   }
+
   function uid() {
     return 'biz_' + Date.now() + '_' + Math.random().toString(36).substr(2, 6);
   }
+
   function escHtml(str) {
     if (!str) return '';
     return String(str).replace(/[&<>"']/g, function (m) {
@@ -2230,6 +2230,7 @@
       return '&#39;';
     });
   }
+
   function showToast(message, type = 'success') {
     const container = document.getElementById('toastContainer');
     const toast = document.createElement('div');
@@ -2239,6 +2240,7 @@
     container.appendChild(toast);
     setTimeout(() => toast.remove(), 4000);
   }
+
   function timeAgo(iso) {
     if (!iso) return '';
     const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
@@ -2251,9 +2253,11 @@
     if (days < 7) return `${days}d ago`;
     return new Date(iso).toLocaleDateString();
   }
+
   function isNewItem(createdAt) {
     return (Date.now() - new Date(createdAt).getTime()) < 7 * 86400000;
   }
+
   function isOpenNow(hours) {
     if (!hours) return false;
     const now = new Date();
@@ -2268,31 +2272,30 @@
       const [h, m] = t.split(':').map(Number);
       return h * 60 + (m || 0);
     };
-    let startMinutes = toMinutes(start);
-    let endMinutes = toMinutes(end);
-    if (endMinutes < startMinutes) {
-      return nowMinutes >= startMinutes || nowMinutes < endMinutes;
-    } else {
-      return nowMinutes >= startMinutes && nowMinutes < endMinutes;
-    }
+    return nowMinutes >= toMinutes(start) && nowMinutes < toMinutes(end);
   }
+
   function getAvgRating(bizId) {
     const ratings = getData(STORAGE.ratings, {})[bizId] || [];
     if (!ratings.length) return 0;
     const sum = ratings.reduce((a, b) => a + b, 0);
     return (sum / ratings.length).toFixed(1);
   }
+
   function getViews(bizId) {
     return getData(STORAGE.views, {})[bizId] || 0;
   }
+
   function incrementViews(bizId) {
     const views = getData(STORAGE.views, {});
     views[bizId] = (views[bizId] || 0) + 1;
     setData(STORAGE.views, views);
   }
+
   function isFavorite(bizId) {
     return getData(STORAGE.favorites, []).includes(bizId);
   }
+
   function toggleFavorite(bizId) {
     let favs = getData(STORAGE.favorites, []);
     if (favs.includes(bizId)) {
@@ -2305,52 +2308,205 @@
     setData(STORAGE.favorites, favs);
     return favs.includes(bizId);
   }
+
   function renderStars(rating) {
     const full = Math.floor(rating);
-    const decimal = rating % 1;
+    const half = rating % 1 >= 0.5;
     let stars = '';
     for (let i = 0; i < full; i++) stars += '★';
-    if (decimal >= 0.5) stars += '½';
+    if (half) stars += '½';
     for (let i = stars.length; i < 5; i++) stars += '☆';
     return stars;
   }
 
-  async function apiCall(url, options = {}) {
-    try {
-      const fetchOptions = { ...options, credentials: 'include' };
-      if (options.body && typeof options.body === 'object') {
-        fetchOptions.body = JSON.stringify(options.body);
-        fetchOptions.headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
-      } else if (options.body && typeof options.body === 'string' && options.body.trim().startsWith('{')) {
-        fetchOptions.headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
-      }
-      const res = await fetch(url, fetchOptions);
-      if (!res.ok) { const errText = await res.text(); throw new Error(errText || `HTTP ${res.status}`); }
-      const ct = res.headers.get('content-type');
-      if (ct && ct.includes('application/json')) return res.json();
-      return res.text();
-    } catch (e) { throw e; }
+  // Credit management functions (like developer tools)
+  function getUserCredits() {
+    const user = JSON.parse(localStorage.getItem('sarveik_user') || '{}');
+    return user.credits || 0;
   }
 
-  let allApprovedBusinesses = [];
+  function addCredits(amount, reason) {
+    let user = JSON.parse(localStorage.getItem('sarveik_user') || '{}');
+    user.credits = (user.credits || 0) + amount;
+    localStorage.setItem('sarveik_user', JSON.stringify(user));
+    
+    // Store transaction record
+    const transactions = getData(STORAGE.credits, []);
+    transactions.push({
+      id: uid(),
+      amount: amount,
+      reason: reason,
+      date: new Date().toISOString(),
+      type: 'credit'
+    });
+    setData(STORAGE.credits, transactions);
+    
+    showToast(`✨ You earned ${amount} credits! ${reason}`, 'success');
+  }
 
-  async function loadApprovedBusinesses() {
+  // Email simulation (like developer tools)
+  async function sendEmailNotification(email, subject, content) {
     try {
-      const response = await apiCall('/api/admin/businesses/approved');
-      if (response && response.data && Array.isArray(response.data)) {
-        allApprovedBusinesses = response.data;
-        console.log('✅ Loaded businesses from API');
-        return;
-      }
-    } catch (err) {
-      console.warn('API load failed, falling back to localStorage', err);
+      // Store email in localStorage for demo (like developer tools would call API)
+      const emails = getData('sarveik_emails', []);
+      emails.push({
+        id: uid(),
+        to: email,
+        subject: subject,
+        content: content,
+        date: new Date().toISOString(),
+        sent: true
+      });
+      setData('sarveik_emails', emails);
+      console.log(`📧 Email would be sent to: ${email} - Subject: ${subject}`);
+      return true;
+    } catch (error) {
+      console.error('Email sending failed:', error);
+      return false;
     }
-    allApprovedBusinesses = getData(STORAGE.approved, []).filter(b => b.approved === true);
-    console.log('📦 Loaded businesses from localStorage fallback');
   }
 
-  function getApprovedBusinesses() {
-    return allApprovedBusinesses;
+  // Send approval email with credits notification
+  async function sendApprovalEmail(businessName, userEmail, userName, creditsEarned) {
+    const subject = `✅ Your Business "${businessName}" Has Been Approved!`;
+    const content = `
+      <div style="font-family: 'DM Sans', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <div style="font-size: 48px;">🏢</div>
+          <h2 style="color: #7c6cf0;">Business Approved!</h2>
+        </div>
+        <p>Dear ${escHtml(userName || 'Valued User')},</p>
+        <p>Great news! Your business listing <strong>"${escHtml(businessName)}"</strong> has been reviewed and <strong style="color: #22c55e;">APPROVED</strong> by our admin team.</p>
+        <div style="background: rgba(124, 108, 240, 0.1); padding: 15px; border-radius: 12px; margin: 20px 0;">
+          <p style="margin: 0;"><strong>✨ Credits Earned: ${creditsEarned} credits</strong></p>
+          <p style="margin: 5px 0 0; font-size: 0.85rem;">Your credits have been added to your account!</p>
+        </div>
+        <p>Your business is now visible to all users on the Sarveik Directory. You can:</p>
+        <ul>
+          <li>Share your listing on social media</li>
+          <li>Respond to customer reviews</li>
+          <li>Update your business information anytime</li>
+        </ul>
+        <p>Thank you for being part of our community!</p>
+        <hr style="border-color: var(--border); margin: 20px 0;">
+        <p style="font-size: 0.8rem; color: #666;">Sarveik Business Directory Team</p>
+      </div>
+    `;
+    return await sendEmailNotification(email, subject, content);
+  }
+
+  // Send rejection email
+  async function sendRejectionEmail(businessName, userEmail, userName, reason = '') {
+    const subject = `❌ Update on Your Business Submission "${businessName}"`;
+    const content = `
+      <div style="font-family: 'DM Sans', sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+          <div style="font-size: 48px;">🏢</div>
+          <h2 style="color: #ef4444;">Submission Update</h2>
+        </div>
+        <p>Dear ${escHtml(userName || 'Valued User')},</p>
+        <p>Thank you for submitting your business <strong>"${escHtml(businessName)}"</strong> to the Sarveik Directory.</p>
+        <p>After careful review, we regret to inform you that your submission has been <strong style="color: #ef4444;">REJECTED</strong>.</p>
+        ${reason ? `<p><strong>Reason provided by admin:</strong> ${escHtml(reason)}</p>` : '<p>Please ensure all information is accurate and complete before resubmitting.</p>'}
+        <p>You are welcome to submit your business again after making the necessary corrections.</p>
+        <p>If you believe this is an error, please contact our support team.</p>
+        <hr style="border-color: var(--border); margin: 20px 0;">
+        <p style="font-size: 0.8rem; color: #666;">Sarveik Business Directory Team</p>
+      </div>
+    `;
+    return await sendEmailNotification(email, subject, content);
+  }
+
+  // Business type to emoji mapping
+  const EMOJIS = {
+    company: '🏢', shop: '🛍️', mart: '🏪', restaurant: '🍽️', hotel: '🏨', hospital: '🏥',
+    school: '🏫', bank: '🏦', salon: '💇', gym: '💪', pharmacy: '💊', garage: '🔧',
+    real_estate: '🏠', tech: '💻', service: '⚙️', market: '🛒', other: '📦'
+  };
+
+  const AMENITY_LIST = [
+    { id: 'parking', label: 'Parking', icon: 'fa-parking' },
+    { id: 'wifi', label: 'Free Wi-Fi', icon: 'fa-wifi' },
+    { id: 'ac', label: 'A/C', icon: 'fa-snowflake' },
+    { id: 'delivery', label: 'Delivery', icon: 'fa-truck' },
+    { id: 'card', label: 'Card Payment', icon: 'fa-credit-card' },
+    { id: 'upi', label: 'UPI', icon: 'fa-qrcode' },
+    { id: 'accessible', label: 'Wheelchair Accessible', icon: 'fa-wheelchair' },
+    { id: 'kids', label: 'Kids Friendly', icon: 'fa-child' },
+    { id: 'pet', label: 'Pet Friendly', icon: 'fa-paw' },
+    { id: 'outdoor', label: 'Outdoor Seating', icon: 'fa-umbrella-beach' },
+    { id: 'reservation', label: 'Reservation', icon: 'fa-calendar-check' },
+    { id: 'takeaway', label: 'Takeaway', icon: 'fa-shopping-bag' },
+    { id: '24h', label: 'Open 24H', icon: 'fa-clock' },
+    { id: 'washroom', label: 'Washroom', icon: 'fa-restroom' }
+  ];
+
+  const CATEGORIES = [
+    { id: 'all', label: 'All', icon: '🌐' },
+    { id: 'retail', label: 'Retail', icon: '🛍️' },
+    { id: 'food', label: 'Food & Dining', icon: '🍽️' },
+    { id: 'health', label: 'Health', icon: '🏥' },
+    { id: 'education', label: 'Education', icon: '🏫' },
+    { id: 'finance', label: 'Finance', icon: '🏦' },
+    { id: 'technology', label: 'Technology', icon: '💻' },
+    { id: 'real_estate', label: 'Real Estate', icon: '🏠' },
+    { id: 'automotive', label: 'Auto', icon: '🔧' },
+    { id: 'beauty', label: 'Beauty', icon: '💇' },
+    { id: 'entertainment', label: 'Entertainment', icon: '🎭' },
+    { id: 'services', label: 'Services', icon: '⚙️' },
+    { id: 'other', label: 'Other', icon: '📦' }
+  ];
+
+  const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  // Seed sample data
+  function seedSampleData() {
+    const existing = getData(STORAGE.approved, []);
+    if (existing.length > 0) return;
+
+    const sample = [
+      {
+        id: 's1', name: 'City Supermart', type: 'mart', category: 'retail',
+        desc: 'One-stop grocery and household shopping destination with a wide range of fresh produce, branded products, and daily essentials at competitive prices. Serving the community since 2010.',
+        address: '45, Anna Salai, T. Nagar, Chennai – 600017', city: 'Chennai', state: 'Tamil Nadu',
+        phone: '+91 9876543210', email: 'info@citysupermart.com', whatsapp: '+91 9876543210', website: 'https://example.com',
+        maps: '', instagram: '', facebook: '',
+        hours: { Mon: '9:00-21:00', Tue: '9:00-21:00', Wed: '9:00-21:00', Thu: '9:00-21:00', Fri: '9:00-22:00', Sat: '8:00-22:00', Sun: '10:00-20:00' },
+        amenities: ['parking', 'card', 'upi', 'ac'], approved: true, verified: true, featured: true,
+        created_at: new Date(Date.now() - 2 * 86400000).toISOString(), images: []
+      },
+      {
+        id: 's2', name: 'TechNova Solutions', type: 'tech', category: 'technology',
+        desc: 'Leading IT services company specializing in web development, cloud solutions, cybersecurity, and digital transformation for businesses of all sizes.',
+        address: '12, Rajiv Gandhi IT Park, Sholinganallur, Chennai – 600119', city: 'Chennai', state: 'Tamil Nadu',
+        phone: '+91 8765432109', email: 'hello@technova.io', whatsapp: '+91 8765432109', website: 'https://example.com',
+        maps: '', instagram: '', facebook: '',
+        hours: { Mon: '9:00-18:00', Tue: '9:00-18:00', Wed: '9:00-18:00', Thu: '9:00-18:00', Fri: '9:00-17:00', Sat: 'Closed', Sun: 'Closed' },
+        amenities: ['wifi', 'parking', 'card', 'upi', 'ac', 'accessible'], approved: true, verified: true, featured: false,
+        created_at: new Date(Date.now() - 5 * 86400000).toISOString(), images: []
+      },
+      {
+        id: 's3', name: 'Spice Garden Restaurant', type: 'restaurant', category: 'food',
+        desc: 'Authentic South Indian cuisine with a modern twist. Serving traditional dosas, biryanis, and seafood specialties in a warm, family-friendly environment.',
+        address: '88, Mount Road, Nungambakkam, Chennai – 600034', city: 'Chennai', state: 'Tamil Nadu',
+        phone: '+91 7654321098', email: 'reservations@spicegarden.in', whatsapp: '+91 7654321098', website: '',
+        maps: '', instagram: '', facebook: '',
+        hours: { Mon: '11:00-23:00', Tue: '11:00-23:00', Wed: '11:00-23:00', Thu: '11:00-23:00', Fri: '11:00-23:30', Sat: '10:00-23:30', Sun: '10:00-22:00' },
+        amenities: ['ac', 'upi', 'card', 'reservation', 'takeaway', 'delivery', 'outdoor', 'kids'], approved: true, verified: false, featured: false,
+        created_at: new Date(Date.now() - 1 * 86400000).toISOString(), images: []
+      },
+      {
+        id: 's4', name: 'Wellness Pharmacy', type: 'pharmacy', category: 'health',
+        desc: 'Your trusted neighborhood pharmacy offering prescription medicines, over-the-counter drugs, health supplements, and professional consultation.',
+        address: '3, Gandhi Road, Adyar, Chennai – 600020', city: 'Chennai', state: 'Tamil Nadu',
+        phone: '+91 6543210987', email: 'wellness@pharmacy.com', whatsapp: '+91 6543210987', website: '',
+        maps: '', instagram: '', facebook: '',
+        hours: { Mon: '7:00-22:00', Tue: '7:00-22:00', Wed: '7:00-22:00', Thu: '7:00-22:00', Fri: '7:00-22:00', Sat: '7:00-22:00', Sun: '8:00-21:00' },
+        amenities: ['upi', 'card', 'accessible'], approved: true, verified: true, featured: false,
+        created_at: new Date(Date.now() - 10 * 86400000).toISOString(), images: []
+      }
+    ];
+    setData(STORAGE.approved, sample);
   }
 
   let state = {
@@ -2369,7 +2525,7 @@
   };
 
   function getFilteredBusinesses() {
-    let businesses = getApprovedBusinesses();
+    let businesses = getData(STORAGE.approved, []).filter(b => b.approved === true);
     if (state.filterCategory !== 'all') {
       businesses = businesses.filter(b => b.category === state.filterCategory);
     }
@@ -2407,8 +2563,7 @@
     return businesses;
   }
 
-  async function renderBusinesses() {
-    await loadApprovedBusinesses();
+  function renderBusinesses() {
     const filtered = getFilteredBusinesses();
     const total = filtered.length;
     const totalPages = Math.ceil(total / state.perPage);
@@ -2429,6 +2584,7 @@
 
     grid.innerHTML = pageItems.map(biz => {
       const avgRating = getAvgRating(biz.id);
+      const views = getViews(biz.id);
       const openNow = isOpenNow(biz.hours);
       const isFav = isFavorite(biz.id);
       const emoji = EMOJIS[biz.type] || '📦';
@@ -2443,7 +2599,7 @@
               ${biz.featured ? '<span class="badge badge-featured">⭐ Featured</span>' : ''}
               ${openNow ? '<span class="badge" style="background:rgba(34,197,94,0.2);color:#22c55e;">● Open</span>' : '<span class="badge badge-closed">✕ Closed</span>'}
             </div>
-            <button class="fav-btn-card ${isFav ? 'active' : ''}" data-id="${biz.id}" aria-label="Save to favorites">${isFav ? '<i class="fas fa-heart"></i>' : '<i class="far fa-heart"></i>'}</button>
+            <button class="fav-btn-card ${isFav ? 'active' : ''}" data-id="${biz.id}">${isFav ? '<i class="fas fa-heart"></i>' : '<i class="far fa-heart"></i>'}</button>
             <div class="biz-logo">${emoji}</div>
           </div>
           <div class="biz-card-body">
@@ -2463,7 +2619,7 @@
                 <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:0.72rem;color:var(--text3);">
                   <input type="checkbox" class="compare-check" data-id="${biz.id}" data-name="${escHtml(biz.name)}" ${state.compareList.some(c => c.id === biz.id) ? 'checked' : ''}> Compare
                 </label>
-                <button class="btn-details details-btn" data-id="${biz.id}" aria-label="View details">Details</button>
+                <button class="btn-details details-btn" data-id="${biz.id}">Details</button>
               </div>
             </div>
           </div>
@@ -2471,18 +2627,42 @@
       `;
     }).join('');
 
-    document.querySelectorAll('.details-btn').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); openDetailModal(btn.dataset.id); }));
-    document.querySelectorAll('.fav-btn-card').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); const id = btn.dataset.id; const newState = toggleFavorite(id); btn.classList.toggle('active', newState); btn.innerHTML = newState ? '<i class="fas fa-heart"></i>' : '<i class="far fa-heart"></i>'; renderBusinesses(); }));
-    document.querySelectorAll('.compare-check').forEach(cb => cb.addEventListener('change', (e) => {
-      e.stopPropagation();
-      const id = cb.dataset.id;
-      const name = cb.dataset.name;
-      if (cb.checked) {
-        if (state.compareList.length >= 3) { showToast('You can compare up to 3 businesses', 'error'); cb.checked = false; return; }
-        if (!state.compareList.some(c => c.id === id)) state.compareList.push({ id, name });
-      } else state.compareList = state.compareList.filter(c => c.id !== id);
-      updateCompareBar();
-    }));
+    document.querySelectorAll('.details-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openDetailModal(btn.dataset.id);
+      });
+    });
+    document.querySelectorAll('.fav-btn-card').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        const newState = toggleFavorite(id);
+        btn.classList.toggle('active', newState);
+        btn.innerHTML = newState ? '<i class="fas fa-heart"></i>' : '<i class="far fa-heart"></i>';
+        renderBusinesses();
+      });
+    });
+    document.querySelectorAll('.compare-check').forEach(cb => {
+      cb.addEventListener('change', (e) => {
+        e.stopPropagation();
+        const id = cb.dataset.id;
+        const name = cb.dataset.name;
+        if (cb.checked) {
+          if (state.compareList.length >= 3) {
+            showToast('You can compare up to 3 businesses', 'error');
+            cb.checked = false;
+            return;
+          }
+          if (!state.compareList.some(c => c.id === id)) {
+            state.compareList.push({ id, name });
+          }
+        } else {
+          state.compareList = state.compareList.filter(c => c.id !== id);
+        }
+        updateCompareBar();
+      });
+    });
 
     renderPagination(totalPages);
     updateStats();
@@ -2490,17 +2670,26 @@
 
   function renderPagination(totalPages) {
     const container = document.getElementById('paginationControls');
-    if (totalPages <= 1) { container.innerHTML = ''; return; }
+    if (totalPages <= 1) {
+      container.innerHTML = '';
+      return;
+    }
     let html = `<button class="page-btn" ${state.page === 1 ? 'disabled' : ''} onclick="changePage(${state.page - 1})"><i class="fas fa-chevron-left"></i></button>`;
-    for (let i = 1; i <= totalPages; i++) html += `<button class="page-btn ${state.page === i ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+    for (let i = 1; i <= totalPages; i++) {
+      html += `<button class="page-btn ${state.page === i ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
+    }
     html += `<button class="page-btn" ${state.page === totalPages ? 'disabled' : ''} onclick="changePage(${state.page + 1})"><i class="fas fa-chevron-right"></i></button>`;
     container.innerHTML = html;
   }
 
-  window.changePage = (page) => { state.page = page; renderBusinesses(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  window.changePage = (page) => {
+    state.page = page;
+    renderBusinesses();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   function updateStats() {
-    const businesses = getApprovedBusinesses();
+    const businesses = getData(STORAGE.approved, []).filter(b => b.approved);
     const reviews = getData(STORAGE.reviews, {});
     const totalReviews = Object.values(reviews).reduce((acc, arr) => acc + arr.length, 0);
     document.getElementById('totalCount').innerText = businesses.length;
@@ -2512,7 +2701,7 @@
   let currentModalBiz = null;
 
   function openDetailModal(bizId) {
-    const biz = getApprovedBusinesses().find(b => b.id === bizId);
+    const biz = getData(STORAGE.approved, []).find(b => b.id === bizId);
     if (!biz) return;
     currentModalBiz = biz;
     incrementViews(bizId);
@@ -2561,18 +2750,24 @@
       const todayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
       const today = DAYS[todayIdx];
       const hoursHtml = DAYS.map(day => {
-        let h = biz.hours[day] || 'Closed';
-        if (h === '00:00-23:59') h = '24 hours';
+        const h = biz.hours[day] || 'Closed';
         return `<div class="hours-item ${day === today ? 'today' : ''} ${h === 'Closed' ? 'closed' : ''}"><span class="day">${day} ${day === today ? '(Today)' : ''}</span><span class="time">${h}</span></div>`;
       }).join('');
       document.getElementById('modalHours').innerHTML = hoursHtml;
-    } else document.getElementById('hoursSection').style.display = 'none';
+    } else {
+      document.getElementById('hoursSection').style.display = 'none';
+    }
 
     if (biz.amenities && biz.amenities.length) {
       document.getElementById('amenitiesSection').style.display = '';
-      const amenHtml = biz.amenities.map(aid => { const a = AMENITY_LIST.find(x => x.id === aid); return a ? `<div class="amenity-tag"><i class="fas ${a.icon}"></i> ${a.label}</div>` : ''; }).join('');
+      const amenHtml = biz.amenities.map(aid => {
+        const a = AMENITY_LIST.find(x => x.id === aid);
+        return a ? `<div class="amenity-tag"><i class="fas ${a.icon}"></i> ${a.label}</div>` : '';
+      }).join('');
       document.getElementById('modalAmenities').innerHTML = amenHtml;
-    } else document.getElementById('amenitiesSection').style.display = 'none';
+    } else {
+      document.getElementById('amenitiesSection').style.display = 'none';
+    }
 
     renderReviewsInModal(bizId);
 
@@ -2584,7 +2779,12 @@
       star.textContent = '★';
       star.style.color = 'var(--text3)';
       star.dataset.v = i;
-      star.addEventListener('click', () => { state.writeStarVal = i; writeStarsDiv.querySelectorAll('span').forEach((s, idx) => { s.style.color = idx < i ? 'var(--gold)' : 'var(--text3)'; }); });
+      star.addEventListener('click', () => {
+        state.writeStarVal = i;
+        writeStarsDiv.querySelectorAll('span').forEach((s, idx) => {
+          s.style.color = idx < i ? 'var(--gold)' : 'var(--text3)';
+        });
+      });
       writeStarsDiv.appendChild(star);
     }
 
@@ -2596,7 +2796,10 @@
       ${biz.website ? `<a class="modal-action-btn" href="${escHtml(biz.website)}" target="_blank"><i class="fas fa-external-link-alt"></i> Website</a>` : ''}
       <button class="modal-action-btn" id="reportBizBtn"><i class="fas fa-flag"></i> Report</button>
     `;
-    document.getElementById('reportBizBtn').addEventListener('click', () => { document.getElementById('detailModal').classList.remove('open'); openReportModal(bizId); });
+    document.getElementById('reportBizBtn').addEventListener('click', () => {
+      document.getElementById('detailModal').classList.remove('open');
+      openReportModal(bizId);
+    });
 
     const shareUrl = encodeURIComponent(window.location.href);
     const shareText = encodeURIComponent(`Check out ${biz.name} on Sarveik Directory!`);
@@ -2606,19 +2809,30 @@
       <a class="share-btn whatsapp" href="https://api.whatsapp.com/send?text=${shareText}" target="_blank"><i class="fab fa-whatsapp"></i> WhatsApp</a>
       <button class="share-btn copy" id="copyLinkBtn"><i class="fas fa-copy"></i> Copy Link</button>
     `;
-    document.getElementById('copyLinkBtn').addEventListener('click', () => { navigator.clipboard.writeText(window.location.href); showToast('Link copied!', 'success'); });
+    document.getElementById('copyLinkBtn').addEventListener('click', () => {
+      navigator.clipboard.writeText(window.location.href);
+      showToast('Link copied!', 'success');
+    });
 
     const favBtn = document.getElementById('modalFavBtn');
     const isFav = isFavorite(bizId);
     favBtn.innerHTML = isFav ? '<i class="fas fa-heart"></i> Saved' : '<i class="far fa-heart"></i> Save';
-    favBtn.onclick = () => { const newState = toggleFavorite(bizId); favBtn.innerHTML = newState ? '<i class="fas fa-heart"></i> Saved' : '<i class="far fa-heart"></i> Save'; renderBusinesses(); };
+    favBtn.onclick = () => {
+      const newState = toggleFavorite(bizId);
+      favBtn.innerHTML = newState ? '<i class="fas fa-heart"></i> Saved' : '<i class="far fa-heart"></i> Save';
+      renderBusinesses();
+    };
+
     document.getElementById('detailModal').classList.add('open');
   }
 
   function renderReviewsInModal(bizId) {
     const reviews = getData(STORAGE.reviews, {})[bizId] || [];
     const container = document.getElementById('modalReviews');
-    if (!reviews.length) { container.innerHTML = '<p style="font-size:0.85rem;color:var(--text3);">No reviews yet. Share your experience!</p>'; return; }
+    if (!reviews.length) {
+      container.innerHTML = '<p style="font-size:0.85rem;color:var(--text3);">No reviews yet. Share your experience!</p>';
+      return;
+    }
     container.innerHTML = reviews.slice().reverse().slice(0, 5).map(r => `
       <div class="review-item">
         <div class="review-header">
@@ -2636,8 +2850,14 @@
   document.getElementById('submitReview').addEventListener('click', () => {
     if (!currentModalBiz) return;
     const reviewText = document.getElementById('reviewInput').value.trim();
-    if (!reviewText) { showToast('Please write a review', 'error'); return; }
-    if (state.writeStarVal === 0) { showToast('Please select a star rating', 'error'); return; }
+    if (!reviewText) {
+      showToast('Please write a review', 'error');
+      return;
+    }
+    if (state.writeStarVal === 0) {
+      showToast('Please select a star rating', 'error');
+      return;
+    }
     const bizId = currentModalBiz.id;
     const ratings = getData(STORAGE.ratings, {});
     if (!ratings[bizId]) ratings[bizId] = [];
@@ -2645,7 +2865,12 @@
     setData(STORAGE.ratings, ratings);
     const reviews = getData(STORAGE.reviews, {});
     if (!reviews[bizId]) reviews[bizId] = [];
-    reviews[bizId].push({ name: 'You', stars: state.writeStarVal, text: reviewText, date: new Date().toISOString() });
+    reviews[bizId].push({
+      name: 'You',
+      stars: state.writeStarVal,
+      text: reviewText,
+      date: new Date().toISOString()
+    });
     setData(STORAGE.reviews, reviews);
     document.getElementById('reviewInput').value = '';
     state.writeStarVal = 0;
@@ -2655,40 +2880,34 @@
     renderBusinesses();
   });
 
-  document.getElementById('sendReviewToAdmin').addEventListener('click', () => {
-    if (!currentModalBiz) return;
-    const reviewText = document.getElementById('reviewInput').value.trim();
-    if (!reviewText) { showToast('Please write a review first', 'error'); return; }
-    if (state.writeStarVal === 0) { showToast('Please select a star rating', 'error'); return; }
-    const adminReviews = getData(ADMIN_REVIEWS_KEY, []);
-    adminReviews.push({
-      id: uid(),
-      businessId: currentModalBiz.id,
-      businessName: currentModalBiz.name,
-      rating: state.writeStarVal,
-      review: reviewText,
-      userName: 'User',
-      submittedAt: new Date().toISOString(),
-      status: 'pending'
-    });
-    setData(ADMIN_REVIEWS_KEY, adminReviews);
-    showToast('Review sent to admin for moderation', 'info');
-  });
+  function openReportModal(bizId) {
+    state.currentReportBizId = bizId;
+    document.getElementById('reportModal').classList.add('open');
+  }
 
-  function openReportModal(bizId) { state.currentReportBizId = bizId; document.getElementById('reportModal').classList.add('open'); }
   document.getElementById('submitReport').addEventListener('click', () => {
     const reason = document.getElementById('reportReason').value;
     const details = document.getElementById('reportDetails').value;
-    if (!reason) { showToast('Please select a reason', 'error'); return; }
+    if (!reason) {
+      showToast('Please select a reason', 'error');
+      return;
+    }
     const reports = getData(STORAGE.reports, []);
-    reports.push({ id: uid(), bizId: state.currentReportBizId, reason: reason, details: details, date: new Date().toISOString(), resolved: false });
+    reports.push({
+      id: uid(),
+      bizId: state.currentReportBizId,
+      reason: reason,
+      details: details,
+      date: new Date().toISOString(),
+      resolved: false
+    });
     setData(STORAGE.reports, reports);
     showToast('Report submitted. Admin will review it.', 'success');
     document.getElementById('reportModal').classList.remove('open');
     document.getElementById('reportDetails').value = '';
   });
 
-  // ADMIN PANEL WITH EMAIL AND CREDITS (uses localStorage for pending)
+  // ADMIN PANEL WITH EMAIL AND CREDITS
   function renderPending() {
     const pending = getData(STORAGE.pending, []);
     const container = document.getElementById('pendingList');
@@ -2725,8 +2944,12 @@
             pendingList.splice(bizIndex, 1);
             setData(STORAGE.pending, pendingList);
             
+            // Add credits to user
             addCredits(CREDITS_REWARD, `Business "${biz.name}" approved!`);
+            
+            // Send approval email
             await sendApprovalEmail(biz.name, biz.email, biz.name.split(' ')[0], CREDITS_REWARD);
+            
             showToast(`✅ "${biz.name}" approved! User notified and earned ${CREDITS_REWARD} credits.`, 'success');
             renderPending();
             renderBusinesses();
@@ -2745,7 +2968,12 @@
           const biz = pendingList.find(b => b.id === btn.dataset.id);
           pendingList = pendingList.filter(b => b.id !== btn.dataset.id);
           setData(STORAGE.pending, pendingList);
-          if (biz && biz.email) await sendRejectionEmail(biz.name, biz.email, biz.name.split(' ')[0], rejectReason);
+          
+          // Send rejection email
+          if (biz && biz.email) {
+            await sendRejectionEmail(biz.name, biz.email, biz.name.split(' ')[0], rejectReason);
+          }
+          
           showToast(`❌ "${biz?.name}" rejected.`, 'error');
           renderPending();
         }
@@ -2756,7 +2984,10 @@
   function renderReportsAdmin() {
     const reports = getData(STORAGE.reports, []);
     const container = document.getElementById('reportsList');
-    if (!reports.length) { container.innerHTML = '<em style="color:var(--text3);">No reports yet.</em>'; return; }
+    if (!reports.length) {
+      container.innerHTML = '<em style="color:var(--text3);">No reports yet.</em>';
+      return;
+    }
     container.innerHTML = reports.map(r => `
       <div class="pending-item" data-id="${r.id}">
         <div class="pending-info">
@@ -2800,7 +3031,7 @@
 
   function showFavorites() {
     const favIds = getData(STORAGE.favorites, []);
-    const businesses = getApprovedBusinesses().filter(b => favIds.includes(b.id));
+    const businesses = getData(STORAGE.approved, []).filter(b => b.approved && favIds.includes(b.id));
     const grid = document.getElementById('favoritesGrid');
     if (!businesses.length) {
       grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1;"><i class="fas fa-heart-broken"></i><h3>No saved businesses yet</h3><p>Click the heart on any business card to save it here.</p></div>';
@@ -2835,22 +3066,29 @@
   function updateCompareBar() {
     const bar = document.getElementById('compareBar');
     const container = document.getElementById('compareItems');
-    const countSpan = document.getElementById('compareCount');
-    if (state.compareList.length === 0) { bar.classList.remove('show'); return; }
+    if (state.compareList.length === 0) {
+      bar.classList.remove('show');
+      return;
+    }
     bar.classList.add('show');
-    countSpan.innerText = state.compareList.length;
-    container.innerHTML = state.compareList.map(c => `<div class="compare-chip">${escHtml(c.name)}<span class="remove" data-id="${c.id}">×</span></div>`).join('');
-    document.querySelectorAll('#compareItems .remove').forEach(btn => btn.addEventListener('click', () => {
-      state.compareList = state.compareList.filter(c => c.id !== btn.dataset.id);
-      updateCompareBar();
-      document.querySelectorAll(`.compare-check[data-id="${btn.dataset.id}"]`).forEach(cb => cb.checked = false);
-      renderBusinesses();
-    }));
+    container.innerHTML = state.compareList.map(c => `
+      <div class="compare-chip">${escHtml(c.name)}<span class="remove" data-id="${c.id}">×</span></div>
+    `).join('');
+    document.querySelectorAll('#compareItems .remove').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.compareList = state.compareList.filter(c => c.id !== btn.dataset.id);
+        updateCompareBar();
+        document.querySelectorAll(`.compare-check[data-id="${btn.dataset.id}"]`).forEach(cb => cb.checked = false);
+      });
+    });
   }
 
   document.getElementById('doCompare').addEventListener('click', () => {
-    if (state.compareList.length < 2) { showToast('Select at least 2 businesses to compare', 'info'); return; }
-    const businesses = getApprovedBusinesses();
+    if (state.compareList.length < 2) {
+      showToast('Select at least 2 businesses to compare', 'info');
+      return;
+    }
+    const businesses = getData(STORAGE.approved, []);
     const selected = state.compareList.map(c => businesses.find(b => b.id === c.id)).filter(Boolean);
     if (selected.length < 2) return;
     const fields = ['name', 'type', 'category', 'city', 'phone', 'email', 'website'];
@@ -2868,9 +3106,15 @@
       });
       tableHtml += '</tr>';
     });
-    tableHtml += `<tr><td style="padding:8px; border:1px solid var(--border);">Rating</td>${selected.map(b => `<td style="padding:8px; border:1px solid var(--border);">${getAvgRating(b.id) || 'N/A'}<table>`).join('')}</tr>`;
-    tableHtml += `<tr><td style="padding:8px; border:1px solid var(--border);">Open Now</td>${selected.map(b => `<td style="padding:8px; border:1px solid var(--border);">${isOpenNow(b.hours) ? '✅ Yes' : '❌ No'}</td>`).join('')}</tr>`;
-    tableHtml += `<tr><td style="padding:8px; border:1px solid var(--border);">Verified</td>${selected.map(b => `<td style="padding:8px; border:1px solid var(--border);">${b.verified ? '✅' : '❌'}</td>`).join('')}</td>`;
+    tableHtml += `<tr><td style="padding:8px; border:1px solid var(--border);">Rating</td>`;
+    selected.forEach(b => { tableHtml += `<td style="padding:8px; border:1px solid var(--border);">${getAvgRating(b.id) || 'N/A'}</td>`; });
+    tableHtml += '</tr>';
+    tableHtml += `<tr><td style="padding:8px; border:1px solid var(--border);">Open Now</td>`;
+    selected.forEach(b => { tableHtml += `<td style="padding:8px; border:1px solid var(--border);">${isOpenNow(b.hours) ? '✅ Yes' : '❌ No'}</td>`; });
+    tableHtml += '</tr>';
+    tableHtml += `<tr><td style="padding:8px; border:1px solid var(--border);">Verified</td>`;
+    selected.forEach(b => { tableHtml += `<td style="padding:8px; border:1px solid var(--border);">${b.verified ? '✅' : '❌'}</td>`; });
+    tableHtml += '</tr>';
     tableHtml += '</table>';
     document.getElementById('compareTable').innerHTML = tableHtml;
     document.getElementById('compareModal').classList.add('open');
@@ -2880,18 +3124,74 @@
     state.compareList = [];
     updateCompareBar();
     document.querySelectorAll('.compare-check').forEach(cb => cb.checked = false);
-    renderBusinesses();
   });
   
-  document.getElementById('closeCompareModal').addEventListener('click', () => document.getElementById('compareModal').classList.remove('open'));
-  document.getElementById('compareModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('open'); });
+  document.getElementById('closeCompareModal').addEventListener('click', () => {
+    document.getElementById('compareModal').classList.remove('open');
+  });
+  
+  document.getElementById('compareModal').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) e.currentTarget.classList.remove('open');
+  });
 
-  function buildHoursForm() { const grid = document.getElementById('hoursFormGrid'); grid.innerHTML = DAYS.map(day => `<div class="hours-form-item"><span class="day-name">${day}</span><input type="time" id="h_${day}_start" value="09:00"><span style="color:var(--text3)">–</span><input type="time" id="h_${day}_end" value="18:00"><input type="checkbox" id="h_${day}_closed" onchange="toggleDayClosed('${day}')"><label for="h_${day}_closed" style="font-size:0.7rem;color:var(--text3)">Closed</label></div>`).join(''); }
-  window.toggleDayClosed = (day) => { const closed = document.getElementById(`h_${day}_closed`).checked; document.getElementById(`h_${day}_start`).disabled = closed; document.getElementById(`h_${day}_end`).disabled = closed; };
-  function buildAmenitiesSelector() { const container = document.getElementById('amenitiesSelector'); container.innerHTML = AMENITY_LIST.map(a => `<div class="amenity-opt" data-id="${a.id}"><i class="fas ${a.icon}"></i> ${a.label}</div>`).join(''); container.querySelectorAll('.amenity-opt').forEach(el => { el.addEventListener('click', () => el.classList.toggle('selected')); }); }
-  function previewImages(input) { const strip = document.getElementById('previewStrip'); strip.innerHTML = ''; Array.from(input.files).slice(0, 2).forEach(file => { const reader = new FileReader(); reader.onload = e => { const img = document.createElement('img'); img.className = 'img-thumb'; img.src = e.target.result; strip.appendChild(img); }; reader.readAsDataURL(file); }); }
+  function buildHoursForm() {
+    const grid = document.getElementById('hoursFormGrid');
+    grid.innerHTML = DAYS.map(day => `
+      <div class="hours-form-item">
+        <span class="day-name">${day}</span>
+        <input type="time" id="h_${day}_start" value="09:00">
+        <span style="color:var(--text3)">–</span>
+        <input type="time" id="h_${day}_end" value="18:00">
+        <input type="checkbox" id="h_${day}_closed" onchange="toggleDayClosed('${day}')">
+        <label for="h_${day}_closed" style="font-size:0.7rem;color:var(--text3)">Closed</label>
+      </div>
+    `).join('');
+  }
+  
+  window.toggleDayClosed = (day) => {
+    const closed = document.getElementById(`h_${day}_closed`).checked;
+    document.getElementById(`h_${day}_start`).disabled = closed;
+    document.getElementById(`h_${day}_end`).disabled = closed;
+  };
+  
+  function buildAmenitiesSelector() {
+    const container = document.getElementById('amenitiesSelector');
+    container.innerHTML = AMENITY_LIST.map(a => `
+      <div class="amenity-opt" data-id="${a.id}"><i class="fas ${a.icon}"></i> ${a.label}</div>
+    `).join('');
+    container.querySelectorAll('.amenity-opt').forEach(el => {
+      el.addEventListener('click', () => el.classList.toggle('selected'));
+    });
+  }
+  
+  function previewImages(input) {
+    const strip = document.getElementById('previewStrip');
+    strip.innerHTML = '';
+    Array.from(input.files).slice(0, 2).forEach(file => {
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = document.createElement('img');
+        img.className = 'img-thumb';
+        img.src = e.target.result;
+        strip.appendChild(img);
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+  
   document.getElementById('f_images').addEventListener('change', function () { previewImages(this); });
-  document.getElementById('f_24h').addEventListener('change', (e) => { DAYS.forEach(day => { if (e.target.checked) { document.getElementById(`h_${day}_start`).value = '00:00'; document.getElementById(`h_${day}_end`).value = '23:59'; document.getElementById(`h_${day}_closed`).checked = false; toggleDayClosed(day); } }); });
+  
+  document.getElementById('f_24h').addEventListener('change', (e) => {
+    DAYS.forEach(day => {
+      if (e.target.checked) {
+        document.getElementById(`h_${day}_start`).value = '00:00';
+        document.getElementById(`h_${day}_end`).value = '23:59';
+        document.getElementById(`h_${day}_closed`).checked = false;
+        toggleDayClosed(day);
+      }
+    });
+  });
+  
   document.getElementById('submitBizBtn').addEventListener('click', () => {
     const name = document.getElementById('f_name').value.trim();
     const type = document.getElementById('f_type').value;
@@ -2958,39 +3258,164 @@
     document.getElementById('f_images').value = '';
   });
 
-  function buildCategoryChips() { const container = document.getElementById('filterChips'); container.innerHTML = CATEGORIES.map(c => `<button class="chip ${state.filterCategory === c.id ? 'active' : ''}" data-filter="${c.id}">${c.icon} ${c.label}</button>`).join(''); container.querySelectorAll('.chip').forEach(btn => { btn.addEventListener('click', () => { state.filterCategory = btn.dataset.filter; state.page = 1; buildCategoryChips(); renderBusinesses(); }); }); }
-  function updateCityFilter() { const businesses = getApprovedBusinesses(); const cities = [...new Set(businesses.map(b => b.city).filter(Boolean))].sort(); const select = document.getElementById('cityFilter'); select.innerHTML = '<option value="all">All Cities</option>' + cities.map(c => `<option value="${c}">${c}</option>`).join(''); select.value = state.city; }
+  function buildCategoryChips() {
+    const container = document.getElementById('filterChips');
+    container.innerHTML = CATEGORIES.map(c => `
+      <button class="chip ${state.filterCategory === c.id ? 'active' : ''}" data-filter="${c.id}">${c.icon} ${c.label}</button>
+    `).join('');
+    container.querySelectorAll('.chip').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.filterCategory = btn.dataset.filter;
+        state.page = 1;
+        buildCategoryChips();
+        renderBusinesses();
+      });
+    });
+  }
 
-  let mapInitialized = false, mapInstance = null;
-  function initMap() { if (mapInitialized) return; const container = document.getElementById('mapContainer'); if (!container) return; mapInstance = L.map('mapContainer').setView([20.5937, 78.9629], 5); L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; CartoDB' }).addTo(mapInstance); mapInitialized = true; const businesses = getApprovedBusinesses().filter(b => b.address); businesses.forEach(biz => { fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(biz.address + ', ' + biz.city)}&limit=1`).then(res => res.json()).then(data => { if (data && data[0]) { const lat = parseFloat(data[0].lat); const lon = parseFloat(data[0].lon); L.marker([lat, lon]).addTo(mapInstance).bindPopup(`<b>${escHtml(biz.name)}</b><br>${escHtml(biz.address)}`); } }).catch(err => console.warn('Map geocoding error:', err)); }); }
-  document.getElementById('toggleMap').addEventListener('click', () => { const mapDiv = document.getElementById('mapContainer'); const btn = document.getElementById('toggleMap'); if (mapDiv.style.display === 'none') { mapDiv.style.display = ''; btn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Map'; if (!mapInitialized) initMap(); else mapInstance?.invalidateSize(); } else { mapDiv.style.display = 'none'; btn.innerHTML = '<i class="fas fa-eye"></i> Show Map'; } });
+  function updateCityFilter() {
+    const businesses = getData(STORAGE.approved, []).filter(b => b.approved);
+    const cities = [...new Set(businesses.map(b => b.city).filter(Boolean))].sort();
+    const select = document.getElementById('cityFilter');
+    select.innerHTML = '<option value="all">All Cities</option>' + cities.map(c => `<option value="${c}">${c}</option>`).join('');
+    select.value = state.city;
+  }
 
-  function initTheme() { const saved = localStorage.getItem(STORAGE.theme); if (saved === 'light') { document.body.classList.add('light-mode'); document.getElementById('themeToggle').innerHTML = '<i class="fas fa-sun"></i> Light'; document.getElementById('drawerThemeToggle').innerHTML = '<i class="fas fa-sun"></i> Light Mode'; } else { document.body.classList.remove('light-mode'); document.getElementById('themeToggle').innerHTML = '<i class="fas fa-moon"></i> Dark'; document.getElementById('drawerThemeToggle').innerHTML = '<i class="fas fa-moon"></i> Dark Mode'; } }
-  function toggleTheme() { const isLight = document.body.classList.toggle('light-mode'); localStorage.setItem(STORAGE.theme, isLight ? 'light' : 'dark'); document.getElementById('themeToggle').innerHTML = isLight ? '<i class="fas fa-sun"></i> Light' : '<i class="fas fa-moon"></i> Dark'; document.getElementById('drawerThemeToggle').innerHTML = isLight ? '<i class="fas fa-sun"></i> Light Mode' : '<i class="fas fa-moon"></i> Dark Mode'; }
+  let mapInitialized = false;
+  let mapInstance = null;
+  
+  function initMap() {
+    if (mapInitialized) return;
+    const container = document.getElementById('mapContainer');
+    if (!container) return;
+    mapInstance = L.map('mapContainer').setView([20.5937, 78.9629], 5);
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; CartoDB'
+    }).addTo(mapInstance);
+    mapInitialized = true;
+    
+    const businesses = getData(STORAGE.approved, []).filter(b => b.approved && b.address);
+    businesses.forEach(biz => {
+      fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(biz.address + ', ' + biz.city)}&limit=1`)
+        .then(res => res.json())
+        .then(data => {
+          if (data && data[0]) {
+            const lat = parseFloat(data[0].lat);
+            const lon = parseFloat(data[0].lon);
+            L.marker([lat, lon]).addTo(mapInstance)
+              .bindPopup(`<b>${escHtml(biz.name)}</b><br>${escHtml(biz.address)}`);
+          }
+        })
+        .catch(err => console.warn);
+    });
+  }
+
+  document.getElementById('toggleMap').addEventListener('click', () => {
+    const mapDiv = document.getElementById('mapContainer');
+    const btn = document.getElementById('toggleMap');
+    if (mapDiv.style.display === 'none') {
+      mapDiv.style.display = '';
+      btn.innerHTML = '<i class="fas fa-eye-slash"></i> Hide Map';
+      if (!mapInitialized) initMap();
+      else mapInstance?.invalidateSize();
+    } else {
+      mapDiv.style.display = 'none';
+      btn.innerHTML = '<i class="fas fa-eye"></i> Show Map';
+    }
+  });
+
+  function initTheme() {
+    const saved = localStorage.getItem(STORAGE.theme);
+    if (saved === 'light') {
+      document.body.classList.add('light-mode');
+      document.getElementById('themeToggle').innerHTML = '<i class="fas fa-sun"></i> Light';
+      document.getElementById('drawerThemeToggle').innerHTML = '<i class="fas fa-sun"></i> Light Mode';
+    } else {
+      document.body.classList.remove('light-mode');
+      document.getElementById('themeToggle').innerHTML = '<i class="fas fa-moon"></i> Dark';
+      document.getElementById('drawerThemeToggle').innerHTML = '<i class="fas fa-moon"></i> Dark Mode';
+    }
+  }
+
+  function toggleTheme() {
+    const isLight = document.body.classList.toggle('light-mode');
+    localStorage.setItem(STORAGE.theme, isLight ? 'light' : 'dark');
+    document.getElementById('themeToggle').innerHTML = isLight ? '<i class="fas fa-sun"></i> Light' : '<i class="fas fa-moon"></i> Dark';
+    document.getElementById('drawerThemeToggle').innerHTML = isLight ? '<i class="fas fa-sun"></i> Light Mode' : '<i class="fas fa-moon"></i> Dark Mode';
+  }
+
   document.getElementById('themeToggle').addEventListener('click', toggleTheme);
-  document.getElementById('drawerThemeToggle').addEventListener('click', () => { toggleTheme(); closeDrawer(); });
+  document.getElementById('drawerThemeToggle').addEventListener('click', () => {
+    toggleTheme();
+    closeDrawer();
+  });
 
   const hamburger = document.getElementById('hamburgerBtn');
   const drawer = document.getElementById('mobileDrawer');
   const overlay = document.getElementById('drawerOverlay');
   const closeDrawerBtn = document.getElementById('drawerCloseBtn');
-  function openDrawer() { drawer.classList.add('open'); overlay.classList.add('active'); document.body.style.overflow = 'hidden'; }
-  function closeDrawer() { drawer.classList.remove('open'); overlay.classList.remove('active'); document.body.style.overflow = ''; }
+
+  function openDrawer() {
+    drawer.classList.add('open');
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeDrawer() {
+    drawer.classList.remove('open');
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
   hamburger.addEventListener('click', openDrawer);
   closeDrawerBtn.addEventListener('click', closeDrawer);
   overlay.addEventListener('click', closeDrawer);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && drawer.classList.contains('open')) closeDrawer(); });
-  document.getElementById('drawerFavBtn').addEventListener('click', () => { showFavorites(); closeDrawer(); });
-  document.getElementById('drawerAddBtn').addEventListener('click', () => { document.getElementById('addModal').classList.add('open'); closeDrawer(); });
-  document.getElementById('drawerRefreshBtn').addEventListener('click', () => { renderBusinesses(); updateCityFilter(); showToast('Data refreshed', 'success'); closeDrawer(); });
-  document.getElementById('refreshDataBtn').addEventListener('click', () => { renderBusinesses(); updateCityFilter(); showToast('Data refreshed', 'success'); });
-  window.addEventListener('resize', () => { if (window.innerWidth > 768 && drawer.classList.contains('open')) closeDrawer(); });
 
-  document.getElementById('searchInput').addEventListener('input', (e) => { state.search = e.target.value; state.page = 1; renderBusinesses(); });
-  document.getElementById('sortSelect').addEventListener('change', (e) => { state.sort = e.target.value; renderBusinesses(); });
-  document.getElementById('cityFilter').addEventListener('change', (e) => { state.city = e.target.value; state.page = 1; renderBusinesses(); });
-  document.getElementById('openNowFilter').addEventListener('change', (e) => { state.openNow = e.target.checked; state.page = 1; renderBusinesses(); });
-  document.getElementById('verifiedFilter').addEventListener('change', (e) => { state.verifiedOnly = e.target.checked; state.page = 1; renderBusinesses(); });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && drawer.classList.contains('open')) {
+      closeDrawer();
+    }
+  });
+
+  document.getElementById('drawerFavBtn').addEventListener('click', () => {
+    showFavorites();
+    closeDrawer();
+  });
+  document.getElementById('drawerAddBtn').addEventListener('click', () => {
+    document.getElementById('addModal').classList.add('open');
+    closeDrawer();
+  });
+
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 768 && drawer.classList.contains('open')) {
+      closeDrawer();
+    }
+  });
+
+  document.getElementById('searchInput').addEventListener('input', (e) => {
+    state.search = e.target.value;
+    state.page = 1;
+    renderBusinesses();
+  });
+  document.getElementById('sortSelect').addEventListener('change', (e) => {
+    state.sort = e.target.value;
+    renderBusinesses();
+  });
+  document.getElementById('cityFilter').addEventListener('change', (e) => {
+    state.city = e.target.value;
+    state.page = 1;
+    renderBusinesses();
+  });
+  document.getElementById('openNowFilter').addEventListener('change', (e) => {
+    state.openNow = e.target.checked;
+    state.page = 1;
+    renderBusinesses();
+  });
+  document.getElementById('verifiedFilter').addEventListener('change', (e) => {
+    state.verifiedOnly = e.target.checked;
+    state.page = 1;
+    renderBusinesses();
+  });
   document.getElementById('clearFiltersBtn').addEventListener('click', () => {
     state.filterCategory = 'all';
     state.search = '';
@@ -3007,11 +3432,43 @@
     buildCategoryChips();
     renderBusinesses();
   });
-  document.getElementById('gridViewBtn').addEventListener('click', () => { state.viewMode = 'grid'; document.getElementById('gridViewBtn').classList.add('active'); document.getElementById('listViewBtn').classList.remove('active'); renderBusinesses(); });
-  document.getElementById('listViewBtn').addEventListener('click', () => { state.viewMode = 'list'; document.getElementById('listViewBtn').classList.add('active'); document.getElementById('gridViewBtn').classList.remove('active'); renderBusinesses(); });
+  document.getElementById('gridViewBtn').addEventListener('click', () => {
+    state.viewMode = 'grid';
+    document.getElementById('gridViewBtn').classList.add('active');
+    document.getElementById('listViewBtn').classList.remove('active');
+    renderBusinesses();
+  });
+  document.getElementById('listViewBtn').addEventListener('click', () => {
+    state.viewMode = 'list';
+    document.getElementById('listViewBtn').classList.add('active');
+    document.getElementById('gridViewBtn').classList.remove('active');
+    renderBusinesses();
+  });
   document.getElementById('showFavBtn').addEventListener('click', showFavorites);
-  document.getElementById('closeFavBtn').addEventListener('click', () => { document.getElementById('favoritesSection').style.display = 'none'; document.getElementById('mainSection').style.display = ''; renderBusinesses(); });
-  document.getElementById('exportDataBtn').addEventListener('click', () => { const businesses = getApprovedBusinesses(); if (!businesses.length) { showToast('No data to export', 'info'); return; } const headers = ['Name', 'Type', 'Category', 'City', 'Phone', 'Email', 'Website', 'Address', 'Verified', 'Created']; const rows = businesses.map(b => [b.name, b.type, b.category, b.city || '', b.phone || '', b.email || '', b.website || '', b.address || '', b.verified ? 'Yes' : 'No', new Date(b.created_at).toLocaleDateString()]); const csv = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n'); const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = 'sarveik_businesses.csv'; link.click(); showToast('Export complete', 'success'); });
+  document.getElementById('closeFavBtn').addEventListener('click', () => {
+    document.getElementById('favoritesSection').style.display = 'none';
+    document.getElementById('mainSection').style.display = '';
+    renderBusinesses();
+  });
+  document.getElementById('exportDataBtn').addEventListener('click', () => {
+    const businesses = getData(STORAGE.approved, []).filter(b => b.approved);
+    if (!businesses.length) {
+      showToast('No data to export', 'info');
+      return;
+    }
+    const headers = ['Name', 'Type', 'Category', 'City', 'Phone', 'Email', 'Website', 'Address', 'Verified', 'Created'];
+    const rows = businesses.map(b => [
+      b.name, b.type, b.category, b.city || '', b.phone || '', b.email || '', b.website || '',
+      b.address || '', b.verified ? 'Yes' : 'No', new Date(b.created_at).toLocaleDateString()
+    ]);
+    const csv = [headers, ...rows].map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob(["\uFEFF" + csv], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'sarveik_businesses.csv';
+    link.click();
+    showToast('Export complete', 'success');
+  });
   
   document.getElementById('openAddModal').addEventListener('click', () => document.getElementById('addModal').classList.add('open'));
   document.getElementById('closeAddModal').addEventListener('click', () => document.getElementById('addModal').classList.remove('open'));
@@ -3022,11 +3479,19 @@
   document.getElementById('closeReportModal').addEventListener('click', () => document.getElementById('reportModal').classList.remove('open'));
   document.getElementById('reportModal').addEventListener('click', (e) => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('open'); });
   
-  document.getElementById('showReportsBtn').addEventListener('click', () => { document.getElementById('reportsPanel').style.display = 'block'; renderReportsAdmin(); });
-  document.getElementById('closeReportsBtn').addEventListener('click', () => { document.getElementById('reportsPanel').style.display = 'none'; });
-  document.getElementById('closeAdminBtn').addEventListener('click', () => { document.getElementById('adminPanel').classList.remove('visible'); });
+  document.getElementById('showReportsBtn').addEventListener('click', () => {
+    document.getElementById('reportsPanel').style.display = 'block';
+    renderReportsAdmin();
+  });
+  document.getElementById('closeReportsBtn').addEventListener('click', () => {
+    document.getElementById('reportsPanel').style.display = 'none';
+  });
+  document.getElementById('closeAdminBtn').addEventListener('click', () => {
+    document.getElementById('adminPanel').classList.remove('visible');
+  });
 
-  let clickCount = 0, timeout;
+  let clickCount = 0;
+  let timeout;
   document.querySelector('.logo').addEventListener('click', () => {
     clickCount++;
     clearTimeout(timeout);
@@ -3039,7 +3504,10 @@
     }
   });
 
-  window.addEventListener('scroll', () => { const btn = document.getElementById('backToTop'); btn.classList.toggle('show', window.scrollY > 400); });
+  window.addEventListener('scroll', () => {
+    const btn = document.getElementById('backToTop');
+    btn.classList.toggle('show', window.scrollY > 400);
+  });
   document.getElementById('backToTop').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
   seedSampleData();
@@ -3047,7 +3515,9 @@
   updateCityFilter();
   buildHoursForm();
   buildAmenitiesSelector();
-  renderBusinesses().then(() => { initTheme(); initMap(); });
+  renderBusinesses();
+  initTheme();
+  initMap();
 </script>
 </body>
 </html>
