@@ -4111,37 +4111,37 @@ app.get('/api/admin/activity', isAdmin, async (req, res) => {
 // ==================== BUSINESS DIRECTORY MANAGEMENT (NEW) ====================
 
 // GET pending businesses
+// ==================== BUSINESS ENDPOINTS ====================
 app.get('/api/admin/businesses/pending', isAdminOrModerator, async (req, res) => {
-    try {
-        const result = await pool.query(
-            `SELECT b.*, u.username as submitter_name, u.email as submitter_email
-             FROM businesses b
-             LEFT JOIN users u ON b.user_id = u.id
-             WHERE b.approved = false
-             ORDER BY b.created_at DESC`
-        );
-        res.json({ data: result.rows });
-    } catch (err) {
-        console.error('Error fetching pending businesses:', err);
-        res.status(500).json({ error: 'Failed to fetch pending businesses' });
-    }
+  try {
+    const result = await pool.query(`
+      SELECT b.*, u.username as submitter_name, u.email as submitter_email
+      FROM businesses b
+      LEFT JOIN users u ON b.user_id = u.id
+      WHERE b.approved = false
+      ORDER BY b.created_at DESC
+    `);
+    res.json({ data: result.rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
-// GET approved businesses
 app.get('/api/admin/businesses/approved', isAdminOrModerator, async (req, res) => {
-    try {
-        const result = await pool.query(
-            `SELECT b.*, u.username as submitter_name, u.email as submitter_email
-             FROM businesses b
-             LEFT JOIN users u ON b.user_id = u.id
-             WHERE b.approved = true
-             ORDER BY b.created_at DESC`
-        );
-        res.json({ data: result.rows });
-    } catch (err) {
-        console.error('Error fetching approved businesses:', err);
-        res.status(500).json({ error: 'Failed to fetch approved businesses' });
-    }
+  try {
+    const result = await pool.query(`
+      SELECT b.*, u.username as submitter_name, u.email as submitter_email
+      FROM businesses b
+      LEFT JOIN users u ON b.user_id = u.id
+      WHERE b.approved = true
+      ORDER BY b.created_at DESC
+    `);
+    res.json({ data: result.rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
 // Approve a business (admin only)
