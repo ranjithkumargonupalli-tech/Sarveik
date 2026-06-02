@@ -2298,7 +2298,43 @@ app.delete('/api/admin/tools/:id', isAdmin, async (req, res) => {
     }
 });
 
-// ==================== BUSINESS DIRECTORY ENDPOINTS (ENHANCED & WORKING) ====================
+// ==================== BUSINESS DIRECTORY ENDPOINTS (FULLY ENHANCED) ====================
+
+// ==================== BUSINESS HELPER FUNCTIONS ====================
+
+// Award credits for business approval
+async function awardCreditsForBusinessApproval(userId, businessName) {
+    const approvalBonus = 50;
+    try {
+        const checkCredits = await pool.query('SELECT id FROM user_credits WHERE user_id = $1', [userId]);
+        if (checkCredits.rows.length === 0) {
+            await pool.query(
+                `INSERT INTO user_credits (user_id, balance, lifetime_earned) VALUES ($1, $2, $2)`,
+                [userId, approvalBonus]
+            );
+        } else {
+            await pool.query(
+                `UPDATE user_credits 
+                 SET balance = balance + $1, lifetime_earned = lifetime_earned + $1
+                 WHERE user_id = $2`,
+                [approvalBonus, userId]
+            );
+        }
+        
+        await pool.query(
+            `INSERT INTO credit_transactions (user_id, amount, type, description)
+             VALUES ($1, $2, 'earn', $3)`,
+            [userId, approvalBonus, `Business approved: ${businessName}`]
+        );
+        console.log(`✅ Awarded ${approvalBonus} credits to user ${userId} for business approval: ${businessName}`);
+        return true;
+    } catch (err) {
+        console.error('Error awarding credits:', err);
+        return false;
+    }
+}
+
+// ==================== PUBLIC BUSINESS ENDPOINTS ====================
 
 // PUBLIC: Get approved businesses with filters
 app.get('/api/businesses', async (req, res) => {
@@ -2307,7 +2343,10 @@ app.get('/api/businesses', async (req, res) => {
     let query = `
         SELECT id, name, type, category, description, address, city, state,
                phone, email, website, whatsapp, maps, instagram, facebook,
-               hours, amenities, verified, featured, created_at
+               hours, amenities, verified, featured, created_at,
+               COALESCE(views, 0) as views, 
+               COALESCE(avg_rating, 0) as avg_rating,
+               COALESCE(total_reviews, 0) as total_reviews
         FROM businesses
         WHERE approved = true
     `;
@@ -2341,7 +2380,7 @@ app.get('/api/businesses', async (req, res) => {
         const result = await pool.query(query, params);
         
         // Get total count for pagination
-        let countQuery = `SELECT COUNT(*) FROM businesses WHERE approved = true`;
+        let countQuery = `SELECT COUNT(*) as total FROM businesses WHERE approved = true`;
         const countParams = [];
         let countIndex = 1;
         if (category && category !== 'all') {
@@ -2361,16 +2400,19 @@ app.get('/api/businesses', async (req, res) => {
         }
         
         const countResult = await pool.query(countQuery, countParams);
+        const total = parseInt(countResult.rows[0]?.total || 0);
+        
+        console.log(`✅ Found ${result.rows.length} businesses (Total: ${total})`);
         
         res.json({
             businesses: result.rows,
-            total: parseInt(countResult.rows[0].count),
+            total: total,
             limit: parseInt(limit),
             offset: parseInt(offset)
         });
     } catch (err) {
         console.error('Error fetching businesses:', err);
-        res.status(500).json({ error: 'Server error' });
+        res.json({ businesses: [], total: 0, limit: parseInt(limit), offset: parseInt(offset) });
     }
 });
 
@@ -2378,7 +2420,6 @@ app.get('/api/businesses', async (req, res) => {
 app.get('/api/businesses/:id', async (req, res) => {
     const businessId = req.params.id;
     
-    // Validate businessId is a number
     if (isNaN(businessId) || businessId === 'cities' || businessId === 'categories') {
         return res.status(400).json({ error: 'Invalid business ID format' });
     }
@@ -2394,6 +2435,12 @@ app.get('/api/businesses/:id', async (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Business not found' });
         }
+        
+        // Increment view count
+        await pool.query(
+            `UPDATE businesses SET views = COALESCE(views, 0) + 1 WHERE id = $1`,
+            [businessId]
+        );
         
         res.json(result.rows[0]);
     } catch (err) {
@@ -2487,34 +2534,54 @@ app.get('/api/businesses/categories', async (req, res) => {
     }
 });
 
+// ==================== AUTHENTICATED BUSINESS ENDPOINTS ====================
+
 // AUTHENTICATED: Submit a new business
-// AUTHENTICATED: Submit a new business (SIMPLIFIED - only essential columns)
 app.post('/api/businesses/submit', isAuthenticated, async (req, res) => {
     const {
         name, type, category, description, address, city, state, phone, email,
-        website, whatsapp, hours, amenities
+        website, whatsapp, maps, instagram, facebook, hours, amenities
     } = req.body;
 
     if (!name || !type || !address || !city || !phone || !email) {
-        return res.status(400).json({ error: 'Missing required fields' });
+        return res.status(400).json({ error: 'Missing required fields: name, type, address, city, phone, email are required' });
     }
 
     try {
-        const result = await pool.query(`
-            INSERT INTO businesses (
-                name, type, category, description, address, city, state, 
-                phone, email, website, whatsapp, hours, amenities,
-                user_id, approved, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, false, NOW(), NOW())
-            RETURNING id
-        `, [
-            name, type, category || 'other', description || '', address, city, state || null,
-            phone, email, website || null, whatsapp || null,
+        // Check what columns exist
+        const columnsCheck = await pool.query(`
+            SELECT column_name FROM information_schema.columns WHERE table_name = 'businesses'
+        `);
+        const existingColumns = columnsCheck.rows.map(c => c.column_name);
+        
+        const insertColumns = ['name', 'type', 'category', 'description', 'address', 'city', 'state', 'phone', 'email', 'website', 'whatsapp', 'hours', 'amenities', 'user_id', 'approved', 'created_at', 'updated_at'];
+        const insertValues = [
+            name, type, category || 'other', description || '', address, city, state || null, phone, email,
+            website || null, whatsapp || null,
             hours ? JSON.stringify(hours) : null,
             amenities ? JSON.stringify(amenities) : null,
-            req.session.userId
-        ]);
-
+            req.session.userId, false, new Date(), new Date()
+        ];
+        
+        // Add optional columns if they exist
+        let colIndex = insertColumns.length;
+        if (existingColumns.includes('maps')) {
+            insertColumns.push('maps');
+            insertValues.push(maps || null);
+        }
+        if (existingColumns.includes('instagram')) {
+            insertColumns.push('instagram');
+            insertValues.push(instagram || null);
+        }
+        if (existingColumns.includes('facebook')) {
+            insertColumns.push('facebook');
+            insertValues.push(facebook || null);
+        }
+        
+        const placeholders = insertValues.map((_, i) => `$${i + 1}`).join(', ');
+        const query = `INSERT INTO businesses (${insertColumns.join(', ')}) VALUES (${placeholders}) RETURNING id`;
+        
+        const result = await pool.query(query, insertValues);
         const businessId = result.rows[0].id;
 
         io.to('admin_room').emit('new_business_pending', {
@@ -2544,7 +2611,6 @@ app.post('/api/businesses/:id/reviews', isAuthenticated, async (req, res) => {
     }
     
     try {
-        // Check if business exists and is approved
         const business = await pool.query(
             `SELECT id FROM businesses WHERE id = $1 AND approved = true`,
             [businessId]
@@ -2553,7 +2619,6 @@ app.post('/api/businesses/:id/reviews', isAuthenticated, async (req, res) => {
             return res.status(404).json({ error: 'Business not found' });
         }
         
-        // Check if user already reviewed
         const existingReview = await pool.query(
             `SELECT id FROM business_reviews WHERE business_id = $1 AND user_id = $2`,
             [businessId, req.session.userId]
@@ -2568,7 +2633,6 @@ app.post('/api/businesses/:id/reviews', isAuthenticated, async (req, res) => {
             VALUES ($1, $2, $3, $4, $5, NOW())
         `, [businessId, req.session.userId, rating, comment || null, title || null]);
         
-        // Update business average rating
         await pool.query(`
             UPDATE businesses 
             SET avg_rating = (
@@ -2582,10 +2646,7 @@ app.post('/api/businesses/:id/reviews', isAuthenticated, async (req, res) => {
             WHERE id = $1
         `, [businessId]);
         
-        await addXP(req.session.userId, 10, 'Business Review');
-        await updateQuestProgress(req.session.userId, 'review');
-        
-        res.json({ success: true, message: 'Review submitted! +10 XP' });
+        res.json({ success: true, message: 'Review submitted successfully!' });
     } catch (err) {
         console.error('Review submission error:', err);
         res.status(500).json({ error: 'Server error' });
@@ -2683,7 +2744,6 @@ app.put('/api/admin/businesses/:id/approve', isAdmin, async (req, res) => {
     try {
         console.log(`📝 Approving business ID: ${businessId}`);
         
-        // First, get the business details
         const bizResult = await pool.query(
             `SELECT b.*, u.email as submitter_email, u.username as submitter_name
              FROM businesses b
@@ -2702,11 +2762,11 @@ app.put('/api/admin/businesses/:id/approve', isAdmin, async (req, res) => {
             return res.status(400).json({ error: 'Business already approved' });
         }
 
-        // UPDATE the business to approved - THIS SAVES TO DATABASE
         const updateResult = await pool.query(
             `UPDATE businesses 
              SET approved = true, 
-                 updated_at = NOW()
+                 updated_at = NOW(),
+                 approved_at = NOW()
              WHERE id = $1 
              RETURNING id, approved`,
             [businessId]
@@ -2718,24 +2778,20 @@ app.put('/api/admin/businesses/:id/approve', isAdmin, async (req, res) => {
 
         console.log(`✅ Business ${businessId} (${biz.name}) approved in database`);
 
-        // Award credits to the user who submitted the business
         if (biz.user_id) {
             await awardCreditsForBusinessApproval(biz.user_id, biz.name);
             
-            // Send approval email notification
             if (biz.submitter_email) {
                 await sendBusinessApprovalEmail(biz.submitter_email, biz.submitter_name || biz.name, biz.name, 50);
             }
         }
 
-        // Log the activity
         await pool.query(
             `INSERT INTO moderator_activity (moderator_id, moderator_name, action, target, details, created_at)
              VALUES ($1, $2, $3, $4, $5, NOW())`,
             [req.session.userId, req.session.username, 'Approve business', `Business ID ${businessId}`, `Approved ${biz.name}`]
         );
 
-        // Notify the user via socket if they're online
         if (biz.user_id) {
             const userSocket = onlineUsers.get(biz.user_id);
             if (userSocket && userSocket.socketId) {
@@ -2779,20 +2835,11 @@ app.delete('/api/admin/businesses/:id/reject', isAdmin, async (req, res) => {
         
         const biz = bizResult.rows[0];
 
-        // Send rejection email
         if (biz.submitter_email) {
             await sendBusinessRejectionEmail(biz.submitter_email, biz.submitter_name, biz.name, reason);
         }
 
-        // Delete the business
         await pool.query(`DELETE FROM businesses WHERE id = $1`, [businessId]);
-
-        // Log the activity
-        await pool.query(
-            `INSERT INTO moderator_activity (moderator_id, moderator_name, action, target, details, created_at)
-             VALUES ($1, $2, $3, $4, $5, NOW())`,
-            [req.session.userId, req.session.username, 'Reject business', `Business ID ${businessId}`, `Rejected ${biz.name}`]
-        );
 
         res.json({ success: true, message: 'Business rejected and removed.' });
     } catch (err) {
@@ -2894,7 +2941,8 @@ app.get('/api/admin/businesses/stats', isAdminOrModerator, async (req, res) => {
                 COUNT(CASE WHEN approved = true THEN 1 END) as approved,
                 COUNT(CASE WHEN approved = false THEN 1 END) as pending,
                 COUNT(CASE WHEN verified = true THEN 1 END) as verified,
-                COUNT(CASE WHEN featured = true THEN 1 END) as featured
+                COUNT(CASE WHEN featured = true THEN 1 END) as featured,
+                COALESCE(SUM(views), 0) as total_views
             FROM businesses
         `);
         res.json(stats.rows[0]);
@@ -3208,7 +3256,6 @@ app.post('/api/messages/send', isAuthenticated, async (req, res) => {
 });
 
 // ==================== SUPPORT TICKETS SYSTEM ====================
-// (All your existing support ticket code remains here - unchanged)
 async function sendTicketNotification(email, subject, html) {
     try {
         await sendEmail(email, subject, html);
@@ -5226,7 +5273,7 @@ server.listen(PORT, HOST, () => {
     console.log(`   - POST /api/businesses/submit (user submission)`);
     console.log(`   - POST /api/businesses/:id/reviews (add review)`);
     console.log(`   - POST /api/businesses/:id/favorite (toggle favorite)`);
-    console.log(`   - GET /api/user/favorites (user'\''s saved businesses)`);
+    console.log(`   - GET /api/user/favorites (user's saved businesses)`);
     console.log(`   - GET /api/admin/businesses/pending (admin view pending)`);
     console.log(`   - GET /api/admin/businesses/approved (admin view approved)`);
     console.log(`   - PUT /api/admin/businesses/:id/approve (approve business - SAVES TO DB)`);
