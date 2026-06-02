@@ -107,6 +107,49 @@ async function sendToolRejectionEmail(to, username, toolName, reason = null) {
     return sendEmail(to, subject, html);
 }
 
+// ==================== BUSINESS EMAIL NOTIFICATIONS (NEW) ====================
+async function sendBusinessApprovalEmail(to, userName, businessName, creditsEarned = 50) {
+    const subject = `✅ Your business "${businessName}" has been approved!`;
+    const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px;">
+            <div style="background: white; padding: 30px; border-radius: 10px;">
+                <h2 style="color: #667eea;">Business Approved! 🎉</h2>
+                <p>Dear ${escapeHtml(userName || 'Valued User')},</p>
+                <p>Great news! Your business listing <strong>"${escapeHtml(businessName)}"</strong> has been <strong style="color: #10b981;">APPROVED</strong> by our admin team.</p>
+                <div style="background: #f0fdf4; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                    <p style="margin: 0; color: #166534;">✨ You have earned <strong style="font-size: 20px;">${creditsEarned} CREDITS</strong> for this submission!</p>
+                </div>
+                <p>Your business is now visible on the Sarveik Directory.</p>
+                <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/businessdirectory.html" style="display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; text-decoration: none; border-radius: 8px; margin-top: 20px;">View Directory</a>
+                <p style="margin-top: 20px; font-size: 12px; color: #666;">Thank you for contributing to Sarveik!</p>
+            </div>
+        </div>
+    `;
+    return sendEmail(to, subject, html);
+}
+
+async function sendBusinessRejectionEmail(to, userName, businessName, reason = null) {
+    const subject = `❌ Update on your business submission "${businessName}"`;
+    const reasonText = reason ? `<p><strong>Reason:</strong> ${escapeHtml(reason)}</p>` : '<p>Please ensure all information is accurate and complete before resubmitting.</p>';
+    const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px;">
+            <div style="background: white; padding: 30px; border-radius: 10px;">
+                <h2 style="color: #ef4444;">Business Submission Update</h2>
+                <p>Dear ${escapeHtml(userName || 'Valued User')},</p>
+                <p>Thank you for submitting your business <strong>"${escapeHtml(businessName)}"</strong> to the Sarveik Directory.</p>
+                <div style="background: #fef2f2; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                    <p style="margin: 0; color: #991b1b;">After careful review, our admin team has decided <strong>not to approve</strong> this business at this time.</p>
+                    ${reasonText}
+                </div>
+                <p>You can submit a new business with corrections anytime.</p>
+                <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/businessdirectory.html" style="display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; text-decoration: none; border-radius: 8px; margin-top: 20px;">Submit Again</a>
+                <p style="margin-top: 20px; font-size: 12px; color: #666;">We appreciate your contribution to Sarveik!</p>
+            </div>
+        </div>
+    `;
+    return sendEmail(to, subject, html);
+}
+
 async function sendToolSubmissionAlert(details) {
     try {
         const admins = await pool.query("SELECT email, username FROM users WHERE role = 'admin'");
@@ -882,6 +925,24 @@ async function awardCreditsForToolApproval(userId, toolName) {
     } catch (err) {
         console.error('Error awarding credits:', err);
     }
+}
+
+// ==================== BUSINESS CREDIT HELPER (NEW) ====================
+async function awardCreditsForBusinessApproval(userId, businessName) {
+    const approvalBonus = 50;
+    await ensureUserCredits(userId);
+    await pool.query(
+        `UPDATE user_credits 
+         SET balance = balance + $1, lifetime_earned = lifetime_earned + $1
+         WHERE user_id = $2`,
+        [approvalBonus, userId]
+    );
+    await pool.query(
+        `INSERT INTO credit_transactions (user_id, amount, type, description)
+         VALUES ($1, $2, 'earn', $3)`,
+        [userId, approvalBonus, `Business approved: ${businessName}`]
+    );
+    console.log(`✅ Awarded ${approvalBonus} credits to user ${userId} for business approval: ${businessName}`);
 }
 
 // ==================== PHONEPE PAYMENT GATEWAY ====================
@@ -4047,6 +4108,217 @@ app.get('/api/admin/activity', isAdmin, async (req, res) => {
     }
 });
 
+// ==================== BUSINESS DIRECTORY MANAGEMENT (NEW) ====================
+
+// GET pending businesses
+app.get('/api/admin/businesses/pending', isAdminOrModerator, async (req, res) => {
+    try {
+        const result = await pool.query(
+            `SELECT b.*, u.username as submitter_name, u.email as submitter_email
+             FROM businesses b
+             LEFT JOIN users u ON b.user_id = u.id
+             WHERE b.approved = false
+             ORDER BY b.created_at DESC`
+        );
+        res.json({ data: result.rows });
+    } catch (err) {
+        console.error('Error fetching pending businesses:', err);
+        res.status(500).json({ error: 'Failed to fetch pending businesses' });
+    }
+});
+
+// GET approved businesses
+app.get('/api/admin/businesses/approved', isAdminOrModerator, async (req, res) => {
+    try {
+        const result = await pool.query(
+            `SELECT b.*, u.username as submitter_name, u.email as submitter_email
+             FROM businesses b
+             LEFT JOIN users u ON b.user_id = u.id
+             WHERE b.approved = true
+             ORDER BY b.created_at DESC`
+        );
+        res.json({ data: result.rows });
+    } catch (err) {
+        console.error('Error fetching approved businesses:', err);
+        res.status(500).json({ error: 'Failed to fetch approved businesses' });
+    }
+});
+
+// Approve a business (admin only)
+app.put('/api/admin/businesses/:id/approve', isAdmin, async (req, res) => {
+    const businessId = req.params.id;
+    try {
+        const bizResult = await pool.query(
+            `SELECT b.*, u.email as submitter_email, u.username as submitter_name
+             FROM businesses b
+             LEFT JOIN users u ON b.user_id = u.id
+             WHERE b.id = $1`,
+            [businessId]
+        );
+        if (bizResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Business not found' });
+        }
+        const biz = bizResult.rows[0];
+        if (biz.approved) {
+            return res.status(400).json({ error: 'Business already approved' });
+        }
+
+        await pool.query(
+            `UPDATE businesses SET approved = true, updated_at = NOW() WHERE id = $1`,
+            [businessId]
+        );
+
+        if (biz.user_id) {
+            await awardCreditsForBusinessApproval(biz.user_id, biz.name);
+            if (biz.submitter_email) {
+                await sendBusinessApprovalEmail(biz.submitter_email, biz.submitter_name, biz.name, 50);
+            }
+        }
+
+        await pool.query(
+            `INSERT INTO moderator_activity (moderator_id, moderator_name, action, target, details, created_at)
+             VALUES ($1, $2, $3, $4, $5, NOW())`,
+            [req.session.userId, req.session.username, 'Approve business', `Business ID ${businessId}`, `Approved ${biz.name}`]
+        );
+
+        res.json({ success: true, message: 'Business approved and user awarded 50 credits.' });
+    } catch (err) {
+        console.error('Business approval error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Reject a business (delete it)
+app.delete('/api/admin/businesses/:id/reject', isAdmin, async (req, res) => {
+    const businessId = req.params.id;
+    const { reason } = req.body;
+    try {
+        const bizResult = await pool.query(
+            `SELECT b.*, u.email as submitter_email, u.username as submitter_name
+             FROM businesses b
+             LEFT JOIN users u ON b.user_id = u.id
+             WHERE b.id = $1`,
+            [businessId]
+        );
+        if (bizResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Business not found' });
+        }
+        const biz = bizResult.rows[0];
+
+        if (biz.submitter_email) {
+            await sendBusinessRejectionEmail(biz.submitter_email, biz.submitter_name, biz.name, reason);
+        }
+
+        await pool.query(`DELETE FROM businesses WHERE id = $1`, [businessId]);
+
+        await pool.query(
+            `INSERT INTO moderator_activity (moderator_id, moderator_name, action, target, details, created_at)
+             VALUES ($1, $2, $3, $4, $5, NOW())`,
+            [req.session.userId, req.session.username, 'Reject business', `Business ID ${businessId}`, `Rejected ${biz.name}`]
+        );
+
+        res.json({ success: true, message: 'Business rejected and removed.' });
+    } catch (err) {
+        console.error('Business rejection error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Update a business (edit)
+app.put('/api/admin/businesses/:id', isAdminOrModerator, async (req, res) => {
+    const businessId = req.params.id;
+    const {
+        name, type, category, desc, address, city, state, phone, email,
+        website, whatsapp, maps, instagram, facebook, verified, featured
+    } = req.body;
+    try {
+        const existing = await pool.query('SELECT id FROM businesses WHERE id = $1', [businessId]);
+        if (existing.rows.length === 0) {
+            return res.status(404).json({ error: 'Business not found' });
+        }
+
+        await pool.query(
+            `UPDATE businesses SET
+                name = $1, type = $2, category = $3, description = $4,
+                address = $5, city = $6, state = $7, phone = $8, email = $9,
+                website = $10, whatsapp = $11, maps = $12, instagram = $13, facebook = $14,
+                verified = $15, featured = $16, updated_at = NOW()
+             WHERE id = $17`,
+            [name, type, category, desc, address, city, state, phone, email,
+             website, whatsapp, maps, instagram, facebook, verified, featured, businessId]
+        );
+
+        await pool.query(
+            `INSERT INTO moderator_activity (moderator_id, moderator_name, action, target, details, created_at)
+             VALUES ($1, $2, $3, $4, $5, NOW())`,
+            [req.session.userId, req.session.username, 'Edit business', `Business ID ${businessId}`, `Edited ${name}`]
+        );
+
+        res.json({ success: true, message: 'Business updated' });
+    } catch (err) {
+        console.error('Business update error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Delete an approved business
+app.delete('/api/admin/businesses/:id', isAdmin, async (req, res) => {
+    const businessId = req.params.id;
+    try {
+        const biz = await pool.query('SELECT name FROM businesses WHERE id = $1', [businessId]);
+        if (biz.rows.length === 0) return res.status(404).json({ error: 'Business not found' });
+
+        await pool.query(`DELETE FROM businesses WHERE id = $1`, [businessId]);
+
+        await pool.query(
+            `INSERT INTO moderator_activity (moderator_id, moderator_name, action, target, details, created_at)
+             VALUES ($1, $2, $3, $4, $5, NOW())`,
+            [req.session.userId, req.session.username, 'Delete business', `Business ID ${businessId}`, `Deleted ${biz.rows[0].name}`]
+        );
+
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Business delete error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Toggle verified status
+app.put('/api/admin/businesses/:id/toggle-verified', isAdminOrModerator, async (req, res) => {
+    const businessId = req.params.id;
+    try {
+        const result = await pool.query(
+            `UPDATE businesses SET verified = NOT verified, updated_at = NOW()
+             WHERE id = $1 RETURNING verified`,
+            [businessId]
+        );
+        if (result.rows.length === 0) return res.status(404).json({ error: 'Business not found' });
+        res.json({ success: true, verified: result.rows[0].verified });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Toggle featured status
+app.put('/api/admin/businesses/:id/toggle-featured', isAdminOrModerator, async (req, res) => {
+    const businessId = req.params.id;
+    try {
+        const result = await pool.query(
+            `UPDATE businesses SET featured = NOT featured, updated_at = NOW()
+             WHERE id = $1 RETURNING featured`,
+            [businessId]
+        );
+        if (result.rows.length === 0) return res.status(404).json({ error: 'Business not found' });
+        res.json({ success: true, featured: result.rows[0].featured });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// ==================== END BUSINESS DIRECTORY MANAGEMENT ====================
+
 app.get('/api/analytics/trending-tools', isAuthenticated, async (req, res) => {
     try {
         const { period = 'week', limit = 10 } = req.query;
@@ -4576,6 +4848,7 @@ server.listen(PORT, HOST, () => {
     console.log(`✅ Username uniqueness check fixed during registration`);
     console.log(`✅ Account deletion fully fixed with cascade deletion of all related data`);
     console.log(`✅ CSRF token endpoint added for state‑changing requests`);
+    console.log(`🏢 Business directory management endpoints active (pending, approve, reject, edit, delete, toggle verified/featured)`);
 });
 
 // ==================== GRACEFUL SHUTDOWN ====================
