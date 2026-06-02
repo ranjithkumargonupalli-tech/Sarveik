@@ -2488,27 +2488,28 @@ app.get('/api/businesses/categories', async (req, res) => {
 });
 
 // AUTHENTICATED: Submit a new business
+// AUTHENTICATED: Submit a new business (SIMPLIFIED - only essential columns)
 app.post('/api/businesses/submit', isAuthenticated, async (req, res) => {
     const {
         name, type, category, description, address, city, state, phone, email,
-        website, whatsapp, maps, instagram, facebook, hours, amenities
+        website, whatsapp, hours, amenities
     } = req.body;
 
     if (!name || !type || !address || !city || !phone || !email) {
-        return res.status(400).json({ error: 'Missing required fields: name, type, address, city, phone, email are required' });
+        return res.status(400).json({ error: 'Missing required fields' });
     }
 
     try {
         const result = await pool.query(`
             INSERT INTO businesses (
-                name, type, category, description, address, city, state, phone, email,
-                website, whatsapp, maps, instagram, facebook, hours, amenities,
+                name, type, category, description, address, city, state, 
+                phone, email, website, whatsapp, hours, amenities,
                 user_id, approved, created_at, updated_at
-            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, false, NOW(), NOW())
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, false, NOW(), NOW())
             RETURNING id
         `, [
-            name, type, category || 'other', description || '', address, city, state || null, phone, email,
-            website || null, whatsapp || null, maps || null, instagram || null, facebook || null,
+            name, type, category || 'other', description || '', address, city, state || null,
+            phone, email, website || null, whatsapp || null,
             hours ? JSON.stringify(hours) : null,
             amenities ? JSON.stringify(amenities) : null,
             req.session.userId
@@ -2516,21 +2517,15 @@ app.post('/api/businesses/submit', isAuthenticated, async (req, res) => {
 
         const businessId = result.rows[0].id;
 
-        // Notify admins via Socket.IO
         io.to('admin_room').emit('new_business_pending', {
             id: businessId,
             name: name,
             submittedBy: req.session.username
         });
 
-        await pool.query(`
-            INSERT INTO moderator_activity (moderator_id, moderator_name, action, target, details, created_at)
-            VALUES ($1, $2, $3, $4, $5, NOW())
-        `, [req.session.userId, req.session.username, 'Business submitted', `Business ID ${businessId}`, `Submitted ${name}`]);
-
         res.status(201).json({
             success: true,
-            message: 'Business submitted for review. You will receive credits and email upon approval.',
+            message: 'Business submitted for review.',
             id: businessId
         });
     } catch (err) {
