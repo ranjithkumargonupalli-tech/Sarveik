@@ -2298,7 +2298,102 @@ app.delete('/api/admin/tools/:id', isAdmin, async (req, res) => {
     }
 });
 
-// ==================== BUSINESS DIRECTORY ENDPOINTS (ENHANCED) ====================
+// ==================== BUSINESS DIRECTORY ENDPOINTS (COMPLETE FIXED VERSION) ====================
+
+// ==================== BUSINESS HELPER FUNCTIONS ====================
+
+// Award credits for business approval
+async function awardCreditsForBusinessApproval(userId, businessName) {
+    const approvalBonus = 50;
+    try {
+        // Ensure user credits record exists
+        const checkCredits = await pool.query('SELECT id FROM user_credits WHERE user_id = $1', [userId]);
+        if (checkCredits.rows.length === 0) {
+            await pool.query(
+                `INSERT INTO user_credits (user_id, balance, lifetime_earned) VALUES ($1, $2, $2)`,
+                [userId, approvalBonus]
+            );
+        } else {
+            await pool.query(
+                `UPDATE user_credits 
+                 SET balance = balance + $1, lifetime_earned = lifetime_earned + $1
+                 WHERE user_id = $2`,
+                [approvalBonus, userId]
+            );
+        }
+        
+        await pool.query(
+            `INSERT INTO credit_transactions (user_id, amount, type, description)
+             VALUES ($1, $2, 'earn', $3)`,
+            [userId, approvalBonus, `Business approved: ${businessName}`]
+        );
+        console.log(`✅ Awarded ${approvalBonus} credits to user ${userId} for business approval: ${businessName}`);
+        return true;
+    } catch (err) {
+        console.error('Error awarding credits:', err);
+        return false;
+    }
+}
+
+// Send business approval email
+async function sendBusinessApprovalEmail(to, userName, businessName, creditsEarned = 50) {
+    try {
+        const subject = `✅ Your business "${businessName}" has been approved!`;
+        const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px;">
+                <div style="background: white; padding: 30px; border-radius: 10px;">
+                    <h2 style="color: #667eea;">Business Approved! 🎉</h2>
+                    <p>Dear ${escapeHtml(userName || 'Valued User')},</p>
+                    <p>Great news! Your business listing <strong>"${escapeHtml(businessName)}"</strong> has been <strong style="color: #10b981;">APPROVED</strong> by our admin team.</p>
+                    <div style="background: #f0fdf4; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                        <p style="margin: 0; color: #166534;">✨ You have earned <strong style="font-size: 20px;">${creditsEarned} CREDITS</strong> for this submission!</p>
+                    </div>
+                    <p>Your business is now visible on the Sarveik Directory.</p>
+                    <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/businessdirectory.html" style="display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; text-decoration: none; border-radius: 8px; margin-top: 20px;">View Directory</a>
+                    <p style="margin-top: 20px; font-size: 12px; color: #666;">Thank you for contributing to Sarveik!</p>
+                </div>
+            </div>
+        `;
+        const emailResult = await sendEmail(to, subject, html);
+        console.log(`📧 Approval email sent to ${to} for business: ${businessName}`);
+        return emailResult;
+    } catch (err) {
+        console.error('Error sending approval email:', err);
+        return { success: false, error: err.message };
+    }
+}
+
+// Send business rejection email
+async function sendBusinessRejectionEmail(to, userName, businessName, reason = null) {
+    try {
+        const subject = `❌ Update on your business submission "${businessName}"`;
+        const reasonText = reason ? `<p><strong>Reason:</strong> ${escapeHtml(reason)}</p>` : '<p>Please ensure all information is accurate and complete before resubmitting.</p>';
+        const html = `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px;">
+                <div style="background: white; padding: 30px; border-radius: 10px;">
+                    <h2 style="color: #ef4444;">Business Submission Update</h2>
+                    <p>Dear ${escapeHtml(userName || 'Valued User')},</p>
+                    <p>Thank you for submitting your business <strong>"${escapeHtml(businessName)}"</strong> to the Sarveik Directory.</p>
+                    <div style="background: #fef2f2; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                        <p style="margin: 0; color: #991b1b;">After careful review, our admin team has decided <strong>not to approve</strong> this business at this time.</p>
+                        ${reasonText}
+                    </div>
+                    <p>You can submit a new business with corrections anytime.</p>
+                    <a href="${process.env.FRONTEND_URL || 'http://localhost:3000'}/businessdirectory.html" style="display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; text-decoration: none; border-radius: 8px; margin-top: 20px;">Submit Again</a>
+                    <p style="margin-top: 20px; font-size: 12px; color: #666;">We appreciate your contribution to Sarveik!</p>
+                </div>
+            </div>
+        `;
+        const emailResult = await sendEmail(to, subject, html);
+        console.log(`📧 Rejection email sent to ${to} for business: ${businessName}`);
+        return emailResult;
+    } catch (err) {
+        console.error('Error sending rejection email:', err);
+        return { success: false, error: err.message };
+    }
+}
+
+// ==================== PUBLIC BUSINESS ENDPOINTS ====================
 
 // PUBLIC: Get approved businesses with filters
 app.get('/api/businesses', async (req, res) => {
@@ -2308,9 +2403,10 @@ app.get('/api/businesses', async (req, res) => {
         SELECT id, name, type, category, description, address, city, state,
                phone, email, website, whatsapp, maps, instagram, facebook,
                hours, amenities, images, verified, featured, created_at,
-               views, avg_rating, total_reviews
+               COALESCE(views, 0) as views, COALESCE(avg_rating, 0) as avg_rating, 
+               COALESCE(total_reviews, 0) as total_reviews
         FROM businesses
-        WHERE approved = true AND is_active = true
+        WHERE approved = true
     `;
     const params = [];
     let paramIndex = 1;
@@ -2342,7 +2438,7 @@ app.get('/api/businesses', async (req, res) => {
         const result = await pool.query(query, params);
         
         // Get total count for pagination
-        let countQuery = `SELECT COUNT(*) FROM businesses WHERE approved = true AND is_active = true`;
+        let countQuery = `SELECT COUNT(*) FROM businesses WHERE approved = true`;
         const countParams = [];
         let countIndex = 1;
         if (category && category !== 'all') {
@@ -2383,7 +2479,7 @@ app.get('/api/businesses/:id', async (req, res) => {
             `SELECT b.*, u.username as owner_name, u.email as owner_email
              FROM businesses b
              LEFT JOIN users u ON b.user_id = u.id
-             WHERE b.id = $1 AND b.approved = true AND b.is_active = true`,
+             WHERE b.id = $1 AND b.approved = true`,
             [businessId]
         );
         if (result.rows.length === 0) {
@@ -2392,7 +2488,7 @@ app.get('/api/businesses/:id', async (req, res) => {
         
         // Increment view count
         await pool.query(
-            `UPDATE businesses SET views = views + 1 WHERE id = $1`,
+            `UPDATE businesses SET views = COALESCE(views, 0) + 1 WHERE id = $1`,
             [businessId]
         );
         
@@ -2414,14 +2510,14 @@ app.get('/api/businesses/:id/reviews', async (req, res) => {
             `SELECT r.*, u.username, u.avatar_url
              FROM business_reviews r
              LEFT JOIN users u ON r.user_id = u.id
-             WHERE r.business_id = $1 AND r.is_approved = true
+             WHERE r.business_id = $1 AND (r.is_approved = true OR r.is_approved IS NULL)
              ORDER BY r.created_at DESC
              LIMIT $2 OFFSET $3`,
             [businessId, limit, offset]
         );
         
         const countResult = await pool.query(
-            `SELECT COUNT(*) FROM business_reviews WHERE business_id = $1 AND is_approved = true`,
+            `SELECT COUNT(*) FROM business_reviews WHERE business_id = $1 AND (is_approved = true OR is_approved IS NULL)`,
             [businessId]
         );
         
@@ -2451,7 +2547,7 @@ app.get('/api/businesses/:id/ratings', async (req, res) => {
                 COUNT(CASE WHEN rating = 2 THEN 1 END) as two_star,
                 COUNT(CASE WHEN rating = 1 THEN 1 END) as one_star
              FROM business_reviews
-             WHERE business_id = $1 AND is_approved = true`,
+             WHERE business_id = $1 AND (is_approved = true OR is_approved IS NULL)`,
             [businessId]
         );
         res.json(result.rows[0]);
@@ -2466,7 +2562,7 @@ app.get('/api/businesses/cities', async (req, res) => {
     try {
         const result = await pool.query(`
             SELECT DISTINCT city FROM businesses 
-            WHERE approved = true AND is_active = true AND city IS NOT NULL 
+            WHERE approved = true AND city IS NOT NULL AND city != ''
             ORDER BY city
         `);
         res.json(result.rows.map(r => r.city));
@@ -2482,7 +2578,7 @@ app.get('/api/businesses/categories', async (req, res) => {
         const result = await pool.query(`
             SELECT category, COUNT(*) as count 
             FROM businesses 
-            WHERE approved = true AND is_active = true AND category IS NOT NULL
+            WHERE approved = true AND category IS NOT NULL
             GROUP BY category 
             ORDER BY count DESC
         `);
@@ -2493,31 +2589,32 @@ app.get('/api/businesses/categories', async (req, res) => {
     }
 });
 
+// ==================== AUTHENTICATED BUSINESS ENDPOINTS ====================
+
 // AUTHENTICATED: Submit a new business
 app.post('/api/businesses/submit', isAuthenticated, async (req, res) => {
     const {
-        name, type, category, desc, address, city, state, phone, email,
-        website, whatsapp, maps, instagram, facebook, hours, amenities, images
+        name, type, category, description, address, city, state, phone, email,
+        website, whatsapp, maps, instagram, facebook, hours, amenities
     } = req.body;
 
-    if (!name || !type || !category || !address || !city || !phone || !email) {
-        return res.status(400).json({ error: 'Missing required fields' });
+    if (!name || !type || !address || !city || !phone || !email) {
+        return res.status(400).json({ error: 'Missing required fields: name, type, address, city, phone, email are required' });
     }
 
     try {
         const result = await pool.query(`
             INSERT INTO businesses (
                 name, type, category, description, address, city, state, phone, email,
-                website, whatsapp, maps, instagram, facebook, hours, amenities, images,
+                website, whatsapp, maps, instagram, facebook, hours, amenities,
                 user_id, approved, created_at, updated_at
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, false, NOW(), NOW())
             RETURNING id
         `, [
-            name, type, category, desc || '', address, city, state || null, phone, email,
+            name, type, category || 'other', description || '', address, city, state || null, phone, email,
             website || null, whatsapp || null, maps || null, instagram || null, facebook || null,
             hours ? JSON.stringify(hours) : null,
             amenities ? JSON.stringify(amenities) : null,
-            images ? JSON.stringify(images) : null,
             req.session.userId
         ]);
 
@@ -2542,7 +2639,7 @@ app.post('/api/businesses/submit', isAuthenticated, async (req, res) => {
         });
     } catch (err) {
         console.error('Business submission error:', err);
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: 'Server error: ' + err.message });
     }
 });
 
@@ -2558,7 +2655,7 @@ app.post('/api/businesses/:id/reviews', isAuthenticated, async (req, res) => {
     try {
         // Check if business exists and is approved
         const business = await pool.query(
-            `SELECT id FROM businesses WHERE id = $1 AND approved = true AND is_active = true`,
+            `SELECT id FROM businesses WHERE id = $1 AND approved = true`,
             [businessId]
         );
         if (business.rows.length === 0) {
@@ -2584,20 +2681,17 @@ app.post('/api/businesses/:id/reviews', isAuthenticated, async (req, res) => {
         await pool.query(`
             UPDATE businesses 
             SET avg_rating = (
-                SELECT AVG(rating) FROM business_reviews 
-                WHERE business_id = $1 AND is_approved = true
+                SELECT COALESCE(AVG(rating), 0) FROM business_reviews 
+                WHERE business_id = $1 AND (is_approved = true OR is_approved IS NULL)
             ),
             total_reviews = (
                 SELECT COUNT(*) FROM business_reviews 
-                WHERE business_id = $1 AND is_approved = true
+                WHERE business_id = $1 AND (is_approved = true OR is_approved IS NULL)
             )
             WHERE id = $1
         `, [businessId]);
         
-        await addXP(req.session.userId, 10, 'Business Review');
-        await updateQuestProgress(req.session.userId, 'review');
-        
-        res.json({ success: true, message: 'Review submitted! +10 XP' });
+        res.json({ success: true, message: 'Review submitted successfully!' });
     } catch (err) {
         console.error('Review submission error:', err);
         res.status(500).json({ error: 'Server error' });
@@ -2652,7 +2746,7 @@ app.get('/api/user/favorites', isAuthenticated, async (req, res) => {
     }
 });
 
-// ==================== ADMIN BUSINESS MANAGEMENT ====================
+// ==================== ADMIN BUSINESS MANAGEMENT ENDPOINTS ====================
 
 // Get pending businesses
 app.get('/api/admin/businesses/pending', isAdminOrModerator, async (req, res) => {
@@ -2661,12 +2755,12 @@ app.get('/api/admin/businesses/pending', isAdminOrModerator, async (req, res) =>
             SELECT b.*, u.username as submitter_name, u.email as submitter_email
             FROM businesses b
             LEFT JOIN users u ON b.user_id = u.id
-            WHERE b.approved = false
+            WHERE b.approved = false OR b.approved IS NULL
             ORDER BY b.created_at DESC
         `);
         res.json({ businesses: result.rows });
     } catch (err) {
-        console.error(err);
+        console.error('Error fetching pending businesses:', err);
         res.status(500).json({ error: err.message });
     }
 });
@@ -2683,15 +2777,17 @@ app.get('/api/admin/businesses/approved', isAdminOrModerator, async (req, res) =
         `);
         res.json({ businesses: result.rows });
     } catch (err) {
-        console.error(err);
+        console.error('Error fetching approved businesses:', err);
         res.status(500).json({ error: err.message });
     }
 });
 
-// Approve a business
+// Approve a business (FIXED - This is the critical endpoint)
 app.put('/api/admin/businesses/:id/approve', isAdmin, async (req, res) => {
     const businessId = req.params.id;
+    
     try {
+        // First, get the business details
         const bizResult = await pool.query(
             `SELECT b.*, u.email as submitter_email, u.username as submitter_name
              FROM businesses b
@@ -2699,43 +2795,73 @@ app.put('/api/admin/businesses/:id/approve', isAdmin, async (req, res) => {
              WHERE b.id = $1`,
             [businessId]
         );
+        
         if (bizResult.rows.length === 0) {
             return res.status(404).json({ error: 'Business not found' });
         }
+        
         const biz = bizResult.rows[0];
-        if (biz.approved) {
+        
+        // Check if already approved
+        if (biz.approved === true) {
             return res.status(400).json({ error: 'Business already approved' });
         }
 
-        await pool.query(
-            `UPDATE businesses SET approved = true, updated_at = NOW() WHERE id = $1`,
+        // UPDATE the business to approved
+        const updateResult = await pool.query(
+            `UPDATE businesses 
+             SET approved = true, 
+                 updated_at = NOW(),
+                 approved_at = NOW()
+             WHERE id = $1 
+             RETURNING id`,
             [businessId]
         );
+        
+        if (updateResult.rowCount === 0) {
+            return res.status(500).json({ error: 'Failed to update business approval status' });
+        }
 
+        console.log(`✅ Business ${businessId} (${biz.name}) approved in database`);
+
+        // Award credits to the user who submitted the business
         if (biz.user_id) {
             await awardCreditsForBusinessApproval(biz.user_id, biz.name);
+            
+            // Send approval email notification
             if (biz.submitter_email) {
-                await sendBusinessApprovalEmail(biz.submitter_email, biz.submitter_name, biz.name, 50);
+                await sendBusinessApprovalEmail(biz.submitter_email, biz.submitter_name || biz.name, biz.name, 50);
             }
         }
 
+        // Log the activity
         await pool.query(
             `INSERT INTO moderator_activity (moderator_id, moderator_name, action, target, details, created_at)
              VALUES ($1, $2, $3, $4, $5, NOW())`,
             [req.session.userId, req.session.username, 'Approve business', `Business ID ${businessId}`, `Approved ${biz.name}`]
         );
 
-        // Notify via socket
-        io.to(`user_${biz.user_id}`).emit('business_approved', {
-            id: businessId,
-            name: biz.name,
-            credits: 50
-        });
+        // Notify the user via socket if they're online
+        if (biz.user_id) {
+            const userSocket = onlineUsers.get(biz.user_id);
+            if (userSocket && userSocket.socketId) {
+                io.to(userSocket.socketId).emit('business_approved', {
+                    id: businessId,
+                    name: biz.name,
+                    credits: 50
+                });
+            }
+        }
 
-        res.json({ success: true, message: 'Business approved and user awarded 50 credits.' });
+        res.json({ 
+            success: true, 
+            message: 'Business approved and user awarded 50 credits.',
+            business: { id: businessId, name: biz.name }
+        });
+        
     } catch (err) {
         console.error('Business approval error:', err);
-        res.status(500).json({ error: 'Server error' });
+        res.status(500).json({ error: 'Server error: ' + err.message });
     }
 });
 
@@ -2743,6 +2869,7 @@ app.put('/api/admin/businesses/:id/approve', isAdmin, async (req, res) => {
 app.delete('/api/admin/businesses/:id/reject', isAdmin, async (req, res) => {
     const businessId = req.params.id;
     const { reason } = req.body;
+    
     try {
         const bizResult = await pool.query(
             `SELECT b.*, u.email as submitter_email, u.username as submitter_name
@@ -2751,17 +2878,22 @@ app.delete('/api/admin/businesses/:id/reject', isAdmin, async (req, res) => {
              WHERE b.id = $1`,
             [businessId]
         );
+        
         if (bizResult.rows.length === 0) {
             return res.status(404).json({ error: 'Business not found' });
         }
+        
         const biz = bizResult.rows[0];
 
+        // Send rejection email
         if (biz.submitter_email) {
             await sendBusinessRejectionEmail(biz.submitter_email, biz.submitter_name, biz.name, reason);
         }
 
+        // Delete the business
         await pool.query(`DELETE FROM businesses WHERE id = $1`, [businessId]);
 
+        // Log the activity
         await pool.query(
             `INSERT INTO moderator_activity (moderator_id, moderator_name, action, target, details, created_at)
              VALUES ($1, $2, $3, $4, $5, NOW())`,
@@ -2797,12 +2929,10 @@ app.put('/api/admin/businesses/:id', isAdminOrModerator, async (req, res) => {
                 verified = $15, featured = $16, updated_at = NOW()
             WHERE id = $17
         `, [name, type, category, description, address, city, state, phone, email,
-            website, whatsapp, maps, instagram, facebook, verified, featured, businessId]);
-
-        await pool.query(`
-            INSERT INTO moderator_activity (moderator_id, moderator_name, action, target, details, created_at)
-            VALUES ($1, $2, $3, $4, $5, NOW())
-        `, [req.session.userId, req.session.username, 'Edit business', `Business ID ${businessId}`, `Edited ${name}`]);
+            website, whatsapp, maps, instagram, facebook, 
+            verified === true || verified === 'true', 
+            featured === true || featured === 'true', 
+            businessId]);
 
         res.json({ success: true, message: 'Business updated' });
     } catch (err) {
@@ -2819,11 +2949,6 @@ app.delete('/api/admin/businesses/:id', isAdmin, async (req, res) => {
         if (biz.rows.length === 0) return res.status(404).json({ error: 'Business not found' });
 
         await pool.query(`DELETE FROM businesses WHERE id = $1`, [businessId]);
-
-        await pool.query(`
-            INSERT INTO moderator_activity (moderator_id, moderator_name, action, target, details, created_at)
-            VALUES ($1, $2, $3, $4, $5, NOW())
-        `, [req.session.userId, req.session.username, 'Delete business', `Business ID ${businessId}`, `Deleted ${biz.rows[0].name}`]);
 
         res.json({ success: true });
     } catch (err) {
@@ -2885,7 +3010,6 @@ app.get('/api/admin/businesses/stats', isAdminOrModerator, async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
-
 // ==================== CARDS MANAGEMENT ====================
 app.get('/api/cards', async (req, res) => {
     try {
