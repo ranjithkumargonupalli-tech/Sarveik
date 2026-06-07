@@ -1812,7 +1812,7 @@ app.get('/auth/google/callback', passport.authenticate('google', { failureRedire
         req.session.email = req.user.email;
         req.session.role = req.user.role;
         if (req.user.role === 'admin') res.redirect('/admin-dashboard.html');
-        else res.redirect('/dashboard.html');
+        else res.redirect('/main.html');
     });
 });
 

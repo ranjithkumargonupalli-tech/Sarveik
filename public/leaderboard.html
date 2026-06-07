@@ -2164,12 +2164,7 @@ function updateCompareBar(){
   bar.style.display = 'flex';
 
   const players = S.compareList.map(key=>S.allUsers.find(u=>(u.id||u.username)===key)).filter(Boolean);
-  document.getElementById('cmpAvatars').innerHTML = players.map(u => {
-    return buildAv(u, 28, '', 'border:2px solid var(--bg2);margin-left:-6px;');
-  }).join('').replace(/margin-left:-6px/, '').replace(/margin-left:-6px;/, '');
-  // Fix first avatar margin
-  const avHtml = players.map((u,i) => buildAv(u, 28, '', `border:2px solid var(--bg2);${i>0?'margin-left:-6px;':''}`)).join('');
-  document.getElementById('cmpAvatars').innerHTML = avHtml;
+  document.getElementById('cmpAvatars').innerHTML = players.map((u,i) => buildAv(u, 28, '', `border:2px solid var(--bg2);${i>0?'margin-left:-6px;':''}`)).join('');
   document.getElementById('cmpNames').textContent = players.map(u=>u.username||'?').join(', ');
 }
 
