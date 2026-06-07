@@ -199,12 +199,24 @@ body {
 .live-dot { width:5px; height:5px; background:var(--em); border-radius:50%; animation:livePulse 1.6s ease-in-out infinite; }
 @keyframes livePulse { 0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(16,185,129,.5);} 50%{opacity:.5;box-shadow:0 0 0 5px rgba(16,185,129,0);} }
 
-/* ── REFRESH RING ── */
-.refresh-ring { position:relative; width:32px; height:32px; cursor:pointer; }
-.refresh-ring svg { position:absolute; top:0; left:0; transform:rotate(-90deg); }
-.rr-t { fill:none; stroke:var(--b1); stroke-width:2.5; }
-.rr-f { fill:none; stroke:var(--a2); stroke-width:2.5; stroke-linecap:round; transition:stroke-dashoffset 1s linear; }
-.rr-i { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; font-size:.62rem; color:var(--txt2); }
+/* ── NEXT REFRESH INFO ── */
+.refresh-info {
+  display:flex; flex-direction:column; align-items:flex-end; gap:.3rem;
+}
+.refresh-label {
+  font-size:.62rem; color:var(--txt3); font-family:var(--mono); letter-spacing:.5px;
+}
+.refresh-time {
+  font-size:.72rem; color:var(--a2); font-family:var(--mono); font-weight:700;
+}
+.refresh-progress {
+  width:120px; height:3px; background:var(--b1); border-radius:2px; overflow:hidden;
+}
+.refresh-fill {
+  height:100%; background:linear-gradient(90deg,var(--vi),var(--a2));
+  border-radius:2px; transition:width 60s linear;
+}
+@media(max-width:600px){ .refresh-info { align-items:flex-start; } }
 
 /* ════════════════════════════════════════
    BUTTONS
@@ -278,6 +290,19 @@ body {
 .card-hdr-title { font-family:var(--disp); font-weight:800; font-size:.98rem; letter-spacing:-.3px; }
 .card-hdr-sub { font-size:.73rem; color:var(--txt2); margin-top:.18rem; }
 
+/* ── CACHE STATUS BAR ── */
+.cache-bar {
+  padding:.55rem 1.75rem; background:rgba(6,182,212,.04); border-bottom:1px solid rgba(6,182,212,.1);
+  display:flex; align-items:center; gap:.75rem; flex-wrap:wrap;
+}
+.cache-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.cache-dot.fresh { background:var(--em); box-shadow:0 0 8px rgba(16,185,129,.5); }
+.cache-dot.stale { background:var(--am); box-shadow:0 0 8px rgba(245,158,11,.5); }
+.cache-dot.loading { background:var(--a2); animation:livePulse 1s infinite; }
+.cache-text { font-size:.72rem; color:var(--txt2); flex:1; }
+.cache-text strong { color:var(--txt); }
+.cache-next { font-family:var(--mono); font-size:.68rem; color:var(--txt3); }
+
 /* ── MY RANK BANNER ── */
 .my-rank-banner {
   margin:.9rem 1.75rem; padding:1rem 1.4rem;
@@ -297,8 +322,9 @@ body {
   width:42px; height:42px; border-radius:50%;
   background:linear-gradient(135deg,var(--vi),var(--a2));
   display:flex; align-items:center; justify-content:center; font-size:.9rem; color:#fff;
-  box-shadow:0 0 16px rgba(124,58,237,.4); flex-shrink:0;
+  box-shadow:0 0 16px rgba(124,58,237,.4); flex-shrink:0; overflow:hidden;
 }
+.mrb-av img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
 .mrb-name { font-weight:800; font-size:.88rem; }
 .mrb-sub { font-size:.7rem; color:var(--txt2); margin-top:.1rem; }
 .mrb-right { display:flex; gap:1.5rem; }
@@ -327,7 +353,8 @@ body {
 .t3-av.g { border:2.5px solid rgba(251,191,36,.6); box-shadow:0 0 14px rgba(251,191,36,.25); }
 .t3-av.s { border:2.5px solid rgba(148,163,184,.5); }
 .t3-av.b { border:2.5px solid rgba(194,121,74,.4); }
-.t3-av img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+.t3-av img { width:100%; height:100%; object-fit:cover; border-radius:50%; display:block; }
+.t3-av .av-letter { display:flex; align-items:center; justify-content:center; width:100%; height:100%; font-weight:800; }
 .t3-medal { font-size:1.2rem; flex-shrink:0; }
 .t3-info { min-width:0; }
 .t3-name { font-weight:700; font-size:.82rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -390,6 +417,27 @@ body {
 .cmp-names { font-size:.73rem; color:var(--txt2); }
 
 /* ════════════════════════════════════════
+   AVATAR COMPONENT (shared)
+   ─ Handles: image URL, fallback initials, color-coded bg
+════════════════════════════════════════ */
+.av-img-wrap {
+  position:relative; border-radius:50%; overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+  background:var(--bg4);
+}
+.av-img-wrap img {
+  position:absolute; inset:0; width:100%; height:100%;
+  object-fit:cover; border-radius:50%;
+  opacity:0; transition:opacity .3s ease;
+}
+.av-img-wrap img.loaded { opacity:1; }
+.av-img-wrap .av-init {
+  font-weight:800; line-height:1; z-index:1; transition:opacity .3s ease;
+  user-select:none;
+}
+.av-img-wrap img.loaded ~ .av-init { opacity:0; }
+
+/* ════════════════════════════════════════
    TABLE VIEW
 ════════════════════════════════════════ */
 .table-wrap { overflow-x:auto; }
@@ -444,15 +492,12 @@ body {
 .player-cell { display:flex; align-items:center; gap:.65rem; }
 .av-wrap {
   width:36px; height:36px; border-radius:50%; flex-shrink:0;
-  display:flex; align-items:center; justify-content:center;
-  font-size:.82rem; font-weight:700; overflow:hidden;
-  background:var(--bg4); border:1.5px solid var(--b1);
-  transition:var(--trans); position:relative;
+  font-size:.82rem; font-weight:700;
+  border:1.5px solid var(--b1); transition:var(--trans); position:relative;
 }
 .av-wrap.g { border-color:rgba(251,191,36,.5); box-shadow:0 0 10px rgba(251,191,36,.18); }
 .av-wrap.s { border-color:rgba(148,163,184,.4); }
 .av-wrap.b { border-color:rgba(194,121,74,.35); }
-.av-wrap img { width:100%; height:100%; object-fit:cover; border-radius:50%; display:block; }
 .p-uname { font-weight:700; font-size:.82rem; line-height:1.25; }
 .p-tags { display:flex; gap:.22rem; flex-wrap:wrap; margin-top:.18rem; }
 .chip { font-size:.57rem; font-weight:800; padding:.1rem .38rem; border-radius:20px; letter-spacing:.3px; white-space:nowrap; }
@@ -520,12 +565,9 @@ body {
 .pc-av {
   width:56px; height:56px; border-radius:50%; margin:.15rem 0;
   border:2px solid var(--b1);
-  background:var(--bg4);
-  display:flex; align-items:center; justify-content:center;
   font-size:1.15rem; font-weight:700;
-  overflow:hidden; flex-shrink:0;
+  flex-shrink:0;
 }
-.pc-av img { width:100%; height:100%; object-fit:cover; border-radius:50%; display:block; }
 .pc-name { font-weight:700; font-size:.83rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:100%; }
 .pc-xp { font-family:var(--mono); font-weight:700; font-size:.9rem; color:var(--cy2); }
 .pc-meta { font-size:.68rem; color:var(--txt2); }
@@ -546,7 +588,7 @@ body {
 .pod-col { display:flex; flex-direction:column; align-items:center; gap:.6rem; cursor:pointer; }
 .pod-info { text-align:center; }
 .pod-av {
-  width:56px; height:56px; border-radius:50%;
+  width:64px; height:64px; border-radius:50%;
   display:flex; align-items:center; justify-content:center; font-size:1.25rem; font-weight:700;
   overflow:hidden; background:var(--bg3); margin:0 auto;
 }
@@ -566,8 +608,6 @@ body {
 .pod-col.third { order:3; }
 .podium-rest { padding:1.25rem 1.75rem; }
 .podium-rest-lbl { font-family:var(--mono); font-size:.6rem; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--txt3); margin-bottom:.65rem; }
-
-/* ── PODIUM REST TABLE ── */
 .podium-rest-rows { display:flex; flex-direction:column; gap:.4rem; }
 .pod-rest-row {
   display:flex; align-items:center; gap:.75rem; padding:.55rem .8rem;
@@ -579,10 +619,8 @@ body {
 .pod-rest-av {
   width:28px; height:28px; border-radius:50%; flex-shrink:0;
   background:var(--bg4); border:1px solid var(--b1);
-  display:flex; align-items:center; justify-content:center; font-size:.65rem; font-weight:700;
   overflow:hidden;
 }
-.pod-rest-av img { width:100%; height:100%; object-fit:cover; border-radius:50%; display:block; }
 .pod-rest-name { font-size:.8rem; font-weight:700; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .pod-rest-xp { font-family:var(--mono); font-size:.72rem; color:var(--cy2); flex-shrink:0; }
 .pod-rest-lvl { font-family:var(--mono); font-size:.68rem; color:var(--txt3); flex-shrink:0; }
@@ -603,10 +641,8 @@ body {
 .cmp-av-lg {
   width:52px; height:52px; border-radius:50%; flex-shrink:0;
   background:var(--bg4); border:2px solid var(--b2);
-  display:flex; align-items:center; justify-content:center; font-size:1.1rem; font-weight:700;
   overflow:hidden;
 }
-.cmp-av-lg img { width:100%; height:100%; object-fit:cover; border-radius:50%; display:block; }
 .cmp-uname { font-weight:800; font-size:.9rem; }
 .cmp-rank { font-family:var(--mono); font-size:.72rem; color:var(--a2); font-weight:600; }
 .cmp-stats { display:grid; grid-template-columns:1fr 1fr; gap:.6rem; }
@@ -651,10 +687,8 @@ body {
 .feed-item:hover { border-color:var(--b2); }
 .feed-av {
   width:32px; height:32px; border-radius:50%; flex-shrink:0; background:var(--bg4);
-  display:flex; align-items:center; justify-content:center; font-size:.72rem; font-weight:700;
   overflow:hidden; border:1px solid var(--b1);
 }
-.feed-av img { width:100%; height:100%; object-fit:cover; border-radius:50%; display:block; }
 .feed-body { flex:1; min-width:0; }
 .feed-text { font-size:.8rem; line-height:1.45; }
 .feed-text strong { color:var(--txt); }
@@ -732,11 +766,10 @@ body {
 .modal-av {
   width:64px; height:64px; border-radius:50%;
   border:3px solid var(--bg2); position:relative; z-index:1;
-  background:var(--bg3); display:flex; align-items:center; justify-content:center;
-  font-size:1.5rem; overflow:hidden;
+  background:var(--bg3);
+  overflow:hidden;
   box-shadow:0 0 22px rgba(124,58,237,.28);
 }
-.modal-av img { width:100%; height:100%; object-fit:cover; border-radius:50%; display:block; }
 .modal-rank-badge {
   font-family:var(--mono); font-size:.72rem; font-weight:700; color:var(--a2);
   background:rgba(129,140,248,.12); border:1px solid rgba(129,140,248,.2);
@@ -791,15 +824,11 @@ body {
 }
 .footer-brand { color:var(--a2); font-weight:700; }
 
-/* ════════════════════════════════════════
-   RESPONSIVE HIDDEN COLS
-════════════════════════════════════════ */
+/* ── RESPONSIVE HIDDEN COLS ── */
 @media(max-width:640px) { .col-lvl,.col-acts,.col-cmp { display:none; } }
 @media(max-width:460px) { .col-xpsub { display:none; } }
 
-/* ════════════════════════════════════════
-   TOOLTIP
-════════════════════════════════════════ */
+/* ── TOOLTIP ── */
 [data-tip] { position:relative; }
 [data-tip]::after {
   content:attr(data-tip); position:absolute; bottom:calc(100% + 6px); left:50%; transform:translateX(-50%);
@@ -810,25 +839,21 @@ body {
 }
 [data-tip]:hover::after { opacity:1; }
 
-/* ── LIMIT NOTICE BANNER ── */
-.limit-notice {
-  margin:.5rem 1.75rem .5rem;
-  padding:.55rem 1rem;
-  background:rgba(251,191,36,.06);
-  border:1px solid rgba(251,191,36,.18);
-  border-radius:var(--r);
-  font-size:.72rem;
-  color:var(--am);
-  display:flex;
-  align-items:center;
-  gap:.5rem;
+/* ── RANK BADGE on player ── */
+.rank-num-badge {
+  position:absolute; bottom:-4px; right:-4px;
+  width:18px; height:18px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center;
+  font-size:.52rem; font-weight:900; font-family:var(--mono);
+  border:2px solid var(--bg2); z-index:2;
 }
-
+.rnb-1 { background:var(--gold); color:#000; }
+.rnb-2 { background:var(--silver); color:#000; }
+.rnb-3 { background:var(--bronze); color:#fff; }
 </style>
 </head>
 <body>
 
-<!-- STARS CANVAS -->
 <canvas id="starfield"></canvas>
 <div class="grid-bg"></div>
 <div class="blob blob1"></div>
@@ -884,18 +909,16 @@ body {
       <p class="hero-sub">Compete fiercely. Climb relentlessly. Own the summit.</p>
       <div class="hero-actions">
         <div class="live-pill"><div class="live-dot"></div> LIVE</div>
-        <button class="btn btn-primary btn-sm" id="refreshBtn"><i class="fas fa-rotate-right" id="refreshIcon"></i> Refresh</button>
+        <button class="btn btn-primary btn-sm" id="refreshBtn"><i class="fas fa-rotate-right" id="refreshIcon"></i> Refresh Now</button>
         <button class="btn btn-ghost btn-sm" id="exportBtn"><i class="fas fa-download"></i> Export CSV</button>
         <button class="btn btn-cyan btn-sm" id="cmpBtn" data-tip="Compare up to 3 players"><i class="fas fa-code-compare"></i> Compare</button>
       </div>
     </div>
     <div class="hero-right">
-      <div class="refresh-ring" id="refreshRing" data-tip="Auto-refreshes every 30s">
-        <svg viewBox="0 0 32 32" width="32" height="32">
-          <circle class="rr-t" cx="16" cy="16" r="13"/>
-          <circle class="rr-f" id="ringCircle" cx="16" cy="16" r="13" stroke-dasharray="81.7" stroke-dashoffset="0"/>
-        </svg>
-        <div class="rr-i"><i class="fas fa-rotate-right"></i></div>
+      <div class="refresh-info">
+        <span class="refresh-label">NEXT AUTO-REFRESH</span>
+        <span class="refresh-time" id="refreshCountdown">24:00:00</span>
+        <div class="refresh-progress"><div class="refresh-fill" id="refreshFill" style="width:100%"></div></div>
       </div>
       <div id="myRankBadge" style="display:none;">
         <div class="live-pill" style="background:rgba(129,140,248,.08);border-color:rgba(129,140,248,.2);color:var(--a2);">
@@ -965,21 +988,28 @@ body {
       </div>
     </div>
 
+    <!-- CACHE STATUS BAR -->
+    <div class="cache-bar" id="cacheBar">
+      <div class="cache-dot loading" id="cacheDot"></div>
+      <span class="cache-text" id="cacheText">Loading data…</span>
+      <span class="cache-next" id="cacheNext"></span>
+    </div>
+
     <!-- TOP 3 HIGHLIGHT BAR -->
     <div class="top3-bar" id="top3Bar">
       <div class="t3-slot gold-slot" id="t3-1">
         <div class="t3-medal">👑</div>
-        <div class="t3-av g" id="t3av-1">—</div>
+        <div class="t3-av g av-img-wrap" id="t3av-1" style="width:44px;height:44px;"><span class="av-init" id="t3init-1" style="font-size:.95rem;">—</span></div>
         <div class="t3-info"><div class="t3-name" id="t3n-1">—</div><div class="t3-xp" id="t3x-1">—</div></div>
       </div>
       <div class="t3-slot silver-slot" id="t3-2">
         <div class="t3-medal">🥈</div>
-        <div class="t3-av s" id="t3av-2">—</div>
+        <div class="t3-av s av-img-wrap" id="t3av-2" style="width:44px;height:44px;"><span class="av-init" id="t3init-2" style="font-size:.95rem;">—</span></div>
         <div class="t3-info"><div class="t3-name" id="t3n-2">—</div><div class="t3-xp" id="t3x-2">—</div></div>
       </div>
       <div class="t3-slot bronze-slot" id="t3-3">
         <div class="t3-medal">🥉</div>
-        <div class="t3-av b" id="t3av-3">—</div>
+        <div class="t3-av b av-img-wrap" id="t3av-3" style="width:44px;height:44px;"><span class="av-init" id="t3init-3" style="font-size:.95rem;">—</span></div>
         <div class="t3-info"><div class="t3-name" id="t3n-3">—</div><div class="t3-xp" id="t3x-3">—</div></div>
       </div>
     </div>
@@ -987,7 +1017,9 @@ body {
     <!-- MY RANK BANNER -->
     <div id="myRankBanner" style="display:none;" class="my-rank-banner">
       <div class="mrb-left">
-        <div class="mrb-av"><i class="fas fa-user"></i></div>
+        <div class="mrb-av av-img-wrap" id="mrbAv" style="width:42px;height:42px;">
+          <span class="av-init" id="mrbInit" style="font-size:.9rem;color:#fff;"><i class="fas fa-user"></i></span>
+        </div>
         <div>
           <div class="mrb-name" id="mrb-name">You</div>
           <div class="mrb-sub">Your current standing</div>
@@ -1056,7 +1088,7 @@ body {
 
 <!-- FOOTER -->
 <div class="footer">
-  &copy; 2026 <span class="footer-brand">Sarveik</span> · All rights reserved · Showing top 100 players by level · Auto-refreshes every 30s
+  &copy; 2026 <span class="footer-brand">Sarveik</span> · All rights reserved · Top 100 players by level · Auto-refreshes every 24 hours
 </div>
 
 <!-- PROFILE MODAL -->
@@ -1068,7 +1100,9 @@ body {
     <button class="modal-close" id="modalClose">&times;</button>
     <div class="modal-body">
       <div class="modal-av-row">
-        <div class="modal-av" id="modalAv"><i class="fas fa-user"></i></div>
+        <div class="modal-av av-img-wrap" id="modalAv" style="width:64px;height:64px;font-size:1.5rem;">
+          <span class="av-init" id="modalAvInit"><i class="fas fa-user"></i></span>
+        </div>
         <div class="modal-rank-badge" id="modalRankBadge">#—</div>
       </div>
       <div class="modal-name" id="modalName">—</div>
@@ -1098,10 +1132,15 @@ body {
 
 <script>
 /* ════════════════════════════════════════
+   CONSTANTS
+════════════════════════════════════════ */
+const MAX_USERS = 100;
+const CACHE_KEY = 'sv_lb_cache';
+const CACHE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+/* ════════════════════════════════════════
    STATE
 ════════════════════════════════════════ */
-const MAX_USERS = 100; // Hard cap: show only top 100 users by level
-
 const S = {
   page:1, perPage:20, totalPages:1, totalItems:0,
   search:'', levelFilter:'', badgeFilter:'', sortBy:'level',
@@ -1110,10 +1149,80 @@ const S = {
   myUserId:null, myUsername:null,
   favorites: new Set(JSON.parse(localStorage.getItem('sv_favs')||'[]')),
   compareList:[],
-  compareMode:false,
-  autoSecs:30, countdown:null,
+  countdownInterval:null,
   openModalUserIdx:-1,
+  cacheTimestamp: null,
 };
+
+/* ════════════════════════════════════════
+   AVATAR HELPER — FIX: proper image loading
+   with graceful fallback to colored initials
+════════════════════════════════════════ */
+// Generates a stable background color from a username
+function avatarBg(username) {
+  const COLORS = [
+    ['#7c3aed','#c084fc'], // violet
+    ['#0891b2','#67e8f9'], // cyan
+    ['#059669','#6ee7b7'], // green
+    ['#d97706','#fcd34d'], // amber
+    ['#db2777','#f9a8d4'], // pink
+    ['#2563eb','#93c5fd'], // blue
+    ['#7c3aed','#818cf8'], // indigo
+    ['#0d9488','#5eead4'], // teal
+  ];
+  let hash = 0;
+  for (let i = 0; i < (username||'').length; i++) hash = (hash * 31 + (username||'').charCodeAt(i)) & 0xffffff;
+  return COLORS[Math.abs(hash) % COLORS.length];
+}
+
+// Build a self-contained avatar element (div string) with image + fallback
+function buildAv(u, size, extraClass='', extraStyle='') {
+  const initial = (u.username||'?')[0].toUpperCase();
+  const [bg1, bg2] = avatarBg(u.username);
+  const fontSize = Math.max(size * 0.38, 10);
+  const borderRadius = '50%';
+  
+  let imgHtml = '';
+  if (u.avatar_url) {
+    // Use the dedicated avatar loader function
+    imgHtml = `<img src="${esc(u.avatar_url)}" alt="${esc(u.username)}" 
+      style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;opacity:0;transition:opacity .3s ease;"
+      onload="this.style.opacity=1;this.nextElementSibling.style.opacity=0;"
+      onerror="this.style.display='none';">`;
+  }
+
+  return `<div class="av-img-wrap ${extraClass}" style="
+    width:${size}px;height:${size}px;border-radius:${borderRadius};
+    background:linear-gradient(135deg,${bg1},${bg2});
+    position:relative;overflow:hidden;flex-shrink:0;
+    ${extraStyle}
+  ">
+    ${imgHtml}
+    <span style="position:relative;z-index:1;font-size:${fontSize}px;font-weight:800;color:#fff;line-height:1;user-select:none;">${initial}</span>
+  </div>`;
+}
+
+// Sets avatar content in an existing .av-img-wrap element by ID
+function setAvatar(el, u) {
+  if (!el) return;
+  const size = el.offsetWidth || parseInt(el.style.width) || 36;
+  const initial = (u.username||'?')[0].toUpperCase();
+  const [bg1, bg2] = avatarBg(u.username);
+  const fontSize = Math.max(size * 0.38, 10);
+
+  el.style.background = `linear-gradient(135deg,${bg1},${bg2})`;
+  el.style.position = 'relative';
+  el.style.overflow = 'hidden';
+
+  let html = `<span style="position:relative;z-index:1;font-size:${fontSize}px;font-weight:800;color:#fff;line-height:1;user-select:none;">${initial}</span>`;
+  if (u.avatar_url) {
+    html = `<img src="${esc(u.avatar_url)}" alt="${esc(u.username)}"
+      style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;opacity:0;transition:opacity .35s ease;z-index:2;"
+      onload="this.style.opacity=1;this.nextElementSibling.style.opacity=0;"
+      onerror="this.style.display='none';">` + html;
+  }
+  el.innerHTML = html;
+}
 
 /* ════════════════════════════════════════
    STAR FIELD
@@ -1212,12 +1321,6 @@ function toast(msg,type='info'){
 const esc=t=>{if(!t)return'';const d=document.createElement('div');d.textContent=t;return d.innerHTML;};
 const fmt=n=>(n||0).toLocaleString();
 
-function getAvContent(u){
-  return u.avatar_url
-    ? `<img src="${esc(u.avatar_url)}" alt="${esc(u.username)}" loading="lazy" onerror="this.style.display='none'">`
-    : `<span>${(u.username||'?')[0].toUpperCase()}</span>`;
-}
-
 function getUserBadges(u){
   const b=[];
   const lvl=u.level||1;
@@ -1251,124 +1354,221 @@ function xpProgress(u){
 }
 
 /* ════════════════════════════════════════
-   REFRESH RING
+   24-HOUR COUNTDOWN
 ════════════════════════════════════════ */
-const CIRC=81.7;
 function startCountdown(){
-  clearInterval(S.countdown);
-  let rem=S.autoSecs;
-  const ring=document.getElementById('ringCircle');
+  clearInterval(S.countdownInterval);
+  
   function tick(){
-    if(ring) ring.style.strokeDashoffset=CIRC*(1-rem/S.autoSecs);
-    rem--;
-    if(rem<0){rem=S.autoSecs;loadLeaderboard();}
+    const now = Date.now();
+    const nextRefresh = S.cacheTimestamp ? S.cacheTimestamp + CACHE_DURATION_MS : now + CACHE_DURATION_MS;
+    const remaining = Math.max(0, nextRefresh - now);
+    const pct = S.cacheTimestamp ? ((nextRefresh - now) / CACHE_DURATION_MS) * 100 : 100;
+
+    const h = Math.floor(remaining / 3600000);
+    const m = Math.floor((remaining % 3600000) / 60000);
+    const s = Math.floor((remaining % 60000) / 1000);
+    const label = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    
+    const cdEl = document.getElementById('refreshCountdown');
+    const fillEl = document.getElementById('refreshFill');
+    if (cdEl) cdEl.textContent = remaining === 0 ? 'Refreshing…' : label;
+    if (fillEl) fillEl.style.width = pct + '%';
+
+    if (remaining === 0) {
+      clearInterval(S.countdownInterval);
+      loadLeaderboard(true); // force-fetch
+    }
   }
+
   tick();
-  S.countdown=setInterval(tick,1000);
+  S.countdownInterval = setInterval(tick, 1000);
 }
 
 /* ════════════════════════════════════════
-   LOAD DATA
+   CACHE STATUS BAR
 ════════════════════════════════════════ */
-async function loadLeaderboard(){
-  setLoading();
-  try{
-    const res=await fetch(`/api/gamification/leaderboard?limit=500`,{credentials:'include',headers:{'Cache-Control':'no-cache'}});
-    if(!res.ok) throw new Error('HTTP '+res.status);
-    const raw=await res.json();
-    let users=Array.isArray(raw)?raw:(raw.users||raw.data||[]);
+function updateCacheBar(state, fetchedAt) {
+  const dot = document.getElementById('cacheDot');
+  const text = document.getElementById('cacheText');
+  const next = document.getElementById('cacheNext');
 
-    // SORT BY LEVEL DESC FIRST, then XP desc as tiebreaker
-    users.sort((a,b)=>{
-      const lvlDiff=(b.level||0)-(a.level||0);
-      if(lvlDiff!==0) return lvlDiff;
-      return (b.xp||0)-(a.xp||0);
+  if (state === 'loading') {
+    dot.className = 'cache-dot loading';
+    text.innerHTML = 'Fetching latest data from server…';
+    next.textContent = '';
+  } else if (state === 'fresh') {
+    dot.className = 'cache-dot fresh';
+    const ts = fetchedAt ? new Date(fetchedAt).toLocaleTimeString() : '';
+    text.innerHTML = `<strong>Live data</strong> — fetched at ${ts}`;
+    next.textContent = 'Next refresh: 24h';
+  } else if (state === 'cached') {
+    dot.className = 'cache-dot stale';
+    const ts = fetchedAt ? new Date(fetchedAt).toLocaleTimeString() : '';
+    const age = fetchedAt ? Math.round((Date.now()-fetchedAt)/60000) : '?';
+    text.innerHTML = `<strong>Cached data</strong> — loaded from ${ts} (${age}m ago)`;
+    next.textContent = 'Refresh every 24h';
+  }
+}
+
+/* ════════════════════════════════════════
+   LOAD DATA — with 24hr cache
+════════════════════════════════════════ */
+async function loadLeaderboard(forceRefresh = false) {
+  // Check local cache
+  if (!forceRefresh) {
+    try {
+      const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+      if (cached && cached.ts && cached.data && (Date.now() - cached.ts < CACHE_DURATION_MS)) {
+        S.cacheTimestamp = cached.ts;
+        S.allUsers = cached.data;
+        updateCacheBar('cached', cached.ts);
+        applyFilters();
+        fetchMyRank();
+        updateTop3();
+        updateStats();
+        startCountdown();
+        return; // serve from cache
+      }
+    } catch(e) { /* ignore cache errors */ }
+  }
+
+  setLoading();
+  updateCacheBar('loading');
+
+  try {
+    const res = await fetch(`/api/gamification/leaderboard?limit=500`, {
+      credentials:'include',
+      headers:{'Cache-Control':'no-cache'}
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const raw = await res.json();
+    let users = Array.isArray(raw) ? raw : (raw.users || raw.data || []);
+
+    // Sort by level desc, then XP as tiebreaker
+    users.sort((a,b) => {
+      const lvlDiff = (b.level||0) - (a.level||0);
+      if (lvlDiff !== 0) return lvlDiff;
+      return (b.xp||0) - (a.xp||0);
     });
 
-    // HARD CAP: top 100 users by level
-    S.allUsers=users.slice(0,MAX_USERS);
+    // Hard cap: top 100
+    users = users.slice(0, MAX_USERS);
+    S.allUsers = users;
 
+    // Save to local cache
+    const now = Date.now();
+    S.cacheTimestamp = now;
+    try {
+      localStorage.setItem(CACHE_KEY, JSON.stringify({ ts: now, data: users }));
+    } catch(e) { /* storage quota exceeded */ }
+
+    updateCacheBar('fresh', now);
     applyFilters();
     fetchMyRank();
     updateTop3();
     updateStats();
-  }catch(e){
+    startCountdown();
+
+  } catch(e) {
     console.error(e);
-    document.getElementById('contentArea').innerHTML=`
+    // Try serving stale cache on error
+    try {
+      const stale = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+      if (stale && stale.data) {
+        S.cacheTimestamp = stale.ts;
+        S.allUsers = stale.data;
+        updateCacheBar('cached', stale.ts);
+        applyFilters();
+        fetchMyRank();
+        updateTop3();
+        updateStats();
+        toast('Using cached data (offline or server error)', 'info');
+        startCountdown();
+        return;
+      }
+    } catch(_) {}
+
+    document.getElementById('contentArea').innerHTML = `
       <div class="state-msg">
         <div class="state-ico">⚠️</div>
         <div class="state-title">Could not load leaderboard</div>
         <div class="state-sub">${esc(e.message)}</div>
-        <button class="btn btn-ghost btn-sm" style="margin-top:1rem;" onclick="loadLeaderboard()">
+        <button class="btn btn-ghost btn-sm" style="margin-top:1rem;" onclick="loadLeaderboard(true)">
           <i class="fas fa-rotate-right"></i> Retry
         </button>
       </div>`;
-    toast('Failed to load leaderboard','error');
+    toast('Failed to load leaderboard', 'error');
   }
 }
 
 function setLoading(){
-  document.getElementById('contentArea').innerHTML=`<div class="state-msg"><div class="loader"></div><div class="state-title">Loading…</div></div>`;
-  document.getElementById('paginationArea').style.display='none';
+  document.getElementById('contentArea').innerHTML = `<div class="state-msg"><div class="loader"></div><div class="state-title">Loading…</div></div>`;
+  document.getElementById('paginationArea').style.display = 'none';
 }
 
 /* ════════════════════════════════════════
-   FETCH MY RANK (current user)
+   FETCH MY RANK
 ════════════════════════════════════════ */
 async function fetchMyRank(){
-  try{
-    const res=await fetch('/api/user/profile',{credentials:'include'});
-    if(!res.ok) return;
-    const u=await res.json();
-    S.myUserId=u.id||u.user_id||null;
-    S.myUsername=u.username||null;
-    const myIdx=S.allUsers.findIndex(x=>x.id===S.myUserId||x.username===S.myUsername);
-    if(myIdx>-1){
-      const myUser=S.allUsers[myIdx];
-      const rankNum=myIdx+1;
-      const rankStr=`#${rankNum}`;
-      document.getElementById('myRankInline').textContent=`You: ${rankStr}`;
-      document.getElementById('myRankInline2').textContent=`You: ${rankStr}`;
-      document.getElementById('myRankBadge').style.display='block';
-      document.getElementById('myRankBadge2').style.display='block';
-      // Banner
-      document.getElementById('myRankBanner').style.display='flex';
-      document.getElementById('mrb-name').textContent=myUser.username||'You';
-      document.getElementById('mrb-rank').textContent=rankStr;
-      document.getElementById('mrb-level').textContent=`Lv.${myUser.level||1}`;
-      document.getElementById('mrb-xp').textContent=fmt(myUser.xp);
+  try {
+    const res = await fetch('/api/user/profile', {credentials:'include'});
+    if (!res.ok) return;
+    const u = await res.json();
+    S.myUserId = u.id || u.user_id || null;
+    S.myUsername = u.username || null;
+
+    const myIdx = S.allUsers.findIndex(x => x.id === S.myUserId || x.username === S.myUsername);
+    if (myIdx > -1) {
+      const myUser = S.allUsers[myIdx];
+      const rankStr = `#${myIdx + 1}`;
+
+      document.getElementById('myRankInline').textContent = `You: ${rankStr}`;
+      document.getElementById('myRankInline2').textContent = `You: ${rankStr}`;
+      document.getElementById('myRankBadge').style.display = 'block';
+      document.getElementById('myRankBadge2').style.display = 'block';
+
+      // My rank banner
+      document.getElementById('myRankBanner').style.display = 'flex';
+      document.getElementById('mrb-name').textContent = myUser.username || 'You';
+      document.getElementById('mrb-rank').textContent = rankStr;
+      document.getElementById('mrb-level').textContent = `Lv.${myUser.level||1}`;
+      document.getElementById('mrb-xp').textContent = fmt(myUser.xp);
+
+      // Avatar in banner
+      const mrbAv = document.getElementById('mrbAv');
+      if (mrbAv) setAvatar(mrbAv, myUser);
     }
     renderView();
-  }catch(e){ /* silent */ }
+  } catch(e) { /* silent */ }
 }
 
 /* ════════════════════════════════════════
    STATS STRIP
 ════════════════════════════════════════ */
 function updateStats(){
-  const users=S.allUsers;
-  if(!users.length) return;
-  const totalXp=users.reduce((s,u)=>s+(u.xp||0),0);
-  const totalLvl=users.reduce((s,u)=>s+(u.level||0),0);
-  document.getElementById('stat-players').textContent=users.length;
-  document.getElementById('stat-topxp').textContent=fmt(users[0]?.xp||0);
-  document.getElementById('stat-avgxp').textContent=fmt(Math.round(totalXp/users.length));
-  document.getElementById('stat-avglvl').textContent=Math.round(totalLvl/users.length);
+  const users = S.allUsers;
+  if (!users.length) return;
+  const totalXp = users.reduce((s,u)=>s+(u.xp||0),0);
+  const totalLvl = users.reduce((s,u)=>s+(u.level||0),0);
+  document.getElementById('stat-players').textContent = users.length;
+  document.getElementById('stat-topxp').textContent = fmt(users[0]?.xp||0);
+  document.getElementById('stat-avgxp').textContent = fmt(Math.round(totalXp/users.length));
+  document.getElementById('stat-avglvl').textContent = Math.round(totalLvl/users.length);
 }
 
 /* ════════════════════════════════════════
-   TOP 3 HIGHLIGHT BAR
+   TOP 3 HIGHLIGHT BAR — FIX: avatar loading
 ════════════════════════════════════════ */
 function updateTop3(){
-  const medals=['g','s','b'];
-  for(let i=0;i<3;i++){
-    const u=S.allUsers[i];
-    if(!u) continue;
-    const avEl=document.getElementById(`t3av-${i+1}`);
-    avEl.innerHTML=getAvContent(u);
-    document.getElementById(`t3n-${i+1}`).textContent=u.username||'—';
-    document.getElementById(`t3x-${i+1}`).textContent=`Lv.${u.level||1} · ${fmt(u.xp)} XP`;
-    document.getElementById(`t3-${i+1}`).onclick=()=>openModalIdx(i);
+  for (let i = 0; i < 3; i++) {
+    const u = S.allUsers[i];
+    if (!u) continue;
+    const avEl = document.getElementById(`t3av-${i+1}`);
+    if (avEl) setAvatar(avEl, u);
+    document.getElementById(`t3n-${i+1}`).textContent = u.username || '—';
+    document.getElementById(`t3x-${i+1}`).textContent = `Lv.${u.level||1} · ${fmt(u.xp)} XP`;
+    document.getElementById(`t3-${i+1}`).onclick = () => openModalIdx(i);
   }
 }
 
@@ -1376,42 +1576,38 @@ function updateTop3(){
    FILTERS & SORT
 ════════════════════════════════════════ */
 function applyFilters(){
-  let users=[...S.allUsers];
-  const q=S.search.toLowerCase().trim();
+  let users = [...S.allUsers];
+  const q = S.search.toLowerCase().trim();
 
-  // search
-  if(q) users=users.filter(u=>(u.username||'').toLowerCase().includes(q));
+  if (q) users = users.filter(u=>(u.username||'').toLowerCase().includes(q));
 
-  // level filter
-  if(S.levelFilter){
-    const [a,b]=S.levelFilter.split('-').map(v=>v.replace('+',''));
-    users=users.filter(u=>{
-      const lvl=u.level||1;
-      if(S.levelFilter==='21+') return lvl>=21;
-      return lvl>=+a && lvl<=(b?+b:999);
+  if (S.levelFilter) {
+    const [a,b] = S.levelFilter.split('-').map(v=>v.replace('+',''));
+    users = users.filter(u=>{
+      const lvl = u.level||1;
+      if (S.levelFilter==='21+') return lvl >= 21;
+      return lvl >= +a && lvl <= (b ? +b : 999);
     });
   }
 
-  // badge filter
-  if(S.badgeFilter==='legend') users=users.filter(u=>(u.level||1)>=20);
-  else if(S.badgeFilter==='pro') users=users.filter(u=>(u.level||1)>=10&&(u.level||1)<20);
-  else if(S.badgeFilter==='favorites') users=users.filter(u=>S.favorites.has(u.id||u.username));
+  if (S.badgeFilter==='legend') users = users.filter(u=>(u.level||1)>=20);
+  else if (S.badgeFilter==='pro') users = users.filter(u=>(u.level||1)>=10&&(u.level||1)<20);
+  else if (S.badgeFilter==='favorites') users = users.filter(u=>S.favorites.has(u.id||u.username));
 
-  // sort (secondary, primary sort is always by level from server)
-  if(S.sortBy==='xp') users.sort((a,b)=>(b.xp||0)-(a.xp||0));
-  else if(S.sortBy==='name') users.sort((a,b)=>(a.username||'').localeCompare(b.username||''));
+  if (S.sortBy==='xp') users.sort((a,b)=>(b.xp||0)-(a.xp||0));
+  else if (S.sortBy==='name') users.sort((a,b)=>(a.username||'').localeCompare(b.username||''));
   else users.sort((a,b)=>{
-    const lvlDiff=(b.level||0)-(a.level||0);
-    return lvlDiff!==0?lvlDiff:(b.xp||0)-(a.xp||0);
+    const d = (b.level||0)-(a.level||0);
+    return d !== 0 ? d : (b.xp||0)-(a.xp||0);
   });
 
-  S.filteredUsers=users;
-  S.totalItems=users.length;
-  S.totalPages=Math.max(1,Math.ceil(users.length/S.perPage));
-  if(S.page>S.totalPages) S.page=1;
+  S.filteredUsers = users;
+  S.totalItems = users.length;
+  S.totalPages = Math.max(1, Math.ceil(users.length/S.perPage));
+  if (S.page > S.totalPages) S.page = 1;
 
-  document.getElementById('countLine').textContent=
-    `${users.length} player${users.length!==1?'s':''} shown · capped at top ${MAX_USERS} by level`;
+  document.getElementById('countLine').textContent =
+    `${users.length} player${users.length!==1?'s':''} shown · top ${MAX_USERS} by level`;
 
   renderView();
 }
@@ -1420,43 +1616,40 @@ function applyFilters(){
    VIEW ROUTER
 ════════════════════════════════════════ */
 function renderView(){
-  const v=S.view;
-  if(v==='table') renderTable();
-  else if(v==='cards') renderCards();
-  else if(v==='podium') renderPodium();
-  else if(v==='compare') renderCompare();
-  else if(v==='achievements') renderAchievements();
-  else if(v==='activity') renderActivity();
+  const v = S.view;
+  if (v==='table') renderTable();
+  else if (v==='cards') renderCards();
+  else if (v==='podium') renderPodium();
+  else if (v==='compare') renderCompare();
+  else if (v==='achievements') renderAchievements();
+  else if (v==='activity') renderActivity();
 }
 
-/* ════════════════════════════════════════
-   PAGE SLICE
-════════════════════════════════════════ */
 function pageSlice(){
-  const start=(S.page-1)*S.perPage;
-  return S.filteredUsers.slice(start,start+S.perPage);
+  const start = (S.page-1) * S.perPage;
+  return S.filteredUsers.slice(start, start+S.perPage);
 }
 
 /* ════════════════════════════════════════
-   TABLE VIEW
+   TABLE VIEW — FIX: rank always shows correctly
 ════════════════════════════════════════ */
 function renderTable(){
-  const users=pageSlice();
-  const ca=document.getElementById('contentArea');
+  const users = pageSlice();
+  const ca = document.getElementById('contentArea');
 
-  if(!users.length){
-    ca.innerHTML=`<div class="state-msg"><div class="state-ico">🔍</div><div class="state-title">No players match your filters</div><div class="state-sub">Try adjusting the search or filters above.</div></div>`;
-    document.getElementById('paginationArea').style.display='none';
+  if (!users.length) {
+    ca.innerHTML = `<div class="state-msg"><div class="state-ico">🔍</div><div class="state-title">No players match your filters</div><div class="state-sub">Try adjusting the search or filters above.</div></div>`;
+    document.getElementById('paginationArea').style.display = 'none';
     return;
   }
 
-  const sortIcon=(col)=>{
-    const active=S.sortBy===col?'sort-active':'';
-    const arrow=S.sortBy===col?'↑':'↕';
+  const sortIcon = (col) => {
+    const active = S.sortBy===col ? 'sort-active' : '';
+    const arrow = S.sortBy===col ? '↑' : '↕';
     return `<th class="sortable ${active}" data-sort="${col}">${col==='xp'?'XP':col==='level'?'Level':'Name'} <span class="sort-icon">${arrow}</span></th>`;
   };
 
-  let html=`<div class="table-wrap"><table class="lb-table">
+  let html = `<div class="table-wrap"><table class="lb-table">
     <thead><tr>
       <th style="width:64px;">Rank</th>
       <th>Player</th>
@@ -1466,29 +1659,48 @@ function renderTable(){
       <th class="col-acts" style="width:80px;">Actions</th>
     </tr></thead><tbody>`;
 
-  users.forEach((u,i)=>{
-    const globalRank=S.filteredUsers.indexOf(u)+1;
-    const isMe=(u.id&&u.id===S.myUserId)||(u.username&&u.username===S.myUsername);
-    const isCmpSelected=S.compareList.includes(u.id||u.username);
-    const fav=isFav(u);
-    const lvl=u.level||1;
-    const avClass=globalRank===1?'g':globalRank===2?'s':globalRank===3?'b':'';
-    const rnClass=globalRank===1?'r1':globalRank===2?'r2':globalRank===3?'r3':'';
-    const badges=getUserBadges(u);
-    const {progress}=xpProgress(u);
-    const maxXp=S.filteredUsers[0]?.xp||1;
-    const barW=Math.round(((u.xp||0)/maxXp)*100);
-    const animDelay=`animation-delay:${i*0.04}s`;
+  users.forEach((u, i) => {
+    // FIXED: global rank is the position in allUsers (original sorted order), not filteredUsers
+    const globalRank = S.allUsers.findIndex(x => (x.id||x.username) === (u.id||u.username)) + 1;
+    // rank within current filtered+sorted view (for display)
+    const displayRank = S.filteredUsers.indexOf(u) + 1;
+    const isMe = (u.id && u.id===S.myUserId) || (u.username && u.username===S.myUsername);
+    const isCmpSelected = S.compareList.includes(u.id||u.username);
+    const fav = isFav(u);
+    const lvl = u.level||1;
+    const avClass = globalRank===1?'g':globalRank===2?'s':globalRank===3?'b':'';
+    const rnClass = displayRank===1?'r1':displayRank===2?'r2':displayRank===3?'r3':'';
+    const badges = getUserBadges(u);
+    const {progress} = xpProgress(u);
+    const maxXp = S.filteredUsers[0]?.xp || 1;
+    const barW = Math.round(((u.xp||0)/maxXp)*100);
+    const animDelay = `animation-delay:${i*0.04}s`;
 
-    html+=`<tr class="${isMe?'my-row':''} ${isCmpSelected?'cmp-selected':''}" style="${animDelay}" onclick="openModalIdx(${S.filteredUsers.indexOf(u)})">
+    // Build inline avatar (36px)
+    const avHtml = buildAv(u, 36, avClass, `border:1.5px solid ${avClass==='g'?'rgba(251,191,36,.5)':avClass==='s'?'rgba(148,163,184,.4)':avClass==='b'?'rgba(194,121,74,.35)':'var(--b1)'};`);
+
+    // Rank badge overlay for top 3
+    const rankOverlay = globalRank <= 3 ? `
+      <div style="position:absolute;bottom:-4px;right:-4px;width:18px;height:18px;border-radius:50%;
+        display:flex;align-items:center;justify-content:center;font-size:.52rem;font-weight:900;font-family:var(--mono);
+        border:2px solid var(--bg2);z-index:2;
+        background:${globalRank===1?'var(--gold);color:#000':globalRank===2?'var(--silver);color:#000':'var(--bronze);color:#fff'}">
+        ${globalRank}
+      </div>` : '';
+
+    html += `<tr class="${isMe?'my-row':''} ${isCmpSelected?'cmp-selected':''}" style="${animDelay}" onclick="openModalIdx(${S.filteredUsers.indexOf(u)})">
       <td>
         <div class="rank-wrap">
-          <span class="rn ${rnClass}">#${globalRank}</span>
+          <span class="rn ${rnClass}">#${displayRank}</span>
+          ${globalRank !== displayRank && globalRank <= 10 ? `<span style="font-size:.6rem;color:var(--txt3);font-family:var(--mono);">(#${globalRank} global)</span>` : ''}
         </div>
       </td>
       <td>
         <div class="player-cell">
-          <div class="av-wrap ${avClass}">${getAvContent(u)}</div>
+          <div style="position:relative;">
+            ${avHtml}
+            ${rankOverlay}
+          </div>
           <div>
             <div class="p-uname">${esc(u.username||'Unknown')}${isMe?' <span style="color:var(--a2);font-size:.65rem;">(you)</span>':''}</div>
             <div class="p-tags">${badges.map(b=>`<span class="chip ${b.cls}">${b.label}</span>`).join('')}</div>
@@ -1519,14 +1731,14 @@ function renderTable(){
     </tr>`;
   });
 
-  html+=`</tbody></table></div>`;
-  ca.innerHTML=html;
+  html += `</tbody></table></div>`;
+  ca.innerHTML = html;
 
-  // sort headers
-  ca.querySelectorAll('th[data-sort]').forEach(th=>{
-    th.addEventListener('click',()=>{
-      S.sortBy=th.dataset.sort;
-      document.getElementById('sortBy').value=S.sortBy;
+  // Sort column headers
+  ca.querySelectorAll('th[data-sort]').forEach(th => {
+    th.addEventListener('click', () => {
+      S.sortBy = th.dataset.sort;
+      document.getElementById('sortBy').value = S.sortBy;
       applyFilters();
     });
   });
@@ -1538,31 +1750,33 @@ function renderTable(){
    CARDS VIEW
 ════════════════════════════════════════ */
 function renderCards(){
-  const users=pageSlice();
-  const ca=document.getElementById('contentArea');
+  const users = pageSlice();
+  const ca = document.getElementById('contentArea');
 
-  if(!users.length){
-    ca.innerHTML=`<div class="state-msg"><div class="state-ico">🔍</div><div class="state-title">No players found</div></div>`;
-    document.getElementById('paginationArea').style.display='none';
+  if (!users.length) {
+    ca.innerHTML = `<div class="state-msg"><div class="state-ico">🔍</div><div class="state-title">No players found</div></div>`;
+    document.getElementById('paginationArea').style.display = 'none';
     return;
   }
 
-  const maxXp=S.filteredUsers[0]?.xp||1;
-  let html=`<div class="cards-grid">`;
+  const maxXp = S.filteredUsers[0]?.xp || 1;
+  let html = `<div class="cards-grid">`;
 
-  users.forEach((u,i)=>{
-    const globalRank=S.filteredUsers.indexOf(u)+1;
-    const fav=isFav(u);
-    const barW=Math.round(((u.xp||0)/maxXp)*100);
-    const rnClass=globalRank===1?'r1':globalRank===2?'r2':globalRank===3?'r3':'';
-    const animDelay=`animation-delay:${i*0.04}s`;
+  users.forEach((u,i) => {
+    const displayRank = S.filteredUsers.indexOf(u) + 1;
+    const globalRank = S.allUsers.findIndex(x=>(x.id||x.username)===(u.id||u.username))+1;
+    const fav = isFav(u);
+    const barW = Math.round(((u.xp||0)/maxXp)*100);
+    const rnClass = displayRank===1?'r1':displayRank===2?'r2':displayRank===3?'r3':'';
+    const animDelay = `animation-delay:${i*0.04}s`;
+    const avHtml = buildAv(u, 56, '', `border:2px solid var(--b1);margin:.15rem 0;`);
 
-    html+=`<div class="p-card" style="${animDelay}" onclick="openModalIdx(${S.filteredUsers.indexOf(u)})">
+    html += `<div class="p-card" style="${animDelay}" onclick="openModalIdx(${S.filteredUsers.indexOf(u)})">
       <button class="pc-fav ${fav?'active':''}" onclick="event.stopPropagation();handleFav('${esc(u.id||u.username)}',this)">
         <i class="fas fa-star"></i>
       </button>
-      <div class="pc-rank ${rnClass}">#${globalRank}</div>
-      <div class="pc-av">${getAvContent(u)}</div>
+      <div class="pc-rank ${rnClass}">#${displayRank}${globalRank !== displayRank ? ` <span style="opacity:.5;font-size:.6rem;">(#${globalRank})</span>` : ''}</div>
+      ${avHtml}
       <div class="pc-name">${esc(u.username||'Unknown')}</div>
       <div class="pc-xp">${fmt(u.xp)} XP</div>
       <div class="pc-meta">Level ${u.level||1}</div>
@@ -1570,74 +1784,91 @@ function renderCards(){
     </div>`;
   });
 
-  html+=`</div>`;
-  ca.innerHTML=html;
+  html += `</div>`;
+  ca.innerHTML = html;
   renderPagination();
 }
 
 /* ════════════════════════════════════════
-   PODIUM VIEW
+   PODIUM VIEW — FIX: avatars + rest list rank
 ════════════════════════════════════════ */
 function renderPodium(){
-  const ca=document.getElementById('contentArea');
-  const top3=S.filteredUsers.slice(0,3);
-  const rest=S.filteredUsers.slice(3,20); // show next 17
+  const ca = document.getElementById('contentArea');
+  const top3 = S.filteredUsers.slice(0,3);
+  const rest = S.filteredUsers.slice(3, 20);
 
-  if(!top3.length){
-    ca.innerHTML=`<div class="state-msg"><div class="state-ico">🏆</div><div class="state-title">No players to display</div></div>`;
-    document.getElementById('paginationArea').style.display='none';
+  if (!top3.length) {
+    ca.innerHTML = `<div class="state-msg"><div class="state-ico">🏆</div><div class="state-title">No players to display</div></div>`;
+    document.getElementById('paginationArea').style.display = 'none';
     return;
   }
 
-  const medals=['🥇','🥈','🥉'];
-  const stepCls=['p1','p2','p3'];
-  const avCls=['g','s','b'];
-  const colCls=['first','second','third'];
+  const medals = ['🥇','🥈','🥉'];
+  const stepCls = ['p1','p2','p3'];
+  const avCls = ['g','s','b'];
+  const colCls = ['first','second','third'];
+  const podBorderColors = [
+    '3px solid var(--gold)',
+    '3px solid var(--silver)',
+    '2.5px solid var(--bronze)',
+  ];
+  const podGlow = [
+    '0 0 20px rgba(251,191,36,.3)',
+    '0 0 12px rgba(148,163,184,.2)',
+    'none',
+  ];
 
-  let podHTML=`<div class="podium-wrap">`;
-  const order=[1,0,2]; // silver left, gold center, bronze right
-  order.forEach(i=>{
-    const u=top3[i];
-    if(!u) return;
-    podHTML+=`<div class="pod-col ${colCls[i]}" onclick="openModalIdx(${i})">
+  let podHTML = `<div class="podium-wrap">`;
+  const order = [1,0,2]; // silver, gold, bronze
+  order.forEach(i => {
+    const u = top3[i];
+    if (!u) return;
+    const globalRank = S.allUsers.findIndex(x=>(x.id||x.username)===(u.id||u.username))+1;
+    const avHtml = buildAv(u, 64, '', `border:${podBorderColors[i]};box-shadow:${podGlow[i]};`);
+
+    podHTML += `<div class="pod-col ${colCls[i]}" onclick="openModalIdx(${i})">
       <div class="pod-info">
-        <div class="pod-av ${avCls[i]}">${getAvContent(u)}</div>
+        ${avHtml}
         <div class="pod-name">${esc(u.username||'?')}</div>
         <div class="pod-xp">Lv.${u.level||1} · ${fmt(u.xp)} XP</div>
+        ${globalRank !== i+1 ? `<div style="font-size:.6rem;color:var(--txt3);font-family:var(--mono);">Global #${globalRank}</div>` : ''}
       </div>
       <div class="pod-step ${stepCls[i]}">${medals[i]}</div>
     </div>`;
   });
-  podHTML+=`</div>`;
+  podHTML += `</div>`;
 
-  let restHTML=`<div class="podium-rest">
-    <div class="podium-rest-lbl"><i class="fas fa-list"></i> Remaining Top ${Math.min(20,S.filteredUsers.length)}</div>
+  let restHTML = `<div class="podium-rest">
+    <div class="podium-rest-lbl"><i class="fas fa-list"></i> Remaining Top ${Math.min(20, S.filteredUsers.length)}</div>
     <div class="podium-rest-rows">`;
-  rest.forEach((u,i)=>{
-    const rank=i+4;
-    restHTML+=`<div class="pod-rest-row" onclick="openModalIdx(${S.filteredUsers.indexOf(u)})">
-      <span class="pod-rest-rank">#${rank}</span>
-      <div class="pod-rest-av">${getAvContent(u)}</div>
+  rest.forEach((u, i) => {
+    const displayRank = i + 4;
+    const globalRank = S.allUsers.findIndex(x=>(x.id||x.username)===(u.id||u.username))+1;
+    const avHtml = buildAv(u, 28, '', '');
+    restHTML += `<div class="pod-rest-row" onclick="openModalIdx(${S.filteredUsers.indexOf(u)})">
+      <span class="pod-rest-rank">#${displayRank}</span>
+      ${avHtml}
       <span class="pod-rest-name">${esc(u.username||'Unknown')}</span>
       <span class="pod-rest-lvl">Lv.${u.level||1}</span>
       <span class="pod-rest-xp">${fmt(u.xp)} XP</span>
+      ${globalRank !== displayRank ? `<span style="font-size:.6rem;color:var(--txt3);font-family:var(--mono);">#${globalRank} global</span>` : ''}
     </div>`;
   });
-  restHTML+=`</div></div>`;
+  restHTML += `</div></div>`;
 
-  ca.innerHTML=podHTML+restHTML;
-  document.getElementById('paginationArea').style.display='none';
+  ca.innerHTML = podHTML + restHTML;
+  document.getElementById('paginationArea').style.display = 'none';
 }
 
 /* ════════════════════════════════════════
-   COMPARE VIEW
+   COMPARE VIEW — FIX: avatars
 ════════════════════════════════════════ */
 function renderCompare(){
-  const ca=document.getElementById('contentArea');
-  document.getElementById('paginationArea').style.display='none';
+  const ca = document.getElementById('contentArea');
+  document.getElementById('paginationArea').style.display = 'none';
 
-  if(!S.compareList.length){
-    ca.innerHTML=`<div class="compare-view">
+  if (!S.compareList.length) {
+    ca.innerHTML = `<div class="compare-view">
       <div class="compare-view-empty">
         <i class="fas fa-code-compare"></i>
         Select up to 3 players using the checkboxes in Table view to compare them here.
@@ -1646,23 +1877,25 @@ function renderCompare(){
     return;
   }
 
-  const players=S.compareList.map(key=>S.allUsers.find(u=>(u.id||u.username)===key)).filter(Boolean);
-  const maxXp=Math.max(...players.map(u=>u.xp||0))||1;
-  const maxLvl=Math.max(...players.map(u=>u.level||1))||1;
+  const players = S.compareList.map(key=>S.allUsers.find(u=>(u.id||u.username)===key)).filter(Boolean);
+  const maxXp = Math.max(...players.map(u=>u.xp||0))||1;
+  const maxLvl = Math.max(...players.map(u=>u.level||1))||1;
 
-  let html=`<div class="compare-view"><div class="cmp-grid">`;
-  players.forEach((u,i)=>{
-    const rank=S.allUsers.findIndex(x=>(x.id||x.username)===(u.id||u.username))+1;
-    const xpPct=Math.round(((u.xp||0)/maxXp)*100);
-    const lvlPct=Math.round(((u.level||1)/maxLvl)*100);
-    const {progress}=xpProgress(u);
-    html+=`<div class="cmp-card">
+  let html = `<div class="compare-view"><div class="cmp-grid">`;
+  players.forEach(u => {
+    const rank = S.allUsers.findIndex(x=>(x.id||x.username)===(u.id||u.username))+1;
+    const xpPct = Math.round(((u.xp||0)/maxXp)*100);
+    const lvlPct = Math.round(((u.level||1)/maxLvl)*100);
+    const {progress} = xpProgress(u);
+    const avHtml = buildAv(u, 52, '', 'border:2px solid var(--b2);');
+
+    html += `<div class="cmp-card">
       <button class="cmp-remove" onclick="removeCmp('${esc(u.id||u.username)}')"><i class="fas fa-xmark"></i></button>
       <div class="cmp-header">
-        <div class="cmp-av-lg">${getAvContent(u)}</div>
+        ${avHtml}
         <div>
           <div class="cmp-uname">${esc(u.username||'Unknown')}</div>
-          <div class="cmp-rank">Rank #${rank}</div>
+          <div class="cmp-rank">Global Rank #${rank}</div>
         </div>
       </div>
       <div class="cmp-stats">
@@ -1685,30 +1918,30 @@ function renderCompare(){
       </div>
       <div class="cmp-bar-section">
         <div class="cmp-bar-label"><span>XP vs Leader</span><span style="color:var(--cy2)">${xpPct}%</span></div>
-        <div class="cmp-bar"><div class="cmp-bar-fill" style="width:${xpPct}%"></div></div>
+        <div class="cmp-bar"><div class="cmp-bar-fill" style="width:0%" data-target="${xpPct}"></div></div>
       </div>
       <div class="cmp-bar-section">
         <div class="cmp-bar-label"><span>Level vs Leader</span><span style="color:var(--a2)">${lvlPct}%</span></div>
-        <div class="cmp-bar"><div class="cmp-bar-fill" style="width:${lvlPct}%;background:linear-gradient(90deg,var(--vi),var(--a2))"></div></div>
+        <div class="cmp-bar"><div class="cmp-bar-fill" style="width:0%;background:linear-gradient(90deg,var(--vi),var(--a2))" data-target="${lvlPct}"></div></div>
       </div>
     </div>`;
   });
 
-  html+=`</div></div>`;
-  ca.innerHTML=html;
+  html += `</div></div>`;
+  ca.innerHTML = html;
 
-  // Animate bars after render
-  setTimeout(()=>{
-    document.querySelectorAll('.cmp-bar-fill').forEach(b=>{
-      b.style.width=b.style.width;
+  // Animate bars
+  setTimeout(() => {
+    ca.querySelectorAll('.cmp-bar-fill[data-target]').forEach(b => {
+      b.style.width = b.dataset.target + '%';
     });
-  },100);
+  }, 80);
 }
 
 /* ════════════════════════════════════════
    ACHIEVEMENTS VIEW
 ════════════════════════════════════════ */
-const ACHIEVEMENTS=[
+const ACHIEVEMENTS = [
   {icon:'👑',name:'Legend Status',desc:'Reach Level 20 to become a Legend.',tag:'legendary',req:u=>(u.level||1)>=20},
   {icon:'⚡',name:'Pro Player',desc:'Hit Level 10 to earn Pro status.',tag:'epic',req:u=>(u.level||1)>=10},
   {icon:'🔥',name:'XP Inferno',desc:'Accumulate over 5,000 XP total.',tag:'rare',req:u=>(u.xp||0)>5000},
@@ -1722,18 +1955,17 @@ const ACHIEVEMENTS=[
 ];
 
 function renderAchievements(){
-  const ca=document.getElementById('contentArea');
-  document.getElementById('paginationArea').style.display='none';
+  const ca = document.getElementById('contentArea');
+  document.getElementById('paginationArea').style.display = 'none';
 
-  // Use first user as example (or current user if found)
-  const meIdx=S.allUsers.findIndex(u=>u.id===S.myUserId||u.username===S.myUsername);
-  const refUser=meIdx>-1?S.allUsers[meIdx]:S.allUsers[0]||{level:1,xp:0};
-  const myRank=meIdx+1;
+  const meIdx = S.allUsers.findIndex(u=>u.id===S.myUserId||u.username===S.myUsername);
+  const refUser = meIdx > -1 ? S.allUsers[meIdx] : S.allUsers[0] || {level:1,xp:0};
+  const myRank = meIdx + 1;
 
-  let html=`<div class="ach-grid">`;
-  ACHIEVEMENTS.forEach(a=>{
-    const unlocked=a.req(refUser,myRank);
-    html+=`<div class="ach-card ${unlocked?'unlocked':'locked'}">
+  let html = `<div class="ach-grid">`;
+  ACHIEVEMENTS.forEach(a => {
+    const unlocked = a.req(refUser, myRank);
+    html += `<div class="ach-card ${unlocked?'unlocked':'locked'}">
       <div class="ach-icon">${a.icon}</div>
       <div class="ach-name">${a.name}</div>
       <div class="ach-desc">${a.desc}</div>
@@ -1741,147 +1973,154 @@ function renderAchievements(){
       ${unlocked?'<div style="font-size:.65rem;color:var(--em);margin-top:.35rem;"><i class="fas fa-circle-check"></i> Unlocked</div>':''}
     </div>`;
   });
-  html+=`</div>`;
-  ca.innerHTML=html;
+  html += `</div>`;
+  ca.innerHTML = html;
 }
 
 /* ════════════════════════════════════════
    ACTIVITY FEED VIEW
 ════════════════════════════════════════ */
-const FEED_TYPES=[
-  {icon:'🚀',key:'leveled',tmpl:(u)=>`<strong>${esc(u.username)}</strong> leveled up to <span class="rank-gain">Lv.${u.level}</span>`},
-  {icon:'⚡',key:'xp',tmpl:(u)=>`<strong>${esc(u.username)}</strong> gained <span class="xp-gain">+${Math.floor(Math.random()*500+50)} XP</span> from a task`},
-  {icon:'🏅',key:'rank',tmpl:(u)=>`<strong>${esc(u.username)}</strong> climbed to rank <span class="rank-gain">#${S.allUsers.indexOf(u)+1}</span>`},
-  {icon:'🔥',key:'streak',tmpl:(u)=>`<strong>${esc(u.username)}</strong> is on a <span class="xp-gain">${Math.floor(Math.random()*7+2)}-day</span> streak!`},
+const FEED_TYPES = [
+  {icon:'🚀',tmpl:(u)=>`<strong>${esc(u.username)}</strong> leveled up to <span class="rank-gain">Lv.${u.level}</span>`},
+  {icon:'⚡',tmpl:(u)=>`<strong>${esc(u.username)}</strong> gained <span class="xp-gain">+${Math.floor(Math.random()*500+50)} XP</span> from a task`},
+  {icon:'🏅',tmpl:(u,rank)=>`<strong>${esc(u.username)}</strong> climbed to rank <span class="rank-gain">#${rank}</span>`},
+  {icon:'🔥',tmpl:(u)=>`<strong>${esc(u.username)}</strong> is on a <span class="xp-gain">${Math.floor(Math.random()*7+2)}-day</span> streak!`},
 ];
-const TIME_AGO=['just now','2m ago','5m ago','12m ago','23m ago','41m ago','1h ago','2h ago','3h ago','5h ago'];
+const TIME_AGO = ['just now','2m ago','5m ago','12m ago','23m ago','41m ago','1h ago','2h ago','3h ago','5h ago'];
 
 function renderActivity(){
-  const ca=document.getElementById('contentArea');
-  document.getElementById('paginationArea').style.display='none';
+  const ca = document.getElementById('contentArea');
+  document.getElementById('paginationArea').style.display = 'none';
 
-  const pool=S.allUsers.slice(0,30);
-  if(!pool.length){
-    ca.innerHTML=`<div class="state-msg"><div class="state-ico">⚡</div><div class="state-title">No activity yet</div></div>`;
+  const pool = S.allUsers.slice(0,30);
+  if (!pool.length) {
+    ca.innerHTML = `<div class="state-msg"><div class="state-ico">⚡</div><div class="state-title">No activity yet</div></div>`;
     return;
   }
 
-  // Generate mock feed entries
-  const entries=[];
-  for(let i=0;i<30;i++){
-    const u=pool[Math.floor(Math.random()*pool.length)];
-    const ft=FEED_TYPES[Math.floor(Math.random()*FEED_TYPES.length)];
-    entries.push({u,ft,time:TIME_AGO[Math.min(i,TIME_AGO.length-1)]});
+  const entries = [];
+  for (let i = 0; i < 30; i++) {
+    const u = pool[Math.floor(Math.random()*pool.length)];
+    const rank = S.allUsers.indexOf(u)+1;
+    const ft = FEED_TYPES[Math.floor(Math.random()*FEED_TYPES.length)];
+    entries.push({u, ft, rank, time: TIME_AGO[Math.min(i, TIME_AGO.length-1)]});
   }
 
-  let html=`<div class="activity-feed">`;
-  entries.forEach((e,i)=>{
-    html+=`<div class="feed-item" style="animation-delay:${i*0.03}s">
+  let html = `<div class="activity-feed">`;
+  entries.forEach((e,i) => {
+    const avHtml = buildAv(e.u, 32, '', '');
+    html += `<div class="feed-item" style="animation-delay:${i*0.03}s">
       <div class="feed-type-icon">${e.ft.icon}</div>
-      <div class="feed-av">${getAvContent(e.u)}</div>
+      ${avHtml}
       <div class="feed-body">
-        <div class="feed-text">${e.ft.tmpl(e.u)}</div>
+        <div class="feed-text">${e.ft.tmpl(e.u, e.rank)}</div>
         <div class="feed-time">${e.time}</div>
       </div>
     </div>`;
   });
-  html+=`</div>`;
-  ca.innerHTML=html;
+  html += `</div>`;
+  ca.innerHTML = html;
 }
 
 /* ════════════════════════════════════════
    PAGINATION
 ════════════════════════════════════════ */
 function renderPagination(){
-  const pa=document.getElementById('paginationArea');
-  if(S.totalPages<=1){ pa.style.display='none'; return; }
-  pa.style.display='flex';
+  const pa = document.getElementById('paginationArea');
+  if (S.totalPages <= 1) { pa.style.display='none'; return; }
+  pa.style.display = 'flex';
 
-  let html=`<div class="pagination">`;
-  html+=`<button class="pg-btn" onclick="gotoPage(${S.page-1})" ${S.page===1?'disabled':''}><i class="fas fa-chevron-left"></i></button>`;
+  let html = `<div class="pagination">`;
+  html += `<button class="pg-btn" onclick="gotoPage(${S.page-1})" ${S.page===1?'disabled':''}><i class="fas fa-chevron-left"></i></button>`;
 
-  const pages=[];
-  for(let i=1;i<=S.totalPages;i++){
-    if(i===1||i===S.totalPages||Math.abs(i-S.page)<=1) pages.push(i);
-    else if(Math.abs(i-S.page)===2) pages.push('…');
+  const pages = [];
+  for (let i = 1; i <= S.totalPages; i++) {
+    if (i===1 || i===S.totalPages || Math.abs(i-S.page)<=1) pages.push(i);
+    else if (Math.abs(i-S.page)===2) pages.push('…');
   }
-  const seen=new Set();
-  pages.forEach(p=>{
-    if(p==='…'){
-      if(!seen.has('…'+p)){ html+=`<span class="pg-dots">…</span>`; seen.add('…'); }
+  const seen = new Set();
+  pages.forEach(p => {
+    if (p==='…') {
+      const key = '…' + seen.size;
+      if (!seen.has(key)) { html += `<span class="pg-dots">…</span>`; seen.add(key); }
     } else {
-      html+=`<button class="pg-btn ${p===S.page?'active':''}" onclick="gotoPage(${p})">${p}</button>`;
+      html += `<button class="pg-btn ${p===S.page?'active':''}" onclick="gotoPage(${p})">${p}</button>`;
     }
   });
 
-  html+=`<button class="pg-btn" onclick="gotoPage(${S.page+1})" ${S.page===S.totalPages?'disabled':''}><i class="fas fa-chevron-right"></i></button>`;
-  html+=`<span class="pg-info">${(S.page-1)*S.perPage+1}–${Math.min(S.page*S.perPage,S.totalItems)} of ${S.totalItems}</span>`;
-  html+=`<div class="pg-goto"><span style="font-size:.7rem;color:var(--txt3);">Go:</span><input type="number" class="pg-input" id="pgGoto" min="1" max="${S.totalPages}" value="${S.page}"><button class="btn btn-ghost btn-sm" onclick="gotoPage(+document.getElementById('pgGoto').value)">→</button></div>`;
-  html+=`</div>`;
+  html += `<button class="pg-btn" onclick="gotoPage(${S.page+1})" ${S.page===S.totalPages?'disabled':''}><i class="fas fa-chevron-right"></i></button>`;
+  html += `<span class="pg-info">${(S.page-1)*S.perPage+1}–${Math.min(S.page*S.perPage,S.totalItems)} of ${S.totalItems}</span>`;
+  html += `<div class="pg-goto"><span style="font-size:.7rem;color:var(--txt3);">Go:</span><input type="number" class="pg-input" id="pgGoto" min="1" max="${S.totalPages}" value="${S.page}"><button class="btn btn-ghost btn-sm" onclick="gotoPage(+document.getElementById('pgGoto').value)">→</button></div>`;
+  html += `</div>`;
 
-  pa.innerHTML=html;
-  pa.style.display='block';
+  pa.innerHTML = html;
+  pa.style.display = 'block';
 }
 
 function gotoPage(p){
-  p=Math.max(1,Math.min(S.totalPages,p));
-  S.page=p;
+  p = Math.max(1, Math.min(S.totalPages, p));
+  S.page = p;
   renderView();
-  document.querySelector('.main-card').scrollIntoView({behavior:'smooth',block:'start'});
+  document.querySelector('.main-card').scrollIntoView({behavior:'smooth', block:'start'});
 }
 
 /* ════════════════════════════════════════
-   PROFILE MODAL
+   PROFILE MODAL — FIX: avatar + rank
 ════════════════════════════════════════ */
 function openModalIdx(idx){
-  const u=S.filteredUsers[idx];
-  if(!u) return;
-  S.openModalUserIdx=idx;
-  const rank=S.allUsers.findIndex(x=>(x.id||x.username)===(u.id||u.username))+1;
-  const {progress,needed,current}=xpProgress(u);
+  const u = S.filteredUsers[idx];
+  if (!u) return;
+  S.openModalUserIdx = idx;
 
-  document.getElementById('modalAv').innerHTML=getAvContent(u);
-  document.getElementById('modalRankBadge').textContent=`#${rank}`;
-  document.getElementById('modalName').textContent=u.username||'Unknown';
-  document.getElementById('modalSub').textContent=`Level ${u.level||1} · ${u.joined?new Date(u.joined).toLocaleDateString():'Unknown'}`;
-  document.getElementById('m-xp').textContent=fmt(u.xp);
-  document.getElementById('m-lvl').textContent=u.level||1;
-  document.getElementById('m-tasks').textContent=u.tasks_completed||u.tasks||'—';
-  document.getElementById('m-prog-txt').textContent=`${fmt(current)} / ${fmt(needed)}`;
+  // FIXED: always use global rank from allUsers
+  const globalRank = S.allUsers.findIndex(x=>(x.id||x.username)===(u.id||u.username)) + 1;
+  const {progress, needed, current} = xpProgress(u);
 
-  setTimeout(()=>{
-    document.getElementById('m-prog-fill').style.width=progress+'%';
-  },100);
+  // Avatar
+  const modalAv = document.getElementById('modalAv');
+  setAvatar(modalAv, u);
 
-  // sparkline
-  const spark=mockSpark(u);
-  const maxS=Math.max(...spark)||1;
-  document.getElementById('modalSpark').innerHTML=spark.map(v=>`<div class="sp-b" style="height:${Math.round((v/maxS)*100)+'%'}"></div>`).join('');
+  document.getElementById('modalRankBadge').textContent = `Global #${globalRank}`;
+  document.getElementById('modalName').textContent = u.username || 'Unknown';
+  document.getElementById('modalSub').textContent = `Level ${u.level||1} · ${u.joined ? new Date(u.joined).toLocaleDateString() : 'Unknown'}`;
+  document.getElementById('m-xp').textContent = fmt(u.xp);
+  document.getElementById('m-lvl').textContent = u.level||1;
+  document.getElementById('m-tasks').textContent = u.tasks_completed || u.tasks || '—';
+  document.getElementById('m-prog-txt').textContent = `${fmt(current)} / ${fmt(needed)}`;
 
-  // badges
-  const badges=getUserBadges(u);
-  document.getElementById('m-badges').innerHTML=badges.map(b=>`<span class="chip ${b.cls}">${b.label}</span>`).join('');
+  setTimeout(() => {
+    document.getElementById('m-prog-fill').style.width = progress + '%';
+  }, 100);
 
-  // fav button
-  const favBtn=document.getElementById('modalFavBtn');
-  const fav=isFav(u);
-  favBtn.innerHTML=`<i class="fas fa-star" style="color:${fav?'var(--am)':''}"></i> ${fav?'Unfavorite':'Favorite'}`;
-  favBtn.onclick=()=>{
+  // Sparkline
+  const spark = mockSpark(u);
+  const maxS = Math.max(...spark)||1;
+  document.getElementById('modalSpark').innerHTML = spark.map(v=>`<div class="sp-b" style="height:${Math.round((v/maxS)*100)+'%'}"></div>`).join('');
+
+  // Badges
+  const badges = getUserBadges(u);
+  document.getElementById('m-badges').innerHTML = badges.map(b=>`<span class="chip ${b.cls}">${b.label}</span>`).join('');
+
+  // Fav button
+  const favBtn = document.getElementById('modalFavBtn');
+  const fav = isFav(u);
+  favBtn.innerHTML = `<i class="fas fa-star" style="color:${fav?'var(--am)':''}"></i> ${fav?'Unfavorite':'Favorite'}`;
+  favBtn.onclick = () => {
     toggleFav(u);
-    const nowFav=isFav(u);
-    favBtn.innerHTML=`<i class="fas fa-star" style="color:${nowFav?'var(--am)':''}"></i> ${nowFav?'Unfavorite':'Favorite'}`;
+    const nowFav = isFav(u);
+    favBtn.innerHTML = `<i class="fas fa-star" style="color:${nowFav?'var(--am)':''}"></i> ${nowFav?'Unfavorite':'Favorite'}`;
     toast(nowFav?'Added to favorites':'Removed from favorites','success');
     renderView();
   };
 
-  // compare button
-  const cmpBtn2=document.getElementById('modalCmpBtn');
-  const alreadyInCmp=S.compareList.includes(u.id||u.username);
-  cmpBtn2.innerHTML=`<i class="fas fa-code-compare"></i> ${alreadyInCmp?'Remove from Compare':'Add to Compare'}`;
-  cmpBtn2.onclick=()=>{
+  // Compare button
+  const cmpBtn2 = document.getElementById('modalCmpBtn');
+  const alreadyInCmp = S.compareList.includes(u.id||u.username);
+  cmpBtn2.innerHTML = `<i class="fas fa-code-compare"></i> ${alreadyInCmp?'Remove from Compare':'Add to Compare'}`;
+  cmpBtn2.onclick = () => {
     toggleCompare(u.id||u.username);
     closeModal();
-    S.view='compare';
+    S.view = 'compare';
     setActiveTab('compare');
     renderView();
   };
@@ -1893,19 +2132,19 @@ function closeModal(){
   document.getElementById('profileModal').classList.remove('open');
 }
 
-document.getElementById('modalClose').addEventListener('click',closeModal);
-document.getElementById('profileModal').addEventListener('click',e=>{
-  if(e.target===document.getElementById('profileModal')) closeModal();
+document.getElementById('modalClose').addEventListener('click', closeModal);
+document.getElementById('profileModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('profileModal')) closeModal();
 });
 
 /* ════════════════════════════════════════
    COMPARE LOGIC
 ════════════════════════════════════════ */
 function toggleCompare(key){
-  const idx=S.compareList.indexOf(key);
-  if(idx>-1){ S.compareList.splice(idx,1); }
-  else{
-    if(S.compareList.length>=3){ toast('Max 3 players for comparison','info'); return; }
+  const idx = S.compareList.indexOf(key);
+  if (idx > -1) { S.compareList.splice(idx,1); }
+  else {
+    if (S.compareList.length >= 3) { toast('Max 3 players for comparison','info'); return; }
     S.compareList.push(key);
   }
   updateCompareBar();
@@ -1913,20 +2152,25 @@ function toggleCompare(key){
 }
 
 function removeCmp(key){
-  const idx=S.compareList.indexOf(key);
-  if(idx>-1) S.compareList.splice(idx,1);
+  const idx = S.compareList.indexOf(key);
+  if (idx > -1) S.compareList.splice(idx,1);
   updateCompareBar();
   renderCompare();
 }
 
 function updateCompareBar(){
-  const bar=document.getElementById('compareBar');
-  if(!S.compareList.length){ bar.style.display='none'; return; }
-  bar.style.display='flex';
+  const bar = document.getElementById('compareBar');
+  if (!S.compareList.length) { bar.style.display='none'; return; }
+  bar.style.display = 'flex';
 
-  const players=S.compareList.map(key=>S.allUsers.find(u=>(u.id||u.username)===key)).filter(Boolean);
-  document.getElementById('cmpAvatars').innerHTML=players.map(u=>`<div class="cmp-av">${getAvContent(u)}</div>`).join('');
-  document.getElementById('cmpNames').textContent=players.map(u=>u.username||'?').join(', ');
+  const players = S.compareList.map(key=>S.allUsers.find(u=>(u.id||u.username)===key)).filter(Boolean);
+  document.getElementById('cmpAvatars').innerHTML = players.map(u => {
+    return buildAv(u, 28, '', 'border:2px solid var(--bg2);margin-left:-6px;');
+  }).join('').replace(/margin-left:-6px/, '').replace(/margin-left:-6px;/, '');
+  // Fix first avatar margin
+  const avHtml = players.map((u,i) => buildAv(u, 28, '', `border:2px solid var(--bg2);${i>0?'margin-left:-6px;':''}`)).join('');
+  document.getElementById('cmpAvatars').innerHTML = avHtml;
+  document.getElementById('cmpNames').textContent = players.map(u=>u.username||'?').join(', ');
 }
 
 document.getElementById('viewCmpBtn').addEventListener('click',()=>{
@@ -1941,15 +2185,15 @@ document.getElementById('cmpBtn').addEventListener('click',()=>{
 });
 
 /* ════════════════════════════════════════
-   HANDLE FAV (from table/cards)
+   HANDLE FAV
 ════════════════════════════════════════ */
-function handleFav(key,btn){
-  const u=S.allUsers.find(x=>(x.id||x.username)===key);
-  if(!u) return;
+function handleFav(key, btn){
+  const u = S.allUsers.find(x=>(x.id||x.username)===key);
+  if (!u) return;
   toggleFav(u);
-  const nowFav=isFav(u);
-  btn.classList.toggle('fav-active',nowFav);
-  btn.classList.toggle('active',nowFav);
+  const nowFav = isFav(u);
+  btn.classList.toggle('fav-active', nowFav);
+  btn.classList.toggle('active', nowFav);
   toast(nowFav?'Added to favorites':'Removed from favorites','success');
 }
 
@@ -1957,11 +2201,11 @@ function handleFav(key,btn){
    JUMP TO ME
 ════════════════════════════════════════ */
 document.getElementById('jumpToMeBtn').addEventListener('click',()=>{
-  if(!S.myUserId&&!S.myUsername){ toast('Could not find your rank','error'); return; }
-  const idx=S.filteredUsers.findIndex(u=>u.id===S.myUserId||u.username===S.myUsername);
-  if(idx<0){ toast('You are not in the filtered list','info'); return; }
-  S.page=Math.ceil((idx+1)/S.perPage);
-  S.view='table'; setActiveTab('table');
+  if (!S.myUserId && !S.myUsername) { toast('Could not find your rank','error'); return; }
+  const idx = S.filteredUsers.findIndex(u=>u.id===S.myUserId||u.username===S.myUsername);
+  if (idx < 0) { toast('You are not in the filtered list','info'); return; }
+  S.page = Math.ceil((idx+1)/S.perPage);
+  S.view = 'table'; setActiveTab('table');
   renderView();
   toast(`Jumped to your rank #${idx+1}`,'success');
 });
@@ -1970,14 +2214,17 @@ document.getElementById('jumpToMeBtn').addEventListener('click',()=>{
    EXPORT CSV
 ════════════════════════════════════════ */
 document.getElementById('exportBtn').addEventListener('click',()=>{
-  const users=S.filteredUsers;
-  if(!users.length){ toast('No data to export','info'); return; }
-  const header='Rank,Username,Level,XP,Tasks\n';
-  const rows=users.map((u,i)=>`${i+1},"${(u.username||'').replace(/"/g,'""')}",${u.level||1},${u.xp||0},${u.tasks_completed||u.tasks||0}`).join('\n');
-  const blob=new Blob([header+rows],{type:'text/csv'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='sarveik_leaderboard.csv';
+  const users = S.filteredUsers;
+  if (!users.length) { toast('No data to export','info'); return; }
+  const header = 'Global Rank,Username,Level,XP,Tasks\n';
+  const rows = users.map(u => {
+    const globalRank = S.allUsers.findIndex(x=>(x.id||x.username)===(u.id||u.username))+1;
+    return `${globalRank},"${(u.username||'').replace(/"/g,'""')}",${u.level||1},${u.xp||0},${u.tasks_completed||u.tasks||0}`;
+  }).join('\n');
+  const blob = new Blob([header+rows],{type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `sarveik_leaderboard_${new Date().toISOString().split('T')[0]}.csv`;
   a.click();
   toast('CSV exported!','success');
 });
@@ -1987,14 +2234,14 @@ document.getElementById('exportBtn').addEventListener('click',()=>{
 ════════════════════════════════════════ */
 function setActiveTab(view){
   document.querySelectorAll('.view-tab').forEach(t=>{
-    t.classList.toggle('active',t.dataset.view===view);
+    t.classList.toggle('active', t.dataset.view===view);
   });
 }
 
 document.querySelectorAll('.view-tab').forEach(t=>{
   t.addEventListener('click',()=>{
-    S.view=t.dataset.view;
-    S.page=1;
+    S.view = t.dataset.view;
+    S.page = 1;
     setActiveTab(S.view);
     renderView();
   });
@@ -2003,52 +2250,56 @@ document.querySelectorAll('.view-tab').forEach(t=>{
 /* ════════════════════════════════════════
    FILTER / SORT CONTROLS
 ════════════════════════════════════════ */
-document.getElementById('searchInput').addEventListener('input',debounce(e=>{
-  S.search=e.target.value; S.page=1; applyFilters();
-},200));
-
-document.getElementById('sortBy').addEventListener('change',e=>{
-  S.sortBy=e.target.value; S.page=1; applyFilters();
-});
-document.getElementById('perPage').addEventListener('change',e=>{
-  S.perPage=+e.target.value; S.page=1; applyFilters();
-});
-document.getElementById('levelFilter').addEventListener('change',e=>{
-  S.levelFilter=e.target.value; S.page=1; applyFilters();
-});
-document.getElementById('badgeFilter').addEventListener('change',e=>{
-  S.badgeFilter=e.target.value; S.page=1; applyFilters();
-});
-
-/* ════════════════════════════════════════
-   REFRESH BUTTON
-════════════════════════════════════════ */
-document.getElementById('refreshBtn').addEventListener('click',()=>{
-  const ico=document.getElementById('refreshIcon');
-  ico.classList.add('spinning');
-  loadLeaderboard().then(()=>{ ico.classList.remove('spinning'); startCountdown(); });
-  toast('Refreshing leaderboard…','info');
-});
-
-/* ════════════════════════════════════════
-   DEBOUNCE
-════════════════════════════════════════ */
 function debounce(fn,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);};}
 
+document.getElementById('searchInput').addEventListener('input', debounce(e=>{
+  S.search = e.target.value; S.page = 1; applyFilters();
+}, 200));
+
+document.getElementById('sortBy').addEventListener('change', e=>{
+  S.sortBy = e.target.value; S.page = 1; applyFilters();
+});
+document.getElementById('perPage').addEventListener('change', e=>{
+  S.perPage = +e.target.value; S.page = 1; applyFilters();
+});
+document.getElementById('levelFilter').addEventListener('change', e=>{
+  S.levelFilter = e.target.value; S.page = 1; applyFilters();
+});
+document.getElementById('badgeFilter').addEventListener('change', e=>{
+  S.badgeFilter = e.target.value; S.page = 1; applyFilters();
+});
+
 /* ════════════════════════════════════════
-   KEYBOARD
+   MANUAL REFRESH BUTTON
 ════════════════════════════════════════ */
-document.addEventListener('keydown',e=>{
-  if(e.key==='Escape') closeModal();
-  if(e.key==='ArrowLeft'&&S.page>1){gotoPage(S.page-1);}
-  if(e.key==='ArrowRight'&&S.page<S.totalPages){gotoPage(S.page+1);}
+document.getElementById('refreshBtn').addEventListener('click',()=>{
+  const ico = document.getElementById('refreshIcon');
+  ico.classList.add('spinning');
+  // Force-clear cache and fetch fresh
+  localStorage.removeItem(CACHE_KEY);
+  loadLeaderboard(true).finally(()=>{ ico.classList.remove('spinning'); });
+  toast('Fetching fresh data…','info');
+});
+
+/* ════════════════════════════════════════
+   KEYBOARD SHORTCUTS
+════════════════════════════════════════ */
+document.addEventListener('keydown', e=>{
+  if (e.key==='Escape') closeModal();
+  if (e.key==='ArrowLeft' && S.page>1) gotoPage(S.page-1);
+  if (e.key==='ArrowRight' && S.page<S.totalPages) gotoPage(S.page+1);
+  // R to refresh (when no modal)
+  if (e.key==='r' && !document.getElementById('profileModal').classList.contains('open')) {
+    if (!e.ctrlKey && !e.metaKey) {
+      document.getElementById('refreshBtn').click();
+    }
+  }
 });
 
 /* ════════════════════════════════════════
    INIT
 ════════════════════════════════════════ */
-loadLeaderboard();
-startCountdown();
+loadLeaderboard(false); // will use cache if valid
 </script>
 </body>
 </html>
