@@ -614,6 +614,7 @@ passport.deserializeUser(async (id, done) => {
     }
 });
 
+// Enhanced Google Strategy with proper credits initialization and admin notifications
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -626,6 +627,7 @@ passport.use(new GoogleStrategy({
         [profile.id]
       );
       let user = userResult.rows[0];
+      let isNewUser = false;
 
       if (!user) {
         const email = profile.emails[0].value;
@@ -646,6 +648,7 @@ passport.use(new GoogleStrategy({
           );
           user = updatedResult.rows[0];
         } else {
+          isNewUser = true;
           let username = profile.displayName.replace(/\s/g, '').toLowerCase();
           const checkUsernameResult = await pool.query(
             'SELECT id FROM users WHERE username = $1',
@@ -660,11 +663,22 @@ passport.use(new GoogleStrategy({
           const insertResult = await pool.query(
             `INSERT INTO users (username, email, google_id, password) 
              VALUES ($1, $2, $3, $4)
-             RETURNING id, username, email`,
+             RETURNING id, username, email, role`,
             [username, email, profile.id, dummyPassword]
           );
           user = insertResult.rows[0];
+          
+          // Initialize credits for new Google user (same as email/password signup)
           await initializeUserCredits(user.id);
+          
+          // Send welcome email (same as email/password signup)
+          sendWelcomeEmail(email, username).catch(err => console.error('Welcome email failed:', err.message));
+          
+          // Send admin notification email for new Google signup (same as email/password registration)
+          sendAdminAlert({ 
+            subject: 'New User Registration (Google Sign-In)', 
+            message: `New user ${username} (${email}) registered via Google Sign-In.` 
+          }).catch(err => console.error('Admin alert failed:', err.message));
         }
       }
       return done(null, user);
