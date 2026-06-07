@@ -1458,7 +1458,8 @@
             const g = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
             const el = document.getElementById('welcomeMessage');
             if (el) el.innerHTML = `${g}, ${escapeHtml(p.username)}! ✨`;
-        } catch { /* silent */ }
+            return p;
+        } catch { return null; }
     }
 
     let latestStats = null;
@@ -1679,28 +1680,75 @@
         } catch(e) { showToast(e.message, 'error'); }
     }
 
-    // ========== DAILY BONUS ==========
+    // ========== DAILY BONUS (FIXED FOR GOOGLE USERS) ==========
     let claimingBonus = false;
     async function claimDailyBonus() {
         if (claimingBonus) return;
         claimingBonus = true;
+        
+        // Show loading state on streak card
+        const streakCard = document.getElementById('streakCard');
+        const originalContent = streakCard ? streakCard.innerHTML : '';
+        if (streakCard) {
+            streakCard.style.opacity = '0.7';
+        }
+        
         try {
-            await apiCall('/api/credits/claim-daily', { method:'POST' });
-            showToast('🎉 Daily bonus claimed! +5 credits', 'success');
-            await loadStats(); await loadGamification();
+            const response = await fetch('/api/credits/claim-daily', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            const data = await response.json();
+            
+            if (response.ok && data.success) {
+                showToast('🎉 Daily bonus claimed! +5 credits', 'success');
+                await loadStats();
+                await loadGamification();
+                
+                // Update streak display immediately
+                const streakDaysEl = document.getElementById('streakDays');
+                if (streakDaysEl) {
+                    const currentStreak = parseInt(streakDaysEl.textContent) || 0;
+                    streakDaysEl.textContent = currentStreak + 1;
+                }
+            } else if (response.status === 400 && data.error && data.error.includes('already')) {
+                showToast('✨ Daily bonus already claimed today!', 'info');
+            } else {
+                throw new Error(data.error || 'Failed to claim bonus');
+            }
         } catch(e) {
-            if (e.message?.includes('already')) showToast('Already claimed today!', 'info');
-            else showToast(e.message, 'error');
-        } finally { claimingBonus = false; }
+            console.error('Daily bonus error:', e);
+            if (e.message?.includes('already')) {
+                showToast('You already claimed your daily bonus today!', 'info');
+            } else if (e.message?.includes('401') || e.message?.includes('authenticated')) {
+                showToast('Session expired. Please refresh the page.', 'warning');
+                setTimeout(() => { window.location.reload(); }, 2000);
+            } else {
+                showToast(e.message || 'Could not claim daily bonus. Please try again.', 'error');
+            }
+        } finally {
+            claimingBonus = false;
+            if (streakCard) {
+                streakCard.style.opacity = '1';
+            }
+        }
     }
 
     // ========== SESSION ==========
     async function checkSession() {
         try {
             const s = await apiCall('/check-session');
-            if (!s.loggedIn) { window.location.href='/'; return false; }
+            if (!s.loggedIn) { 
+                window.location.href='/'; 
+                return false; 
+            }
             return true;
-        } catch { window.location.href='/'; return false; }
+        } catch { 
+            window.location.href='/'; 
+            return false; 
+        }
     }
 
     async function logout() {
@@ -1789,8 +1837,21 @@
         renderTopTools();
         renderLbMini();
         renderXpChart();
-        // auto claim daily
-        try { await apiCall('/api/credits/claim-daily',{method:'POST'}); await loadStats(); await loadGamification(); } catch {}
+        // Auto claim daily (silent - will show error only if needed)
+        try { 
+            const claimRes = await fetch('/api/credits/claim-daily', { 
+                method: 'POST', 
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            if (claimRes.ok) {
+                await loadStats(); 
+                await loadGamification();
+            }
+        } catch(e) { 
+            // Silent fail - daily bonus may have been claimed already
+            console.log('Daily bonus check:', e.message);
+        }
     }
 
     // Event listeners
