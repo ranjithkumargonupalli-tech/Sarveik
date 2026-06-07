@@ -1372,14 +1372,7 @@
                 </div>
                 <div class="forgot-link"><a onclick="showForgotFlow()">Forgot Password?</a></div>
                 <button class="auth-btn" onclick="handleLogin()" id="loginBtn">Login</button>
-                <!-- ─────────────────────────────────────────────────────────────────
-                     CHANGE 1 OF 2 — Added id="googleAuthLink" to this anchor.
-                     The syncGoogleAuthLink() function (below) updates its href
-                     dynamically to carry ?remember=1 when the checkbox is ticked,
-                     so the server can echo the preference back after OAuth completes.
-                     Nothing else about this element has been altered.
-                ──────────────────────────────────────────────────────────────────── -->
-                <a id="googleAuthLink" href="/auth/google" style="text-decoration:none;">
+                <a href="/auth/google" style="text-decoration:none;">
                     <button class="auth-btn google-btn"><i class="fab fa-google"></i> Continue with Google</button>
                 </a>
             </div>
@@ -1734,113 +1727,5 @@
             })();
         });
     </script>
-
-    <!-- ═══════════════════════════════════════════════════════════════════════
-         CHANGE 2 OF 2 — GOOGLE OAUTH SESSION HANDLER
-         ───────────────────────────────────────────────────────────────────────
-         What this block does (and only what this block does):
-
-         1. syncGoogleAuthLink()
-            Keeps the Google auth anchor's href in sync with the "Remember Me"
-            checkbox so the server receives ?remember=1 or ?remember=0 as part
-            of the OAuth initiation request.  Called on DOMContentLoaded and on
-            every checkbox change event.
-
-         2. OAuth Return Handler (runs inside DOMContentLoaded)
-            After /auth/google/callback the server redirects back to index.html
-            with ?oauth_success=1 appended (plus the remember value echoed back).
-            This handler:
-              a) Immediately strips those params from the URL (no retrigger on F5)
-              b) Calls the existing apiCall('/profile') helper — identical to
-                 what handleLogin() already does
-              c) Writes nova_auth to localStorage in the exact same format that
-                 handleLogin() uses: { username, role, timestamp }
-              d) Writes nova_remember when remember=1, removes it when remember=0
-                 — identical to handleLogin()'s remember-me branch
-              e) Redirects by role — identical to handleLogin()
-
-         No existing function, variable, route, UI element, CSS rule, or logic
-         has been modified.  This block is purely additive.
-         ═══════════════════════════════════════════════════════════════════════ -->
-    <script>
-        /* ── 1. Keep Google auth link in sync with the Remember Me checkbox ── */
-        function syncGoogleAuthLink() {
-            var link = document.getElementById('googleAuthLink');
-            if (!link) return;
-            var cb = document.getElementById('rememberCheckbox');
-            var remember = (cb && cb.checked) ? '1' : '0';
-            link.href = '/auth/google?remember=' + remember;
-        }
-
-        document.addEventListener('DOMContentLoaded', function () {
-            /* Wire checkbox changes to keep the href current */
-            var cb = document.getElementById('rememberCheckbox');
-            if (cb) cb.addEventListener('change', syncGoogleAuthLink);
-
-            /* Set initial href once the DOM is ready */
-            syncGoogleAuthLink();
-
-            /* ── 2. OAuth Return Handler ────────────────────────────────────────
-               Triggered only when the server appends ?oauth_success=1 to the
-               redirect URL after a successful Google OAuth callback.
-
-               The server must redirect to:
-                 /?oauth_success=1&remember=1   (if the user ticked Remember Me)
-                 /?oauth_success=1&remember=0   (if they did not)
-
-               Everything below mirrors handleLogin() exactly:
-                 - same apiCall('/profile') fetch
-                 - same nova_auth localStorage format
-                 - same nova_remember logic
-                 - same role-based redirect targets
-            ─────────────────────────────────────────────────────────────────── */
-            var params = new URLSearchParams(window.location.search);
-
-            if (params.get('oauth_success') === '1') {
-                /* Remove the query params immediately so a page refresh or
-                   browser back-button does not retrigger this handler */
-                history.replaceState({}, document.title, window.location.pathname);
-
-                var rememberRequested = params.get('remember') === '1';
-
-                apiCall('/profile')
-                    .then(function (profile) {
-                        /* ── Store session — identical format to handleLogin() ── */
-                        localStorage.setItem('nova_auth', JSON.stringify({
-                            username:  profile.username,
-                            role:      profile.role,
-                            timestamp: Date.now()
-                        }));
-
-                        /* ── Remember Me — identical logic to handleLogin() ── */
-                        if (rememberRequested) {
-                            localStorage.setItem('nova_remember', JSON.stringify({
-                                username: profile.username,
-                                role:     profile.role
-                            }));
-                        } else {
-                            localStorage.removeItem('nova_remember');
-                        }
-
-                        /* ── Role-based redirect — identical to handleLogin() ── */
-                        if (profile.role === 'admin') {
-                            window.location.href = '/admin-dashboard.html';
-                        } else if (profile.role === 'moderator') {
-                            window.location.href = '/moderator-dashboard.html';
-                        } else {
-                            window.location.href = '/main.html';
-                        }
-                    })
-                    .catch(function () {
-                        /* Profile fetch failed after OAuth — surface the auth modal
-                           with an error so the user can try again */
-                        openAuthModal();
-                        showMessage('Google sign-in failed. Please try again.');
-                    });
-            }
-        });
-    </script>
-    <!-- END GOOGLE OAUTH SESSION HANDLER -->
-
 </body>
 </html>
