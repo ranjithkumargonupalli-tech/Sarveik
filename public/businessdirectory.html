@@ -384,16 +384,23 @@
             <option value="name">Name A–Z</option>
             <option value="rating">Top Rated (Google)</option>
             <option value="views">Most Popular</option>
+            <option value="nearby">Near Me (20 KM)</option>
           </select>
         </div>
         <div class="select-wrap">
-          <select id="cityFilter">
-            <option value="all">All Cities</option>
+          <select id="stateFilter">
+            <option value="all">All States</option>
+          </select>
+        </div>
+        <div class="select-wrap">
+          <select id="districtFilter">
+            <option value="all">All Districts</option>
           </select>
         </div>
         <button id="clearFiltersBtn" class="btn-ghost"><i class="fas fa-times"></i> Clear</button>
       </div>
       <div class="filter-chips" id="filterChips"></div>
+      <div id="locationStatus" style="font-size:0.75rem;color:var(--text3);margin-top:8px;display:none;"></div>
     </div>
 
     <div class="admin-panel" id="adminPanel">
@@ -591,6 +598,10 @@
           <input type="text" class="form-control" id="f_state" placeholder="e.g. Tamil Nadu">
         </div>
         <div class="form-group">
+          <label><i class="fas fa-building"></i> District</label>
+          <input type="text" class="form-control" id="f_district" placeholder="e.g. Chennai District">
+        </div>
+        <div class="form-group">
           <label><i class="fas fa-phone"></i> Phone <span class="req">*</span></label>
           <input type="tel" class="form-control" id="f_phone" placeholder="+91 9876543210">
         </div>
@@ -610,6 +621,14 @@
         <div class="form-group">
           <label><i class="fas fa-map-pin"></i> Google Maps Link</label>
           <input type="url" class="form-control" id="f_maps" placeholder="https://maps.google.com/...">
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-location-dot"></i> Latitude (for distance calculation)</label>
+          <input type="text" class="form-control" id="f_lat" placeholder="e.g. 13.0827">
+        </div>
+        <div class="form-group">
+          <label><i class="fas fa-location-dot"></i> Longitude</label>
+          <input type="text" class="form-control" id="f_lng" placeholder="e.g. 80.2707">
         </div>
 
         <div class="form-section-title full">🕐 Opening Hours</div>
@@ -715,6 +734,68 @@ const GOOGLE_RATINGS_CACHE_TTL = 15 * 24 * 60 * 60 * 1000; // 15 days in ms
 // For production: store server-side, proxy requests through your backend
 const GOOGLE_PLACES_API_KEY = ''; // <-- YOUR KEY HERE
 
+// Distance calculation (Haversine formula)
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  if (!lat1 || !lon1 || !lat2 || !lon2) return null;
+  const R = 6371; // Earth's radius in km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  return R * c;
+}
+
+function formatDistance(km) {
+  if (km === null) return null;
+  if (km < 1) return `${Math.round(km * 1000)}m`;
+  return `${km.toFixed(1)}km`;
+}
+
+let userLocation = null;
+let userLocationPromise = null;
+
+function getUserLocation() {
+  if (userLocationPromise) return userLocationPromise;
+  
+  userLocationPromise = new Promise((resolve) => {
+    if (!navigator.geolocation) {
+      document.getElementById('locationStatus').style.display = 'block';
+      document.getElementById('locationStatus').innerHTML = '<i class="fas fa-map-marker-alt"></i> Geolocation not supported';
+      resolve(null);
+      return;
+    }
+    
+    document.getElementById('locationStatus').style.display = 'block';
+    document.getElementById('locationStatus').innerHTML = '<i class="fas fa-spinner fa-spin"></i> Detecting your location...';
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        userLocation = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude
+        };
+        document.getElementById('locationStatus').innerHTML = '<i class="fas fa-check-circle"></i> Location detected - showing nearby businesses';
+        setTimeout(() => {
+          document.getElementById('locationStatus').style.display = 'none';
+        }, 3000);
+        resolve(userLocation);
+      },
+      (error) => {
+        let errorMsg = 'Location access denied. Using default view.';
+        if (error.code === 1) errorMsg = 'Location permission denied. Enable to see nearby businesses.';
+        else if (error.code === 2) errorMsg = 'Location unavailable.';
+        document.getElementById('locationStatus').innerHTML = `<i class="fas fa-exclamation-triangle"></i> ${errorMsg}`;
+        resolve(null);
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 600000 }
+    );
+  });
+  
+  return userLocationPromise;
+}
+
 function escHtml(str) {
   if (!str) return '';
   return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
@@ -743,7 +824,7 @@ function timeAgo(iso) {
 function isNewItem(createdAt) { return (Date.now() - new Date(createdAt)) < 7 * 86400000; }
 
 function isOpenNow(hours) {
-  if (!hours) return null; // null = unknown
+  if (!hours) return null;
   const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
   const dayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
   const range = hours[dayNames[dayIdx]];
@@ -807,14 +888,13 @@ const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
 // ======================== STATE ========================
 let state = {
-  filterCategory:'all', search:'', sort:'newest', city:'all',
+  filterCategory:'all', search:'', sort:'newest', city:'all', stateFilter:'all', districtFilter:'all',
   openNow:false, verifiedOnly:false, page:1, perPage:9, viewMode:'grid',
   compareList:[], currentBizId:null, allBusinesses:[], favorites:[],
-  pendingBusinesses:[], currentReportBizId:null
+  pendingBusinesses:[], currentReportBizId:null, userLocation:null, nearbyMode:false
 };
 
 // ======================== GOOGLE RATINGS CACHE ========================
-// Cache structure: { placeId: { rating, user_ratings_total, fetchedAt }, ... }
 function loadGoogleCache() {
   try { return JSON.parse(localStorage.getItem(GOOGLE_RATINGS_CACHE_KEY) || '{}'); }
   catch { return {}; }
@@ -838,14 +918,12 @@ function cacheAgeLabel(fetchedAt) {
 }
 
 // ======================== GOOGLE PLACES API ========================
-// Fetch rating from Google Places API (requires API key + backend proxy in prod)
 async function fetchGoogleRating(placeId) {
   if (!placeId) return null;
   const cache = loadGoogleCache();
   if (cache[placeId] && isCacheFresh(cache[placeId])) return cache[placeId];
 
   if (!GOOGLE_PLACES_API_KEY) {
-    // In production, proxy through your backend: GET /api/google-rating?place_id=...
     try {
       const res = await fetch(`${API_BASE}/google-rating?place_id=${encodeURIComponent(placeId)}`);
       if (res.ok) {
@@ -861,7 +939,6 @@ async function fetchGoogleRating(placeId) {
     return null;
   }
 
-  // Direct Google Places API call (only works if key has Places API + browser allowed)
   try {
     const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(placeId)}&fields=rating,user_ratings_total&key=${GOOGLE_PLACES_API_KEY}`;
     const res = await fetch(url);
@@ -880,7 +957,6 @@ async function fetchGoogleRating(placeId) {
   return null;
 }
 
-// Force refresh all cached ratings for a business
 async function refreshGoogleRating(placeId) {
   if (!placeId) return null;
   const cache = loadGoogleCache();
@@ -908,7 +984,8 @@ async function getBusinesses() {
   try {
     let url = `/businesses?approved=true&limit=100`;
     if (state.filterCategory !== 'all') url += `&category=${encodeURIComponent(state.filterCategory)}`;
-    if (state.city !== 'all') url += `&city=${encodeURIComponent(state.city)}`;
+    if (state.stateFilter !== 'all') url += `&state=${encodeURIComponent(state.stateFilter)}`;
+    if (state.districtFilter !== 'all') url += `&district=${encodeURIComponent(state.districtFilter)}`;
     if (state.verifiedOnly) url += `&verifiedOnly=true`;
     if (state.search) url += `&search=${encodeURIComponent(state.search)}`;
     const data = await apiCall(url);
@@ -919,7 +996,8 @@ async function getBusinesses() {
 async function submitBusiness(bizData) { return apiCall('/businesses/submit', {method:'POST',body:bizData}); }
 async function getFavorites() { try { return await apiCall('/user/favorites'); } catch { return []; } }
 async function toggleFavoriteAPI(id) { try { const r = await apiCall(`/businesses/${id}/favorite`,{method:'POST'}); return r.favorited; } catch { return false; } }
-async function getCities() { try { return await apiCall('/businesses/cities'); } catch { return []; } }
+async function getStates() { try { return await apiCall('/businesses/states'); } catch { return []; } }
+async function getDistrictsByState(state) { try { return await apiCall(`/businesses/districts?state=${encodeURIComponent(state)}`); } catch { return []; } }
 async function getPendingBusinesses() { try { const d = await apiCall('/admin/businesses/pending'); return d.businesses||d.data||[]; } catch { return []; } }
 async function approveBusinessAPI(id) { return apiCall(`/admin/businesses/${id}/approve`,{method:'PUT'}); }
 async function rejectBusinessAPI(id,reason) { return apiCall(`/admin/businesses/${id}/reject`,{method:'DELETE',body:{reason}}); }
@@ -933,13 +1011,61 @@ async function loadBusinesses() {
     state.allBusinesses = await getBusinesses();
     await renderBusinesses();
     updateStats();
-    updateCityFilter();
+    await loadStatesFilter();
   } catch { showToast('Failed to load businesses','error'); }
+}
+
+async function loadStatesFilter() {
+  const states = await getStates();
+  const stateSel = document.getElementById('stateFilter');
+  const current = stateSel.value;
+  stateSel.innerHTML = '<option value="all">All States</option>' + states.map(s=>`<option value="${escHtml(s)}">${escHtml(s)}</option>`).join('');
+  if (current !== 'all') stateSel.value = current;
+}
+
+async function loadDistrictsFilter(state) {
+  if (!state || state === 'all') {
+    document.getElementById('districtFilter').innerHTML = '<option value="all">All Districts</option>';
+    return;
+  }
+  const districts = await getDistrictsByState(state);
+  const districtSel = document.getElementById('districtFilter');
+  const current = districtSel.value;
+  districtSel.innerHTML = '<option value="all">All Districts</option>' + districts.map(d=>`<option value="${escHtml(d)}">${escHtml(d)}</option>`).join('');
+  if (current !== 'all') districtSel.value = current;
 }
 
 // ======================== RENDER BUSINESSES ========================
 async function renderBusinesses() {
   let filtered = [...state.allBusinesses];
+  
+  // Apply district filter
+  if (state.districtFilter !== 'all') {
+    filtered = filtered.filter(b => (b.district || b.city) === state.districtFilter);
+  }
+
+  // Apply state filter
+  if (state.stateFilter !== 'all') {
+    filtered = filtered.filter(b => b.state === state.stateFilter);
+  }
+
+  // Apply nearby sorting and filtering
+  let userPos = null;
+  if (state.sort === 'nearby') {
+    userPos = await getUserLocation();
+    if (userPos) {
+      // Calculate distances
+      filtered = filtered.map(b => {
+        const dist = calculateDistance(userPos.lat, userPos.lng, b.lat, b.lng);
+        return { ...b, distance: dist };
+      }).filter(b => b.distance !== null && b.distance <= 20); // Within 20 KM
+      filtered.sort((a, b) => (a.distance || 999) - (b.distance || 999));
+    } else {
+      showToast('Enable location to use Nearby filter', 'info');
+      state.sort = 'newest';
+      document.getElementById('sortSelect').value = 'newest';
+    }
+  }
 
   if (state.sort === 'name') filtered.sort((a,b) => a.name.localeCompare(b.name));
   else if (state.sort === 'rating') {
@@ -951,7 +1077,7 @@ async function renderBusinesses() {
     });
   }
   else if (state.sort === 'views') filtered.sort((a,b) => (b.views||0)-(a.views||0));
-  else filtered.sort((a,b) => new Date(b.created_at)-new Date(a.created_at));
+  else if (state.sort !== 'nearby') filtered.sort((a,b) => new Date(b.created_at)-new Date(a.created_at));
 
   if (state.openNow) filtered = filtered.filter(b => isOpenNow(b.hours) === true);
 
@@ -980,6 +1106,7 @@ async function renderBusinesses() {
     const emoji = EMOJIS[biz.type] || '📦';
     const gData = (biz.place_id && cache[biz.place_id]) || (biz.google_rating ? {rating:biz.google_rating, user_ratings_total:biz.google_review_count||0} : null);
     const mapsUrl = buildGoogleMapsUrl(biz.address, biz.city, biz.state, biz.lat, biz.lng);
+    const distanceHtml = biz.distance ? `<div class="biz-meta-item"><i class="fas fa-location-dot"></i> ${formatDistance(biz.distance)} away</div>` : '';
 
     const ratingHtml = gData?.rating
       ? `<div class="google-rating-pill">
@@ -1007,10 +1134,12 @@ async function renderBusinesses() {
         </div>
         <div class="biz-card-body">
           <div class="biz-name">${escHtml(biz.name)}</div>
-          <div class="biz-type-tag">${emoji} ${escHtml((biz.type||'').replace('_',' '))} · ${escHtml(biz.city||'')}</div>
+          <div class="biz-type-tag">${emoji} ${escHtml((biz.type||'').replace('_',' '))} · ${escHtml(biz.city||'')}${biz.state ? `, ${escHtml(biz.state)}` : ''}</div>
           <p class="biz-desc">${escHtml(biz.description||biz.desc||'')}</p>
           <div class="biz-meta">
             <div class="biz-meta-item"><i class="fas fa-map-marker-alt"></i> ${escHtml((biz.address||'').substring(0,55))}${(biz.address||'').length>55?'...':''}</div>
+            ${biz.district ? `<div class="biz-meta-item"><i class="fas fa-building"></i> District: ${escHtml(biz.district)}</div>` : ''}
+            ${distanceHtml}
             ${biz.phone?`<div class="biz-meta-item"><i class="fas fa-phone"></i> <a href="tel:${escHtml(biz.phone)}" onclick="event.stopPropagation()">${escHtml(biz.phone)}</a></div>`:''}
           </div>
           <div class="biz-card-footer">
@@ -1031,7 +1160,6 @@ async function renderBusinesses() {
       </div>`;
   }).join('');
 
-  // Bind events
   document.querySelectorAll('.details-btn').forEach(btn => btn.addEventListener('click', e => { e.stopPropagation(); openDetailModal(btn.dataset.id); }));
   document.querySelectorAll('.fav-btn-card').forEach(btn => btn.addEventListener('click', async e => {
     e.stopPropagation();
@@ -1054,7 +1182,6 @@ async function renderBusinesses() {
 
   renderPagination(totalPages);
 
-  // Async: load Google ratings for visible cards that don't have cached data
   pageItems.forEach(biz => {
     if (biz.place_id && !(cache[biz.place_id] && isCacheFresh(cache[biz.place_id]))) {
       fetchGoogleRating(biz.place_id).then(rating => {
@@ -1065,7 +1192,6 @@ async function renderBusinesses() {
 }
 
 function updateCardGoogleRating(bizId, gData) {
-  // Update any rendered card's rating pill
   const cards = document.querySelectorAll(`.biz-card[data-id="${bizId}"]`);
   cards.forEach(card => {
     const footer = card.querySelector('.biz-card-footer');
@@ -1108,12 +1234,6 @@ function updateStats() {
   document.getElementById('reviewCount').innerText = totalReviews.toLocaleString();
 }
 
-async function updateCityFilter() {
-  const cities = await getCities();
-  const sel = document.getElementById('cityFilter');
-  sel.innerHTML = '<option value="all">All Cities</option>' + cities.map(c=>`<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('');
-}
-
 // ======================== DETAIL MODAL ========================
 let currentModalBiz = null;
 
@@ -1136,7 +1256,6 @@ async function openDetailModal(bizId) {
     ${openStatus === true ? '<span class="badge badge-open">● Open Now</span>' : openStatus === false ? '<span class="badge badge-closed">✕ Closed Now</span>' : ''}
   `;
 
-  // --- Google Rating Block ---
   const grbScore = document.getElementById('grbScore');
   const grbStars = document.getElementById('grbStars');
   const grbCount = document.getElementById('grbCount');
@@ -1144,7 +1263,6 @@ async function openDetailModal(bizId) {
   const grbCacheBadge = document.getElementById('grbCacheBadge');
   const grbSpinner = document.getElementById('grbSpinner');
 
-  // Reset to loading state
   grbScore.textContent = '—';
   grbStars.textContent = '☆☆☆☆☆';
   grbCount.textContent = 'Loading Google reviews…';
@@ -1156,10 +1274,8 @@ async function openDetailModal(bizId) {
     const cache = loadGoogleCache();
     const cached = cache[biz.place_id];
     if (cached && isCacheFresh(cached)) {
-      // Use cached
       applyGoogleRatingToModal(cached, true, cached.fetchedAt);
     } else {
-      // Fetch live
       const gData = await fetchGoogleRating(biz.place_id);
       if (gData) applyGoogleRatingToModal(gData, false, gData.fetchedAt);
       else {
@@ -1180,7 +1296,6 @@ async function openDetailModal(bizId) {
     grbStatus.innerHTML = '<i class="fas fa-info-circle"></i> Setup needed';
   }
 
-  // --- Google Maps Thumbnail ---
   const thumbWrap = document.getElementById('mapsThumbWrap');
   const mapsUrl = buildGoogleMapsUrl(biz.address, biz.city, biz.state, biz.lat, biz.lng);
   const staticUrl = buildStaticMapsUrl(biz.address, biz.city, biz.state, biz.lat, biz.lng);
@@ -1192,7 +1307,6 @@ async function openDetailModal(bizId) {
         <a href="${mapsUrl}" target="_blank" rel="noopener" class="maps-open-btn"><i class="fas fa-map-marker-alt"></i> View on Google Maps</a>
       </div>`;
   } else {
-    // No API key: show address with open button
     thumbWrap.style.height = 'auto';
     thumbWrap.style.padding = '16px';
     thumbWrap.style.background = 'var(--card)';
@@ -1203,7 +1317,7 @@ async function openDetailModal(bizId) {
       <i class="fas fa-map-marker-alt" style="color:var(--accent);font-size:1.4rem;flex-shrink:0"></i>
       <div>
         <div style="font-size:0.88rem;font-weight:500;">${escHtml(biz.address||'')}</div>
-        <div style="font-size:0.78rem;color:var(--text3);">${escHtml([biz.city,biz.state].filter(Boolean).join(', '))}</div>
+        <div style="font-size:0.78rem;color:var(--text3);">${escHtml([biz.city,biz.district,biz.state].filter(Boolean).join(', '))}</div>
       </div>`;
   }
 
@@ -1212,10 +1326,11 @@ async function openDetailModal(bizId) {
     ${biz.maps_link ? `<a href="${escHtml(biz.maps_link)}" target="_blank" rel="noopener" class="contact-btn maps-btn"><i class="fas fa-directions"></i> Directions</a>` : ''}
   `;
 
-  // --- Info Grid ---
   document.getElementById('modalInfoGrid').innerHTML = `
     ${biz.address ? `<div class="info-item"><div class="info-label"><i class="fas fa-map-marker-alt"></i> Address</div><div class="info-val">${escHtml(biz.address)}</div></div>` : ''}
-    ${biz.city ? `<div class="info-item"><div class="info-label"><i class="fas fa-city"></i> City</div><div class="info-val">${escHtml(biz.city)}${biz.state?', '+escHtml(biz.state):''}</div></div>` : ''}
+    ${biz.city ? `<div class="info-item"><div class="info-label"><i class="fas fa-city"></i> City</div><div class="info-val">${escHtml(biz.city)}</div></div>` : ''}
+    ${biz.district ? `<div class="info-item"><div class="info-label"><i class="fas fa-building"></i> District</div><div class="info-val">${escHtml(biz.district)}</div></div>` : ''}
+    ${biz.state ? `<div class="info-item"><div class="info-label"><i class="fas fa-map"></i> State</div><div class="info-val">${escHtml(biz.state)}</div></div>` : ''}
     ${biz.phone ? `<div class="info-item"><div class="info-label"><i class="fas fa-phone"></i> Phone</div><div class="info-val"><a href="tel:${escHtml(biz.phone)}">${escHtml(biz.phone)}</a></div></div>` : ''}
     ${biz.email ? `<div class="info-item"><div class="info-label"><i class="fas fa-envelope"></i> Email</div><div class="info-val"><a href="mailto:${escHtml(biz.email)}">${escHtml(biz.email)}</a></div></div>` : ''}
     ${biz.website ? `<div class="info-item"><div class="info-label"><i class="fas fa-globe"></i> Website</div><div class="info-val"><a href="${escHtml(biz.website)}" target="_blank" rel="noopener">Visit Website</a></div></div>` : ''}
@@ -1223,7 +1338,6 @@ async function openDetailModal(bizId) {
     <div class="info-item"><div class="info-label"><i class="fas fa-calendar"></i> Listed</div><div class="info-val">${timeAgo(biz.created_at)}</div></div>
   `;
 
-  // --- Hours ---
   if (biz.hours && Object.keys(biz.hours).length) {
     document.getElementById('hoursSection').style.display='';
     const todayIdx = new Date().getDay()===0?6:new Date().getDay()-1;
@@ -1237,7 +1351,6 @@ async function openDetailModal(bizId) {
     }).join('');
   } else { document.getElementById('hoursSection').style.display='none'; }
 
-  // --- Amenities ---
   if (biz.amenities?.length) {
     document.getElementById('amenitiesSection').style.display='';
     document.getElementById('modalAmenities').innerHTML = biz.amenities.map(aid => {
@@ -1246,7 +1359,6 @@ async function openDetailModal(bizId) {
     }).join('');
   } else { document.getElementById('amenitiesSection').style.display='none'; }
 
-  // --- Contact Actions ---
   document.getElementById('modalContactActions').innerHTML = `
     ${biz.phone ? `<a href="tel:${escHtml(biz.phone)}" class="contact-btn call"><i class="fas fa-phone"></i> Call</a>` : ''}
     ${biz.whatsapp ? `<a href="https://api.whatsapp.com/send?phone=${encodeURIComponent(biz.whatsapp.replace(/\D/g,''))}&text=Hello%20${encodeURIComponent(biz.name)}" target="_blank" rel="noopener" class="contact-btn whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</a>` : ''}
@@ -1254,7 +1366,6 @@ async function openDetailModal(bizId) {
     ${biz.website ? `<a href="${escHtml(biz.website)}" target="_blank" rel="noopener" class="contact-btn"><i class="fas fa-external-link-alt"></i> Website</a>` : ''}
   `;
 
-  // --- Share ---
   const shareUrl = encodeURIComponent(window.location.href + '#biz-' + biz.id);
   const shareText = encodeURIComponent(`Check out ${biz.name} on Sarveik Directory!`);
   document.getElementById('modalShare').innerHTML = `
@@ -1265,7 +1376,6 @@ async function openDetailModal(bizId) {
   `;
   document.getElementById('copyLinkBtn').addEventListener('click', () => { navigator.clipboard.writeText(window.location.href); showToast('Link copied!','success'); });
 
-  // --- Fav button ---
   const isFav = state.favorites.includes(biz.id);
   const favBtn = document.getElementById('modalFavBtn');
   favBtn.innerHTML = isFav ? '<i class="fas fa-heart"></i> Saved' : '<i class="far fa-heart"></i> Save';
@@ -1276,7 +1386,6 @@ async function openDetailModal(bizId) {
     await loadBusinesses();
   };
 
-  // --- Modal Actions ---
   document.getElementById('modalActions').innerHTML = `
     <a class="modal-action-btn gmaps" href="${mapsUrl}" target="_blank" rel="noopener"><i class="fas fa-map-marker-alt"></i> 📍 Open in Google Maps</a>
     ${biz.phone ? `<a class="modal-action-btn primary" href="tel:${escHtml(biz.phone)}"><i class="fas fa-phone"></i> Call Now</a>` : ''}
@@ -1338,7 +1447,7 @@ function renderPendingList() {
     <div class="pending-item">
       <div class="pending-info">
         <div class="pending-name">${escHtml(b.name)} <span style="font-size:0.75rem;color:var(--text3);">(${b.type})</span></div>
-        <div class="pending-meta"><i class="fas fa-map-marker-alt"></i> ${escHtml(b.city)} · ${timeAgo(b.created_at)}</div>
+        <div class="pending-meta"><i class="fas fa-map-marker-alt"></i> ${escHtml(b.city)}${b.state ? `, ${escHtml(b.state)}` : ''} · ${timeAgo(b.created_at)}</div>
         <div style="font-size:0.72rem;color:var(--accent);margin-top:4px;"><i class="fas fa-envelope"></i> ${escHtml(b.email)}</div>
       </div>
       <div class="pending-actions">
@@ -1363,13 +1472,12 @@ async function rejectBusiness(id) {
   catch(e) { showToast('Rejection failed: '+e.message,'error'); }
 }
 
-// Export CSV
 document.getElementById('exportDataBtn').addEventListener('click', () => {
-  const rows = [['Name','Type','Category','City','Phone','Email','Verified','Featured','Views','Google Rating','Google Reviews']];
+  const rows = [['Name','Type','Category','City','District','State','Phone','Email','Verified','Featured','Views','Google Rating','Google Reviews']];
   const cache = loadGoogleCache();
   state.allBusinesses.forEach(b => {
     const g = b.place_id && cache[b.place_id];
-    rows.push([b.name,b.type,b.category,b.city,b.phone,b.email,b.verified?'Yes':'No',b.featured?'Yes':'No',b.views||0,g?.rating||'',g?.user_ratings_total||'']);
+    rows.push([b.name,b.type,b.category,b.city,b.district,b.state,b.phone,b.email,b.verified?'Yes':'No',b.featured?'Yes':'No',b.views||0,g?.rating||'',g?.user_ratings_total||'']);
   });
   const csv = rows.map(r=>r.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
   const a = document.createElement('a');
@@ -1396,23 +1504,27 @@ document.getElementById('submitBizBtn').addEventListener('click', async () => {
     hours[day] = closed ? 'Closed' : `${document.getElementById(`h_${day}_start`)?.value}-${document.getElementById(`h_${day}_end`)?.value}`;
   });
   const amenities = Array.from(document.querySelectorAll('.amenity-opt.selected')).map(el=>el.dataset.id);
+  const lat = parseFloat(document.getElementById('f_lat').value);
+  const lng = parseFloat(document.getElementById('f_lng').value);
   const bizData = {
     name, type, category:document.getElementById('f_category').value,
     description:desc, address, city, state:document.getElementById('f_state').value.trim(),
+    district:document.getElementById('f_district').value.trim(),
     phone, email, whatsapp:document.getElementById('f_whatsapp').value.trim(),
     website:document.getElementById('f_website').value.trim(),
     place_id:document.getElementById('f_place_id').value.trim(),
     maps_link:document.getElementById('f_maps').value.trim(),
     instagram:document.getElementById('f_instagram').value.trim(),
     facebook:document.getElementById('f_facebook').value.trim(),
-    hours, amenities
+    hours, amenities,
+    lat: isNaN(lat) ? null : lat,
+    lng: isNaN(lng) ? null : lng
   };
   try {
     await submitBusiness(bizData);
     showToast('✅ Submitted for admin review!','success');
     document.getElementById('addModal').classList.remove('open');
-    // Reset form
-    ['f_name','f_type','f_desc','f_address','f_city','f_phone','f_email','f_whatsapp','f_website','f_place_id','f_maps','f_instagram','f_facebook','f_state'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+    ['f_name','f_type','f_desc','f_address','f_city','f_phone','f_email','f_whatsapp','f_website','f_place_id','f_maps','f_instagram','f_facebook','f_state','f_district','f_lat','f_lng'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
     document.getElementById('f_24h').checked=false;
     buildHoursForm();
     document.querySelectorAll('.amenity-opt.selected').forEach(el=>el.classList.remove('selected'));
@@ -1440,7 +1552,7 @@ async function showFavorites() {
         </div>
         <div class="biz-card-body">
           <div class="biz-name">${escHtml(biz.name)}</div>
-          <div class="biz-type-tag">${emoji} ${(biz.type||'').replace('_',' ')} · ${biz.city||''}</div>
+          <div class="biz-type-tag">${emoji} ${(biz.type||'').replace('_',' ')} · ${biz.city||''}${biz.state ? `, ${biz.state}` : ''}</div>
           <p class="biz-desc">${escHtml(biz.description||biz.desc||'')}</p>
           <div class="biz-card-footer">
             ${g?.rating ? `<div class="google-rating-pill"><span class="g-stars">${renderGoogleStars(g.rating)}</span><span class="g-score">${g.rating.toFixed(1)}</span></div>` : '<span style="font-size:0.75rem;color:var(--text3);">No rating</span>'}
@@ -1479,6 +1591,7 @@ document.getElementById('doCompare').addEventListener('click', () => {
   const fields = [
     {label:'Name',fn:b=>b.name},{label:'Type',fn:b=>(b.type||'').replace('_',' ')},
     {label:'Category',fn:b=>b.category||'—'},{label:'City',fn:b=>b.city||'—'},
+    {label:'District',fn:b=>b.district||'—'},{label:'State',fn:b=>b.state||'—'},
     {label:'Phone',fn:b=>b.phone||'—'},{label:'Email',fn:b=>b.email||'—'},
     {label:'Google Rating',fn:b=>{const g=b.place_id&&cache[b.place_id];return g?.rating?`${g.rating.toFixed(1)} ★ (${(g.user_ratings_total||0).toLocaleString()})`:b.google_rating?`${b.google_rating} ★`:'N/A'}},
     {label:'Open Now',fn:b=>isOpenNow(b.hours)===true?'✅ Yes':'❌ No'},
@@ -1487,7 +1600,7 @@ document.getElementById('doCompare').addEventListener('click', () => {
   let t='<table style="width:100%;border-collapse:collapse;">';
   t+=`<tr style="background:var(--bg2);"><th style="padding:10px;border:1px solid var(--border);text-align:left;">Attribute</th>`;
   selected.forEach(b=>{ t+=`<th style="padding:10px;border:1px solid var(--border);">${escHtml(b.name)}</th>`; });
-  t+='</tr>';
+  t+='</td>';
   fields.forEach(f=>{
     t+=`<tr><td style="padding:8px 10px;border:1px solid var(--border);color:var(--text2);font-size:0.82rem;">${f.label}</td>`;
     selected.forEach(b=>{ t+=`<td style="padding:8px 10px;border:1px solid var(--border);font-size:0.85rem;">${escHtml(f.fn(b))}</td>`; });
@@ -1567,14 +1680,27 @@ window.addEventListener('resize',()=>{if(window.innerWidth>768&&drawer.classList
 
 // ======================== EVENT LISTENERS ========================
 document.getElementById('searchInput').addEventListener('input',e=>{state.search=e.target.value;state.page=1;loadBusinesses();});
-document.getElementById('sortSelect').addEventListener('change',e=>{state.sort=e.target.value;loadBusinesses();});
-document.getElementById('cityFilter').addEventListener('change',e=>{state.city=e.target.value;state.page=1;loadBusinesses();});
+document.getElementById('sortSelect').addEventListener('change',e=>{state.sort=e.target.value;state.page=1;loadBusinesses();});
+document.getElementById('stateFilter').addEventListener('change',async e=>{
+  state.stateFilter=e.target.value;
+  state.districtFilter='all';
+  await loadDistrictsFilter(state.stateFilter);
+  state.page=1;
+  loadBusinesses();
+});
+document.getElementById('districtFilter').addEventListener('change',e=>{
+  state.districtFilter=e.target.value;
+  state.page=1;
+  loadBusinesses();
+});
 document.getElementById('openNowFilter').addEventListener('change',e=>{state.openNow=e.target.checked;loadBusinesses();});
 document.getElementById('verifiedFilter').addEventListener('change',e=>{state.verifiedOnly=e.target.checked;loadBusinesses();});
 document.getElementById('clearFiltersBtn').addEventListener('click',()=>{
-  state.filterCategory='all';state.search='';state.city='all';state.openNow=false;state.verifiedOnly=false;state.sort='newest';state.page=1;
+  state.filterCategory='all';state.search='';state.stateFilter='all';state.districtFilter='all';
+  state.openNow=false;state.verifiedOnly=false;state.sort='newest';state.page=1;
   document.getElementById('searchInput').value='';document.getElementById('sortSelect').value='newest';
-  document.getElementById('cityFilter').value='all';document.getElementById('openNowFilter').checked=false;document.getElementById('verifiedFilter').checked=false;
+  document.getElementById('stateFilter').value='all';document.getElementById('districtFilter').innerHTML='<option value="all">All Districts</option>';
+  document.getElementById('openNowFilter').checked=false;document.getElementById('verifiedFilter').checked=false;
   buildCategoryChips();loadBusinesses();
 });
 document.getElementById('gridViewBtn').addEventListener('click',()=>{state.viewMode='grid';document.getElementById('gridViewBtn').classList.add('active');document.getElementById('listViewBtn').classList.remove('active');renderBusinesses();});
@@ -1594,14 +1720,12 @@ document.getElementById('showReportsBtn').addEventListener('click',()=>document.
 document.getElementById('closeReportsBtn').addEventListener('click',()=>document.getElementById('reportsPanel').style.display='none');
 document.getElementById('closeAdminBtn').addEventListener('click',()=>document.getElementById('adminPanel').classList.remove('visible'));
 
-// Admin: 5-click logo
 let clickCount=0,clickTimeout;
 document.querySelector('.logo').addEventListener('click',()=>{
   clickCount++;clearTimeout(clickTimeout);clickTimeout=setTimeout(()=>clickCount=0,800);
   if(clickCount>=5){document.getElementById('adminPanel').classList.add('visible');loadPendingBusinesses();clickCount=0;showToast('Admin panel unlocked','info');}
 });
 
-// Scroll
 window.addEventListener('scroll',()=>document.getElementById('backToTop').classList.toggle('show',window.scrollY>400));
 document.getElementById('backToTop').addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){document.querySelectorAll('.modal-backdrop.open').forEach(m=>m.classList.remove('open'));closeDrawer();}});
@@ -1611,6 +1735,7 @@ buildCategoryChips();
 buildHoursForm();
 buildAmenitiesSelector();
 initTheme();
+getUserLocation(); // pre-fetch location
 loadBusinesses();
 </script>
 </body>
