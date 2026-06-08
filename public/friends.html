@@ -61,10 +61,9 @@
             z-index: 0;
         }
 
-        /* All direct children of body sit above pseudo-elements */
         body > * { position: relative; z-index: 1; }
 
-        /* ═══════════════ NAVBAR ═══════════════ */
+        /* ========== NAVBAR ========== */
         .navbar {
             background: rgba(3,10,22,0.97);
             backdrop-filter: blur(28px);
@@ -94,6 +93,8 @@
             position: relative;
         }
         .nav-brand i { font-size: 1rem; }
+        
+        /* Desktop Navigation */
         .nav-links {
             display: flex;
             list-style: none;
@@ -121,6 +122,146 @@
             border-color: rgba(0,229,255,0.25);
             box-shadow: 0 0 16px rgba(0,229,255,0.12);
         }
+        
+        /* Profile Section in Navbar */
+        .nav-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            padding: 0.3rem 0.6rem;
+            border-radius: var(--radius-btn);
+            transition: all 0.22s ease;
+            background: rgba(0,229,255,0.05);
+            border: 1px solid rgba(0,229,255,0.15);
+            margin-left: 0.5rem;
+            position: relative;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .nav-profile:hover {
+            background: rgba(0,229,255,0.12);
+            border-color: rgba(0,229,255,0.3);
+        }
+        .nav-profile-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--cyan);
+            background: var(--bg-deep);
+        }
+        .nav-profile-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #e2eaf5;
+            max-width: 100px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .nav-profile-icon {
+            color: var(--cyan);
+            font-size: 0.75rem;
+            transition: transform 0.2s ease;
+        }
+        .nav-profile.active .nav-profile-icon {
+            transform: rotate(180deg);
+        }
+
+        /* Profile Dropdown Menu */
+        .profile-dropdown {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: rgba(4,12,28,0.98);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            min-width: 240px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1150;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,229,255,0.1);
+        }
+        .profile-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+        .profile-dropdown-header {
+            padding: 1rem 1rem 0.75rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        .profile-dropdown-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--cyan);
+        }
+        .profile-dropdown-info {
+            flex: 1;
+        }
+        .profile-dropdown-name {
+            font-weight: 700;
+            font-size: 0.9rem;
+            color: #e2eaf5;
+        }
+        .profile-dropdown-email {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+        }
+        .profile-dropdown-items {
+            padding: 0.5rem 0;
+        }
+        .profile-dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.7rem 1rem;
+            width: 100%;
+            background: transparent;
+            border: none;
+            color: #e2eaf5;
+            font-family: var(--font-main);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .profile-dropdown-item:hover {
+            background: rgba(0,229,255,0.08);
+            color: var(--cyan);
+        }
+        .profile-dropdown-item i {
+            width: 20px;
+            color: var(--cyan);
+            font-size: 0.9rem;
+        }
+        .profile-dropdown-item.danger {
+            color: #fca5a5;
+        }
+        .profile-dropdown-item.danger:hover {
+            background: rgba(239,68,68,0.1);
+            color: #fca5a5;
+        }
+        .profile-dropdown-item.danger i {
+            color: var(--rose);
+        }
+        .profile-dropdown-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 0.3rem 0;
+        }
+
+        /* Badge */
         .badge {
             background: var(--rose);
             color: white;
@@ -131,112 +272,57 @@
             line-height: 1.5;
         }
 
-        /* ═══════════════ HAMBURGER ═══════════════ */
-        /*
-         * Only visible on mobile (≤768px).
-         * Uses a pure-CSS bar → X morph via transform.
-         * min-width/height ensure a 44×44 touch target (WCAG 2.5.5).
-         */
+        /* Hamburger Button */
         .hamburger {
-            display: none;                 /* hidden on desktop */
+            display: none;
             flex-direction: column;
-            justify-content: center;
-            align-items: center;
             cursor: pointer;
-            gap: 0;                        /* gaps controlled by margin on spans */
-            padding: 10px;
-            z-index: 1200;                 /* above drawer AND overlay */
-            border-radius: 12px;
-            background: transparent;
-            border: 1px solid transparent;
-            min-width: 44px;
-            min-height: 44px;
-            transition: background 0.2s ease, border-color 0.2s ease;
+            gap: 5px;
+            padding: 8px;
+            z-index: 1200;
+            border-radius: 10px;
+            transition: background 0.2s;
             position: relative;
             -webkit-tap-highlight-color: transparent;
-            /* GPU-composite the button itself */
-            will-change: transform;
+            background: transparent;
+            border: none;
         }
-        .hamburger:hover,
-        .hamburger:focus-visible {
-            background: rgba(0,229,255,0.08);
-            border-color: rgba(0,229,255,0.2);
-            outline: none;
-        }
-        .hamburger:focus-visible {
-            box-shadow: 0 0 0 3px rgba(0,229,255,0.35);
-        }
-
-        /* The three bars */
-        .hamburger .bar {
-            display: block;
+        .hamburger:hover { background: rgba(0,229,255,0.08); }
+        .hamburger span {
             width: 22px;
             height: 2px;
             background: #e2eaf5;
             border-radius: 2px;
-            /* GPU-composited transform — no layout reflow */
-            will-change: transform, opacity;
-            transition:
-                transform 0.32s cubic-bezier(0.4, 0, 0.2, 1),
-                opacity   0.22s ease,
-                background 0.2s ease;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+            display: block;
         }
-        .hamburger .bar:nth-child(1) { margin-bottom: 5px; }
-        .hamburger .bar:nth-child(2) { margin-bottom: 5px; }
+        .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+        .hamburger.active span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+        .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
 
-        /* X state — set by JS adding .is-open to the hamburger */
-        .hamburger.is-open .bar:nth-child(1) {
-            transform: translateY(7px) rotate(45deg);
-            background: var(--cyan);
-        }
-        .hamburger.is-open .bar:nth-child(2) {
-            opacity: 0;
-            transform: scaleX(0);
-        }
-        .hamburger.is-open .bar:nth-child(3) {
-            transform: translateY(-7px) rotate(-45deg);
-            background: var(--cyan);
-        }
-
-        /* ═══════════════ OVERLAY ═══════════════ */
-        /*
-         * Sits between page content and the nav drawer.
-         * Uses opacity + pointer-events instead of display toggle
-         * so CSS transitions work correctly.
-         */
+        /* Mobile Drawer */
         .nav-overlay {
+            display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.72);
+            background: rgba(0,0,0,0.7);
+            z-index: 1050;
             backdrop-filter: blur(4px);
             -webkit-backdrop-filter: blur(4px);
-            z-index: 1050;                 /* below drawer (1100) and hamburger (1200) */
             opacity: 0;
-            pointer-events: none;          /* invisible + non-interactive by default */
-            transition: opacity 0.32s cubic-bezier(0.4, 0, 0.2, 1);
-            /* ensure it never shows on desktop */
-            display: none;
+            transition: opacity 0.3s ease;
         }
-        .nav-overlay.is-visible {
-            display: block;                /* make it part of layout first ... */
-        }
-        /* two-frame trick: display:block is applied synchronously, then
-           opacity transition fires on the next paint */
-        .nav-overlay.is-active {
+        .nav-overlay.active {
+            display: block;
             opacity: 1;
-            pointer-events: auto;
         }
 
-        /* ═══════════════ MOBILE NAV ═══════════════ */
         @media (max-width: 768px) {
             .hamburger { display: flex; }
-
             .nav-links {
                 position: fixed;
-                top: 0;
-                right: 0;
-                bottom: 0;
-                width: min(300px, 88vw);
+                top: 0; right: 0; bottom: 0;
+                width: min(290px, 85vw);
                 background: rgba(4,12,28,0.99);
                 backdrop-filter: blur(32px);
                 -webkit-backdrop-filter: blur(32px);
@@ -245,42 +331,37 @@
                 align-items: stretch;
                 padding: 80px 1.25rem 2rem;
                 gap: 0.25rem;
-                z-index: 1100;             /* above overlay, below hamburger */
-                /* GPU-composited slide — no layout reflow */
-                transform: translateX(100%) translateZ(0);
-                will-change: transform;
-                transition: transform 0.32s cubic-bezier(0.4, 0, 0.2, 1);
+                z-index: 1100;
+                transform: translateX(100%);
+                transition: transform 0.32s cubic-bezier(0.4,0,0.2,1);
                 border-left: 1px solid var(--border);
-                box-shadow: -8px 0 40px rgba(0,0,0,0.5);
                 overflow-y: auto;
                 -webkit-overflow-scrolling: touch;
-                /* prevent content behind from scrolling through */
-                overscroll-behavior: contain;
             }
-            .nav-links.is-open {
-                transform: translateX(0) translateZ(0);
-            }
-
+            .nav-links.active { transform: translateX(0); }
             .nav-links li { width: 100%; }
-            .nav-links a {
-                padding: 0.9rem 1.1rem;
-                border-radius: 14px;
-                font-size: 0.95rem;
+            .nav-links a { padding: 0.85rem 1.1rem; border-radius: 14px; font-size: 0.95rem; width: 100%; }
+            .nav-profile { margin-left: 0; }
+            .nav-profile-name { display: none; }
+            .profile-dropdown {
+                position: fixed;
+                top: 60px;
+                right: 0;
+                left: 0;
                 width: 100%;
-                /* larger touch target */
-                min-height: 48px;
-                display: flex;
-                align-items: center;
-            }
-            .nav-links a:hover,
-            .nav-links a:focus-visible {
-                background: var(--cyan-dim);
-                color: var(--cyan);
-                outline: none;
+                border-radius: 0 0 20px 20px;
+                max-height: 80vh;
+                overflow-y: auto;
             }
         }
 
-        /* ═══════════════ LAYOUT ═══════════════ */
+        @media (min-width: 769px) {
+            .nav-profile {
+                position: relative;
+            }
+        }
+
+        /* ========== REST OF EXISTING STYLES (PRESERVED) ========== */
         .friends-container {
             max-width: 1240px;
             margin: 0 auto;
@@ -290,7 +371,6 @@
             .friends-container { padding: 1rem 0.75rem 5rem; }
         }
 
-        /* ═══════════════ PAGE HEADER ═══════════════ */
         .page-header { margin-bottom: 1.5rem; }
         .page-header-inner {
             display: flex;
@@ -311,7 +391,6 @@
         }
         .page-subtitle { color: var(--text-secondary); font-size: 0.84rem; margin-top: 0.3rem; }
 
-        /* ═══════════════ STATS ═══════════════ */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -355,7 +434,6 @@
         }
         .stat-label { color: var(--text-secondary); font-size: clamp(0.55rem, 1.8vw, 0.72rem); font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; }
 
-        /* ═══════════════ SECTION HEADINGS ═══════════════ */
         h2 {
             display: flex; align-items: center; gap: 0.5rem;
             margin: 2rem 0 0.85rem;
@@ -375,7 +453,6 @@
             margin-left: 0.5rem;
         }
 
-        /* ═══════════════ HEALTH CARD ═══════════════ */
         .health-card {
             background: var(--bg-card);
             border-radius: var(--radius-card);
@@ -418,7 +495,6 @@
         .health-tip.done { color: #6ee7b7; background: rgba(16,185,129,0.06); }
         .health-tip.done i { color: var(--emerald); }
 
-        /* ═══════════════ PINNED ═══════════════ */
         .pinned-section {
             background: linear-gradient(135deg, rgba(0,229,255,0.06), rgba(0,150,170,0.02));
             border: 1px solid rgba(0,229,255,0.18);
@@ -449,7 +525,6 @@
         .pinned-chip:hover { background: rgba(0,229,255,0.16); transform: translateY(-2px); }
         .pinned-chip img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; }
 
-        /* ═══════════════ SEARCH / ADD ═══════════════ */
         .search-section, .add-friend {
             display: flex; gap: 0.65rem; margin-bottom: 1.25rem;
         }
@@ -474,7 +549,6 @@
             .search-section .btn, .add-friend .btn { width: 100%; justify-content: center; }
         }
 
-        /* ═══════════════ BUTTONS ═══════════════ */
         .btn {
             padding: 0.72rem 1.25rem;
             border: none; border-radius: var(--radius-btn);
@@ -507,7 +581,6 @@
             .btn-icon { min-width: 34px; min-height: 34px; }
         }
 
-        /* ═══════════════ FILTERS ═══════════════ */
         .filters-section {
             background: var(--bg-card);
             border-radius: var(--radius-card);
@@ -541,7 +614,6 @@
             .filters-actions { width: 100%; justify-content: flex-end; }
         }
 
-        /* ═══════════════ CONTROLS ═══════════════ */
         .controls-row {
             display: flex; justify-content: space-between; align-items: center;
             flex-wrap: wrap; gap: 0.65rem; margin-bottom: 0.85rem;
@@ -569,7 +641,6 @@
             .sort-btn { padding: 0.32rem 0.65rem; font-size: 0.65rem; }
         }
 
-        /* ═══════════════ FRIEND GRID ═══════════════ */
         .friend-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
@@ -578,7 +649,6 @@
         @media (max-width: 700px) { .friend-grid { grid-template-columns: 1fr; } }
         .friend-grid.list-view { grid-template-columns: 1fr; }
 
-        /* ═══════════════ FRIEND CARD ═══════════════ */
         .friend-card, .search-result-card, .request-card, .group-card {
             background: var(--bg-card);
             backdrop-filter: blur(20px);
@@ -622,7 +692,6 @@
             }
         }
 
-        /* ── FRIEND INFO ── */
         .friend-info {
             display: flex;
             flex-direction: row;
@@ -692,7 +761,6 @@
             font-size: 0.6rem; color: var(--text-secondary);
         }
 
-        /* ── CARD ACTIONS ── */
         .card-actions {
             display: flex;
             flex-direction: row;
@@ -719,7 +787,6 @@
             .card-actions .star-btn { display: none; }
         }
 
-        /* STATUS DOT */
         .friend-status {
             display: inline-flex; width: 8px; height: 8px;
             border-radius: 50%; background: #1e3048; flex-shrink: 0;
@@ -753,11 +820,9 @@
             font-size: 0.58rem; display: inline-flex; align-items: center; gap: 2px; flex-shrink: 0;
         }
 
-        /* VARIANTS */
         .request-card { border-left: 3px solid rgba(0,229,255,0.5); background: rgba(0,229,255,0.03); margin-bottom: 0.65rem; }
         .group-card { border-left: 3px solid rgba(249,115,22,0.5); background: rgba(249,115,22,0.03); }
 
-        /* ═══════════════ TRENDING ═══════════════ */
         #trendingSection {
             background: var(--bg-card);
             border-radius: var(--radius-card);
@@ -800,7 +865,6 @@
             .trending-rank { width: 24px; height: 24px; font-size: 0.65rem; }
         }
 
-        /* ═══════════════ SUGGESTIONS ═══════════════ */
         .suggestion-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(min(160px, calc(50% - 0.5rem)), 1fr));
@@ -838,7 +902,6 @@
         .suggestion-mutual { font-size: 0.62rem; color: var(--cyan); margin-bottom: 0.6rem; display: flex; align-items: center; justify-content: center; gap: 0.28rem; flex-wrap: wrap; }
         .suggest-connect-btn { font-size: 0.72rem !important; width: 100%; }
 
-        /* ═══════════════ ACTIVITY ═══════════════ */
         .activity-feed {
             background: var(--bg-card);
             border-radius: var(--radius-card);
@@ -868,7 +931,6 @@
         .activity-time { font-size: 0.68rem; color: var(--text-muted); white-space: nowrap; flex-shrink: 0; font-family: var(--font-mono); }
         @media (max-width: 380px) { .activity-time { display: none; } }
 
-        /* ═══════════════ LOADING / EMPTY ═══════════════ */
         .loading, .no-results {
             display: flex; align-items: center; justify-content: center;
             padding: 2rem 1rem; color: var(--text-muted);
@@ -878,7 +940,6 @@
         .loading i { animation: spin 1s linear infinite; font-size: 1.1rem; color: var(--cyan); }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-        /* ═══════════════ SKELETON ═══════════════ */
         .skeleton-card {
             background: rgba(10,20,40,0.7); border-radius: var(--radius-card); padding: 1rem;
             display: flex; align-items: center; gap: 0.75rem; min-height: 76px;
@@ -890,7 +951,6 @@
         .skeleton-line:last-child { width: 58%; }
         @keyframes skeleton-pulse { 0%,100%{opacity:0.35} 50%{opacity:0.7} }
 
-        /* ═══════════════ EXPORT BTN ═══════════════ */
         .export-btn {
             background: rgba(255,255,255,0.04); border: 1px solid rgba(100,140,180,0.2);
             border-radius: var(--radius-btn); color: var(--text-secondary);
@@ -900,7 +960,6 @@
         }
         .export-btn:hover { color: var(--cyan); border-color: rgba(0,229,255,0.3); }
 
-        /* ═══════════════ TOAST ═══════════════ */
         .toast {
             position: fixed; top: 72px; right: 0.85rem;
             color: white; padding: 0.8rem 1.1rem;
@@ -915,7 +974,6 @@
         }
         .toast.show { transform: translateX(0); }
 
-        /* ═══════════════ MODALS ═══════════════ */
         .modal {
             display: none;
             position: fixed;
@@ -1012,7 +1070,6 @@
             margin: 2rem 0;
         }
 
-        /* ═══════════════ BACK TO TOP ═══════════════ */
         #backToTop {
             position: fixed; bottom: 1.25rem; right: 1.25rem;
             background: linear-gradient(135deg, var(--cyan), #0099cc);
@@ -1038,8 +1095,8 @@
 
         .mutual-pill {
             display: inline-flex; align-items: center; gap: 0.28rem;
-            background: rgba(0,230,255,0.08); border: 1px solid rgba(0,230,255,0.18);
-            border-radius: 20px; padding: 2px 9px; font-size: 0.65rem; color: #00e6ff; margin-top: 3px;
+            background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.18);
+            border-radius: var(--radius-btn); padding: 2px 9px; font-size: 0.62rem; color: var(--cyan); margin-top: 3px;
         }
 
         .section-divider {
@@ -1049,7 +1106,6 @@
         .section-divider::before, .section-divider::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(100,140,180,0.15)); }
         .section-divider::after { background: linear-gradient(270deg, transparent, rgba(100,140,180,0.15)); }
 
-        /* ═══════════════ MORE BUTTON (mobile overflow) ═══════════════ */
         .btn-more {
             padding: 0.42rem 0.55rem;
             font-size: 0.75rem;
@@ -1067,7 +1123,6 @@
         }
         .btn-more:hover { background: rgba(255,255,255,0.05); color: #e2eaf5; }
 
-        /* ═══════════════ CONTEXT MENU ═══════════════ */
         .ctx-menu {
             position: fixed;
             z-index: 3100;
@@ -1102,48 +1157,70 @@
     </style>
 </head>
 <body>
+    <div class="nav-overlay" id="navOverlay"></div>
 
-    <!-- ═══════ NAV OVERLAY ═══════ -->
-    <div class="nav-overlay" id="navOverlay" aria-hidden="true"></div>
-
-    <!-- ═══════ NAVBAR ═══════ -->
-    <nav class="navbar" role="navigation" aria-label="Main navigation">
+    <nav class="navbar">
         <div class="nav-brand">
             <i class="fas fa-shield-alt"></i> Sarveik
         </div>
-
-        <!-- Nav links — also acts as the mobile drawer -->
-        <ul
-            class="nav-links"
-            id="navLinks"
-            role="menubar"
-            aria-label="Site navigation"
-        >
-            <li role="none"><a href="dashboard.html" role="menuitem"><i class="fas fa-home"></i> Dashboard</a></li>
-            <li role="none"><a href="profile.html" role="menuitem"><i class="fas fa-user"></i> Profile</a></li>
-            <li role="none"><a href="main.html" role="menuitem"><i class="fas fa-rocket"></i> Tools</a></li>
-            <li role="none">
-                <a href="friends.html" class="active" role="menuitem">
-                    <i class="fas fa-users"></i> Network
-                    <span id="totalBadge" class="badge" style="display:none;" aria-label="notifications"></span>
-                </a>
-            </li>
-            <li role="none"><a href="index.html" id="logoutBtn" role="menuitem"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+        
+        <!-- Desktop Navigation Links -->
+        <ul class="nav-links" id="navLinks">
+            <li><a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li><a href="profile.html"><i class="fas fa-user"></i> Profile</a></li>
+            <li><a href="main.html"><i class="fas fa-rocket"></i> Tools</a></li>
+            <li><a href="friends.html" class="active">
+                <i class="fas fa-users"></i> Network
+                <span id="totalBadge" class="badge" style="display:none;"></span>
+            </a></li>
         </ul>
-
-        <!-- Hamburger button -->
-        <button
-            class="hamburger"
-            id="hamburger"
-            aria-label="Open navigation menu"
-            aria-expanded="false"
-            aria-controls="navLinks"
-            type="button"
-        >
-            <span class="bar" aria-hidden="true"></span>
-            <span class="bar" aria-hidden="true"></span>
-            <span class="bar" aria-hidden="true"></span>
-        </button>
+        
+        <!-- Right side: Profile Menu + Hamburger -->
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <div class="nav-profile" id="navProfileBtn">
+                <img src="https://via.placeholder.com/32" alt="Profile" class="nav-profile-avatar" id="navProfileAvatar" onerror="this.src='https://via.placeholder.com/32?text=U'">
+                <span class="nav-profile-name" id="navProfileName">Loading...</span>
+                <i class="fas fa-chevron-down nav-profile-icon"></i>
+            </div>
+            <button class="hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+        
+        <!-- Profile Dropdown Menu -->
+        <div class="profile-dropdown" id="profileDropdown">
+            <div class="profile-dropdown-header">
+                <img src="https://via.placeholder.com/44" alt="Profile" class="profile-dropdown-avatar" id="dropdownAvatar" onerror="this.src='https://via.placeholder.com/44?text=U'">
+                <div class="profile-dropdown-info">
+                    <div class="profile-dropdown-name" id="dropdownName">Loading...</div>
+                    <div class="profile-dropdown-email" id="dropdownEmail">user@example.com</div>
+                </div>
+            </div>
+            <div class="profile-dropdown-items">
+                <button class="profile-dropdown-item" id="profileMenuItem">
+                    <i class="fas fa-user-circle"></i> My Profile
+                </button>
+                <button class="profile-dropdown-item" id="dashboardMenuItem">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </button>
+                <button class="profile-dropdown-item" id="savedMenuItem">
+                    <i class="fas fa-heart"></i> Saved Items
+                </button>
+                <button class="profile-dropdown-item" id="notificationsMenuItem">
+                    <i class="fas fa-bell"></i> Notifications
+                </button>
+                <button class="profile-dropdown-item" id="settingsMenuItem">
+                    <i class="fas fa-cog"></i> Settings
+                </button>
+                <button class="profile-dropdown-item" id="helpMenuItem">
+                    <i class="fas fa-question-circle"></i> Help & Support
+                </button>
+                <div class="profile-dropdown-divider"></div>
+                <button class="profile-dropdown-item danger" id="logoutMenuItem">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
+            </div>
+        </div>
     </nav>
 
     <div class="friends-container">
@@ -1300,24 +1377,24 @@
     </div>
 
     <div class="disclaimer">
-        <p><strong>Disclaimer:</strong> Sarveik is a directory of third&#8209;party tools. We do not host any content. All trademarks, logos, and brand names are the property of their respective owners. If you believe any link infringes your rights, please <a href="dmca.html">contact us</a> for removal.</p>
+        <p><strong>Disclaimer:</strong> Sarveik is a directory of third‑party tools. We do not host any content. All trademarks, logos, and brand names are the property of their respective owners. If you believe any link infringes your rights, please <a href="dmca.html">contact us</a> for removal.</p>
     </div>
 
     <button id="backToTop" title="Back to top"><i class="fas fa-arrow-up"></i></button>
 
     <!-- PROFILE MODAL -->
-    <div id="profileModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="profileModalTitle">
+    <div id="profileModal" class="modal">
         <div class="modal-content">
-            <span class="close-modal" role="button" aria-label="Close">&times;</span>
+            <span class="close-modal">&times;</span>
             <div id="modalProfileContent">Loading...</div>
         </div>
     </div>
 
     <!-- CREATE GROUP MODAL -->
-    <div id="createGroupModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="createGroupTitle">
+    <div id="createGroupModal" class="modal">
         <div class="modal-content" style="max-width:540px;">
-            <span class="close-modal" id="closeGroupModal" role="button" aria-label="Close">&times;</span>
-            <h3 id="createGroupTitle" style="margin-bottom:0.8rem;font-size:0.95rem;display:flex;align-items:center;gap:0.42rem;">
+            <span class="close-modal" id="closeGroupModal">&times;</span>
+            <h3 style="margin-bottom:0.8rem;font-size:0.95rem;display:flex;align-items:center;gap:0.42rem;">
                 <i class="fas fa-layer-group" style="color:var(--cyan);"></i> Create New Group
             </h3>
             <div class="group-info-preview">
@@ -1340,10 +1417,10 @@
     </div>
 
     <!-- NOTE MODAL -->
-    <div id="noteModal" class="modal" role="dialog" aria-modal="true" aria-labelledby="noteModalTitle">
+    <div id="noteModal" class="modal">
         <div class="modal-content" style="max-width:420px;">
-            <span class="close-modal" id="closeNoteModal" role="button" aria-label="Close">&times;</span>
-            <h3 id="noteModalTitle" style="margin-bottom:0.4rem;font-size:0.95rem;display:flex;align-items:center;gap:0.42rem;">
+            <span class="close-modal" id="closeNoteModal">&times;</span>
+            <h3 style="margin-bottom:0.4rem;font-size:0.95rem;display:flex;align-items:center;gap:0.42rem;">
                 <i class="fas fa-sticky-note" style="color:var(--cyan);"></i> Private Note
             </h3>
             <p style="color:var(--text-secondary);font-size:0.74rem;" id="noteForUser">For @username</p>
@@ -1355,224 +1432,11 @@
     </div>
 
     <!-- Context Menu -->
-    <div id="ctxMenu" class="ctx-menu" style="display:none;" role="menu"></div>
-    <div id="ctxBackdrop" class="ctx-backdrop" style="display:none;" aria-hidden="true"></div>
+    <div id="ctxMenu" class="ctx-menu" style="display:none;"></div>
+    <div id="ctxBackdrop" class="ctx-backdrop" style="display:none;"></div>
 
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script>
-    // ╔══════════════════════════════════════════════════════════════════╗
-    // ║                  HAMBURGER MENU — FIXED MODULE                  ║
-    // ║  Self-contained IIFE so variables don't pollute global scope.   ║
-    // ║  Uses pointer-events (not display toggling) on the overlay so   ║
-    // ║  CSS opacity transitions work without rAF hacks.                ║
-    // ║  Implements a proper focus-trap and ARIA state management.      ║
-    // ╚══════════════════════════════════════════════════════════════════╝
-    (function initNavMenu() {
-        const hamburger  = document.getElementById('hamburger');
-        const navLinks   = document.getElementById('navLinks');
-        const navOverlay = document.getElementById('navOverlay');
-
-        if (!hamburger || !navLinks || !navOverlay) return;
-
-        /* ── State ── */
-        let isOpen    = false;
-        let isAnimating = false;   // debounce guard — prevents rapid-tap glitch
-
-        /* ── All focusable elements inside the drawer ── */
-        function getFocusable() {
-            return Array.from(
-                navLinks.querySelectorAll(
-                    'a[href], button:not([disabled]), [tabindex]:not([tabindex="-1"])'
-                )
-            ).filter(el => !el.closest('[hidden]'));
-        }
-
-        /* ── Open ── */
-        function openNav() {
-            if (isOpen || isAnimating) return;
-            isAnimating = true;
-
-            // Close context menu if it happens to be open
-            if (typeof hideCtxMenu === 'function') hideCtxMenu();
-
-            isOpen = true;
-
-            /* ARIA */
-            hamburger.setAttribute('aria-expanded', 'true');
-            hamburger.setAttribute('aria-label', 'Close navigation menu');
-            navLinks.removeAttribute('aria-hidden');
-
-            /* Visual state */
-            hamburger.classList.add('is-open');
-            navLinks.classList.add('is-open');
-
-            /* Overlay: set display first, then trigger opacity transition */
-            navOverlay.classList.add('is-visible');
-            /* rAF ensures the browser has painted display:block before
-               the opacity transition fires — solves the flicker bug */
-            requestAnimationFrame(() => {
-                navOverlay.classList.add('is-active');
-            });
-
-            /* Lock body scroll — preserves scroll position */
-            document.body.style.top    = `-${window.scrollY}px`;
-            document.body.style.position = 'fixed';
-            document.body.style.width  = '100%';
-            document.body.style.overflowY = 'hidden';
-
-            /* Move focus into drawer after slide-in (320ms) */
-            const TRANSITION_MS = 340;
-            setTimeout(() => {
-                isAnimating = false;
-                const first = getFocusable()[0];
-                if (first) first.focus();
-            }, TRANSITION_MS);
-        }
-
-        /* ── Close ── */
-        function closeNav() {
-            if (!isOpen || isAnimating) return;
-            isAnimating = true;
-
-            isOpen = false;
-
-            /* ARIA */
-            hamburger.setAttribute('aria-expanded', 'false');
-            hamburger.setAttribute('aria-label', 'Open navigation menu');
-            navLinks.setAttribute('aria-hidden', 'true');
-
-            /* Visual state */
-            hamburger.classList.remove('is-open');
-            navLinks.classList.remove('is-open');
-
-            /* Fade out overlay, then hide it from layout */
-            navOverlay.classList.remove('is-active');
-            const FADE_MS = 340;
-            setTimeout(() => {
-                navOverlay.classList.remove('is-visible');
-            }, FADE_MS);
-
-            /* Restore body scroll — re-apply saved scroll position */
-            const scrollY = parseInt(document.body.style.top || '0', 10) * -1;
-            document.body.style.position  = '';
-            document.body.style.top       = '';
-            document.body.style.width     = '';
-            document.body.style.overflowY = '';
-            window.scrollTo(0, scrollY);
-
-            /* Return focus to hamburger */
-            setTimeout(() => {
-                isAnimating = false;
-                hamburger.focus();
-            }, FADE_MS);
-        }
-
-        /* ── Toggle (used only by hamburger click) ── */
-        function toggleNav() {
-            isOpen ? closeNav() : openNav();
-        }
-
-        /* ── Hamburger: click + touch ──
-         * We use 'touchend' + preventDefault to eliminate the iOS 300ms
-         * ghost-click delay that caused the double-toggle glitch.
-         * The 'click' handler fires on desktop where touch events don't exist.
-         */
-        let _touchHandled = false;
-
-        hamburger.addEventListener('touchend', function(e) {
-            e.preventDefault();          // kill ghost click
-            _touchHandled = true;
-            toggleNav();
-            /* reset flag after ghost-click window */
-            setTimeout(() => { _touchHandled = false; }, 600);
-        }, { passive: false });
-
-        hamburger.addEventListener('click', function(e) {
-            if (_touchHandled) return;   // already handled by touchend
-            toggleNav();
-        });
-
-        /* Keyboard: Enter / Space on hamburger */
-        hamburger.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                toggleNav();
-            }
-        });
-
-        /* ── Overlay click → close ── */
-        navOverlay.addEventListener('click', closeNav);
-        navOverlay.addEventListener('touchend', function(e) {
-            e.preventDefault();
-            closeNav();
-        }, { passive: false });
-
-        /* ── Nav links: close drawer when a link is tapped ──
-         * Single delegated listener — no duplicates.
-         */
-        navLinks.addEventListener('click', function(e) {
-            const link = e.target.closest('a');
-            if (link && isOpen) {
-                closeNav();
-            }
-        });
-
-        /* ── Focus trap inside the open drawer ── */
-        navLinks.addEventListener('keydown', function(e) {
-            if (!isOpen) return;
-            if (e.key === 'Tab') {
-                const focusable = getFocusable();
-                if (!focusable.length) return;
-                const first = focusable[0];
-                const last  = focusable[focusable.length - 1];
-                if (e.shiftKey) {
-                    if (document.activeElement === first) {
-                        e.preventDefault();
-                        last.focus();
-                    }
-                } else {
-                    if (document.activeElement === last) {
-                        e.preventDefault();
-                        first.focus();
-                    }
-                }
-            }
-        });
-
-        /* ── Escape key closes menu ── */
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape') {
-                if (isOpen) closeNav();
-                if (typeof hideCtxMenu === 'function') hideCtxMenu();
-            }
-        });
-
-        /* ── Orientation / resize: close menu to avoid stale layout ── */
-        window.addEventListener('resize', function() {
-            if (window.innerWidth > 768 && isOpen) {
-                /* On desktop breakpoint, silently reset state without animation */
-                isOpen = false;
-                isAnimating = false;
-                hamburger.classList.remove('is-open');
-                navLinks.classList.remove('is-open');
-                navOverlay.classList.remove('is-active', 'is-visible');
-                hamburger.setAttribute('aria-expanded', 'false');
-                hamburger.setAttribute('aria-label', 'Open navigation menu');
-                /* Restore body scroll just in case */
-                document.body.style.position  = '';
-                document.body.style.top       = '';
-                document.body.style.width     = '';
-                document.body.style.overflowY = '';
-            }
-        });
-
-        /* Initial ARIA state */
-        navLinks.setAttribute('aria-hidden', 'true');
-        hamburger.setAttribute('aria-expanded', 'false');
-
-    })(); // end initNavMenu IIFE
-
-
         // ========== CSRF ==========
         let csrfToken = null;
         async function fetchCsrfToken() {
@@ -1622,13 +1486,16 @@
         let noteTargetId = null;
         let activityLog = JSON.parse(localStorage.getItem('nova_activity') || '[]');
 
+        // ========== Profile Data ==========
+        let currentUserProfile = null;
+
         // ========== Context Menu ==========
         const ctxMenu = document.getElementById('ctxMenu');
         const ctxBackdrop = document.getElementById('ctxBackdrop');
 
         function showCtxMenu(items, anchorEl) {
             ctxMenu.innerHTML = items.map(item => `
-                <button class="ctx-menu-item ${item.danger ? 'danger' : ''}" data-action="${item.action}" role="menuitem">
+                <button class="ctx-menu-item ${item.danger ? 'danger' : ''}" data-action="${item.action}">
                     <i class="fas ${item.icon}"></i> ${item.label}
                 </button>`).join('');
             ctxMenu.style.display = 'block';
@@ -1720,7 +1587,25 @@
             } catch (err) { console.error('Stats error:', err); }
         }
         async function getCurrentUserId() {
-            try { const user = await apiCall('/profile'); currentUserId = user.id; } catch (err) { console.error('Error getting user ID:', err); }
+            try { const user = await apiCall('/profile'); currentUserId = user.id; return user; } catch (err) { console.error('Error getting user ID:', err); return null; }
+        }
+        async function loadCurrentUserProfile() {
+            try {
+                const user = await apiCall('/profile');
+                currentUserProfile = user;
+                const avatarEl = document.getElementById('navProfileAvatar');
+                const nameEl = document.getElementById('navProfileName');
+                const dropdownAvatar = document.getElementById('dropdownAvatar');
+                const dropdownName = document.getElementById('dropdownName');
+                const dropdownEmail = document.getElementById('dropdownEmail');
+                
+                if (avatarEl) avatarEl.src = user.avatar_url || 'https://via.placeholder.com/32?text=U';
+                if (dropdownAvatar) dropdownAvatar.src = user.avatar_url || 'https://via.placeholder.com/44?text=U';
+                if (nameEl) nameEl.textContent = user.display_name || user.username || 'User';
+                if (dropdownName) dropdownName.textContent = user.display_name || user.username || 'User';
+                if (dropdownEmail) dropdownEmail.textContent = user.email || 'user@example.com';
+                return user;
+            } catch (err) { console.error('Error loading profile:', err); return null; }
         }
         async function updateUnreadBadge() {
             try {
@@ -2324,6 +2209,78 @@
         const closeProfileModal = document.querySelector('#profileModal .close-modal');
         if (closeProfileModal) closeProfileModal.onclick = () => profileModal.style.display = 'none';
 
+        // ========== Profile Dropdown Menu ==========
+        const navProfileBtn = document.getElementById('navProfileBtn');
+        const profileDropdown = document.getElementById('profileDropdown');
+        let dropdownOpen = false;
+
+        function toggleProfileDropdown() {
+            dropdownOpen = !dropdownOpen;
+            if (dropdownOpen) {
+                profileDropdown.classList.add('show');
+                navProfileBtn.classList.add('active');
+            } else {
+                profileDropdown.classList.remove('show');
+                navProfileBtn.classList.remove('active');
+            }
+        }
+
+        function closeProfileDropdown() {
+            dropdownOpen = false;
+            profileDropdown.classList.remove('show');
+            navProfileBtn.classList.remove('active');
+        }
+
+        navProfileBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleProfileDropdown();
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!navProfileBtn.contains(e.target) && !profileDropdown.contains(e.target)) {
+                closeProfileDropdown();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && dropdownOpen) {
+                closeProfileDropdown();
+            }
+        });
+
+        // Profile Menu Item Actions
+        document.getElementById('profileMenuItem')?.addEventListener('click', () => {
+            closeProfileDropdown();
+            window.location.href = 'profile.html';
+        });
+        document.getElementById('dashboardMenuItem')?.addEventListener('click', () => {
+            closeProfileDropdown();
+            window.location.href = 'dashboard.html';
+        });
+        document.getElementById('savedMenuItem')?.addEventListener('click', () => {
+            closeProfileDropdown();
+            window.location.href = 'profile.html?tab=favorites';
+        });
+        document.getElementById('notificationsMenuItem')?.addEventListener('click', () => {
+            closeProfileDropdown();
+            window.location.href = 'profile.html?tab=notifications';
+        });
+        document.getElementById('settingsMenuItem')?.addEventListener('click', () => {
+            closeProfileDropdown();
+            window.location.href = 'profile.html?tab=settings';
+        });
+        document.getElementById('helpMenuItem')?.addEventListener('click', () => {
+            closeProfileDropdown();
+            window.location.href = 'support.html';
+        });
+        document.getElementById('logoutMenuItem')?.addEventListener('click', async (e) => {
+            e.preventDefault();
+            if (confirm('Are you sure you want to logout?')) {
+                try { await apiCall('/logout', { method: 'POST' }); } catch (err) { }
+                window.location.href = 'index.html';
+            }
+        });
+
         // ========== Socket ==========
         socket.on('connect', () => console.log('Realtime connected'));
         socket.on('disconnect', () => { setTimeout(() => { if (!socket.connected) socket.connect(); }, 5000); });
@@ -2350,12 +2307,60 @@
         window.addEventListener('scroll', () => backToTopBtn.classList.toggle('visible', window.scrollY > 400));
         backToTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
-        // ========== Logout ==========
-        document.getElementById('logoutBtn').addEventListener('click', async (e) => {
-            e.preventDefault();
-            if (confirm('Are you sure you want to logout?')) {
-                try { await apiCall('/logout', { method: 'POST' }); } catch (err) { }
-                window.location.href = 'index.html';
+        // ========== Hamburger Menu - FIXED ==========
+        const hamburger = document.getElementById('hamburger');
+        const navLinks = document.getElementById('navLinks');
+        const navOverlay = document.getElementById('navOverlay');
+
+        function openNav() {
+            hamburger.classList.add('active');
+            navLinks.classList.add('active');
+            navOverlay.classList.add('active');
+            hamburger.setAttribute('aria-expanded', 'true');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeNav() {
+            hamburger.classList.remove('active');
+            navLinks.classList.remove('active');
+            navOverlay.classList.remove('active');
+            hamburger.setAttribute('aria-expanded', 'false');
+            document.body.style.overflow = '';
+            closeProfileDropdown();
+        }
+
+        function toggleNav() {
+            if (navLinks.classList.contains('active')) {
+                closeNav();
+            } else {
+                openNav();
+            }
+        }
+
+        hamburger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleNav();
+        });
+
+        hamburger.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleNav();
+            }
+        });
+
+        navOverlay.addEventListener('click', closeNav);
+
+        // Close nav when links are clicked
+        navLinks.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', closeNav);
+        });
+
+        // Close nav on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeNav();
+                hideCtxMenu();
             }
         });
 
@@ -2366,6 +2371,7 @@
         (async () => {
             await fetchCsrfToken();
             await getCurrentUserId();
+            await loadCurrentUserProfile();
             await Promise.all([loadFriends(), loadRequests(), loadStats(), loadTrending(), loadGroups()]);
             await updateUnreadBadge();
             renderActivityFeed();
