@@ -29,132 +29,16 @@ const nodemailer = require('nodemailer');
 const { fileTypeFromBuffer } = require('file-type');
 const { StandardCheckoutClient, Env, StandardCheckoutPayRequest } = require('@phonepe-pg/pg-sdk-node');
 const crypto = require('crypto');
-const compression = require('compression');
-const helmet = require('helmet');
-const morgan = require('morgan');
-const { body, validationResult, param, query } = require('express-validator');
-const NodeCache = require('node-cache');
-const geoip = require('geoip-lite');
-const useragent = require('express-useragent');
-const slowDown = require('express-slow-down');
-const CircuitBreaker = require('opossum');
-const { createLogger, format, transports } = require('winston');
-const ElasticsearchClient = require('@elastic/elasticsearch').Client;
-const Redis = require('ioredis');
-const Bull = require('bull');
-const { v4: uuidv4 } = require('uuid');
-const sanitizeHtml = require('sanitize-html');
-const xss = require('xss');
 
-// ==================== ENHANCED LOGGING SETUP ====================
-const logger = createLogger({
-    level: process.env.LOG_LEVEL || 'info',
-    format: format.combine(
-        format.timestamp(),
-        format.errors({ stack: true }),
-        format.json(),
-        format.printf(({ timestamp, level, message, ...meta }) => {
-            return `${timestamp} [${level}]: ${message} ${Object.keys(meta).length ? JSON.stringify(meta) : ''}`;
-        })
-    ),
-    transports: [
-        new transports.File({ filename: 'logs/error.log', level: 'error' }),
-        new transports.File({ filename: 'logs/combined.log' }),
-        new transports.Console({ format: format.simple() })
-    ]
-});
-
-// ==================== CACHE SETUP ====================
-const cache = new NodeCache({
-    stdTTL: 300, // 5 minutes default
-    checkperiod: 60,
-    useClones: false
-});
-
-// Redis setup for production
-let redis = null;
-try {
-    if (process.env.REDIS_URL) {
-        redis = new Redis(process.env.REDIS_URL);
-        logger.info('✅ Redis connected');
-    }
-} catch (err) {
-    logger.warn('Redis connection failed, using memory cache only');
-}
-
-// ==================== CIRCUIT BREAKER SETUP ====================
-const options = {
-    timeout: 3000,
-    errorThresholdPercentage: 50,
-    resetTimeout: 30000
-};
-
-async function dbQueryWithBreaker(query, params) {
-    try {
-        return await pool.query(query, params);
-    } catch (err) {
-        logger.error('Database query failed:', err);
-        throw err;
-    }
-}
-
-const dbBreaker = new CircuitBreaker(dbQueryWithBreaker, options);
-dbBreaker.on('open', () => logger.warn('Circuit breaker opened - DB failing'));
-dbBreaker.on('halfOpen', () => logger.info('Circuit breaker half-open'));
-dbBreaker.on('close', () => logger.info('Circuit breaker closed'));
-
-// ==================== EMAIL QUEUE SETUP ====================
-const emailQueue = new Bull('email-queue', process.env.REDIS_URL || 'redis://127.0.0.1:6379', {
-    defaultJobOptions: {
-        attempts: 3,
-        backoff: {
-            type: 'exponential',
-            delay: 2000
-        },
-        removeOnComplete: true,
-        removeOnFail: false
-    }
-});
-
-emailQueue.process(async (job) => {
-    const { to, subject, html } = job.data;
-    const transporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
-        }
-    });
-    await transporter.sendMail({
-        from: process.env.EMAIL_USER || 'noreply@Sarveik.com',
-        to,
-        subject,
-        html
-    });
-    logger.info(`Email sent to ${to}: ${subject}`);
-});
-
-// ==================== ENHANCED EMAIL SERVICE ====================
-async function sendEmailQueue(to, subject, html) {
-    try {
-        const job = await emailQueue.add({ to, subject, html });
-        return { success: true, jobId: job.id };
-    } catch (error) {
-        logger.error('Email queue error:', error);
-        return { success: false, error: error.message };
-    }
-}
-
-// ==================== ENHANCED SECURITY HEADERS ====================
-const {
-    sendWelcomeEmail,
-    sendPasswordChangeNotification,
-    sendAdminAlert,
+const { 
+    sendWelcomeEmail, 
+    sendPasswordChangeNotification, 
+    sendAdminAlert, 
     sendOtpEmail,
     sendPasswordResetOtp,
     sendFriendRequestEmail,
     sendWeeklyDigest,
-    sendAccountDeletionAlert
+    sendAccountDeletionAlert 
 } = require('./utils/emailService');
 
 // ==================== EMAIL CONFIGURATION ====================
@@ -297,39 +181,21 @@ async function sendToolSubmissionAlert(details) {
 
 const app = express();
 app.set('trust proxy', 1);
-app.get('/health', (req, res) => res.json({ status: 'healthy', timestamp: new Date().toISOString() }));
-app.get('/health/readiness', async (req, res) => {
-    try {
-        await pool.query('SELECT 1');
-        res.json({ status: 'ready', database: 'connected' });
-    } catch (err) {
-        res.status(503).json({ status: 'not ready', database: 'disconnected' });
-    }
-});
+app.get('/health', (req, res) => res.send('OK'));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// ==================== ENHANCED SECURITY MIDDLEWARE ====================
-app.use(helmet({
-    contentSecurityPolicy: {
-        directives: {
-            defaultSrc: ["'self'"],
-            styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
-            scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://cdnjs.cloudflare.com"],
-            fontSrc: ["'self'", "https://fonts.gstatic.com", "https://cdnjs.cloudflare.com"],
-            imgSrc: ["'self'", "data:", "https://maps.googleapis.com", "https://*.googleapis.com"],
-            connectSrc: ["'self'", "https://maps.googleapis.com", "wss://*"],
-            frameSrc: ["'self'", "https://www.google.com"]
+// ==================== SECURITY MIDDLEWARE ====================
+if (process.env.NODE_ENV === 'production') {
+    app.use((req, res, next) => {
+        if (req.headers['x-forwarded-proto'] !== 'https') {
+            return res.redirect(`https://${req.headers.host}${req.url}`);
         }
-    },
-    crossOriginEmbedderPolicy: false
-}));
+        next();
+    });
+}
 
-// Compression middleware
-app.use(compression());
-
-// Enhanced CORS with dynamic origin validation
 const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ['http://localhost:3000'];
 app.use(cors({
     origin: function(origin, callback) {
@@ -339,113 +205,41 @@ app.use(cors({
             callback(new Error('Not allowed by CORS'));
         }
     },
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token', 'X-Request-ID']
+    credentials: true
 }));
 
-// Request ID middleware for tracing
-app.use((req, res, next) => {
-    req.requestId = req.headers['x-request-id'] || uuidv4();
-    res.setHeader('X-Request-ID', req.requestId);
-    next();
-});
-
-// Request logging middleware
-app.use(morgan('combined', { 
-    stream: { 
-        write: (message) => logger.info(message.trim()) 
-    },
-    skip: (req) => req.path === '/health' || req.path === '/health/readiness'
-}));
-
-// User agent parsing
-app.use(useragent.express());
-
-// GeoIP middleware (optional)
-app.use((req, res, next) => {
-    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    const geo = geoip.lookup(ip);
-    req.geo = geo || null;
-    next();
-});
-
-app.use(express.json({ limit: '5mb' }));
-app.use(express.urlencoded({ extended: true, limit: '5mb' }));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use('/api/phonepe-webhook', express.raw({ type: 'application/json' }));
-app.use(express.static('public', { maxAge: '1d' }));
+app.use(express.static('public'));
 
-// Rate limiting with slow down
-const globalLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000,
-    max: 200,
-    message: { error: 'Too many requests, please try again later.' },
-    keyGenerator: ipKeyGenerator,
-    standardHeaders: true,
-    legacyHeaders: false
-});
-
-const slowDownLimiter = slowDown({
-    windowMs: 15 * 60 * 1000,
-    delayAfter: 100,
-    delayMs: 500
-});
-
-app.use(globalLimiter);
-app.use(slowDownLimiter);
-
-// ==================== ENHANCED SESSION MIDDLEWARE ====================
+// ==================== SESSION MIDDLEWARE (PostgreSQL store) ====================
 const sessionMiddleware = session({
     store: new pgSession({
         pool: pool,
         tableName: 'session',
-        createTableIfMissing: true,
-        pruneSessionInterval: 60
+        createTableIfMissing: true
     }),
     secret: process.env.SESSION_SECRET,
     resave: false,
     saveUninitialized: false,
-    name: 'sessionId',
     cookie: {
-        maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+        maxAge: 1000 * 60 * 60,
         httpOnly: true,
-        sameSite: 'strict',
-        secure: process.env.NODE_ENV === 'production',
-        path: '/',
-        domain: process.env.COOKIE_DOMAIN || undefined
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production'
     }
 });
 app.use(sessionMiddleware);
 
-// Session validation middleware
-app.use((req, res, next) => {
-    if (req.session.userId && !req.session.sessionValidated) {
-        req.session.sessionValidated = true;
-        req.session.touch();
-    }
-    next();
-});
-
 app.use(passport.initialize());
 app.use(passport.session());
 
-// ==================== ENHANCED XSS HELPER ====================
+// ==================== XSS HELPER ====================
 function escapeHtml(str) {
     if (!str) return '';
-    return str.replace(/[&<>]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[m]));
+    return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m]));
 }
-
-function sanitizeInput(input) {
-    if (typeof input === 'string') {
-        return sanitizeHtml(input, {
-            allowedTags: [],
-            allowedAttributes: {},
-            stripAll: true
-        });
-    }
-    return input;
-}
-
 function validateIntParam(value, paramName) {
     const num = Number(value);
     if (isNaN(num) || !Number.isInteger(num) || num < -2147483648 || num > 2147483647) {
@@ -459,29 +253,21 @@ setInterval(async () => {
     try {
         await pool.query('DELETE FROM otp_store WHERE expires_at < NOW()');
         await pool.query('DELETE FROM password_resets WHERE expires_at < NOW()');
-        await pool.query('DELETE FROM sessions WHERE expire < NOW()');
     } catch (err) { console.error('OTP cleanup error:', err); }
 }, 10 * 60 * 1000);
 
-// ==================== ENHANCED RATE LIMITING ====================
+// ==================== RATE LIMITING ====================
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 200,
-    message: { error: 'Too many requests from this IP, please try again later.' },
-    standardHeaders: true
+    max: 100,
+    message: 'Too many requests from this IP, please try again later.'
 });
-
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 15,
     skipSuccessfulRequests: true,
-    message: { error: 'Too many attempts, please try again later.' },
-    keyGenerator: (req) => {
-        if (req.body.email) return req.body.email;
-        return ipKeyGenerator(req);
-    }
+    message: 'Too many attempts, please try again later.'
 });
-
 const otpVerificationLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 5,
@@ -489,20 +275,8 @@ const otpVerificationLimiter = rateLimit({
         if (req.body.email) return req.body.email;
         return ipKeyGenerator(req);
     },
-    message: { error: 'Too many OTP verification attempts, please try again later.' }
+    message: 'Too many OTP verification attempts, please try again later.'
 });
-
-const apiLimiter = rateLimit({
-    windowMs: 60 * 1000,
-    max: 30,
-    keyGenerator: ipKeyGenerator,
-    message: { error: 'Rate limit exceeded. Please wait a moment.' }
-});
-
-// Apply API rate limit to sensitive endpoints
-app.use('/api/businesses/submit', apiLimiter);
-app.use('/api/tools/submit', apiLimiter);
-app.use('/api/credits/spend', apiLimiter);
 
 // ==================== STAFF LOUNGE ====================
 async function ensureStaffLoungeGroup() {
@@ -554,7 +328,6 @@ async function addXP(userId, amount, source) {
             [userId, amount, source]
         );
         await checkLevelUp(userId);
-        logger.info(`Added ${amount} XP to user ${userId} from ${source}`);
     } catch (err) {
         console.error('addXP error:', err);
     }
@@ -581,7 +354,6 @@ async function checkLevelUp(userId) {
             if (socketInfo?.socketId) {
                 io.to(socketInfo.socketId).emit('level_up', { oldLevel: level, newLevel });
             }
-            logger.info(`User ${userId} leveled up from ${level} to ${newLevel}`);
         }
     } catch (err) {
         console.error('checkLevelUp error:', err);
@@ -683,7 +455,7 @@ async function updateStreak(userId) {
 }
 
 async function getDailyQuests(userId) {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = new Date().toISOString().slice(0,10);
     const quests = await pool.query(`
         SELECT q.*, COALESCE(uqd.progress, 0) as progress, COALESCE(uqd.completed, false) as completed, COALESCE(uqd.claimed, false) as claimed
         FROM daily_quests q
@@ -703,7 +475,7 @@ async function getDailyQuests(userId) {
 }
 
 async function updateQuestProgress(userId, action, increment = 1) {
-    const today = new Date().toISOString().slice(0, 10);
+    const today = new Date().toISOString().slice(0,10);
     try {
         await pool.query(`
             INSERT INTO user_daily_quests (user_id, quest_id, date, progress, completed, claimed)
@@ -896,10 +668,13 @@ passport.use(new GoogleStrategy({
           );
           user = insertResult.rows[0];
           
+          // Initialize credits for new Google user (same as email/password signup)
           await initializeUserCredits(user.id);
           
+          // Send welcome email (same as email/password signup)
           sendWelcomeEmail(email, username).catch(err => console.error('Welcome email failed:', err.message));
           
+          // Send admin notification email for new Google signup (same as email/password registration)
           sendAdminAlert({ 
             subject: 'New User Registration (Google Sign-In)', 
             message: `New user ${username} (${email}) registered via Google Sign-In.` 
@@ -940,7 +715,7 @@ const upload = multer({
     }
 });
 
-// ==================== ENHANCED AUTH MIDDLEWARE ====================
+// ==================== AUTH MIDDLEWARE ====================
 const isAuthenticated = async (req, res, next) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Not authenticated' });
     try {
@@ -949,10 +724,6 @@ const isAuthenticated = async (req, res, next) => {
                 'SELECT role, is_banned FROM users WHERE id = $1',
                 [req.session.userId]
             );
-            if (result.rows.length === 0) {
-                req.session.destroy();
-                return res.status(401).json({ error: 'User not found' });
-            }
             if (result.rows[0].is_banned) {
                 req.session.destroy();
                 return res.status(403).json({ error: 'Your account has been banned' });
@@ -1004,18 +775,6 @@ const isAdminOrModerator = async (req, res, next) => {
     }
 };
 
-// CSRF Protection middleware for state-changing requests
-const csrfProtection = async (req, res, next) => {
-    if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
-        return next();
-    }
-    const token = req.headers['x-csrf-token'] || req.body._csrf;
-    if (!token || token !== req.session.csrfToken) {
-        return res.status(403).json({ error: 'Invalid CSRF token' });
-    }
-    next();
-};
-
 app.get('/uploads/avatars/:filename', isAuthenticated, (req, res) => {
     const filepath = path.join(__dirname, 'private_uploads', 'avatars', req.params.filename);
     if (fs.existsSync(filepath)) {
@@ -1027,10 +786,6 @@ app.get('/uploads/avatars/:filename', isAuthenticated, (req, res) => {
 
 // ==================== PREMIUM STATUS HELPER ====================
 async function getPremiumStatus(userId) {
-    const cacheKey = `premium:${userId}`;
-    const cached = cache.get(cacheKey);
-    if (cached) return cached;
-    
     try {
         const result = await pool.query(
             `SELECT premium_until, analytics_until, featured_until,
@@ -1042,7 +797,7 @@ async function getPremiumStatus(userId) {
         const user = result.rows[0];
         if (!user) return {};
         const now = new Date();
-        const status = {
+        return {
             isPremium: user.premium_until && new Date(user.premium_until) > now,
             premiumUntil: user.premium_until,
             hasAnalytics: user.analytics_until && new Date(user.analytics_until) > now,
@@ -1055,8 +810,6 @@ async function getPremiumStatus(userId) {
             hasCustomBadge: user.has_custom_badge === true,
             selectedBadge: user.selected_badge
         };
-        cache.set(cacheKey, status, 300);
-        return status;
     } catch (err) {
         console.error('getPremiumStatus error:', err);
         return {};
@@ -1130,11 +883,6 @@ async function spendCredits(userId, amount, reason, feature, durationDays = 0, u
             'SELECT balance FROM user_credits WHERE user_id = $1',
             [userId]
         );
-        
-        // Invalidate cache
-        cache.del(`premium:${userId}`);
-        cache.del(`credits:${userId}`);
-        
         return balanceResult.rows[0]?.balance || 0;
     } catch (err) {
         await client.query('ROLLBACK');
@@ -1158,7 +906,6 @@ async function initializeUserCredits(userId) {
              VALUES ($1, $2, 'bonus', 'Welcome bonus for joining Sraveik')`,
             [userId, welcomeBonus]
         );
-        logger.info(`Initialized credits for new user ${userId} with ${welcomeBonus} credits`);
     } catch (err) {
         console.error('Error initializing user credits:', err);
     }
@@ -1208,7 +955,7 @@ async function awardCreditsForBusinessApproval(userId, businessName) {
          VALUES ($1, $2, 'earn', $3)`,
         [userId, approvalBonus, `Business approved: ${businessName}`]
     );
-    logger.info(`Awarded ${approvalBonus} credits to user ${userId} for business approval: ${businessName}`);
+    console.log(`✅ Awarded ${approvalBonus} credits to user ${userId} for business approval: ${businessName}`);
 }
 
 // ==================== PHONEPE PAYMENT GATEWAY ====================
@@ -2020,17 +1767,12 @@ app.post('/login', authLimiter, async (req, res) => {
             );
         }
 
-        // Generate CSRF token
-        const csrfToken = crypto.randomBytes(32).toString('hex');
-        req.session.csrfToken = csrfToken;
-
         req.session.regenerate((err) => {
             if (err) return res.status(500).send('Session error');
             req.session.userId = user.id;
             req.session.username = user.username;
             req.session.email = user.email;
             req.session.role = user.role;
-            req.session.csrfToken = csrfToken;
             if (user.role === 'admin') res.send('Login successful:admin');
             else res.send('Login successful');
         });
@@ -2608,25 +2350,17 @@ async function awardCreditsForBusinessApproval(userId, businessName) {
 
 // ==================== PUBLIC BUSINESS ENDPOINTS ====================
 
-// PUBLIC: Get approved businesses with filters and caching
+// PUBLIC: Get approved businesses with filters
 app.get('/api/businesses', async (req, res) => {
-    const { category, city, search, verifiedOnly, featured, limit = 50, offset = 0, state, district } = req.query;
-    
-    // Build cache key based on query parameters
-    const cacheKey = `businesses:${JSON.stringify(req.query)}`;
-    const cached = cache.get(cacheKey);
-    if (cached) {
-        return res.json(cached);
-    }
+    const { category, city, search, verifiedOnly, featured, limit = 50, offset = 0 } = req.query;
 
     let query = `
-        SELECT id, name, type, category, description, address, city, state, district,
+        SELECT id, name, type, category, description, address, city, state,
                phone, email, website, whatsapp, maps, instagram, facebook,
                hours, amenities, verified, featured, created_at,
                COALESCE(views, 0) as views, 
                COALESCE(avg_rating, 0) as avg_rating,
-               COALESCE(total_reviews, 0) as total_reviews,
-               lat, lng, place_id
+               COALESCE(total_reviews, 0) as total_reviews
         FROM businesses
         WHERE approved = true
     `;
@@ -2640,14 +2374,6 @@ app.get('/api/businesses', async (req, res) => {
     if (city && city !== 'all') {
         query += ` AND city = $${paramIndex++}`;
         params.push(city);
-    }
-    if (state && state !== 'all') {
-        query += ` AND state = $${paramIndex++}`;
-        params.push(state);
-    }
-    if (district && district !== 'all') {
-        query += ` AND district = $${paramIndex++}`;
-        params.push(district);
     }
     if (verifiedOnly === 'true') {
         query += ` AND verified = true`;
@@ -2679,14 +2405,6 @@ app.get('/api/businesses', async (req, res) => {
             countQuery += ` AND city = $${countIndex++}`;
             countParams.push(city);
         }
-        if (state && state !== 'all') {
-            countQuery += ` AND state = $${countIndex++}`;
-            countParams.push(state);
-        }
-        if (district && district !== 'all') {
-            countQuery += ` AND district = $${countIndex++}`;
-            countParams.push(district);
-        }
         if (verifiedOnly === 'true') {
             countQuery += ` AND verified = true`;
         }
@@ -2698,37 +2416,26 @@ app.get('/api/businesses', async (req, res) => {
         const countResult = await pool.query(countQuery, countParams);
         const total = parseInt(countResult.rows[0]?.total || 0);
         
-        const response = {
+        console.log(`✅ Found ${result.rows.length} businesses (Total: ${total})`);
+        
+        res.json({
             businesses: result.rows,
             total: total,
             limit: parseInt(limit),
             offset: parseInt(offset)
-        };
-        
-        // Cache for 30 seconds
-        cache.set(cacheKey, response, 30);
-        
-        console.log(`✅ Found ${result.rows.length} businesses (Total: ${total})`);
-        
-        res.json(response);
+        });
     } catch (err) {
         console.error('Error fetching businesses:', err);
         res.json({ businesses: [], total: 0, limit: parseInt(limit), offset: parseInt(offset) });
     }
 });
 
-// PUBLIC: Get single business by ID with caching
+// PUBLIC: Get single business by ID
 app.get('/api/businesses/:id', async (req, res) => {
     const businessId = req.params.id;
     
     if (isNaN(businessId) || businessId === 'cities' || businessId === 'categories') {
         return res.status(400).json({ error: 'Invalid business ID format' });
-    }
-    
-    const cacheKey = `business:${businessId}`;
-    const cached = cache.get(cacheKey);
-    if (cached) {
-        return res.json(cached);
     }
     
     try {
@@ -2743,13 +2450,11 @@ app.get('/api/businesses/:id', async (req, res) => {
             return res.status(404).json({ error: 'Business not found' });
         }
         
-        // Increment view count asynchronously (don't wait)
-        pool.query(
+        // Increment view count
+        await pool.query(
             `UPDATE businesses SET views = COALESCE(views, 0) + 1 WHERE id = $1`,
             [businessId]
-        ).catch(err => console.error('View increment error:', err));
-        
-        cache.set(cacheKey, result.rows[0], 60);
+        );
         
         res.json(result.rows[0]);
     } catch (err) {
@@ -2758,10 +2463,10 @@ app.get('/api/businesses/:id', async (req, res) => {
     }
 });
 
-// PUBLIC: Get business reviews with pagination
+// PUBLIC: Get business reviews
 app.get('/api/businesses/:id/reviews', async (req, res) => {
     const businessId = req.params.id;
-    const limit = Math.min(parseInt(req.query.limit) || 20, 100);
+    const limit = parseInt(req.query.limit) || 20;
     const offset = parseInt(req.query.offset) || 0;
     
     try {
@@ -2799,12 +2504,7 @@ app.get('/api/businesses/:id/ratings', async (req, res) => {
         const result = await pool.query(
             `SELECT 
                 COALESCE(AVG(rating), 0) as average_rating,
-                COUNT(*) as total_reviews,
-                COUNT(*) FILTER (WHERE rating = 5) as five_star,
-                COUNT(*) FILTER (WHERE rating = 4) as four_star,
-                COUNT(*) FILTER (WHERE rating = 3) as three_star,
-                COUNT(*) FILTER (WHERE rating = 2) as two_star,
-                COUNT(*) FILTER (WHERE rating = 1) as one_star
+                COUNT(*) as total_reviews
              FROM business_reviews
              WHERE business_id = $1 AND (is_approved = true OR is_approved IS NULL)`,
             [businessId]
@@ -2816,21 +2516,14 @@ app.get('/api/businesses/:id/ratings', async (req, res) => {
     }
 });
 
-// PUBLIC: Get cities list (for filter dropdown) with caching
+// PUBLIC: Get cities list (for filter dropdown)
 app.get('/api/businesses/cities', async (req, res) => {
-    const cacheKey = 'business_cities';
-    const cached = cache.get(cacheKey);
-    if (cached) {
-        return res.json(cached);
-    }
-    
     try {
         const result = await pool.query(`
             SELECT DISTINCT city FROM businesses 
             WHERE approved = true AND city IS NOT NULL AND city != ''
             ORDER BY city
         `);
-        cache.set(cacheKey, result.rows.map(r => r.city), 3600);
         res.json(result.rows.map(r => r.city));
     } catch (err) {
         console.error('Error fetching cities:', err);
@@ -2838,63 +2531,8 @@ app.get('/api/businesses/cities', async (req, res) => {
     }
 });
 
-// PUBLIC: Get states list with caching
-app.get('/api/businesses/states', async (req, res) => {
-    const cacheKey = 'business_states';
-    const cached = cache.get(cacheKey);
-    if (cached) {
-        return res.json(cached);
-    }
-    
-    try {
-        const result = await pool.query(`
-            SELECT DISTINCT state FROM businesses 
-            WHERE approved = true AND state IS NOT NULL AND state != ''
-            ORDER BY state
-        `);
-        cache.set(cacheKey, result.rows.map(r => r.state), 3600);
-        res.json(result.rows.map(r => r.state));
-    } catch (err) {
-        console.error('Error fetching states:', err);
-        res.json([]);
-    }
-});
-
-// PUBLIC: Get districts by state with caching
-app.get('/api/businesses/districts', async (req, res) => {
-    const { state } = req.query;
-    if (!state) {
-        return res.json([]);
-    }
-    
-    const cacheKey = `business_districts:${state}`;
-    const cached = cache.get(cacheKey);
-    if (cached) {
-        return res.json(cached);
-    }
-    
-    try {
-        const result = await pool.query(`
-            SELECT DISTINCT district FROM businesses 
-            WHERE approved = true AND state = $1 AND district IS NOT NULL AND district != ''
-            ORDER BY district
-        `, [state]);
-        cache.set(cacheKey, result.rows.map(r => r.district), 3600);
-        res.json(result.rows.map(r => r.district));
-    } catch (err) {
-        console.error('Error fetching districts:', err);
-        res.json([]);
-    }
-});
-
 // PUBLIC: Get categories list with counts
 app.get('/api/businesses/categories', async (req, res) => {
-    const cacheKey = 'business_categories';
-    const cached = cache.get(cacheKey);
-    if (cached) {
-        return res.json(cached);
-    }
-    
     try {
         const result = await pool.query(`
             SELECT category, COUNT(*) as count 
@@ -2903,7 +2541,6 @@ app.get('/api/businesses/categories', async (req, res) => {
             GROUP BY category 
             ORDER BY count DESC
         `);
-        cache.set(cacheKey, result.rows, 3600);
         res.json(result.rows);
     } catch (err) {
         console.error('Error fetching categories:', err);
@@ -2917,8 +2554,7 @@ app.get('/api/businesses/categories', async (req, res) => {
 app.post('/api/businesses/submit', isAuthenticated, async (req, res) => {
     const {
         name, type, category, description, address, city, state, phone, email,
-        website, whatsapp, maps, instagram, facebook, hours, amenities,
-        district, lat, lng, place_id
+        website, whatsapp, maps, instagram, facebook, hours, amenities
     } = req.body;
 
     if (!name || !type || !address || !city || !phone || !email) {
@@ -2926,16 +2562,35 @@ app.post('/api/businesses/submit', isAuthenticated, async (req, res) => {
     }
 
     try {
-        const insertColumns = ['name', 'type', 'category', 'description', 'address', 'city', 'state', 'district', 'phone', 'email', 'website', 'whatsapp', 'maps', 'instagram', 'facebook', 'hours', 'amenities', 'lat', 'lng', 'place_id', 'user_id', 'approved', 'created_at', 'updated_at'];
+        // Check what columns exist
+        const columnsCheck = await pool.query(`
+            SELECT column_name FROM information_schema.columns WHERE table_name = 'businesses'
+        `);
+        const existingColumns = columnsCheck.rows.map(c => c.column_name);
+        
+        const insertColumns = ['name', 'type', 'category', 'description', 'address', 'city', 'state', 'phone', 'email', 'website', 'whatsapp', 'hours', 'amenities', 'user_id', 'approved', 'created_at', 'updated_at'];
         const insertValues = [
-            name, type, category || 'other', description || '', address, city, state || null, district || null,
-            phone, email, website || null, whatsapp || null, maps || null, instagram || null, facebook || null,
+            name, type, category || 'other', description || '', address, city, state || null, phone, email,
+            website || null, whatsapp || null,
             hours ? JSON.stringify(hours) : null,
             amenities ? JSON.stringify(amenities) : null,
-            lat ? parseFloat(lat) : null, lng ? parseFloat(lng) : null,
-            place_id || null,
             req.session.userId, false, new Date(), new Date()
         ];
+        
+        // Add optional columns if they exist
+        let colIndex = insertColumns.length;
+        if (existingColumns.includes('maps')) {
+            insertColumns.push('maps');
+            insertValues.push(maps || null);
+        }
+        if (existingColumns.includes('instagram')) {
+            insertColumns.push('instagram');
+            insertValues.push(instagram || null);
+        }
+        if (existingColumns.includes('facebook')) {
+            insertColumns.push('facebook');
+            insertValues.push(facebook || null);
+        }
         
         const placeholders = insertValues.map((_, i) => `$${i + 1}`).join(', ');
         const query = `INSERT INTO businesses (${insertColumns.join(', ')}) VALUES (${placeholders}) RETURNING id`;
@@ -3004,9 +2659,6 @@ app.post('/api/businesses/:id/reviews', isAuthenticated, async (req, res) => {
             )
             WHERE id = $1
         `, [businessId]);
-        
-        // Invalidate cache
-        cache.del(`business:${businessId}`);
         
         res.json({ success: true, message: 'Review submitted successfully!' });
     } catch (err) {
@@ -3164,10 +2816,7 @@ app.put('/api/admin/businesses/:id/approve', isAdmin, async (req, res) => {
                 });
             }
         }
-        
-        // Invalidate caches
-        cache.flush();
-        
+
         res.json({ 
             success: true, 
             message: 'Business approved and user awarded 50 credits.',
@@ -3205,9 +2854,6 @@ app.delete('/api/admin/businesses/:id/reject', isAdmin, async (req, res) => {
         }
 
         await pool.query(`DELETE FROM businesses WHERE id = $1`, [businessId]);
-        
-        // Invalidate caches
-        cache.flush();
 
         res.json({ success: true, message: 'Business rejected and removed.' });
     } catch (err) {
@@ -3220,9 +2866,8 @@ app.delete('/api/admin/businesses/:id/reject', isAdmin, async (req, res) => {
 app.put('/api/admin/businesses/:id', isAdminOrModerator, async (req, res) => {
     const businessId = req.params.id;
     const {
-        name, type, category, description, address, city, state, district, phone, email,
-        website, whatsapp, maps, instagram, facebook, verified, featured,
-        lat, lng, place_id
+        name, type, category, description, address, city, state, phone, email,
+        website, whatsapp, maps, instagram, facebook, verified, featured
     } = req.body;
     
     try {
@@ -3234,20 +2879,15 @@ app.put('/api/admin/businesses/:id', isAdminOrModerator, async (req, res) => {
         await pool.query(`
             UPDATE businesses SET
                 name = $1, type = $2, category = $3, description = $4,
-                address = $5, city = $6, state = $7, district = $8, phone = $9, email = $10,
-                website = $11, whatsapp = $12, maps = $13, instagram = $14, facebook = $15,
-                verified = $16, featured = $17, lat = $18, lng = $19, place_id = $20, updated_at = NOW()
-            WHERE id = $21
-        `, [name, type, category, description, address, city, state, district, phone, email,
+                address = $5, city = $6, state = $7, phone = $8, email = $9,
+                website = $10, whatsapp = $11, maps = $12, instagram = $13, facebook = $14,
+                verified = $15, featured = $16, updated_at = NOW()
+            WHERE id = $17
+        `, [name, type, category, description, address, city, state, phone, email,
             website, whatsapp, maps, instagram, facebook, 
             verified === true || verified === 'true', 
-            featured === true || featured === 'true',
-            lat ? parseFloat(lat) : null, lng ? parseFloat(lng) : null,
-            place_id || null, businessId]);
-
-        // Invalidate cache
-        cache.del(`business:${businessId}`);
-        cache.flush();
+            featured === true || featured === 'true', 
+            businessId]);
 
         res.json({ success: true, message: 'Business updated' });
     } catch (err) {
@@ -3264,10 +2904,6 @@ app.delete('/api/admin/businesses/:id', isAdmin, async (req, res) => {
         if (biz.rows.length === 0) return res.status(404).json({ error: 'Business not found' });
 
         await pool.query(`DELETE FROM businesses WHERE id = $1`, [businessId]);
-        
-        // Invalidate cache
-        cache.del(`business:${businessId}`);
-        cache.flush();
 
         res.json({ success: true });
     } catch (err) {
@@ -3286,10 +2922,6 @@ app.put('/api/admin/businesses/:id/toggle-verified', isAdminOrModerator, async (
             [businessId]
         );
         if (result.rows.length === 0) return res.status(404).json({ error: 'Business not found' });
-        
-        // Invalidate cache
-        cache.del(`business:${businessId}`);
-        
         res.json({ success: true, verified: result.rows[0].verified });
     } catch (err) {
         console.error(err);
@@ -3307,10 +2939,6 @@ app.put('/api/admin/businesses/:id/toggle-featured', isAdminOrModerator, async (
             [businessId]
         );
         if (result.rows.length === 0) return res.status(404).json({ error: 'Business not found' });
-        
-        // Invalidate cache
-        cache.del(`business:${businessId}`);
-        
         res.json({ success: true, featured: result.rows[0].featured });
     } catch (err) {
         console.error(err);
@@ -3320,12 +2948,6 @@ app.put('/api/admin/businesses/:id/toggle-featured', isAdminOrModerator, async (
 
 // Get business stats for admin dashboard
 app.get('/api/admin/businesses/stats', isAdminOrModerator, async (req, res) => {
-    const cacheKey = 'business_stats';
-    const cached = cache.get(cacheKey);
-    if (cached) {
-        return res.json(cached);
-    }
-    
     try {
         const stats = await pool.query(`
             SELECT 
@@ -3337,7 +2959,6 @@ app.get('/api/admin/businesses/stats', isAdminOrModerator, async (req, res) => {
                 COALESCE(SUM(views), 0) as total_views
             FROM businesses
         `);
-        cache.set(cacheKey, stats.rows[0], 300);
         res.json(stats.rows[0]);
     } catch (err) {
         console.error(err);
@@ -3347,15 +2968,8 @@ app.get('/api/admin/businesses/stats', isAdminOrModerator, async (req, res) => {
 
 // ==================== CARDS MANAGEMENT ====================
 app.get('/api/cards', async (req, res) => {
-    const cacheKey = 'cards_all';
-    const cached = cache.get(cacheKey);
-    if (cached) {
-        return res.json(cached);
-    }
-    
     try {
         const result = await pool.query(`SELECT * FROM cards ORDER BY display_order ASC, id ASC`);
-        cache.set(cacheKey, result.rows, 300);
         res.json(result.rows);
     } catch (err) {
         console.error(err);
@@ -3385,7 +2999,6 @@ app.post('/api/cards', isAdmin, async (req, res) => {
              VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING id`,
             [title, description || '', icon, link, category, order || 0]
         );
-        cache.del('cards_all');
         res.status(201).json({ success: true, id: result.rows[0].id });
     } catch (err) {
         console.error(err);
@@ -3404,7 +3017,6 @@ app.put('/api/cards/:id', isAdmin, async (req, res) => {
              WHERE id = $7`,
             [title, description || '', icon, link, category, order || 0, cardId]
         );
-        cache.del('cards_all');
         res.json({ success: true });
     } catch (err) {
         console.error(err);
@@ -3417,7 +3029,6 @@ app.delete('/api/cards/:id', isAdmin, async (req, res) => {
     try {
         const result = await pool.query('DELETE FROM cards WHERE id = $1', [cardId]);
         if (result.rowCount === 0) return res.status(404).json({ error: 'Card not found' });
-        cache.del('cards_all');
         res.json({ success: true });
     } catch (err) {
         console.error(err);
@@ -3427,12 +3038,6 @@ app.delete('/api/cards/:id', isAdmin, async (req, res) => {
 
 // ==================== CREDITS SYSTEM ====================
 app.get('/api/credits/balance', isAuthenticated, async (req, res) => {
-    const cacheKey = `credits:${req.session.userId}`;
-    const cached = cache.get(cacheKey);
-    if (cached) {
-        return res.json(cached);
-    }
-    
     try {
         await ensureUserCredits(req.session.userId);
         const result = await pool.query(
@@ -3444,11 +3049,8 @@ app.get('/api/credits/balance', isAuthenticated, async (req, res) => {
         );
         if (result.rows.length === 0) {
             await initializeUserCredits(req.session.userId);
-            const response = { balance: 600, lifetime_earned: 600, lifetime_spent: 0 };
-            cache.set(cacheKey, response, 30);
-            return res.json(response);
+            return res.json({ balance: 600, lifetime_earned: 600, lifetime_spent: 0 });
         }
-        cache.set(cacheKey, result.rows[0], 30);
         res.json(result.rows[0]);
     } catch (err) {
         console.error(err);
@@ -3517,7 +3119,6 @@ app.post('/api/credits/claim-daily', isAuthenticated, async (req, res) => {
              VALUES ($1, $2, 'bonus', 'Daily login bonus')`,
             [req.session.userId, dailyBonus]
         );
-        cache.del(`credits:${req.session.userId}`);
         res.json({ success: true, message: `Claimed ${dailyBonus} credits!` });
     } catch (err) {
         console.error(err);
@@ -3582,7 +3183,6 @@ app.post('/api/user/use-boost', isAuthenticated, async (req, res) => {
             return res.status(400).json({ error: 'No boosts remaining' });
         }
         await pool.query('UPDATE users SET message_boosts_remaining = message_boosts_remaining - 1 WHERE id = $1', [req.session.userId]);
-        cache.del(`premium:${req.session.userId}`);
         res.json({ success: true, remaining: remaining - 1 });
     } catch (err) {
         console.error(err);
@@ -3630,7 +3230,6 @@ app.post('/api/messages/boost/:messageId', isAuthenticated, async (req, res) => 
                  VALUES ($1, $2, 'spend', 'Message boost')`,
                 [userId, 10]
             );
-            cache.del(`credits:${userId}`);
         }
         
         await pool.query('UPDATE messages SET is_boosted = true WHERE id = $1', [messageId]);
@@ -4065,12 +3664,6 @@ app.delete('/api/support/tickets/:id', isAdminOrModerator, async (req, res) => {
 });
 
 app.get('/api/support/stats', isAdminOrModerator, async (req, res) => {
-    const cacheKey = 'support_stats';
-    const cached = cache.get(cacheKey);
-    if (cached) {
-        return res.json(cached);
-    }
-    
     try {
         const stats = await pool.query(`
             SELECT 
@@ -4087,13 +3680,11 @@ app.get('/api/support/stats', isAdminOrModerator, async (req, res) => {
         const categoryStats = await pool.query(`
             SELECT category, COUNT(*) FROM support_tickets WHERE status NOT IN ('resolved','closed') GROUP BY category
         `);
-        const response = {
+        res.json({
             overview: stats.rows[0],
             by_priority: priorityStats.rows,
             by_category: categoryStats.rows
-        };
-        cache.set(cacheKey, response, 300);
-        res.json(response);
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -5013,12 +4604,6 @@ app.get('/api/unread', isAuthenticated, async (req, res) => {
 
 // ==================== ADMIN ANALYTICS ====================
 app.get('/api/admin/analytics', isAdmin, async (req, res) => {
-    const cacheKey = 'admin_analytics_dashboard';
-    const cached = cache.get(cacheKey);
-    if (cached) {
-        return res.json(cached);
-    }
-    
     try {
         const totalUsers = await pool.query('SELECT COUNT(*) as count FROM users');
         const activeUsers = await pool.query('SELECT COUNT(*) as count FROM users WHERE is_banned = false');
@@ -5039,15 +4624,13 @@ app.get('/api/admin/analytics', isAdmin, async (req, res) => {
             ? Math.round(((thisMonth.rows[0].count - lastMonth.rows[0].count) / lastMonth.rows[0].count) * 100)
             : 100;
         
-        const response = {
+        res.json({
             totalUsers: totalUsers.rows[0].count,
             activeUsers: activeUsers.rows[0].count,
             suspendedUsers: suspendedUsers.rows[0].count,
             growthRate: growthRate,
             weeklyUsage: weeklyUsage.rows
-        };
-        cache.set(cacheKey, response, 300);
-        res.json(response);
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -5055,12 +4638,6 @@ app.get('/api/admin/analytics', isAdmin, async (req, res) => {
 });
 
 app.get('/api/admin/analytics/top-tools', isAdmin, async (req, res) => {
-    const cacheKey = 'admin_top_tools';
-    const cached = cache.get(cacheKey);
-    if (cached) {
-        return res.json(cached);
-    }
-    
     try {
         const topTools = await pool.query(`
             SELECT t.name, COUNT(u.id) as count
@@ -5080,14 +4657,12 @@ app.get('/api/admin/analytics/top-tools', isAdmin, async (req, res) => {
                 ELSE 0 END as avg
             FROM tool_usage
         `);
-        const response = {
+        res.json({
             tools: topTools.rows,
             totalTools: totalTools.rows[0]?.count || 0,
             pendingTools: pendingTools.rows[0]?.count || 0,
             avgToolsPerUser: avgPerUser.rows[0]?.avg || 0
-        };
-        cache.set(cacheKey, response, 300);
-        res.json(response);
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -5095,12 +4670,6 @@ app.get('/api/admin/analytics/top-tools', isAdmin, async (req, res) => {
 });
 
 app.get('/api/admin/analytics/category-distribution', isAdmin, async (req, res) => {
-    const cacheKey = 'admin_category_distribution';
-    const cached = cache.get(cacheKey);
-    if (cached) {
-        return res.json(cached);
-    }
-    
     try {
         const result = await pool.query(`
             SELECT category, COUNT(*) as count
@@ -5109,7 +4678,6 @@ app.get('/api/admin/analytics/category-distribution', isAdmin, async (req, res) 
             GROUP BY category
             ORDER BY count DESC
         `);
-        cache.set(cacheKey, result.rows, 3600);
         res.json(result.rows);
     } catch (err) {
         console.error(err);
@@ -5150,12 +4718,6 @@ app.get('/api/analytics/user-activity', isAuthenticated, async (req, res) => {
 });
 
 app.get('/api/admin/analytics/submission-trend', isAdmin, async (req, res) => {
-    const cacheKey = 'admin_submission_trend';
-    const cached = cache.get(cacheKey);
-    if (cached) {
-        return res.json(cached);
-    }
-    
     try {
         const result = await pool.query(`
             SELECT DATE(created_at) as date, COUNT(*) as count
@@ -5164,7 +4726,6 @@ app.get('/api/admin/analytics/submission-trend', isAdmin, async (req, res) => {
             GROUP BY DATE(created_at)
             ORDER BY date
         `);
-        cache.set(cacheKey, result.rows, 3600);
         res.json(result.rows);
     } catch (err) {
         console.error(err);
@@ -5420,15 +4981,8 @@ app.post('/api/tools/:id/recommend', isAdminOrModerator, async (req, res) => {
 });
 
 app.get('/api/announcements', async (req, res) => {
-    const cacheKey = 'announcements';
-    const cached = cache.get(cacheKey);
-    if (cached) {
-        return res.json(cached);
-    }
-    
     try {
         const result = await pool.query('SELECT * FROM announcements ORDER BY created_at DESC');
-        cache.set(cacheKey, result.rows, 300);
         res.json(result.rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -5442,7 +4996,6 @@ app.post('/api/announcements', isAdminOrModerator, async (req, res) => {
             'INSERT INTO announcements (title, content, created_by, created_at) VALUES ($1, $2, $3, NOW())',
             [title, content, req.session.userId]
         );
-        cache.del('announcements');
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -5453,7 +5006,6 @@ app.delete('/api/announcements/:id', isAdminOrModerator, async (req, res) => {
     const id = req.params.id;
     try {
         await pool.query('DELETE FROM announcements WHERE id = $1', [id]);
-        cache.del('announcements');
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -5702,10 +5254,389 @@ app.get('/api/csrf-token', (req, res) => {
     }
 })();
 
-// ==================== CACHE CLEANUP CRON ====================
-cron.schedule('0 */6 * * *', () => {
-    cache.flushAll();
-    console.log('🔄 Cache flushed');
+// ==================== BUSINESS UPDATE REMINDER SYSTEM ====================
+
+/**
+ * Business Update Reminder System
+ * Sends periodic reminders to business owners to update their business information
+ */
+
+// Add business update tracking columns if not exists
+async function ensureBusinessUpdateTracking() {
+    try {
+        await pool.query(`
+            ALTER TABLE businesses 
+            ADD COLUMN IF NOT EXISTS last_updated TIMESTAMP DEFAULT NOW(),
+            ADD COLUMN IF NOT EXISTS last_reminder_sent TIMESTAMP,
+            ADD COLUMN IF NOT EXISTS reminder_count INT DEFAULT 0
+        `);
+        console.log('✅ Business update tracking columns verified');
+    } catch (err) {
+        console.error('Error adding business update columns:', err.message);
+    }
+}
+
+// Run the migration
+ensureBusinessUpdateTracking();
+
+// Update last_updated timestamp when business is modified
+async function updateBusinessLastUpdated(businessId) {
+    try {
+        await pool.query(
+            `UPDATE businesses SET last_updated = NOW() WHERE id = $1`,
+            [businessId]
+        );
+        console.log(`📝 Updated last_updated for business ${businessId}`);
+    } catch (err) {
+        console.error('Error updating business last_updated:', err);
+    }
+}
+
+// Send business update reminder email
+async function sendBusinessUpdateReminder(business, reminderType) {
+    const { name, id, last_updated, user_id } = business;
+    
+    // Get owner email
+    const ownerResult = await pool.query(
+        'SELECT email, username FROM users WHERE id = $1',
+        [user_id]
+    );
+    
+    if (ownerResult.rows.length === 0) {
+        console.log(`⚠️ No owner found for business ${id}`);
+        return false;
+    }
+    
+    const ownerEmail = ownerResult.rows[0].email;
+    const ownerName = ownerResult.rows[0].username;
+    
+    let subject = '';
+    let urgencyLevel = '';
+    let messageColor = '';
+    let daysSince = Math.floor((Date.now() - new Date(last_updated)) / (1000 * 60 * 60 * 24));
+    
+    if (reminderType === '30days') {
+        subject = `📋 Update Your Business Info - ${name}`;
+        urgencyLevel = 'Gentle Reminder';
+        messageColor = '#3b82f6';
+    } else if (reminderType === '60days') {
+        subject = `⚠️ Your Business Info Needs Attention - ${name}`;
+        urgencyLevel = 'Important Reminder';
+        messageColor = '#f59e0b';
+    } else {
+        subject = `🔴 Urgent: Update Your Business Profile - ${name}`;
+        urgencyLevel = 'Urgent Action Required';
+        messageColor = '#ef4444';
+    }
+    
+    const updateUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/business-directory.html?edit=${id}`;
+    
+    const html = `
+        <div style="font-family: 'DM Sans', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px;">
+            <div style="background: white; padding: 30px; border-radius: 16px;">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="font-size: 48px;">🏢</div>
+                    <h2 style="color: #667eea; margin: 10px 0 5px;">Business Update Reminder</h2>
+                    <p style="color: #666; font-size: 14px;">${urgencyLevel}</p>
+                </div>
+                
+                <div style="background: ${messageColor}10; padding: 20px; border-radius: 12px; margin: 20px 0; border-left: 4px solid ${messageColor};">
+                    <p style="margin: 0 0 10px;"><strong style="color: ${messageColor};">Dear ${ownerName},</strong></p>
+                    <p style="margin: 0;">Your business listing <strong>"${escapeHtml(name)}"</strong> hasn't been updated in <strong style="color: ${messageColor};">${daysSince} days</strong>.</p>
+                </div>
+                
+                <div style="margin: 20px 0;">
+                    <p><strong>Why update your business information?</strong></p>
+                    <ul style="color: #555; line-height: 1.6;">
+                        <li>✅ Keep customers informed about your current services</li>
+                        <li>✅ Improve your visibility in search results</li>
+                        <li>✅ Show that your business is active and reliable</li>
+                        <li>✅ Update operating hours, contact info, and special offers</li>
+                    </ul>
+                </div>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${updateUrl}" style="display: inline-block; padding: 12px 30px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; text-decoration: none; border-radius: 50px; font-weight: 600;">Update Your Business Now</a>
+                </div>
+                
+                <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 20px;">
+                    <p style="margin: 0; font-size: 12px; color: #666;">Need help? Contact us at support@sarveik.com</p>
+                    <p style="margin: 5px 0 0; font-size: 11px; color: #999;">Business ID: ${id} | Last updated: ${new Date(last_updated).toLocaleDateString()}</p>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    try {
+        await sendEmail(ownerEmail, subject, html);
+        console.log(`📧 Sent ${reminderType} reminder to ${ownerEmail} for business ${name}`);
+        return true;
+    } catch (err) {
+        console.error(`Failed to send reminder for business ${id}:`, err);
+        return false;
+    }
+}
+
+// Get businesses that need update reminders
+async function getBusinessesNeedingReminders() {
+    try {
+        // 30-day reminder (not sent yet, last_updated > 30 days, reminder_count < 1)
+        const thirtyDayReminders = await pool.query(`
+            SELECT b.*
+            FROM businesses b
+            WHERE b.approved = true
+              AND b.last_updated < NOW() - INTERVAL '30 days'
+              AND (b.last_reminder_sent IS NULL OR b.last_reminder_sent < NOW() - INTERVAL '30 days')
+              AND b.reminder_count < 1
+              AND b.user_id IS NOT NULL
+            ORDER BY b.last_updated ASC
+            LIMIT 50
+        `);
+        
+        // 60-day reminder (reminder_count = 1)
+        const sixtyDayReminders = await pool.query(`
+            SELECT b.*
+            FROM businesses b
+            WHERE b.approved = true
+              AND b.last_updated < NOW() - INTERVAL '60 days'
+              AND b.reminder_count = 1
+              AND (b.last_reminder_sent < NOW() - INTERVAL '15 days' OR b.last_reminder_sent IS NULL)
+              AND b.user_id IS NOT NULL
+            ORDER BY b.last_updated ASC
+            LIMIT 50
+        `);
+        
+        // 90-day reminder (reminder_count >= 2)
+        const ninetyDayReminders = await pool.query(`
+            SELECT b.*
+            FROM businesses b
+            WHERE b.approved = true
+              AND b.last_updated < NOW() - INTERVAL '90 days'
+              AND b.reminder_count >= 2
+              AND (b.last_reminder_sent < NOW() - INTERVAL '10 days' OR b.last_reminder_sent IS NULL)
+              AND b.user_id IS NOT NULL
+            ORDER BY b.last_updated ASC
+            LIMIT 50
+        `);
+        
+        return {
+            thirtyDay: thirtyDayReminders.rows,
+            sixtyDay: sixtyDayReminders.rows,
+            ninetyDay: ninetyDayReminders.rows
+        };
+    } catch (err) {
+        console.error('Error fetching businesses for reminders:', err);
+        return { thirtyDay: [], sixtyDay: [], ninetyDay: [] };
+    }
+}
+
+// Update reminder tracking after sending
+async function updateReminderTracking(businessId, reminderType) {
+    try {
+        await pool.query(`
+            UPDATE businesses 
+            SET last_reminder_sent = NOW(),
+                reminder_count = reminder_count + 1
+            WHERE id = $1
+        `, [businessId]);
+        console.log(`✅ Updated reminder tracking for business ${businessId}`);
+    } catch (err) {
+        console.error('Error updating reminder tracking:', err);
+    }
+}
+
+// Main cron job for business update reminders (runs daily at 9 AM)
+cron.schedule('0 9 * * *', async () => {
+    console.log('📧 Running business update reminder cron job...');
+    
+    try {
+        const reminders = await getBusinessesNeedingReminders();
+        
+        let sentCount = 0;
+        let errorCount = 0;
+        
+        // Send 30-day reminders
+        for (const business of reminders.thirtyDay) {
+            const sent = await sendBusinessUpdateReminder(business, '30days');
+            if (sent) {
+                await updateReminderTracking(business.id, '30days');
+                sentCount++;
+            } else {
+                errorCount++;
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        
+        // Send 60-day reminders
+        for (const business of reminders.sixtyDay) {
+            const sent = await sendBusinessUpdateReminder(business, '60days');
+            if (sent) {
+                await updateReminderTracking(business.id, '60days');
+                sentCount++;
+            } else {
+                errorCount++;
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        
+        // Send 90-day reminders
+        for (const business of reminders.ninetyDay) {
+            const sent = await sendBusinessUpdateReminder(business, '90days');
+            if (sent) {
+                await updateReminderTracking(business.id, '90days');
+                sentCount++;
+            } else {
+                errorCount++;
+            }
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+        
+        console.log(`✅ Business reminder cron finished: ${sentCount} sent, ${errorCount} errors`);
+        
+    } catch (err) {
+        console.error('❌ Error in business reminder cron job:', err);
+    }
+}, { scheduled: true, recoverMissedExecutions: false });
+
+// ==================== BUSINESS UPDATE API ENDPOINTS ====================
+
+// GET endpoint to check when a business was last updated
+app.get('/api/businesses/:id/last-updated', async (req, res) => {
+    const businessId = req.params.id;
+    try {
+        const result = await pool.query(
+            `SELECT id, name, last_updated, reminder_count, approved 
+             FROM businesses WHERE id = $1 AND approved = true`,
+            [businessId]
+        );
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'Business not found' });
+        }
+        const daysSince = Math.floor((Date.now() - new Date(result.rows[0].last_updated)) / (1000 * 60 * 60 * 24));
+        res.json({
+            ...result.rows[0],
+            days_since_update: daysSince,
+            needs_update: daysSince > 30,
+            urgency: daysSince > 90 ? 'critical' : daysSince > 60 ? 'high' : daysSince > 30 ? 'medium' : 'good'
+        });
+    } catch (err) {
+        console.error('Error fetching last_updated:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// POST endpoint for businesses to manually update their last_updated timestamp
+app.post('/api/businesses/:id/touch', isAuthenticated, async (req, res) => {
+    const businessId = req.params.id;
+    try {
+        // Verify ownership
+        const business = await pool.query(
+            `SELECT user_id FROM businesses WHERE id = $1 AND approved = true`,
+            [businessId]
+        );
+        if (business.rows.length === 0) {
+            return res.status(404).json({ error: 'Business not found' });
+        }
+        if (business.rows[0].user_id !== req.session.userId && req.session.role !== 'admin') {
+            return res.status(403).json({ error: 'You can only update your own businesses' });
+        }
+        
+        await updateBusinessLastUpdated(businessId);
+        
+        res.json({ 
+            success: true, 
+            message: 'Business update timestamp refreshed',
+            last_updated: new Date().toISOString()
+        });
+    } catch (err) {
+        console.error('Error touching business:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// GET endpoint for admin to see businesses needing updates
+app.get('/api/admin/businesses/stale', isAdminOrModerator, async (req, res) => {
+    try {
+        const staleBusinesses = await pool.query(`
+            SELECT b.id, b.name, b.type, b.city, b.state, b.last_updated, 
+                   b.reminder_count, b.verified, b.featured,
+                   u.username as owner_name, u.email as owner_email,
+                   EXTRACT(DAY FROM (NOW() - b.last_updated)) as days_stale
+            FROM businesses b
+            LEFT JOIN users u ON b.user_id = u.id
+            WHERE b.approved = true
+              AND b.last_updated < NOW() - INTERVAL '30 days'
+            ORDER BY b.last_updated ASC
+            LIMIT 100
+        `);
+        
+        const stats = await pool.query(`
+            SELECT 
+                COUNT(CASE WHEN last_updated < NOW() - INTERVAL '30 days' THEN 1 END) as thirty_day_stale,
+                COUNT(CASE WHEN last_updated < NOW() - INTERVAL '60 days' THEN 1 END) as sixty_day_stale,
+                COUNT(CASE WHEN last_updated < NOW() - INTERVAL '90 days' THEN 1 END) as ninety_day_stale,
+                AVG(EXTRACT(DAY FROM (NOW() - last_updated))) as avg_days_stale
+            FROM businesses
+            WHERE approved = true
+        `);
+        
+        res.json({
+            stale_businesses: staleBusinesses.rows,
+            stats: stats.rows[0],
+            total_stale: staleBusinesses.rows.length
+        });
+    } catch (err) {
+        console.error('Error fetching stale businesses:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// PUT endpoint to reset reminder count for a business (admin only)
+app.put('/api/admin/businesses/:id/reset-reminders', isAdmin, async (req, res) => {
+    const businessId = req.params.id;
+    try {
+        await pool.query(`
+            UPDATE businesses 
+            SET reminder_count = 0, 
+                last_reminder_sent = NULL,
+                last_updated = NOW()
+            WHERE id = $1
+        `, [businessId]);
+        
+        res.json({ success: true, message: 'Reminder count reset for business' });
+    } catch (err) {
+        console.error('Error resetting reminders:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// POST endpoint to manually trigger reminder for a business (admin only)
+app.post('/api/admin/businesses/:id/send-reminder', isAdmin, async (req, res) => {
+    const businessId = req.params.id;
+    const { reminderType = '30days' } = req.body;
+    
+    try {
+        const business = await pool.query(`
+            SELECT b.*
+            FROM businesses b
+            WHERE b.id = $1
+        `, [businessId]);
+        
+        if (business.rows.length === 0) {
+            return res.status(404).json({ error: 'Business not found' });
+        }
+        
+        const sent = await sendBusinessUpdateReminder(business.rows[0], reminderType);
+        if (sent) {
+            await updateReminderTracking(businessId, reminderType);
+            res.json({ success: true, message: 'Reminder sent successfully' });
+        } else {
+            res.status(400).json({ error: 'Failed to send reminder (no owner email)' });
+        }
+    } catch (err) {
+        console.error('Error sending manual reminder:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
 });
 
 // ==================== START SERVER ====================
@@ -5734,14 +5665,10 @@ server.listen(PORT, HOST, () => {
     console.log(`✅ Account deletion fully fixed with cascade deletion of all related data`);
     console.log(`✅ CSRF token endpoint added for state‑changing requests`);
     console.log(`🏢 Business directory management endpoints active:`);
-    console.log(`   - GET /api/businesses (public listing with filters and caching)`);
-    console.log(`   - GET /api/businesses/:id (single business with caching)`);
+    console.log(`   - GET /api/businesses (public listing with filters)`);
+    console.log(`   - GET /api/businesses/:id (single business)`);
     console.log(`   - GET /api/businesses/:id/reviews (business reviews)`);
     console.log(`   - GET /api/businesses/ratings/:id (rating stats)`);
-    console.log(`   - GET /api/businesses/cities (filter cities)`);
-    console.log(`   - GET /api/businesses/states (filter states)`);
-    console.log(`   - GET /api/businesses/districts (filter districts by state)`);
-    console.log(`   - GET /api/businesses/categories (categories with counts)`);
     console.log(`   - POST /api/businesses/submit (user submission)`);
     console.log(`   - POST /api/businesses/:id/reviews (add review)`);
     console.log(`   - POST /api/businesses/:id/favorite (toggle favorite)`);
@@ -5755,20 +5682,14 @@ server.listen(PORT, HOST, () => {
     console.log(`   - PUT /api/admin/businesses/:id/toggle-verified (toggle verified status)`);
     console.log(`   - PUT /api/admin/businesses/:id/toggle-featured (toggle featured status)`);
     console.log(`   - GET /api/admin/businesses/stats (business statistics)`);
-    console.log(`🔒 Security enhancements:`);
-    console.log(`   - Helmet.js for secure headers`);
-    console.log(`   - Compression for faster responses`);
-    console.log(`   - Rate limiting with slow down`);
-    console.log(`   - CSRF protection for state-changing requests`);
-    console.log(`   - XSS sanitization for user input`);
-    console.log(`   - Session validation middleware`);
-    console.log(`   - GeoIP tracking for requests`);
-    console.log(`   - Request ID tracing`);
-    console.log(`   - Circuit breaker for database queries`);
-    console.log(`   - Email queue system for async notifications`);
-    console.log(`   - Redis-ready caching (fallback to memory cache)`);
-    console.log(`   - Enhanced logging with Winston`);
-    console.log(`   - Health check endpoints (/health, /health/readiness)`);
+    console.log(`📧 Business Update Reminder System active:`);
+    console.log(`   - Daily cron job at 9 AM checks for stale businesses`);
+    console.log(`   - 30-day, 60-day, and 90-day reminders`);
+    console.log(`   - GET /api/businesses/:id/last-updated - Check business freshness`);
+    console.log(`   - POST /api/businesses/:id/touch - Manually refresh timestamp`);
+    console.log(`   - GET /api/admin/businesses/stale - Admin view of stale businesses`);
+    console.log(`   - PUT /api/admin/businesses/:id/reset-reminders - Reset reminder counter`);
+    console.log(`   - POST /api/admin/businesses/:id/send-reminder - Manual reminder trigger`);
 });
 
 // ==================== GRACEFUL SHUTDOWN ====================
