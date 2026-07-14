@@ -4548,33 +4548,74 @@ app.put('/api/friends/decline/:requestId', isAuthenticated, async (req, res) => 
     }
 });
 
+// ==================== FIXED FRIENDS ENDPOINT ====================
 app.get('/api/friends', isAuthenticated, async (req, res) => {
     try {
         const { search } = req.query;
+        const userId = req.session.userId;
+        
+        // First get all accepted friends
         let query = `
-            SELECT u.id, u.username, u.display_name, u.avatar_url, u.status
+            SELECT 
+                u.id, 
+                u.username, 
+                u.display_name, 
+                u.avatar_url, 
+                u.status,
+                u.email,
+                u.level,
+                u.xp
             FROM friendships f
-            JOIN users u ON (f.user_id = u.id OR f.friend_id = u.id)
-            WHERE (f.user_id = $1 OR f.friend_id = $1)
-              AND f.status = 'accepted' AND u.id != $1
+            JOIN users u ON (
+                (f.user_id = u.id AND f.friend_id = $1) OR 
+                (f.friend_id = u.id AND f.user_id = $1)
+            )
+            WHERE f.status = 'accepted'
+            AND u.id != $1
         `;
-        const params = [req.session.userId];
-        if (search) {
-            query += ` AND (u.username ILIKE $2 OR u.display_name ILIKE $2)`;
-            params.push(`%${search}%`);
+        
+        const params = [userId];
+        let paramIndex = 2;
+        
+        // Add search filter if provided
+        if (search && search.trim()) {
+            query += ` AND (u.username ILIKE $${paramIndex} OR u.display_name ILIKE $${paramIndex} OR u.email ILIKE $${paramIndex})`;
+            params.push(`%${search.trim()}%`);
+            paramIndex++;
         }
+        
+        // Add ordering
+        query += ` ORDER BY u.username ASC`;
+        
+        console.log('🔍 Fetching friends for user:', userId);
+        console.log('📝 Query:', query);
+        console.log('📊 Params:', params);
+        
         const result = await pool.query(query, params);
-        res.json(result.rows);
+        
+        // Get online status from onlineUsers map
+        const friendsWithStatus = result.rows.map(friend => {
+            const isOnline = onlineUsers.has(friend.id);
+            return {
+                ...friend,
+                is_online: isOnline,
+                status: isOnline ? 'online' : (friend.status || 'offline')
+            };
+        });
+        
+        console.log(`✅ Found ${friendsWithStatus.length} friends for user ${userId}`);
+        
+        res.json(friendsWithStatus);
     } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
+        console.error('❌ Error fetching friends:', err);
+        res.status(500).json({ error: 'Server error: ' + err.message });
     }
 });
 
 app.get('/api/friends/requests', isAuthenticated, async (req, res) => {
     try {
         const result = await pool.query(
-            `SELECT f.id, u.id as sender_id, u.username, u.display_name, u.avatar_url
+            `SELECT f.id, u.id as sender_id, u.username, u.display_name, u.avatar_url, u.status
              FROM friendships f JOIN users u ON f.user_id = u.id
              WHERE f.friend_id = $1 AND f.status = 'pending'`,
             [req.session.userId]
@@ -5922,6 +5963,7 @@ server.listen(PORT, HOST, () => {
     console.log(`💰 NEW: Sponsored Ads System (Method 1) - Businesses pay to appear at top`);
     console.log(`💰 NEW: Affiliate Commission System (Method 2) - Earn 5-8% on every sale`);
     console.log(`💰 NEW: Users earn 15 CREDITS when their submitted business gets approved`);
+    console.log(`👥 FRIENDS SYSTEM: Fixed friends loading with proper query and online status tracking`);
 });
 
 // ==================== GRACEFUL SHUTDOWN ====================
