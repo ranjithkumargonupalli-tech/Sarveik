@@ -1057,7 +1057,7 @@ async function awardCreditsForToolApproval(userId, toolName) {
 
 // ==================== BUSINESS CREDIT HELPER (15 CREDITS FOR BUSINESS APPROVAL) ====================
 async function awardCreditsForBusinessApproval(userId, businessName) {
-    const approvalBonus = 15; // Changed from 50 to 15 credits
+    const approvalBonus = 15;
     await ensureUserCredits(userId);
     await pool.query(
         `UPDATE user_credits 
@@ -4466,7 +4466,79 @@ app.get('/api/usage/analytics', isAuthenticated, async (req, res) => {
     }
 });
 
-// ==================== FRIEND & NETWORK ENDPOINTS ====================
+// ==================== FIXED FRIEND & NETWORK ENDPOINTS ====================
+
+// ==================== FIXED: GET FRIENDS ====================
+app.get('/api/friends', isAuthenticated, async (req, res) => {
+    try {
+        const { search, status } = req.query;
+        const userId = req.session.userId;
+        
+        console.log(`📡 Fetching friends for user ${userId} with filters:`, { search, status });
+        
+        // Build the base query - gets all accepted friends
+        let query = `
+            SELECT 
+                u.id, 
+                u.username, 
+                u.display_name, 
+                u.avatar_url, 
+                u.status,
+                u.email,
+                u.level,
+                u.xp,
+                u.bio,
+                u.location,
+                u.is_pro,
+                u.is_verified,
+                u.github,
+                u.twitter,
+                u.linkedin,
+                u.profession,
+                u.created_at as joined_at
+            FROM friendships f
+            JOIN users u ON (
+                (f.user_id = u.id AND f.friend_id = $1) OR 
+                (f.friend_id = u.id AND f.user_id = $1)
+            )
+            WHERE f.status = 'accepted'
+            AND u.id != $1
+        `;
+        
+        const params = [userId];
+        let paramIndex = 2;
+        
+        // Add status filter if provided
+        if (status && ['online', 'away', 'busy', 'offline'].includes(status)) {
+            query += ` AND u.status = $${paramIndex}`;
+            params.push(status);
+            paramIndex++;
+        }
+        
+        // Add search filter if provided
+        if (search && search.trim()) {
+            query += ` AND (u.username ILIKE $${paramIndex} OR u.display_name ILIKE $${paramIndex} OR u.email ILIKE $${paramIndex})`;
+            params.push(`%${search.trim()}%`);
+            paramIndex++;
+        }
+        
+        query += ` ORDER BY u.username ASC`;
+        
+        console.log('📝 Executing query with params:', params);
+        
+        const result = await pool.query(query, params);
+        
+        console.log(`✅ Found ${result.rows.length} friends for user ${userId}`);
+        
+        // Return the friends data
+        res.json(result.rows);
+    } catch (err) {
+        console.error('❌ Error fetching friends:', err);
+        res.status(500).json({ error: 'Server error: ' + err.message });
+    }
+});
+
+// ==================== FRIEND REQUEST ====================
 app.post('/api/friends/request', isAuthenticated, async (req, res) => {
     const { friendUsername } = req.body;
     if (!friendUsername) return res.status(400).send('Username required');
@@ -4518,6 +4590,7 @@ app.post('/api/friends/request', isAuthenticated, async (req, res) => {
     }
 });
 
+// ==================== ACCEPT FRIEND ====================
 app.put('/api/friends/accept/:requestId', isAuthenticated, async (req, res) => {
     try {
         const result = await pool.query(
@@ -4533,6 +4606,7 @@ app.put('/api/friends/accept/:requestId', isAuthenticated, async (req, res) => {
     }
 });
 
+// ==================== DECLINE FRIEND ====================
 app.put('/api/friends/decline/:requestId', isAuthenticated, async (req, res) => {
     try {
         const result = await pool.query(
@@ -4548,33 +4622,11 @@ app.put('/api/friends/decline/:requestId', isAuthenticated, async (req, res) => 
     }
 });
 
-app.get('/api/friends', isAuthenticated, async (req, res) => {
-    try {
-        const { search } = req.query;
-        let query = `
-            SELECT u.id, u.username, u.display_name, u.avatar_url, u.status
-            FROM friendships f
-            JOIN users u ON (f.user_id = u.id OR f.friend_id = u.id)
-            WHERE (f.user_id = $1 OR f.friend_id = $1)
-              AND f.status = 'accepted' AND u.id != $1
-        `;
-        const params = [req.session.userId];
-        if (search) {
-            query += ` AND (u.username ILIKE $2 OR u.display_name ILIKE $2)`;
-            params.push(`%${search}%`);
-        }
-        const result = await pool.query(query, params);
-        res.json(result.rows);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
+// ==================== GET FRIEND REQUESTS ====================
 app.get('/api/friends/requests', isAuthenticated, async (req, res) => {
     try {
         const result = await pool.query(
-            `SELECT f.id, u.id as sender_id, u.username, u.display_name, u.avatar_url
+            `SELECT f.id, u.id as sender_id, u.username, u.display_name, u.avatar_url, u.status, u.profession
              FROM friendships f JOIN users u ON f.user_id = u.id
              WHERE f.friend_id = $1 AND f.status = 'pending'`,
             [req.session.userId]
@@ -4586,6 +4638,7 @@ app.get('/api/friends/requests', isAuthenticated, async (req, res) => {
     }
 });
 
+// ==================== GET OUTGOING REQUESTS ====================
 app.get('/api/friends/outgoing-requests', isAuthenticated, async (req, res) => {
     try {
         const userId = req.session.userId;
@@ -4603,6 +4656,24 @@ app.get('/api/friends/outgoing-requests', isAuthenticated, async (req, res) => {
     }
 });
 
+// ==================== DELETE FRIEND ====================
+app.delete('/api/friends/:friendId', isAuthenticated, async (req, res) => {
+    const friendId = parseInt(req.params.friendId);
+    if (isNaN(friendId)) return res.status(400).send('Invalid friend ID');
+    try {
+        await pool.query(
+            `DELETE FROM friendships
+             WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1)`,
+            [req.session.userId, friendId]
+        );
+        res.send('Friend removed');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server error');
+    }
+});
+
+// ==================== GET MESSAGES ====================
 app.get('/api/messages/:friendId', isAuthenticated, async (req, res) => {
     const friendId = req.params.friendId;
     const offset = parseInt(req.query.offset) || 0;
@@ -4623,22 +4694,7 @@ app.get('/api/messages/:friendId', isAuthenticated, async (req, res) => {
     }
 });
 
-app.delete('/api/friends/:friendId', isAuthenticated, async (req, res) => {
-    const friendId = parseInt(req.params.friendId);
-    if (isNaN(friendId)) return res.status(400).send('Invalid friend ID');
-    try {
-        await pool.query(
-            `DELETE FROM friendships
-             WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1)`,
-            [req.session.userId, friendId]
-        );
-        res.send('Friend removed');
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Server error');
-    }
-});
-
+// ==================== MARK MESSAGES AS READ ====================
 app.post('/api/messages/read/:friendId', isAuthenticated, async (req, res) => {
     const friendId = req.params.friendId;
     try {
@@ -4654,6 +4710,7 @@ app.post('/api/messages/read/:friendId', isAuthenticated, async (req, res) => {
     }
 });
 
+// ==================== NETWORK STATS ====================
 app.get('/api/network/stats', isAuthenticated, async (req, res) => {
     try {
         const userId = req.session.userId;
@@ -4667,9 +4724,21 @@ app.get('/api/network/stats', isAuthenticated, async (req, res) => {
              WHERE friend_id = $1 AND status = 'pending'`,
             [userId]
         );
+        
+        // Count online friends
+        const onlineResult = await pool.query(
+            `SELECT COUNT(*) as count FROM users u
+             JOIN friendships f ON (f.user_id = u.id OR f.friend_id = u.id)
+             WHERE (f.user_id = $1 OR f.friend_id = $1)
+               AND f.status = 'accepted'
+               AND u.id != $1
+               AND u.status = 'online'`,
+            [userId]
+        );
+        
         res.json({
             total: parseInt(total.rows[0].count),
-            online: 0,
+            online: parseInt(onlineResult.rows[0].count),
             requests: parseInt(pending.rows[0].count)
         });
     } catch (err) {
@@ -4678,6 +4747,7 @@ app.get('/api/network/stats', isAuthenticated, async (req, res) => {
     }
 });
 
+// ==================== NETWORK REQUESTS ====================
 app.get('/api/network/requests', isAuthenticated, async (req, res) => {
     try {
         const userId = req.session.userId;
@@ -4696,6 +4766,7 @@ app.get('/api/network/requests', isAuthenticated, async (req, res) => {
     }
 });
 
+// ==================== TRENDING PROFESSIONALS ====================
 app.get('/api/trending/professionals', isAuthenticated, async (req, res) => {
     try {
         const userId = req.session.userId;
@@ -4716,113 +4787,27 @@ app.get('/api/trending/professionals', isAuthenticated, async (req, res) => {
     }
 });
 
-app.get('/api/network/unread', isAuthenticated, async (req, res) => {
+// ==================== UNREAD COUNT ====================
+app.get('/api/unread', isAuthenticated, async (req, res) => {
     try {
-        const userId = req.session.userId;
-        const unread = await pool.query('SELECT COUNT(*) as count FROM messages WHERE receiver_id = $1 AND is_read = false', [userId]);
-        const pending = await pool.query('SELECT COUNT(*) as count FROM friendships WHERE friend_id = $1 AND status = $2', [userId, 'pending']);
-        const total = (unread.rows[0]?.count || 0) + (pending.rows[0]?.count || 0);
-        res.json({ total });
+        const unread = await pool.query(
+            `SELECT sender_id as friend_id, COUNT(*) as count
+             FROM messages WHERE receiver_id = $1 AND is_read = false
+             GROUP BY sender_id`,
+            [req.session.userId]
+        );
+        const requests = await pool.query(
+            `SELECT COUNT(*) as count FROM friendships
+             WHERE friend_id = $1 AND status = 'pending'`,
+            [req.session.userId]
+        );
+        res.json({
+            unread: unread.rows,
+            pendingRequests: parseInt(requests.rows[0].count)
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
-    }
-});
-
-app.get('/api/network/export', isAuthenticated, async (req, res) => {
-    try {
-        const userId = req.session.userId;
-        const result = await pool.query(
-            `SELECT u.username, u.display_name, u.email, u.status
-             FROM friendships f
-             JOIN users u ON (f.user_id = u.id OR f.friend_id = u.id)
-             WHERE (f.user_id = $1 OR f.friend_id = $1) AND f.status = 'accepted' AND u.id != $1`,
-            [userId]
-        );
-        const csvRows = [['Username', 'Display Name', 'Email', 'Status']];
-        result.rows.forEach(row => {
-            csvRows.push([row.username, row.display_name || '', row.email, row.status]);
-        });
-        const csv = csvRows.map(row => row.join(',')).join('\n');
-        res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', 'attachment; filename="Sraveik-network.csv"');
-        res.send(csv);
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Export failed');
-    }
-});
-
-app.delete('/api/network/:friendId', isAuthenticated, async (req, res) => {
-    const friendId = parseInt(req.params.friendId);
-    if (isNaN(friendId)) return res.status(400).send('Invalid friend ID');
-    try {
-        const result = await pool.query(
-            `DELETE FROM friendships
-             WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1)`,
-            [req.session.userId, friendId]
-        );
-        if (result.rowCount === 0) return res.status(404).send('Connection not found');
-        res.send('Connection removed');
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Server error');
-    }
-});
-
-app.post('/api/network/accept/:requestId', isAuthenticated, async (req, res) => {
-    const requestId = req.params.requestId;
-    try {
-        const result = await pool.query(
-            `UPDATE friendships SET status = 'accepted' WHERE id = $1 AND friend_id = $2 AND status = 'pending'`,
-            [requestId, req.session.userId]
-        );
-        if (result.rowCount === 0) return res.status(404).send('Request not found');
-        const request = await pool.query('SELECT user_id FROM friendships WHERE id = $1', [requestId]);
-        const otherUserId = request.rows[0]?.user_id;
-        if (otherUserId) {
-            const otherEntry = onlineUsers.get(otherUserId);
-            if (otherEntry && otherEntry.socketId) io.to(otherEntry.socketId).emit('connection_accepted', {
-                from: req.session.userId,
-                fromUsername: req.session.username
-            });
-        }
-        res.send('Request accepted');
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Server error');
-    }
-});
-
-app.post('/api/network/decline/:requestId', isAuthenticated, async (req, res) => {
-    const requestId = req.params.requestId;
-    try {
-        const result = await pool.query(
-            `UPDATE friendships SET status = 'declined' WHERE id = $1 AND friend_id = $2 AND status = 'pending'`,
-            [requestId, req.session.userId]
-        );
-        if (result.rowCount === 0) return res.status(404).send('Request not found');
-        res.send('Request declined');
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Server error');
-    }
-});
-
-app.post('/api/update-status', isAuthenticated, async (req, res) => {
-    const { status } = req.body;
-    if (!['online', 'away', 'busy', 'offline'].includes(status)) {
-        return res.status(400).send('Invalid status');
-    }
-    try {
-        await pool.query(
-            'UPDATE users SET status = $1 WHERE id = $2',
-            [status, req.session.userId]
-        );
-        res.send('Status updated');
-    } catch (err) {
-        console.error(err);
-        res.status(500).send('Server error');
     }
 });
 
@@ -4997,7 +4982,7 @@ app.get('/api/users/search', isAuthenticated, async (req, res) => {
     if (!query || query.length < 2) return res.json([]);
     try {
         const result = await pool.query(
-            `SELECT id, username, display_name, avatar_url
+            `SELECT id, username, display_name, avatar_url, profession
              FROM users
              WHERE (username ILIKE $1 OR display_name ILIKE $1) AND id != $2
              ORDER BY username LIMIT 10`,
@@ -5016,7 +5001,7 @@ app.get('/profile', isAuthenticated, async (req, res) => {
             `SELECT id, username, email, role, display_name, 
                     bio, phone, github, twitter, linkedin,
                     avatar_url, created_at, updated_at,
-                    email_verified
+                    email_verified, profession, location, is_pro, is_verified
              FROM users WHERE id = $1`,
             [req.session.userId]
         );
@@ -5027,15 +5012,35 @@ app.get('/profile', isAuthenticated, async (req, res) => {
     }
 });
 
+app.get('/api/users/:id', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const result = await pool.query(
+            `SELECT id, username, display_name, avatar_url, bio, profession, location,
+                    github, twitter, linkedin, is_pro, is_verified, created_at
+             FROM users WHERE id = $1`,
+            [userId]
+        );
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.json(result.rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 app.put('/profile/update', isAuthenticated, async (req, res) => {
-    const { display_name, bio, phone, github, twitter, linkedin } = req.body;
+    const { display_name, bio, phone, github, twitter, linkedin, profession, location } = req.body;
     try {
         await pool.query(
             `UPDATE users SET
                 display_name = $1, bio = $2, phone = $3,
                 github = $4, twitter = $5, linkedin = $6,
+                profession = $7, location = $8,
                 updated_at = NOW()
-             WHERE id = $7`,
+             WHERE id = $9`,
             [
                 display_name ? escapeHtml(display_name) : null,
                 bio ? escapeHtml(bio) : null,
@@ -5043,13 +5048,16 @@ app.put('/profile/update', isAuthenticated, async (req, res) => {
                 github ? escapeHtml(github) : null,
                 twitter ? escapeHtml(twitter) : null,
                 linkedin ? escapeHtml(linkedin) : null,
+                profession ? escapeHtml(profession) : null,
+                location ? escapeHtml(location) : null,
                 req.session.userId
             ]
         );
         const updated = await pool.query(
             `SELECT id, username, display_name, email, bio, phone,
                     github, twitter, linkedin, email_verified,
-                    two_factor_enabled, created_at, updated_at, avatar_url
+                    two_factor_enabled, created_at, updated_at, avatar_url,
+                    profession, location
              FROM users WHERE id = $1`,
             [req.session.userId]
         );
@@ -5214,29 +5222,6 @@ app.delete('/api/messages/clear/:friendId', isAuthenticated, async (req, res) =>
     } catch (err) {
         console.error(err);
         res.status(500).send('Server error');
-    }
-});
-
-app.get('/api/unread', isAuthenticated, async (req, res) => {
-    try {
-        const unread = await pool.query(
-            `SELECT sender_id as friend_id, COUNT(*) as count
-             FROM messages WHERE receiver_id = $1 AND is_read = false
-             GROUP BY sender_id`,
-            [req.session.userId]
-        );
-        const requests = await pool.query(
-            `SELECT COUNT(*) as count FROM friendships
-             WHERE friend_id = $1 AND status = 'pending'`,
-            [req.session.userId]
-        );
-        res.json({
-            unread: unread.rows,
-            pendingRequests: parseInt(requests.rows[0].count)
-        });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
     }
 });
 
@@ -5922,6 +5907,8 @@ server.listen(PORT, HOST, () => {
     console.log(`💰 NEW: Sponsored Ads System (Method 1) - Businesses pay to appear at top`);
     console.log(`💰 NEW: Affiliate Commission System (Method 2) - Earn 5-8% on every sale`);
     console.log(`💰 NEW: Users earn 15 CREDITS when their submitted business gets approved`);
+    console.log(`👥 FRIENDS SYSTEM: Fixed friends loading with proper query and online status tracking`);
+    console.log(`👥 API: /api/friends now returns correct friend data with all user fields`);
 });
 
 // ==================== GRACEFUL SHUTDOWN ====================
