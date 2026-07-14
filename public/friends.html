@@ -1154,6 +1154,28 @@
             position: fixed; inset: 0;
             z-index: 3050;
         }
+
+        /* ENHANCED: Friend count badge */
+        .friend-count {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-left: 0.5rem;
+            background: rgba(0,229,255,0.08);
+            padding: 0.1rem 0.6rem;
+            border-radius: 20px;
+            border: 1px solid rgba(0,229,255,0.1);
+        }
+
+        /* ENHANCED: Quick action buttons */
+        .quick-actions {
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+        }
+        .quick-actions .btn {
+            font-size: 0.7rem;
+            padding: 0.3rem 0.7rem;
+        }
     </style>
 </head>
 <body>
@@ -1231,6 +1253,10 @@
                 <div>
                     <div class="page-title">Your Network</div>
                     <div class="page-subtitle">Manage connections, groups, and professional relationships</div>
+                </div>
+                <div class="quick-actions">
+                    <button class="btn btn-primary btn-small" id="refreshBtn"><i class="fas fa-sync-alt"></i> Refresh</button>
+                    <button class="btn btn-outline btn-small" id="exportBtn"><i class="fas fa-download"></i> Export</button>
                 </div>
             </div>
         </div>
@@ -1323,8 +1349,7 @@
             <div class="filters-top-row">
                 <h3><i class="fas fa-filter"></i> Filters &amp; Search</h3>
                 <div class="filters-actions">
-                    <button class="export-btn" id="exportBtn"><i class="fas fa-download"></i> Export</button>
-                    <button id="refreshBtn" class="btn btn-outline btn-small"><i class="fas fa-sync-alt"></i> Refresh</button>
+                    <button id="clearFilters" class="btn btn-outline btn-small">Clear</button>
                 </div>
             </div>
             <div class="filters-row">
@@ -1336,7 +1361,6 @@
                     <option value="offline">Offline</option>
                 </select>
                 <input type="text" id="quickSearch" class="filter-input" placeholder="Quick search…">
-                <button id="clearFilters" class="btn btn-outline btn-small">Clear</button>
             </div>
         </div>
 
@@ -1347,6 +1371,7 @@
                 <button class="sort-btn active" data-sort="name">Name</button>
                 <button class="sort-btn" data-sort="status">Status</button>
                 <button class="sort-btn" data-sort="starred">Starred</button>
+                <button class="sort-btn" data-sort="recent">Recent</button>
             </div>
             <div class="view-toggle">
                 <button class="view-toggle-btn active" data-view="grid" title="Grid view"><i class="fas fa-th-large"></i></button>
@@ -1355,7 +1380,10 @@
         </div>
 
         <!-- FRIENDS -->
-        <h2><i class="fas fa-user-friends"></i> Your Network</h2>
+        <h2>
+            <i class="fas fa-user-friends"></i> Your Network
+            <span class="friend-count" id="friendCount">0 connections</span>
+        </h2>
         <div id="friendsList" class="friend-grid"></div>
 
         <!-- REQUESTS -->
@@ -1462,7 +1490,11 @@
                 options.headers = { ...options.headers, ...csrfHeader };
             }
             const res = await fetch(url, { ...options, credentials: 'include' });
-            if (!res.ok) { let errorMsg = await res.text(); throw new Error(errorMsg || `Request failed with status ${res.status}`); }
+            if (!res.ok) { 
+                let errorMsg;
+                try { errorMsg = await res.text(); } catch(e) { errorMsg = `Request failed with status ${res.status}`; }
+                throw new Error(errorMsg || `Request failed with status ${res.status}`);
+            }
             const contentType = res.headers.get('content-type');
             if (contentType && contentType.includes('application/json')) return res.json();
             return res.text();
@@ -1583,6 +1615,7 @@
                 document.getElementById('totalConnections').textContent = stats.total || 0;
                 document.getElementById('onlineCount').textContent = stats.online || 0;
                 document.getElementById('requestsCount').textContent = stats.requests || 0;
+                document.getElementById('friendCount').textContent = `${stats.total || 0} connections`;
                 updateHealthScore(stats);
             } catch (err) { console.error('Stats error:', err); }
         }
@@ -1652,14 +1685,24 @@
                 const params = new URLSearchParams();
                 if (filters.status) params.append('status', filters.status);
                 if (filters.search) params.append('search', filters.search);
-                friendsData = await apiCall(`/api/friends?${params.toString()}`);
-                for (const f of friendsData) { if (!onlineStatus.has(f.id)) onlineStatus.set(f.id, f.status || 'offline'); }
+                const url = `/api/friends${params.toString() ? '?' + params.toString() : ''}`;
+                console.log('📡 Fetching friends from:', url);
+                friendsData = await apiCall(url);
+                console.log(`✅ Loaded ${friendsData.length} friends`);
+                
+                // Update online status from loaded data
+                for (const f of friendsData) { 
+                    if (!onlineStatus.has(f.id)) {
+                        onlineStatus.set(f.id, f.status || 'offline');
+                    }
+                }
                 renderFriends(friendsData);
                 renderPinned();
                 renderSuggestions();
+                loadStats();
             } catch (err) {
-                console.error(err);
-                container.innerHTML = '<div class="no-results"><i class="fas fa-wifi"></i>Error loading network. Please try again.</div>';
+                console.error('❌ Error loading friends:', err);
+                container.innerHTML = `<div class="no-results"><i class="fas fa-wifi"></i>Error loading network: ${escapeHtml(err.message || 'Please try again.')}</div>`;
             }
         }
         function getFriendStatusClass(friend) {
@@ -1674,6 +1717,8 @@
             } else if (currentSort === 'status') {
                 const order = { online: 0, away: 1, busy: 2, offline: 3 };
                 arr.sort((a, b) => (order[onlineStatus.get(a.id) || 'offline'] ?? 3) - (order[onlineStatus.get(b.id) || 'offline'] ?? 3));
+            } else if (currentSort === 'recent') {
+                arr.sort((a, b) => (b.last_active || 0) - (a.last_active || 0));
             } else {
                 arr.sort((a, b) => (a.display_name || a.username).localeCompare(b.display_name || b.username));
             }
@@ -1693,19 +1738,20 @@
                 const statusClass = getFriendStatusClass(f);
                 const isStarred = starredFriends.has(String(f.id));
                 const note = friendNotes[f.id] ? `<span class="friend-tag"><i class="fas fa-sticky-note"></i> Note</span>` : '';
+                const displayName = f.display_name || f.username;
                 return `
                     <div class="friend-card" data-friend-id="${f.id}" style="animation-delay:${i * 0.04}s;">
                         <div class="friend-info">
                             <img src="${escapeHtml(f.avatar_url || 'https://via.placeholder.com/44?text=U')}" class="friend-avatar" alt="Avatar" onerror="this.src='https://via.placeholder.com/44?text=U'">
                             <div class="friend-text">
                                 <div class="friend-name">
-                                    <span class="friend-name-text">${escapeHtml(f.display_name || f.username)}</span>
+                                    <span class="friend-name-text">${escapeHtml(displayName)}</span>
                                     ${f.is_pro ? '<span class="pro-badge">PRO</span>' : ''}
                                     ${f.is_verified ? '<span class="verified-badge"><i class="fas fa-check"></i></span>' : ''}
                                     <span class="friend-status ${statusClass}"></span>
                                     ${unreadHtml}
                                 </div>
-                                <div class="friend-username">@${escapeHtml(f.username)} · ${escapeHtml(f.profession || 'Professional')}</div>
+                                <div class="friend-username">@${escapeHtml(f.username)} ${f.profession ? '· ' + escapeHtml(f.profession) : ''}</div>
                                 <div class="friend-tags">${note}</div>
                             </div>
                         </div>
@@ -1739,7 +1785,7 @@
                     else { starredFriends.add(id); btn.classList.add('starred'); showToast('Added to favourites ⭐', 'success'); pushActivity('fa-star', 'message', 'You starred a connection'); }
                     localStorage.setItem('nova_starred', JSON.stringify([...starredFriends]));
                     renderPinned();
-                    updateHealthScore({ total: friendsData.length, online: 0, requests: requestsData.length });
+                    loadStats();
                 });
             });
             document.querySelectorAll('.note-btn').forEach(btn => {
@@ -1831,6 +1877,8 @@
                         btn.innerHTML = '<i class="fas fa-check"></i> Sent';
                         showToast('Request sent!', 'success');
                         pushActivity('fa-user-plus', 'connect', `You sent a request to @${uname}`);
+                        loadRequests();
+                        updateUnreadBadge();
                     } catch (err) { showToast(err.message || 'Failed', 'error'); btn.innerHTML = original; btn.disabled = false; }
                 });
             });
@@ -1862,7 +1910,7 @@
                                     <span class="friend-name-text">${escapeHtml(r.display_name || r.username)}</span>
                                     ${r.is_pro ? '<span class="pro-badge">PRO</span>' : ''}
                                 </div>
-                                <div class="friend-username">@${escapeHtml(r.username)} · ${escapeHtml(r.profession || 'Professional')}</div>
+                                <div class="friend-username">@${escapeHtml(r.username)} ${r.profession ? '· ' + escapeHtml(r.profession) : ''}</div>
                             </div>
                         </div>
                         <div class="card-actions">
@@ -1911,6 +1959,7 @@
                 showToast('Request sent!', 'success');
                 pushActivity('fa-user-plus', 'connect', `You sent a request to @${username}`);
                 updateUnreadBadge();
+                loadRequests();
             } catch (err) { showToast(err.message || 'Failed to send request', 'error'); }
             finally { btn.disabled = false; btn.innerHTML = original; }
         });
@@ -1934,7 +1983,7 @@
                                     <span class="friend-name-text">${escapeHtml(user.display_name || user.username)}</span>
                                     ${user.is_pro ? '<span class="pro-badge">PRO</span>' : ''}
                                 </div>
-                                <div class="friend-username">@${escapeHtml(user.username)} · ${escapeHtml(user.profession || 'Professional')}</div>
+                                <div class="friend-username">@${escapeHtml(user.username)} ${user.profession ? '· ' + escapeHtml(user.profession) : ''}</div>
                             </div>
                         </div>
                         <div class="card-actions">
@@ -1951,6 +2000,7 @@
                             showToast(`Request sent to ${username}!`, 'success');
                             pushActivity('fa-user-plus', 'connect', `You sent a request to @${username}`);
                             updateUnreadBadge();
+                            loadRequests();
                         } catch (err) { showToast(err.message || 'Failed to send request', 'error'); btn.innerHTML = original; btn.disabled = false; }
                     });
                 });
@@ -2036,6 +2086,7 @@
                             await apiCall('/api/friends/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ friendUsername: username }) });
                             showToast('Request sent!', 'success');
                             pushActivity('fa-user-plus', 'connect', `You connected with @${username}`);
+                            loadRequests();
                         } catch (err) { showToast(err.message || 'Failed to send request', 'error'); btn.disabled = false; btn.innerHTML = 'Connect'; }
                     });
                 });
@@ -2165,7 +2216,18 @@
             contentDiv.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading profile...</div>';
             try {
                 let friend = friendsData.find(f => String(f.id) == String(userId));
+                if (!friend) { 
+                    // Try to fetch from API directly
+                    try {
+                        const userData = await apiCall(`/api/users/${userId}`);
+                        friend = userData;
+                    } catch(e) {
+                        contentDiv.innerHTML = '<div class="no-results">Profile information not available.</div>';
+                        return;
+                    }
+                }
                 if (!friend) { contentDiv.innerHTML = '<div class="no-results">Profile information not available.</div>'; return; }
+                
                 const displayName = friend.display_name || friend.username;
                 const avatar = friend.avatar_url || 'https://via.placeholder.com/80?text=U';
                 const bio = friend.bio || 'No bio available.';
@@ -2299,7 +2361,11 @@
                 pushActivity('fa-comment', 'message', `New message from @${data.fromUsername || 'a connection'}`);
             }
         });
-        socket.on('user_status', (data) => { onlineStatus.set(data.userId, data.status); if (friendsData.length) renderFriends(friendsData); loadStats(); });
+        socket.on('user_status', (data) => { 
+            onlineStatus.set(data.userId, data.status); 
+            if (friendsData.length) renderFriends(friendsData); 
+            loadStats(); 
+        });
         socket.on('group_created', () => { loadGroups(); showToast('A new group was created!', 'info'); pushActivity('fa-users', 'group', 'A new group was created'); });
 
         // ========== Back to top ==========
@@ -2307,7 +2373,7 @@
         window.addEventListener('scroll', () => backToTopBtn.classList.toggle('visible', window.scrollY > 400));
         backToTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
-        // ========== Hamburger Menu - FIXED ==========
+        // ========== Hamburger Menu ==========
         const hamburger = document.getElementById('hamburger');
         const navLinks = document.getElementById('navLinks');
         const navOverlay = document.getElementById('navOverlay');
@@ -2351,12 +2417,10 @@
 
         navOverlay.addEventListener('click', closeNav);
 
-        // Close nav when links are clicked
         navLinks.querySelectorAll('a').forEach(link => {
             link.addEventListener('click', closeNav);
         });
 
-        // Close nav on Escape key
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 closeNav();
