@@ -361,7 +361,7 @@
             }
         }
 
-        /* ========== REST OF EXISTING STYLES ========== */
+        /* ========== REST OF EXISTING STYLES (PRESERVED) ========== */
         .friends-container {
             max-width: 1240px;
             margin: 0 auto;
@@ -1154,49 +1154,6 @@
             position: fixed; inset: 0;
             z-index: 3050;
         }
-
-        .friend-count {
-            font-size: 0.7rem;
-            color: var(--text-secondary);
-            margin-left: 0.5rem;
-            background: rgba(0,229,255,0.08);
-            padding: 0.1rem 0.6rem;
-            border-radius: 20px;
-            border: 1px solid rgba(0,229,255,0.1);
-        }
-
-        .quick-actions {
-            display: flex;
-            gap: 0.4rem;
-            flex-wrap: wrap;
-        }
-        .quick-actions .btn {
-            font-size: 0.7rem;
-            padding: 0.3rem 0.7rem;
-        }
-
-        /* Debug info */
-        .debug-info {
-            background: rgba(239,68,68,0.1);
-            border: 1px solid rgba(239,68,68,0.2);
-            border-radius: 12px;
-            padding: 0.75rem 1rem;
-            margin-bottom: 1rem;
-            font-size: 0.75rem;
-            color: #fca5a5;
-            font-family: var(--font-mono);
-            display: none;
-        }
-        .debug-info.show {
-            display: block;
-        }
-        .debug-info pre {
-            white-space: pre-wrap;
-            word-break: break-all;
-            margin-top: 0.3rem;
-            font-size: 0.7rem;
-            color: #94a3b8;
-        }
     </style>
 </head>
 <body>
@@ -1207,6 +1164,7 @@
             <i class="fas fa-shield-alt"></i> Sarveik
         </div>
         
+        <!-- Desktop Navigation Links -->
         <ul class="nav-links" id="navLinks">
             <li><a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a></li>
             <li><a href="profile.html"><i class="fas fa-user"></i> Profile</a></li>
@@ -1217,6 +1175,7 @@
             </a></li>
         </ul>
         
+        <!-- Right side: Profile Menu + Hamburger -->
         <div style="display: flex; align-items: center; gap: 0.5rem;">
             <div class="nav-profile" id="navProfileBtn">
                 <img src="https://via.placeholder.com/32" alt="Profile" class="nav-profile-avatar" id="navProfileAvatar" onerror="this.src='https://via.placeholder.com/32?text=U'">
@@ -1228,6 +1187,7 @@
             </button>
         </div>
         
+        <!-- Profile Dropdown Menu -->
         <div class="profile-dropdown" id="profileDropdown">
             <div class="profile-dropdown-header">
                 <img src="https://via.placeholder.com/44" alt="Profile" class="profile-dropdown-avatar" id="dropdownAvatar" onerror="this.src='https://via.placeholder.com/44?text=U'">
@@ -1237,39 +1197,45 @@
                 </div>
             </div>
             <div class="profile-dropdown-items">
-                <button class="profile-dropdown-item" id="profileMenuItem"><i class="fas fa-user-circle"></i> My Profile</button>
-                <button class="profile-dropdown-item" id="dashboardMenuItem"><i class="fas fa-tachometer-alt"></i> Dashboard</button>
-                <button class="profile-dropdown-item" id="savedMenuItem"><i class="fas fa-heart"></i> Saved Items</button>
-                <button class="profile-dropdown-item" id="notificationsMenuItem"><i class="fas fa-bell"></i> Notifications</button>
-                <button class="profile-dropdown-item" id="settingsMenuItem"><i class="fas fa-cog"></i> Settings</button>
-                <button class="profile-dropdown-item" id="helpMenuItem"><i class="fas fa-question-circle"></i> Help & Support</button>
+                <button class="profile-dropdown-item" id="profileMenuItem">
+                    <i class="fas fa-user-circle"></i> My Profile
+                </button>
+                <button class="profile-dropdown-item" id="dashboardMenuItem">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </button>
+                <button class="profile-dropdown-item" id="savedMenuItem">
+                    <i class="fas fa-heart"></i> Saved Items
+                </button>
+                <button class="profile-dropdown-item" id="notificationsMenuItem">
+                    <i class="fas fa-bell"></i> Notifications
+                </button>
+                <button class="profile-dropdown-item" id="settingsMenuItem">
+                    <i class="fas fa-cog"></i> Settings
+                </button>
+                <button class="profile-dropdown-item" id="helpMenuItem">
+                    <i class="fas fa-question-circle"></i> Help & Support
+                </button>
                 <div class="profile-dropdown-divider"></div>
-                <button class="profile-dropdown-item danger" id="logoutMenuItem"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                <button class="profile-dropdown-item danger" id="logoutMenuItem">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
             </div>
         </div>
     </nav>
 
     <div class="friends-container">
 
-        <!-- DEBUG INFO -->
-        <div class="debug-info" id="debugInfo">
-            <strong>🐛 Debug Info:</strong>
-            <pre id="debugContent">Loading...</pre>
-        </div>
-
+        <!-- PAGE HEADER -->
         <div class="page-header">
             <div class="page-header-inner">
                 <div>
                     <div class="page-title">Your Network</div>
                     <div class="page-subtitle">Manage connections, groups, and professional relationships</div>
                 </div>
-                <div class="quick-actions">
-                    <button class="btn btn-primary btn-small" id="refreshBtn"><i class="fas fa-sync-alt"></i> Refresh</button>
-                    <button class="btn btn-outline btn-small" id="exportBtn"><i class="fas fa-download"></i> Export</button>
-                </div>
             </div>
         </div>
 
+        <!-- STATS -->
         <div class="stats-grid" id="statsGrid">
             <div class="stat-card">
                 <div class="stat-icon"><i class="fas fa-users"></i></div>
@@ -1288,6 +1254,7 @@
             </div>
         </div>
 
+        <!-- HEALTH -->
         <div class="health-card" id="healthCard">
             <div class="health-header">
                 <div>
@@ -1317,11 +1284,13 @@
             </ul>
         </div>
 
+        <!-- PINNED -->
         <div class="pinned-section" id="pinnedSection" style="display:none;">
             <div class="pinned-label"><i class="fas fa-star"></i> Favourite Connections</div>
             <div class="pinned-avatars" id="pinnedAvatars"></div>
         </div>
 
+        <!-- SEARCH -->
         <h2><i class="fas fa-search"></i> Find Professionals</h2>
         <div class="search-section">
             <input type="text" id="searchUser" placeholder="Search by username or name…" minlength="2" autocomplete="off">
@@ -1330,27 +1299,32 @@
         <div id="searchResults"></div>
         <hr>
 
+        <!-- ADD FRIEND -->
         <h2><i class="fas fa-user-plus"></i> Add Connection</h2>
         <div class="add-friend">
             <input type="text" id="friendUsername" placeholder="Enter exact username" autocomplete="off" autocapitalize="none">
             <button id="addFriendBtn" class="btn btn-primary"><i class="fas fa-user-plus"></i> Send Request</button>
         </div>
 
+        <!-- TRENDING -->
         <h2><i class="fas fa-fire"></i> Trending Professionals</h2>
         <div id="trendingSection">
             <div class="loading"><i class="fas fa-spinner"></i> Loading trending…</div>
         </div>
 
+        <!-- SUGGESTIONS -->
         <h2><i class="fas fa-user-astronaut"></i> People You May Know</h2>
         <div class="suggestion-grid" id="suggestionsGrid">
             <div class="no-results" style="grid-column:1/-1;">Loading suggestions…</div>
         </div>
 
+        <!-- FILTERS -->
         <div class="filters-section">
             <div class="filters-top-row">
                 <h3><i class="fas fa-filter"></i> Filters &amp; Search</h3>
                 <div class="filters-actions">
-                    <button id="clearFilters" class="btn btn-outline btn-small">Clear</button>
+                    <button class="export-btn" id="exportBtn"><i class="fas fa-download"></i> Export</button>
+                    <button id="refreshBtn" class="btn btn-outline btn-small"><i class="fas fa-sync-alt"></i> Refresh</button>
                 </div>
             </div>
             <div class="filters-row">
@@ -1362,16 +1336,17 @@
                     <option value="offline">Offline</option>
                 </select>
                 <input type="text" id="quickSearch" class="filter-input" placeholder="Quick search…">
+                <button id="clearFilters" class="btn btn-outline btn-small">Clear</button>
             </div>
         </div>
 
+        <!-- SORT + VIEW -->
         <div class="controls-row">
             <div class="sort-bar">
                 <span>Sort by</span>
                 <button class="sort-btn active" data-sort="name">Name</button>
                 <button class="sort-btn" data-sort="status">Status</button>
                 <button class="sort-btn" data-sort="starred">Starred</button>
-                <button class="sort-btn" data-sort="recent">Recent</button>
             </div>
             <div class="view-toggle">
                 <button class="view-toggle-btn active" data-view="grid" title="Grid view"><i class="fas fa-th-large"></i></button>
@@ -1379,21 +1354,22 @@
             </div>
         </div>
 
-        <h2>
-            <i class="fas fa-user-friends"></i> Your Network
-            <span class="friend-count" id="friendCount">0 connections</span>
-        </h2>
+        <!-- FRIENDS -->
+        <h2><i class="fas fa-user-friends"></i> Your Network</h2>
         <div id="friendsList" class="friend-grid"></div>
 
+        <!-- REQUESTS -->
         <h2 style="margin-top:2rem;"><i class="fas fa-clock"></i> Pending Requests</h2>
         <div id="requestsList"></div>
 
+        <!-- GROUPS -->
         <h2><i class="fas fa-users-viewfinder"></i> My Groups</h2>
         <div id="groupsList" class="friend-grid"></div>
         <div style="margin:1rem 0;">
             <button id="createGroupBtn" class="btn btn-primary"><i class="fas fa-plus"></i> Create New Group</button>
         </div>
 
+        <!-- ACTIVITY -->
         <h2><i class="fas fa-bolt"></i> Recent Activity</h2>
         <div class="activity-feed" id="activityFeed">
             <div class="loading"><i class="fas fa-spinner"></i> Loading activity…</div>
@@ -1406,6 +1382,7 @@
 
     <button id="backToTop" title="Back to top"><i class="fas fa-arrow-up"></i></button>
 
+    <!-- PROFILE MODAL -->
     <div id="profileModal" class="modal">
         <div class="modal-content">
             <span class="close-modal">&times;</span>
@@ -1413,6 +1390,7 @@
         </div>
     </div>
 
+    <!-- CREATE GROUP MODAL -->
     <div id="createGroupModal" class="modal">
         <div class="modal-content" style="max-width:540px;">
             <span class="close-modal" id="closeGroupModal">&times;</span>
@@ -1438,6 +1416,7 @@
         </div>
     </div>
 
+    <!-- NOTE MODAL -->
     <div id="noteModal" class="modal">
         <div class="modal-content" style="max-width:420px;">
             <span class="close-modal" id="closeNoteModal">&times;</span>
@@ -1452,6 +1431,7 @@
         </div>
     </div>
 
+    <!-- Context Menu -->
     <div id="ctxMenu" class="ctx-menu" style="display:none;"></div>
     <div id="ctxBackdrop" class="ctx-backdrop" style="display:none;"></div>
 
@@ -1474,32 +1454,18 @@
                 options.body = JSON.stringify(options.body);
                 options.headers = { ...options.headers, 'Content-Type': 'application/json' };
             }
+            if (options.body && typeof options.body === 'string' && !options.headers?.['Content-Type']) {
+                options.headers = { ...options.headers, 'Content-Type': 'application/json' };
+            }
             if (options.method && options.method !== 'GET') {
                 const csrfHeader = await getCsrfHeader();
                 options.headers = { ...options.headers, ...csrfHeader };
             }
             const res = await fetch(url, { ...options, credentials: 'include' });
-            if (!res.ok) { 
-                let errorMsg;
-                try { errorMsg = await res.text(); } catch(e) { errorMsg = `Request failed with status ${res.status}`; }
-                throw new Error(errorMsg || `Request failed with status ${res.status}`);
-            }
+            if (!res.ok) { let errorMsg = await res.text(); throw new Error(errorMsg || `Request failed with status ${res.status}`); }
             const contentType = res.headers.get('content-type');
             if (contentType && contentType.includes('application/json')) return res.json();
             return res.text();
-        }
-
-        // ========== Debug ==========
-        function setDebug(message, data) {
-            const debugEl = document.getElementById('debugInfo');
-            const contentEl = document.getElementById('debugContent');
-            debugEl.classList.add('show');
-            let debugText = message;
-            if (data) {
-                debugText += '\n' + (typeof data === 'string' ? data : JSON.stringify(data, null, 2));
-            }
-            contentEl.textContent = debugText;
-            console.log('🐛 Debug:', message, data || '');
         }
 
         // ========== Globals ==========
@@ -1519,6 +1485,8 @@
         let currentView = 'grid';
         let noteTargetId = null;
         let activityLog = JSON.parse(localStorage.getItem('nova_activity') || '[]');
+
+        // ========== Profile Data ==========
         let currentUserProfile = null;
 
         // ========== Context Menu ==========
@@ -1615,7 +1583,6 @@
                 document.getElementById('totalConnections').textContent = stats.total || 0;
                 document.getElementById('onlineCount').textContent = stats.online || 0;
                 document.getElementById('requestsCount').textContent = stats.requests || 0;
-                document.getElementById('friendCount').textContent = `${stats.total || 0} connections`;
                 updateHealthScore(stats);
             } catch (err) { console.error('Stats error:', err); }
         }
@@ -1677,84 +1644,29 @@
                 </li>`).join('');
         }
 
-        // ========== FRIENDS - FIXED LOADING ==========
+        // ========== Friends ==========
         async function loadFriends() {
             const container = document.getElementById('friendsList');
             showSkeleton(container);
-            
             try {
-                // Build URL with filters
                 const params = new URLSearchParams();
                 if (filters.status) params.append('status', filters.status);
                 if (filters.search) params.append('search', filters.search);
-                const url = `/api/friends${params.toString() ? '?' + params.toString() : ''}`;
-                
-                setDebug('📡 Fetching friends from:', url);
-                
-                // Make the API call
-                const response = await fetch(url, { 
-                    credentials: 'include',
-                    headers: { 'Accept': 'application/json' }
-                });
-                
-                // Check response status
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    setDebug('❌ API Error:', `Status ${response.status}: ${errorText}`);
-                    container.innerHTML = `<div class="no-results"><i class="fas fa-exclamation-triangle"></i>Error loading network (${response.status})</div>`;
-                    return;
-                }
-                
-                // Parse response
-                let data;
-                try {
-                    data = await response.json();
-                } catch (e) {
-                    setDebug('❌ Parse Error:', e.message);
-                    container.innerHTML = '<div class="no-results"><i class="fas fa-exclamation-triangle"></i>Invalid response from server</div>';
-                    return;
-                }
-                
-                setDebug('✅ Friends data received:', data);
-                
-                // Check if data is an array
-                if (!Array.isArray(data)) {
-                    setDebug('⚠️ Data is not an array:', data);
-                    container.innerHTML = '<div class="no-results"><i class="fas fa-exclamation-triangle"></i>Unexpected data format from server</div>';
-                    return;
-                }
-                
-                // Store data
-                friendsData = data;
-                
-                // Update online status
-                for (const f of friendsData) { 
-                    if (!onlineStatus.has(f.id)) {
-                        onlineStatus.set(f.id, f.status || 'offline');
-                    }
-                }
-                
-                // Render friends
+                friendsData = await apiCall(`/api/friends?${params.toString()}`);
+                for (const f of friendsData) { if (!onlineStatus.has(f.id)) onlineStatus.set(f.id, f.status || 'offline'); }
                 renderFriends(friendsData);
                 renderPinned();
                 renderSuggestions();
-                loadStats();
-                
-                setDebug('✅ Rendered', `${friendsData.length} friends`);
-                
             } catch (err) {
-                console.error('❌ Error loading friends:', err);
-                setDebug('❌ Error:', err.message);
-                container.innerHTML = `<div class="no-results"><i class="fas fa-wifi"></i>Error: ${escapeHtml(err.message || 'Unknown error')}</div>`;
+                console.error(err);
+                container.innerHTML = '<div class="no-results"><i class="fas fa-wifi"></i>Error loading network. Please try again.</div>';
             }
         }
-
         function getFriendStatusClass(friend) {
             let status = onlineStatus.get(friend.id);
             if (!status) status = friend.status || 'offline';
             return ['online', 'away', 'busy'].includes(status) ? status : '';
         }
-
         function sortedFriends(friends) {
             const arr = [...friends];
             if (currentSort === 'starred') {
@@ -1762,46 +1674,38 @@
             } else if (currentSort === 'status') {
                 const order = { online: 0, away: 1, busy: 2, offline: 3 };
                 arr.sort((a, b) => (order[onlineStatus.get(a.id) || 'offline'] ?? 3) - (order[onlineStatus.get(b.id) || 'offline'] ?? 3));
-            } else if (currentSort === 'recent') {
-                arr.sort((a, b) => (b.last_active || 0) - (a.last_active || 0));
             } else {
                 arr.sort((a, b) => (a.display_name || a.username).localeCompare(b.display_name || b.username));
             }
             return arr;
         }
-
         function renderFriends(friends) {
             const container = document.getElementById('friendsList');
             container.className = 'friend-grid' + (currentView === 'list' ? ' list-view' : '');
             const sorted = sortedFriends(friends);
-            
             if (sorted.length === 0) {
                 container.innerHTML = '<div class="no-results"><i class="fas fa-users-slash"></i>No connections yet. Add some professionals!</div>';
                 return;
             }
-            
             container.innerHTML = sorted.map((f, i) => {
                 const unread = unreadCounts.get(f.id) || 0;
                 const unreadHtml = unread > 0 ? `<span class="unread-badge">${unread}</span>` : '';
                 const statusClass = getFriendStatusClass(f);
                 const isStarred = starredFriends.has(String(f.id));
                 const note = friendNotes[f.id] ? `<span class="friend-tag"><i class="fas fa-sticky-note"></i> Note</span>` : '';
-                const displayName = f.display_name || f.username;
-                const avatarUrl = f.avatar_url || 'https://via.placeholder.com/44?text=U';
-                
                 return `
                     <div class="friend-card" data-friend-id="${f.id}" style="animation-delay:${i * 0.04}s;">
                         <div class="friend-info">
-                            <img src="${escapeHtml(avatarUrl)}" class="friend-avatar" alt="Avatar" onerror="this.src='https://via.placeholder.com/44?text=U'">
+                            <img src="${escapeHtml(f.avatar_url || 'https://via.placeholder.com/44?text=U')}" class="friend-avatar" alt="Avatar" onerror="this.src='https://via.placeholder.com/44?text=U'">
                             <div class="friend-text">
                                 <div class="friend-name">
-                                    <span class="friend-name-text">${escapeHtml(displayName)}</span>
+                                    <span class="friend-name-text">${escapeHtml(f.display_name || f.username)}</span>
                                     ${f.is_pro ? '<span class="pro-badge">PRO</span>' : ''}
                                     ${f.is_verified ? '<span class="verified-badge"><i class="fas fa-check"></i></span>' : ''}
                                     <span class="friend-status ${statusClass}"></span>
                                     ${unreadHtml}
                                 </div>
-                                <div class="friend-username">@${escapeHtml(f.username)}${f.profession ? ' · ' + escapeHtml(f.profession) : ''}</div>
+                                <div class="friend-username">@${escapeHtml(f.username)} · ${escapeHtml(f.profession || 'Professional')}</div>
                                 <div class="friend-tags">${note}</div>
                             </div>
                         </div>
@@ -1815,10 +1719,8 @@
                         </div>
                     </div>`;
             }).join('');
-            
             attachFriendEvents();
         }
-
         function attachFriendEvents() {
             document.querySelectorAll('.chat-btn').forEach(btn => {
                 btn.addEventListener('click', async () => {
@@ -1837,7 +1739,7 @@
                     else { starredFriends.add(id); btn.classList.add('starred'); showToast('Added to favourites ⭐', 'success'); pushActivity('fa-star', 'message', 'You starred a connection'); }
                     localStorage.setItem('nova_starred', JSON.stringify([...starredFriends]));
                     renderPinned();
-                    loadStats();
+                    updateHealthScore({ total: friendsData.length, online: 0, requests: requestsData.length });
                 });
             });
             document.querySelectorAll('.note-btn').forEach(btn => {
@@ -1877,7 +1779,6 @@
                 });
             });
         }
-
         async function unfriend(friendId) {
             if (!confirm('Remove this connection?')) return;
             const friendCard = document.querySelector(`.friend-card[data-friend-id="${friendId}"]`);
@@ -1897,7 +1798,6 @@
                 if (unfriendBtn) { unfriendBtn.disabled = false; unfriendBtn.innerHTML = original; }
             }
         }
-
         function renderPinned() {
             const section = document.getElementById('pinnedSection');
             const container = document.getElementById('pinnedAvatars');
@@ -1910,7 +1810,6 @@
                     ${escapeHtml(f.display_name || f.username)}
                 </div>`).join('');
         }
-
         function renderSuggestions() {
             const container = document.getElementById('suggestionsGrid');
             const pool = trendingData.filter(t => !friendsData.some(f => f.id === t.id) && t.id !== currentUserId);
@@ -1932,13 +1831,10 @@
                         btn.innerHTML = '<i class="fas fa-check"></i> Sent';
                         showToast('Request sent!', 'success');
                         pushActivity('fa-user-plus', 'connect', `You sent a request to @${uname}`);
-                        loadRequests();
-                        updateUnreadBadge();
                     } catch (err) { showToast(err.message || 'Failed', 'error'); btn.innerHTML = original; btn.disabled = false; }
                 });
             });
         }
-
         function renderActivityFeed() {
             const container = document.getElementById('activityFeed');
             if (activityLog.length === 0) { container.innerHTML = '<div class="no-results"><i class="fas fa-bolt-lightning"></i>No recent activity yet.</div>'; return; }
@@ -1966,7 +1862,7 @@
                                     <span class="friend-name-text">${escapeHtml(r.display_name || r.username)}</span>
                                     ${r.is_pro ? '<span class="pro-badge">PRO</span>' : ''}
                                 </div>
-                                <div class="friend-username">@${escapeHtml(r.username)}${r.profession ? ' · ' + escapeHtml(r.profession) : ''}</div>
+                                <div class="friend-username">@${escapeHtml(r.username)} · ${escapeHtml(r.profession || 'Professional')}</div>
                             </div>
                         </div>
                         <div class="card-actions">
@@ -2010,12 +1906,11 @@
             const original = btn.innerHTML;
             btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
             try {
-                await apiCall('/api/friends/request', { method: 'POST', body: JSON.stringify({ friendUsername: username }) });
+                await apiCall('/api/friends/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ friendUsername: username }) });
                 document.getElementById('friendUsername').value = '';
                 showToast('Request sent!', 'success');
                 pushActivity('fa-user-plus', 'connect', `You sent a request to @${username}`);
                 updateUnreadBadge();
-                loadRequests();
             } catch (err) { showToast(err.message || 'Failed to send request', 'error'); }
             finally { btn.disabled = false; btn.innerHTML = original; }
         });
@@ -2039,7 +1934,7 @@
                                     <span class="friend-name-text">${escapeHtml(user.display_name || user.username)}</span>
                                     ${user.is_pro ? '<span class="pro-badge">PRO</span>' : ''}
                                 </div>
-                                <div class="friend-username">@${escapeHtml(user.username)}${user.profession ? ' · ' + escapeHtml(user.profession) : ''}</div>
+                                <div class="friend-username">@${escapeHtml(user.username)} · ${escapeHtml(user.profession || 'Professional')}</div>
                             </div>
                         </div>
                         <div class="card-actions">
@@ -2051,12 +1946,11 @@
                         const username = btn.dataset.username; const original = btn.innerHTML;
                         btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                         try {
-                            await apiCall('/api/friends/request', { method: 'POST', body: JSON.stringify({ friendUsername: username }) });
+                            await apiCall('/api/friends/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ friendUsername: username }) });
                             btn.innerHTML = '<i class="fas fa-check"></i>';
                             showToast(`Request sent to ${username}!`, 'success');
                             pushActivity('fa-user-plus', 'connect', `You sent a request to @${username}`);
                             updateUnreadBadge();
-                            loadRequests();
                         } catch (err) { showToast(err.message || 'Failed to send request', 'error'); btn.innerHTML = original; btn.disabled = false; }
                     });
                 });
@@ -2139,10 +2033,9 @@
                         const username = btn.dataset.username;
                         btn.disabled = true; btn.innerHTML = '<i class="fas fa-check"></i>';
                         try {
-                            await apiCall('/api/friends/request', { method: 'POST', body: JSON.stringify({ friendUsername: username }) });
+                            await apiCall('/api/friends/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ friendUsername: username }) });
                             showToast('Request sent!', 'success');
                             pushActivity('fa-user-plus', 'connect', `You connected with @${username}`);
-                            loadRequests();
                         } catch (err) { showToast(err.message || 'Failed to send request', 'error'); btn.disabled = false; btn.innerHTML = 'Connect'; }
                     });
                 });
@@ -2272,17 +2165,7 @@
             contentDiv.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading profile...</div>';
             try {
                 let friend = friendsData.find(f => String(f.id) == String(userId));
-                if (!friend) { 
-                    try {
-                        const userData = await apiCall(`/api/users/${userId}`);
-                        friend = userData;
-                    } catch(e) {
-                        contentDiv.innerHTML = '<div class="no-results">Profile information not available.</div>';
-                        return;
-                    }
-                }
                 if (!friend) { contentDiv.innerHTML = '<div class="no-results">Profile information not available.</div>'; return; }
-                
                 const displayName = friend.display_name || friend.username;
                 const avatar = friend.avatar_url || 'https://via.placeholder.com/80?text=U';
                 const bio = friend.bio || 'No bio available.';
@@ -2365,12 +2248,31 @@
             }
         });
 
-        document.getElementById('profileMenuItem')?.addEventListener('click', () => { closeProfileDropdown(); window.location.href = 'profile.html'; });
-        document.getElementById('dashboardMenuItem')?.addEventListener('click', () => { closeProfileDropdown(); window.location.href = 'dashboard.html'; });
-        document.getElementById('savedMenuItem')?.addEventListener('click', () => { closeProfileDropdown(); window.location.href = 'profile.html?tab=favorites'; });
-        document.getElementById('notificationsMenuItem')?.addEventListener('click', () => { closeProfileDropdown(); window.location.href = 'profile.html?tab=notifications'; });
-        document.getElementById('settingsMenuItem')?.addEventListener('click', () => { closeProfileDropdown(); window.location.href = 'profile.html?tab=settings'; });
-        document.getElementById('helpMenuItem')?.addEventListener('click', () => { closeProfileDropdown(); window.location.href = 'support.html'; });
+        // Profile Menu Item Actions
+        document.getElementById('profileMenuItem')?.addEventListener('click', () => {
+            closeProfileDropdown();
+            window.location.href = 'profile.html';
+        });
+        document.getElementById('dashboardMenuItem')?.addEventListener('click', () => {
+            closeProfileDropdown();
+            window.location.href = 'dashboard.html';
+        });
+        document.getElementById('savedMenuItem')?.addEventListener('click', () => {
+            closeProfileDropdown();
+            window.location.href = 'profile.html?tab=favorites';
+        });
+        document.getElementById('notificationsMenuItem')?.addEventListener('click', () => {
+            closeProfileDropdown();
+            window.location.href = 'profile.html?tab=notifications';
+        });
+        document.getElementById('settingsMenuItem')?.addEventListener('click', () => {
+            closeProfileDropdown();
+            window.location.href = 'profile.html?tab=settings';
+        });
+        document.getElementById('helpMenuItem')?.addEventListener('click', () => {
+            closeProfileDropdown();
+            window.location.href = 'support.html';
+        });
         document.getElementById('logoutMenuItem')?.addEventListener('click', async (e) => {
             e.preventDefault();
             if (confirm('Are you sure you want to logout?')) {
@@ -2397,11 +2299,7 @@
                 pushActivity('fa-comment', 'message', `New message from @${data.fromUsername || 'a connection'}`);
             }
         });
-        socket.on('user_status', (data) => { 
-            onlineStatus.set(data.userId, data.status); 
-            if (friendsData.length) renderFriends(friendsData); 
-            loadStats(); 
-        });
+        socket.on('user_status', (data) => { onlineStatus.set(data.userId, data.status); if (friendsData.length) renderFriends(friendsData); loadStats(); });
         socket.on('group_created', () => { loadGroups(); showToast('A new group was created!', 'info'); pushActivity('fa-users', 'group', 'A new group was created'); });
 
         // ========== Back to top ==========
@@ -2409,7 +2307,7 @@
         window.addEventListener('scroll', () => backToTopBtn.classList.toggle('visible', window.scrollY > 400));
         backToTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
-        // ========== Hamburger Menu ==========
+        // ========== Hamburger Menu - FIXED ==========
         const hamburger = document.getElementById('hamburger');
         const navLinks = document.getElementById('navLinks');
         const navOverlay = document.getElementById('navOverlay');
@@ -2432,14 +2330,39 @@
         }
 
         function toggleNav() {
-            if (navLinks.classList.contains('active')) { closeNav(); } else { openNav(); }
+            if (navLinks.classList.contains('active')) {
+                closeNav();
+            } else {
+                openNav();
+            }
         }
 
-        hamburger.addEventListener('click', (e) => { e.stopPropagation(); toggleNav(); });
-        hamburger.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleNav(); } });
+        hamburger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleNav();
+        });
+
+        hamburger.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleNav();
+            }
+        });
+
         navOverlay.addEventListener('click', closeNav);
-        navLinks.querySelectorAll('a').forEach(link => { link.addEventListener('click', closeNav); });
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeNav(); hideCtxMenu(); } });
+
+        // Close nav when links are clicked
+        navLinks.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', closeNav);
+        });
+
+        // Close nav on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeNav();
+                hideCtxMenu();
+            }
+        });
 
         // ========== Periodic refresh ==========
         setInterval(() => { if (currentUserId) { updateUnreadBadge(); loadStats(); } }, 30000);

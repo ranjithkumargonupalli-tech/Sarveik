@@ -108,7 +108,7 @@ async function sendToolRejectionEmail(to, username, toolName, reason = null) {
 }
 
 // ==================== BUSINESS EMAIL NOTIFICATIONS ====================
-async function sendBusinessApprovalEmail(to, userName, businessName, creditsEarned = 15) {
+async function sendBusinessApprovalEmail(to, userName, businessName, creditsEarned = 50) {
     const subject = `✅ Your business "${businessName}" has been approved!`;
     const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 10px;">
@@ -277,121 +277,6 @@ const otpVerificationLimiter = rateLimit({
     },
     message: 'Too many OTP verification attempts, please try again later.'
 });
-
-// ==================== SETUP MONETIZATION TABLES ====================
-async function setupMonetizationTables() {
-    try {
-        // Sponsored listings table
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS sponsored_listings (
-                id SERIAL PRIMARY KEY,
-                business_id INT REFERENCES businesses(id) NOT NULL,
-                package_type VARCHAR(50) NOT NULL,
-                start_date TIMESTAMP NOT NULL,
-                end_date TIMESTAMP NOT NULL,
-                price_paid DECIMAL(10,2) NOT NULL,
-                clicks INT DEFAULT 0,
-                views INT DEFAULT 0,
-                custom_message TEXT,
-                is_active BOOLEAN DEFAULT true,
-                created_at TIMESTAMP DEFAULT NOW(),
-                updated_at TIMESTAMP DEFAULT NOW()
-            )
-        `);
-        
-        // Sponsored packages table
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS sponsored_packages (
-                id SERIAL PRIMARY KEY,
-                name VARCHAR(100),
-                duration_days INT,
-                price DECIMAL(10,2),
-                position_priority INT,
-                features JSONB
-            )
-        `);
-        
-        // Insert default packages if not exist
-        const pkgCheck = await pool.query('SELECT COUNT(*) FROM sponsored_packages');
-        if (parseInt(pkgCheck.rows[0].count) === 0) {
-            await pool.query(`
-                INSERT INTO sponsored_packages (name, duration_days, price, position_priority, features) VALUES
-                ('Basic Spotlight', 30, 1499, 2, '{"impressions": 5000, "badge": "Sponsored"}'::jsonb),
-                ('Premium Featured', 30, 4999, 1, '{"impressions": 20000, "badge": "⭐ Featured Sponsor", "custom_message": true}'::jsonb),
-                ('Enterprise Dominance', 30, 14999, 0, '{"impressions": 100000, "badge": "👑 Official Partner", "custom_message": true, "homepage_banner": true}'::jsonb)
-            `);
-        }
-        
-        // Affiliate links table
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS affiliate_links (
-                id SERIAL PRIMARY KEY,
-                business_id INT REFERENCES businesses(id) NOT NULL,
-                product_name VARCHAR(200),
-                product_url TEXT NOT NULL,
-                commission_rate DECIMAL(5,2) DEFAULT 7.00,
-                click_count INT DEFAULT 0,
-                sale_count INT DEFAULT 0,
-                total_revenue DECIMAL(10,2) DEFAULT 0,
-                total_commission DECIMAL(10,2) DEFAULT 0,
-                is_active BOOLEAN DEFAULT true,
-                created_at TIMESTAMP DEFAULT NOW(),
-                updated_at TIMESTAMP DEFAULT NOW()
-            )
-        `);
-        
-        // Affiliate clicks tracking
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS affiliate_clicks (
-                id SERIAL PRIMARY KEY,
-                affiliate_link_id INT REFERENCES affiliate_links(id),
-                user_id INT REFERENCES users(id),
-                ip_address INET,
-                user_agent TEXT,
-                referrer TEXT,
-                clicked_at TIMESTAMP DEFAULT NOW(),
-                session_id VARCHAR(100)
-            )
-        `);
-        
-        // Affiliate conversions (sales)
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS affiliate_conversions (
-                id SERIAL PRIMARY KEY,
-                affiliate_link_id INT REFERENCES affiliate_links(id),
-                click_id INT REFERENCES affiliate_clicks(id),
-                order_id VARCHAR(100),
-                sale_amount DECIMAL(10,2),
-                commission_earned DECIMAL(10,2),
-                commission_rate DECIMAL(5,2),
-                status VARCHAR(20) DEFAULT 'pending',
-                business_notes TEXT,
-                conversion_date TIMESTAMP DEFAULT NOW(),
-                approved_at TIMESTAMP,
-                paid_at TIMESTAMP
-            )
-        `);
-        
-        // Business settings for affiliate
-        await pool.query(`
-            CREATE TABLE IF NOT EXISTS business_affiliate_settings (
-                business_id INT REFERENCES businesses(id) PRIMARY KEY,
-                auto_approve_conversions BOOLEAN DEFAULT false,
-                notification_email BOOLEAN DEFAULT true,
-                min_payout_amount DECIMAL(10,2) DEFAULT 1000,
-                tracking_days INT DEFAULT 30,
-                created_at TIMESTAMP DEFAULT NOW()
-            )
-        `);
-        
-        console.log('✅ Monetization tables setup complete');
-    } catch (err) {
-        console.error('Error setting up monetization tables:', err);
-    }
-}
-
-// Call setup function
-setupMonetizationTables();
 
 // ==================== STAFF LOUNGE ====================
 async function ensureStaffLoungeGroup() {
@@ -1055,9 +940,9 @@ async function awardCreditsForToolApproval(userId, toolName) {
     }
 }
 
-// ==================== BUSINESS CREDIT HELPER (15 CREDITS FOR BUSINESS APPROVAL) ====================
+// ==================== BUSINESS CREDIT HELPER ====================
 async function awardCreditsForBusinessApproval(userId, businessName) {
-    const approvalBonus = 15; // Changed from 50 to 15 credits
+    const approvalBonus = 50;
     await ensureUserCredits(userId);
     await pool.query(
         `UPDATE user_credits 
@@ -1068,7 +953,7 @@ async function awardCreditsForBusinessApproval(userId, businessName) {
     await pool.query(
         `INSERT INTO credit_transactions (user_id, amount, type, description)
          VALUES ($1, $2, 'earn', $3)`,
-        [userId, approvalBonus, `Business approved: ${businessName} - Earned ${approvalBonus} credits`]
+        [userId, approvalBonus, `Business approved: ${businessName}`]
     );
     console.log(`✅ Awarded ${approvalBonus} credits to user ${userId} for business approval: ${businessName}`);
 }
@@ -2427,11 +2312,13 @@ app.delete('/api/admin/tools/:id', isAdmin, async (req, res) => {
     }
 });
 
-// ==================== BUSINESS DIRECTORY ENDPOINTS ====================
+// ==================== BUSINESS DIRECTORY ENDPOINTS (FULLY ENHANCED) ====================
 
-// Award credits for business approval (15 credits)
+// ==================== BUSINESS HELPER FUNCTIONS ====================
+
+// Award credits for business approval
 async function awardCreditsForBusinessApproval(userId, businessName) {
-    const approvalBonus = 15;
+    const approvalBonus = 50;
     try {
         const checkCredits = await pool.query('SELECT id FROM user_credits WHERE user_id = $1', [userId]);
         if (checkCredits.rows.length === 0) {
@@ -2451,7 +2338,7 @@ async function awardCreditsForBusinessApproval(userId, businessName) {
         await pool.query(
             `INSERT INTO credit_transactions (user_id, amount, type, description)
              VALUES ($1, $2, 'earn', $3)`,
-            [userId, approvalBonus, `Business approved: ${businessName} - Earned ${approvalBonus} credits`]
+            [userId, approvalBonus, `Business approved: ${businessName}`]
         );
         console.log(`✅ Awarded ${approvalBonus} credits to user ${userId} for business approval: ${businessName}`);
         return true;
@@ -2460,6 +2347,8 @@ async function awardCreditsForBusinessApproval(userId, businessName) {
         return false;
     }
 }
+
+// ==================== PUBLIC BUSINESS ENDPOINTS ====================
 
 // PUBLIC: Get approved businesses with filters
 app.get('/api/businesses', async (req, res) => {
@@ -2504,6 +2393,7 @@ app.get('/api/businesses', async (req, res) => {
     try {
         const result = await pool.query(query, params);
         
+        // Get total count for pagination
         let countQuery = `SELECT COUNT(*) as total FROM businesses WHERE approved = true`;
         const countParams = [];
         let countIndex = 1;
@@ -2560,6 +2450,7 @@ app.get('/api/businesses/:id', async (req, res) => {
             return res.status(404).json({ error: 'Business not found' });
         }
         
+        // Increment view count
         await pool.query(
             `UPDATE businesses SET views = COALESCE(views, 0) + 1 WHERE id = $1`,
             [businessId]
@@ -2625,7 +2516,7 @@ app.get('/api/businesses/:id/ratings', async (req, res) => {
     }
 });
 
-// PUBLIC: Get cities list
+// PUBLIC: Get cities list (for filter dropdown)
 app.get('/api/businesses/cities', async (req, res) => {
     try {
         const result = await pool.query(`
@@ -2657,6 +2548,8 @@ app.get('/api/businesses/categories', async (req, res) => {
     }
 });
 
+// ==================== AUTHENTICATED BUSINESS ENDPOINTS ====================
+
 // AUTHENTICATED: Submit a new business
 app.post('/api/businesses/submit', isAuthenticated, async (req, res) => {
     const {
@@ -2669,6 +2562,7 @@ app.post('/api/businesses/submit', isAuthenticated, async (req, res) => {
     }
 
     try {
+        // Check what columns exist
         const columnsCheck = await pool.query(`
             SELECT column_name FROM information_schema.columns WHERE table_name = 'businesses'
         `);
@@ -2683,6 +2577,7 @@ app.post('/api/businesses/submit', isAuthenticated, async (req, res) => {
             req.session.userId, false, new Date(), new Date()
         ];
         
+        // Add optional columns if they exist
         let colIndex = insertColumns.length;
         if (existingColumns.includes('maps')) {
             insertColumns.push('maps');
@@ -2711,7 +2606,7 @@ app.post('/api/businesses/submit', isAuthenticated, async (req, res) => {
 
         res.status(201).json({
             success: true,
-            message: 'Business submitted for review. You will earn 15 credits upon approval!',
+            message: 'Business submitted for review.',
             id: businessId
         });
     } catch (err) {
@@ -2820,7 +2715,9 @@ app.get('/api/user/favorites', isAuthenticated, async (req, res) => {
     }
 });
 
-// ADMIN BUSINESS MANAGEMENT
+// ==================== ADMIN BUSINESS MANAGEMENT ====================
+
+// Get pending businesses
 app.get('/api/admin/businesses/pending', isAdminOrModerator, async (req, res) => {
     try {
         const result = await pool.query(`
@@ -2837,6 +2734,7 @@ app.get('/api/admin/businesses/pending', isAdminOrModerator, async (req, res) =>
     }
 });
 
+// Get approved businesses (admin view)
 app.get('/api/admin/businesses/approved', isAdminOrModerator, async (req, res) => {
     try {
         const result = await pool.query(`
@@ -2853,7 +2751,7 @@ app.get('/api/admin/businesses/approved', isAdminOrModerator, async (req, res) =
     }
 });
 
-// Approve a business - Awards 15 credits to user
+// Approve a business - THIS WILL UPDATE THE DATABASE
 app.put('/api/admin/businesses/:id/approve', isAdmin, async (req, res) => {
     const businessId = req.params.id;
     
@@ -2861,7 +2759,7 @@ app.put('/api/admin/businesses/:id/approve', isAdmin, async (req, res) => {
         console.log(`📝 Approving business ID: ${businessId}`);
         
         const bizResult = await pool.query(
-            `SELECT b.*, u.email as submitter_email, u.username as submitter_name, u.id as user_id
+            `SELECT b.*, u.email as submitter_email, u.username as submitter_name
              FROM businesses b
              LEFT JOIN users u ON b.user_id = u.id
              WHERE b.id = $1`,
@@ -2894,19 +2792,18 @@ app.put('/api/admin/businesses/:id/approve', isAdmin, async (req, res) => {
 
         console.log(`✅ Business ${businessId} (${biz.name}) approved in database`);
 
-        // Award 15 credits to the user who submitted the business
         if (biz.user_id) {
             await awardCreditsForBusinessApproval(biz.user_id, biz.name);
             
             if (biz.submitter_email) {
-                await sendBusinessApprovalEmail(biz.submitter_email, biz.submitter_name || biz.name, biz.name, 15);
+                await sendBusinessApprovalEmail(biz.submitter_email, biz.submitter_name || biz.name, biz.name, 50);
             }
         }
 
         await pool.query(
             `INSERT INTO moderator_activity (moderator_id, moderator_name, action, target, details, created_at)
              VALUES ($1, $2, $3, $4, $5, NOW())`,
-            [req.session.userId, req.session.username, 'Approve business', `Business ID ${businessId}`, `Approved ${biz.name} - User earned 15 credits`]
+            [req.session.userId, req.session.username, 'Approve business', `Business ID ${businessId}`, `Approved ${biz.name}`]
         );
 
         if (biz.user_id) {
@@ -2915,14 +2812,14 @@ app.put('/api/admin/businesses/:id/approve', isAdmin, async (req, res) => {
                 io.to(userSocket.socketId).emit('business_approved', {
                     id: businessId,
                     name: biz.name,
-                    credits: 15
+                    credits: 50
                 });
             }
         }
 
         res.json({ 
             success: true, 
-            message: 'Business approved and user awarded 15 credits.',
+            message: 'Business approved and user awarded 50 credits.',
             business: { id: businessId, name: biz.name, approved: true }
         });
         
@@ -3069,541 +2966,6 @@ app.get('/api/admin/businesses/stats', isAdminOrModerator, async (req, res) => {
     }
 });
 
-// ==================== SPONSORED ADS SYSTEM (METHOD 1) ====================
-
-// Get sponsored packages
-app.get('/api/sponsored/packages', async (req, res) => {
-    try {
-        const packages = await pool.query(`
-            SELECT * FROM sponsored_packages ORDER BY price ASC
-        `);
-        res.json(packages.rows);
-    } catch (err) {
-        console.error('Error fetching sponsored packages:', err);
-        res.json([
-            { name: 'Basic Spotlight', duration_days: 30, price: 499, features: 'Sponsored badge, Priority in search' },
-            { name: 'Premium Featured', duration_days: 30, price: 999, features: '⭐ Featured badge, Top position, Custom message' },
-            { name: 'Enterprise Dominance', duration_days: 30, price: 1499, features: '👑 Partner badge, Homepage banner, WhatsApp broadcast' }
-        ]);
-    }
-});
-
-// Business buys sponsored listing
-app.post('/api/business/sponsor', isAuthenticated, async (req, res) => {
-    const { businessId, packageType, customMessage } = req.body;
-    
-    try {
-        // Verify business ownership
-        const bizCheck = await pool.query(
-            'SELECT id, name, user_id FROM businesses WHERE id = $1 AND user_id = $2',
-            [businessId, req.session.userId]
-        );
-        
-        if (bizCheck.rows.length === 0) {
-            return res.status(403).json({ error: 'Not your business' });
-        }
-        
-        // Get package details
-        const packageData = await pool.query(
-            'SELECT * FROM sponsored_packages WHERE name = $1',
-            [packageType]
-        );
-        
-        if (packageData.rows.length === 0) {
-            return res.status(400).json({ error: 'Invalid package' });
-        }
-        
-        const pkg = packageData.rows[0];
-        
-        // Check if business has enough credits
-        const credits = await pool.query(
-            'SELECT balance FROM user_credits WHERE user_id = $1',
-            [req.session.userId]
-        );
-        
-        if ((credits.rows[0]?.balance || 0) < pkg.price) {
-            return res.status(400).json({ 
-                error: `Need ${pkg.price} credits. Current balance: ${credits.rows[0]?.balance || 0}` 
-            });
-        }
-        
-        // Deduct credits
-        await pool.query(
-            'UPDATE user_credits SET balance = balance - $1 WHERE user_id = $2',
-            [pkg.price, req.session.userId]
-        );
-        
-        // Record transaction
-        await pool.query(
-            `INSERT INTO credit_transactions (user_id, amount, type, description)
-             VALUES ($1, $2, 'spend', $3)`,
-            [req.session.userId, pkg.price, `Sponsored listing: ${packageType} for ${bizCheck.rows[0].name}`]
-        );
-        
-        // Calculate dates
-        const startDate = new Date();
-        const endDate = new Date();
-        endDate.setDate(endDate.getDate() + pkg.duration_days);
-        
-        // Deactivate existing sponsored listings for this business
-        await pool.query(
-            `UPDATE sponsored_listings SET is_active = false 
-             WHERE business_id = $1 AND is_active = true`,
-            [businessId]
-        );
-        
-        // Create new sponsored listing
-        const result = await pool.query(
-            `INSERT INTO sponsored_listings (business_id, package_type, start_date, end_date, price_paid, custom_message)
-             VALUES ($1, $2, $3, $4, $5, $6)
-             RETURNING id`,
-            [businessId, packageType, startDate, endDate, pkg.price, customMessage || null]
-        );
-        
-        // Update business table to mark as featured
-        await pool.query(
-            `UPDATE businesses SET featured = true, featured_until = $1 WHERE id = $2`,
-            [endDate, businessId]
-        );
-        
-        res.json({ 
-            success: true, 
-            message: `Business is now sponsored until ${endDate.toLocaleDateString()}!`,
-            sponsoredId: result.rows[0].id,
-            endDate: endDate
-        });
-        
-    } catch (err) {
-        console.error('Sponsorship error:', err);
-        res.status(500).json({ error: 'Failed to process sponsorship' });
-    }
-});
-
-// Get sponsored businesses for search results
-app.get('/api/sponsored/list', async (req, res) => {
-    const { category, city, limit = 3 } = req.query;
-    
-    try {
-        let query = `
-            SELECT s.*, b.id as business_id, b.name, b.type, b.category, b.city, 
-                   b.state, b.phone, b.address, b.avg_rating, b.verified,
-                   b.description, s.custom_message as sponsor_message,
-                   s.package_type, s.clicks, s.views
-            FROM sponsored_listings s
-            JOIN businesses b ON s.business_id = b.id
-            WHERE s.is_active = true 
-            AND s.end_date > NOW()
-            AND b.approved = true
-        `;
-        
-        const params = [];
-        let paramCount = 1;
-        
-        if (category && category !== 'all') {
-            query += ` AND b.category = $${paramCount}`;
-            params.push(category);
-            paramCount++;
-        }
-        
-        if (city && city !== 'all') {
-            query += ` AND b.city ILIKE $${paramCount}`;
-            params.push(`%${city}%`);
-            paramCount++;
-        }
-        
-        query += ` ORDER BY 
-            CASE s.package_type 
-                WHEN 'Enterprise Dominance' THEN 1
-                WHEN 'Premium Featured' THEN 2
-                WHEN 'Basic Spotlight' THEN 3
-            END,
-            s.created_at DESC
-            LIMIT $${paramCount}`;
-        params.push(limit);
-        
-        const result = await pool.query(query, params);
-        
-        // Update view counts
-        for (const row of result.rows) {
-            await pool.query(
-                `UPDATE sponsored_listings SET views = views + 1 WHERE id = $1`,
-                [row.id]
-            );
-        }
-        
-        res.json(result.rows);
-        
-    } catch (err) {
-        console.error('Error fetching sponsored:', err);
-        res.json([]);
-    }
-});
-
-// Track sponsored click
-app.post('/api/sponsored/:id/click', async (req, res) => {
-    const sponsoredId = req.params.id;
-    const userId = req.session?.userId || null;
-    
-    try {
-        await pool.query(
-            `UPDATE sponsored_listings SET clicks = clicks + 1 WHERE id = $1`,
-            [sponsoredId]
-        );
-        
-        if (userId) {
-            await pool.query(
-                `INSERT INTO sponsored_clicks (sponsored_id, user_id, clicked_at)
-                 VALUES ($1, $2, NOW())`,
-                [sponsoredId, userId]
-            );
-        }
-        
-        res.json({ success: true });
-    } catch (err) {
-        console.error('Click tracking error:', err);
-        res.json({ success: false });
-    }
-});
-
-// Get sponsorship stats for business
-app.get('/api/business/sponsor/stats', isAuthenticated, async (req, res) => {
-    try {
-        const stats = await pool.query(`
-            SELECT s.*, 
-                   s.views, 
-                   s.clicks,
-                   ROUND((s.clicks::DECIMAL / NULLIF(s.views, 0)) * 100, 2) as ctr,
-                   b.name as business_name
-            FROM sponsored_listings s
-            JOIN businesses b ON s.business_id = b.id
-            WHERE b.user_id = $1 AND s.is_active = true
-            ORDER BY s.created_at DESC
-        `, [req.session.userId]);
-        
-        res.json(stats.rows);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
-// ==================== AFFILIATE COMMISSION SYSTEM (METHOD 2) ====================
-
-// Generate session ID for affiliate tracking
-function generateSessionId() {
-    return crypto.randomBytes(32).toString('hex');
-}
-
-// Business creates affiliate link for their product
-app.post('/api/affiliate/create-link', isAuthenticated, async (req, res) => {
-    const { productName, productUrl, commissionRate } = req.body;
-    
-    if (!productName || !productUrl) {
-        return res.status(400).json({ error: 'Product name and URL required' });
-    }
-    
-    try {
-        // Verify business ownership
-        const business = await pool.query(
-            'SELECT id, name FROM businesses WHERE user_id = $1',
-            [req.session.userId]
-        );
-        
-        if (business.rows.length === 0) {
-            return res.status(403).json({ error: 'No business found. List your business first.' });
-        }
-        
-        const businessId = business.rows[0].id;
-        
-        // Create affiliate link
-        const result = await pool.query(
-            `INSERT INTO affiliate_links (business_id, product_name, product_url, commission_rate)
-             VALUES ($1, $2, $3, $4)
-             RETURNING id`,
-            [businessId, productName, productUrl, commissionRate || 7.00]
-        );
-        
-        const linkId = result.rows[0].id;
-        
-        // Generate unique affiliate URL
-        const affiliateUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/go/${linkId}`;
-        
-        res.json({
-            success: true,
-            affiliateUrl: affiliateUrl,
-            linkId: linkId,
-            productName: productName,
-            commissionRate: commissionRate || 7.00,
-            trackingPixel: `<img src="${process.env.FRONTEND_URL}/api/affiliate/pixel/${linkId}" width="1" height="1" />`
-        });
-        
-    } catch (err) {
-        console.error('Affiliate link creation error:', err);
-        res.status(500).json({ error: 'Failed to create affiliate link' });
-    }
-});
-
-// Track click on affiliate link (redirect endpoint)
-app.get('/go/:linkId', async (req, res) => {
-    const linkId = parseInt(req.params.linkId);
-    const userId = req.session?.userId || null;
-    const ipAddress = req.ip || req.connection.remoteAddress;
-    const userAgent = req.headers['user-agent'];
-    const referrer = req.headers['referer'] || null;
-    
-    try {
-        // Get affiliate link details
-        const linkData = await pool.query(
-            `SELECT al.*, b.name as business_name, b.id as business_id
-             FROM affiliate_links al
-             JOIN businesses b ON al.business_id = b.id
-             WHERE al.id = $1 AND al.is_active = true`,
-            [linkId]
-        );
-        
-        if (linkData.rows.length === 0) {
-            return res.status(404).send('Affiliate link not found');
-        }
-        
-        const link = linkData.rows[0];
-        
-        // Generate or get session ID from cookie
-        let sessionId = req.cookies?.affiliate_session;
-        if (!sessionId) {
-            sessionId = generateSessionId();
-            res.cookie('affiliate_session', sessionId, {
-                maxAge: (link.tracking_days || 30) * 24 * 60 * 60 * 1000,
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'lax'
-            });
-        }
-        
-        // Store the affiliate source in cookie
-        res.cookie(`affiliate_source_${link.business_id}`, linkId, {
-            maxAge: (link.tracking_days || 30) * 24 * 60 * 60 * 1000,
-            httpOnly: false,
-            sameSite: 'lax'
-        });
-        
-        // Record the click
-        const clickResult = await pool.query(
-            `INSERT INTO affiliate_clicks (affiliate_link_id, user_id, ip_address, user_agent, referrer, session_id)
-             VALUES ($1, $2, $3, $4, $5, $6)
-             RETURNING id`,
-            [linkId, userId, ipAddress, userAgent, referrer, sessionId]
-        );
-        
-        // Update click count on link
-        await pool.query(
-            `UPDATE affiliate_links SET click_count = click_count + 1 WHERE id = $1`,
-            [linkId]
-        );
-        
-        // Redirect to actual business product URL with tracking parameter
-        const redirectUrl = new URL(link.product_url);
-        redirectUrl.searchParams.set('ref', 'sarveik');
-        redirectUrl.searchParams.set('affiliate_id', linkId);
-        
-        res.redirect(redirectUrl.toString());
-        
-    } catch (err) {
-        console.error('Affiliate redirect error:', err);
-        res.redirect('/businessdirectory.html');
-    }
-});
-
-// Webhook for businesses to report sales
-app.post('/api/affiliate/conversion-webhook', async (req, res) => {
-    const { 
-        affiliate_link_id, 
-        order_id, 
-        sale_amount, 
-        customer_email,
-        customer_session_id,
-        api_key 
-    } = req.body;
-    
-    // Simple API key validation (businesses should use their own key)
-    const validApiKey = process.env.AFFILIATE_API_KEY || 'test_key_123';
-    if (api_key !== validApiKey) {
-        return res.status(401).json({ error: 'Invalid API key' });
-    }
-    
-    try {
-        // Find the click that led to this sale
-        let clickId = null;
-        
-        if (customer_session_id) {
-            const click = await pool.query(
-                `SELECT id FROM affiliate_clicks 
-                 WHERE session_id = $1 
-                 ORDER BY clicked_at DESC LIMIT 1`,
-                [customer_session_id]
-            );
-            if (click.rows.length > 0) {
-                clickId = click.rows[0].id;
-            }
-        }
-        
-        // Get affiliate link details
-        const link = await pool.query(
-            `SELECT * FROM affiliate_links WHERE id = $1`,
-            [affiliate_link_id]
-        );
-        
-        if (link.rows.length === 0) {
-            return res.status(404).json({ error: 'Affiliate link not found' });
-        }
-        
-        const commissionRate = link.rows[0].commission_rate;
-        const commissionEarned = (sale_amount * commissionRate) / 100;
-        
-        // Record conversion
-        await pool.query(
-            `INSERT INTO affiliate_conversions (
-                affiliate_link_id, click_id, order_id, sale_amount, 
-                commission_earned, commission_rate, status
-             ) VALUES ($1, $2, $3, $4, $5, $6, 'pending')
-             RETURNING id`,
-            [affiliate_link_id, clickId, order_id, sale_amount, commissionEarned, commissionRate]
-        );
-        
-        // Update link stats
-        await pool.query(
-            `UPDATE affiliate_links 
-             SET sale_count = sale_count + 1, 
-                 total_revenue = total_revenue + $1,
-                 total_commission = total_commission + $2
-             WHERE id = $3`,
-            [sale_amount, commissionEarned, affiliate_link_id]
-        );
-        
-        res.json({
-            success: true,
-            commissionEarned: commissionEarned,
-            message: `Commission recorded: ₹${commissionEarned} (${commissionRate}% of ₹${sale_amount})`
-        });
-        
-    } catch (err) {
-        console.error('Conversion webhook error:', err);
-        res.status(500).json({ error: 'Failed to record conversion' });
-    }
-});
-
-// Business approves a conversion
-app.post('/api/affiliate/conversion/:conversionId/approve', isAuthenticated, async (req, res) => {
-    const conversionId = req.params.conversionId;
-    const { status, notes } = req.body;
-    
-    try {
-        const conversion = await pool.query(`
-            SELECT ac.*, al.business_id
-            FROM affiliate_conversions ac
-            JOIN affiliate_links al ON ac.affiliate_link_id = al.id
-            JOIN businesses b ON al.business_id = b.id
-            WHERE ac.id = $1 AND b.user_id = $2
-        `, [conversionId, req.session.userId]);
-        
-        if (conversion.rows.length === 0) {
-            return res.status(403).json({ error: 'Not authorized' });
-        }
-        
-        await pool.query(
-            `UPDATE affiliate_conversions 
-             SET status = $1, business_notes = $2, approved_at = $3
-             WHERE id = $4`,
-            [status, notes || null, status === 'approved' ? new Date() : null, conversionId]
-        );
-        
-        res.json({ success: true, status: status });
-        
-    } catch (err) {
-        console.error('Conversion approval error:', err);
-        res.status(500).json({ error: 'Failed to update conversion' });
-    }
-});
-
-// Get affiliate earnings for business
-app.get('/api/affiliate/earnings', isAuthenticated, async (req, res) => {
-    try {
-        const earnings = await pool.query(`
-            SELECT 
-                al.id as link_id,
-                al.product_name,
-                al.click_count,
-                al.sale_count,
-                al.total_revenue,
-                al.total_commission,
-                COALESCE(SUM(CASE WHEN ac.status = 'approved' THEN ac.commission_earned ELSE 0 END), 0) as approved_commission,
-                COALESCE(SUM(CASE WHEN ac.status = 'pending' THEN ac.commission_earned ELSE 0 END), 0) as pending_commission
-            FROM affiliate_links al
-            JOIN businesses b ON al.business_id = b.id
-            LEFT JOIN affiliate_conversions ac ON al.id = ac.affiliate_link_id
-            WHERE b.user_id = $1
-            GROUP BY al.id
-            ORDER BY al.created_at DESC
-        `, [req.session.userId]);
-        
-        const recentConversions = await pool.query(`
-            SELECT ac.*, al.product_name
-            FROM affiliate_conversions ac
-            JOIN affiliate_links al ON ac.affiliate_link_id = al.id
-            JOIN businesses b ON al.business_id = b.id
-            WHERE b.user_id = $1
-            ORDER BY ac.conversion_date DESC
-            LIMIT 20
-        `, [req.session.userId]);
-        
-        res.json({
-            earnings: earnings.rows,
-            recentConversions: recentConversions.rows
-        });
-        
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
-// Get user's own affiliate stats
-app.get('/api/user/affiliate-earnings', isAuthenticated, async (req, res) => {
-    try {
-        const stats = await pool.query(`
-            SELECT 
-                COUNT(DISTINCT ac.id) as total_sales,
-                COALESCE(SUM(ac.commission_earned), 0) as total_commission,
-                COUNT(DISTINCT ac.affiliate_link_id) as unique_businesses
-            FROM affiliate_conversions ac
-            LEFT JOIN affiliate_clicks ac2 ON ac.click_id = ac2.id
-            WHERE ac2.user_id = $1 AND ac.status = 'approved'
-        `, [req.session.userId]);
-        
-        res.json(stats.rows[0] || { total_sales: 0, total_commission: 0, unique_businesses: 0 });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
-// Get all affiliate links for a business
-app.get('/api/affiliate/links', isAuthenticated, async (req, res) => {
-    try {
-        const links = await pool.query(`
-            SELECT al.*, b.name as business_name
-            FROM affiliate_links al
-            JOIN businesses b ON al.business_id = b.id
-            WHERE b.user_id = $1 AND al.is_active = true
-            ORDER BY al.created_at DESC
-        `, [req.session.userId]);
-        
-        res.json(links.rows);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
 // ==================== CARDS MANAGEMENT ====================
 app.get('/api/cards', async (req, res) => {
     try {
@@ -3728,7 +3090,7 @@ app.get('/api/credits/opportunities', isAuthenticated, async (req, res) => {
         { id: 4, title: "Submit a Tool", description: "Earn credits for submitting new tools", amount: 25, icon: "fa-upload", action: "submit_tool", frequency: "per_submission" },
         { id: 5, title: "Complete Profile", description: "Fill out your profile completely", amount: 30, icon: "fa-user-check", action: "complete_profile", frequency: "one_time" },
         { id: 6, title: "Write a Review", description: "Review tools and earn credits", amount: 10, icon: "fa-star", action: "write_review", frequency: "per_review" },
-        { id: 7, title: "Submit a Business", description: "Submit a business to the directory", amount: 15, icon: "fa-building", action: "submit_business", frequency: "per_submission" }
+        { id: 7, title: "Submit a Business", description: "Submit a business to the directory", amount: 50, icon: "fa-building", action: "submit_business", frequency: "per_submission" }
     ];
     res.json(opportunities);
 });
@@ -4548,74 +3910,33 @@ app.put('/api/friends/decline/:requestId', isAuthenticated, async (req, res) => 
     }
 });
 
-// ==================== FIXED FRIENDS ENDPOINT ====================
 app.get('/api/friends', isAuthenticated, async (req, res) => {
     try {
         const { search } = req.query;
-        const userId = req.session.userId;
-        
-        // First get all accepted friends
         let query = `
-            SELECT 
-                u.id, 
-                u.username, 
-                u.display_name, 
-                u.avatar_url, 
-                u.status,
-                u.email,
-                u.level,
-                u.xp
+            SELECT u.id, u.username, u.display_name, u.avatar_url, u.status
             FROM friendships f
-            JOIN users u ON (
-                (f.user_id = u.id AND f.friend_id = $1) OR 
-                (f.friend_id = u.id AND f.user_id = $1)
-            )
-            WHERE f.status = 'accepted'
-            AND u.id != $1
+            JOIN users u ON (f.user_id = u.id OR f.friend_id = u.id)
+            WHERE (f.user_id = $1 OR f.friend_id = $1)
+              AND f.status = 'accepted' AND u.id != $1
         `;
-        
-        const params = [userId];
-        let paramIndex = 2;
-        
-        // Add search filter if provided
-        if (search && search.trim()) {
-            query += ` AND (u.username ILIKE $${paramIndex} OR u.display_name ILIKE $${paramIndex} OR u.email ILIKE $${paramIndex})`;
-            params.push(`%${search.trim()}%`);
-            paramIndex++;
+        const params = [req.session.userId];
+        if (search) {
+            query += ` AND (u.username ILIKE $2 OR u.display_name ILIKE $2)`;
+            params.push(`%${search}%`);
         }
-        
-        // Add ordering
-        query += ` ORDER BY u.username ASC`;
-        
-        console.log('🔍 Fetching friends for user:', userId);
-        console.log('📝 Query:', query);
-        console.log('📊 Params:', params);
-        
         const result = await pool.query(query, params);
-        
-        // Get online status from onlineUsers map
-        const friendsWithStatus = result.rows.map(friend => {
-            const isOnline = onlineUsers.has(friend.id);
-            return {
-                ...friend,
-                is_online: isOnline,
-                status: isOnline ? 'online' : (friend.status || 'offline')
-            };
-        });
-        
-        console.log(`✅ Found ${friendsWithStatus.length} friends for user ${userId}`);
-        
-        res.json(friendsWithStatus);
+        res.json(result.rows);
     } catch (err) {
-        console.error('❌ Error fetching friends:', err);
-        res.status(500).json({ error: 'Server error: ' + err.message });
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
     }
 });
 
 app.get('/api/friends/requests', isAuthenticated, async (req, res) => {
     try {
         const result = await pool.query(
-            `SELECT f.id, u.id as sender_id, u.username, u.display_name, u.avatar_url, u.status
+            `SELECT f.id, u.id as sender_id, u.username, u.display_name, u.avatar_url
              FROM friendships f JOIN users u ON f.user_id = u.id
              WHERE f.friend_id = $1 AND f.status = 'pending'`,
             [req.session.userId]
@@ -5927,7 +5248,6 @@ app.get('/api/csrf-token', (req, res) => {
     try {
         await pool.query('SELECT NOW()');
         console.log('✅ Database connection verified');
-        await ensureStaffLoungeGroup();
     } catch (err) {
         console.error('❌ Database connection failed:', err.message);
         process.exit(1);
@@ -5959,11 +5279,24 @@ server.listen(PORT, HOST, () => {
     console.log(`✅ Username uniqueness check fixed during registration`);
     console.log(`✅ Account deletion fully fixed with cascade deletion of all related data`);
     console.log(`✅ CSRF token endpoint added for state‑changing requests`);
-    console.log(`🏢 Business directory management endpoints active`);
-    console.log(`💰 NEW: Sponsored Ads System (Method 1) - Businesses pay to appear at top`);
-    console.log(`💰 NEW: Affiliate Commission System (Method 2) - Earn 5-8% on every sale`);
-    console.log(`💰 NEW: Users earn 15 CREDITS when their submitted business gets approved`);
-    console.log(`👥 FRIENDS SYSTEM: Fixed friends loading with proper query and online status tracking`);
+    console.log(`🏢 Business directory management endpoints active:`);
+    console.log(`   - GET /api/businesses (public listing with filters)`);
+    console.log(`   - GET /api/businesses/:id (single business)`);
+    console.log(`   - GET /api/businesses/:id/reviews (business reviews)`);
+    console.log(`   - GET /api/businesses/ratings/:id (rating stats)`);
+    console.log(`   - POST /api/businesses/submit (user submission)`);
+    console.log(`   - POST /api/businesses/:id/reviews (add review)`);
+    console.log(`   - POST /api/businesses/:id/favorite (toggle favorite)`);
+    console.log(`   - GET /api/user/favorites (user's saved businesses)`);
+    console.log(`   - GET /api/admin/businesses/pending (admin view pending)`);
+    console.log(`   - GET /api/admin/businesses/approved (admin view approved)`);
+    console.log(`   - PUT /api/admin/businesses/:id/approve (approve business - SAVES TO DB)`);
+    console.log(`   - DELETE /api/admin/businesses/:id/reject (reject business)`);
+    console.log(`   - PUT /api/admin/businesses/:id (edit business)`);
+    console.log(`   - DELETE /api/admin/businesses/:id (delete business)`);
+    console.log(`   - PUT /api/admin/businesses/:id/toggle-verified (toggle verified status)`);
+    console.log(`   - PUT /api/admin/businesses/:id/toggle-featured (toggle featured status)`);
+    console.log(`   - GET /api/admin/businesses/stats (business statistics)`);
 });
 
 // ==================== GRACEFUL SHUTDOWN ====================
