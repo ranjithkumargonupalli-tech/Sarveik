@@ -2429,38 +2429,6 @@ app.delete('/api/admin/tools/:id', isAdmin, async (req, res) => {
 
 // ==================== BUSINESS DIRECTORY ENDPOINTS ====================
 
-// Award credits for business approval (15 credits)
-async function awardCreditsForBusinessApproval(userId, businessName) {
-    const approvalBonus = 15;
-    try {
-        const checkCredits = await pool.query('SELECT id FROM user_credits WHERE user_id = $1', [userId]);
-        if (checkCredits.rows.length === 0) {
-            await pool.query(
-                `INSERT INTO user_credits (user_id, balance, lifetime_earned) VALUES ($1, $2, $2)`,
-                [userId, approvalBonus]
-            );
-        } else {
-            await pool.query(
-                `UPDATE user_credits 
-                 SET balance = balance + $1, lifetime_earned = lifetime_earned + $1
-                 WHERE user_id = $2`,
-                [approvalBonus, userId]
-            );
-        }
-        
-        await pool.query(
-            `INSERT INTO credit_transactions (user_id, amount, type, description)
-             VALUES ($1, $2, 'earn', $3)`,
-            [userId, approvalBonus, `Business approved: ${businessName} - Earned ${approvalBonus} credits`]
-        );
-        console.log(`✅ Awarded ${approvalBonus} credits to user ${userId} for business approval: ${businessName}`);
-        return true;
-    } catch (err) {
-        console.error('Error awarding credits:', err);
-        return false;
-    }
-}
-
 // PUBLIC: Get approved businesses with filters
 app.get('/api/businesses', async (req, res) => {
     const { category, city, search, verifiedOnly, featured, limit = 50, offset = 0 } = req.query;
@@ -4476,7 +4444,7 @@ app.get('/api/friends', isAuthenticated, async (req, res) => {
         
         console.log(`📡 Fetching friends for user ${userId} with filters:`, { search, status });
         
-        // Build the base query - gets all accepted friends
+        // Build the base query - ONLY SELECT COLUMNS THAT EXIST IN YOUR DATABASE
         let query = `
             SELECT 
                 u.id, 
@@ -4488,7 +4456,6 @@ app.get('/api/friends', isAuthenticated, async (req, res) => {
                 u.level,
                 u.xp,
                 u.bio,
-                u.location,
                 u.is_pro,
                 u.is_verified,
                 u.github,
@@ -5001,7 +4968,7 @@ app.get('/profile', isAuthenticated, async (req, res) => {
             `SELECT id, username, email, role, display_name, 
                     bio, phone, github, twitter, linkedin,
                     avatar_url, created_at, updated_at,
-                    email_verified, profession, location, is_pro, is_verified
+                    email_verified, profession, is_pro, is_verified
              FROM users WHERE id = $1`,
             [req.session.userId]
         );
@@ -5016,7 +4983,7 @@ app.get('/api/users/:id', isAuthenticated, async (req, res) => {
     try {
         const userId = req.params.id;
         const result = await pool.query(
-            `SELECT id, username, display_name, avatar_url, bio, profession, location,
+            `SELECT id, username, display_name, avatar_url, bio, profession,
                     github, twitter, linkedin, is_pro, is_verified, created_at
              FROM users WHERE id = $1`,
             [userId]
@@ -5032,15 +4999,15 @@ app.get('/api/users/:id', isAuthenticated, async (req, res) => {
 });
 
 app.put('/profile/update', isAuthenticated, async (req, res) => {
-    const { display_name, bio, phone, github, twitter, linkedin, profession, location } = req.body;
+    const { display_name, bio, phone, github, twitter, linkedin, profession } = req.body;
     try {
         await pool.query(
             `UPDATE users SET
                 display_name = $1, bio = $2, phone = $3,
                 github = $4, twitter = $5, linkedin = $6,
-                profession = $7, location = $8,
+                profession = $7,
                 updated_at = NOW()
-             WHERE id = $9`,
+             WHERE id = $8`,
             [
                 display_name ? escapeHtml(display_name) : null,
                 bio ? escapeHtml(bio) : null,
@@ -5049,7 +5016,6 @@ app.put('/profile/update', isAuthenticated, async (req, res) => {
                 twitter ? escapeHtml(twitter) : null,
                 linkedin ? escapeHtml(linkedin) : null,
                 profession ? escapeHtml(profession) : null,
-                location ? escapeHtml(location) : null,
                 req.session.userId
             ]
         );
@@ -5057,7 +5023,7 @@ app.put('/profile/update', isAuthenticated, async (req, res) => {
             `SELECT id, username, display_name, email, bio, phone,
                     github, twitter, linkedin, email_verified,
                     two_factor_enabled, created_at, updated_at, avatar_url,
-                    profession, location
+                    profession
              FROM users WHERE id = $1`,
             [req.session.userId]
         );
