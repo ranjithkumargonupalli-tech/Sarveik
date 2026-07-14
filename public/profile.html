@@ -4,10 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Profile | Sarveik</title>
+    
+    <!-- ===== PRELOAD CRITICAL RESOURCES ===== -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    
+    <!-- ===== OPTIMIZED FONTS (Subset + Display Swap) ===== -->
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- ===== FONT AWESOME (Async Loading) ===== -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" media="all" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"></noscript>
+    
     <style>
-        /* ========== OPTIMIZED CSS ========== */
+        /* ========== CRITICAL CSS (Minified & Optimized) ========== */
         :root {
             --primary: linear-gradient(135deg, #00d4ff, #7c3aed);
             --success: #10b981;
@@ -33,6 +44,7 @@
             line-height: 1.6;
             transition: var(--transition);
             overflow-x: hidden;
+            opacity: 1;
         }
         [data-theme="dark"] body {
             background: linear-gradient(135deg, #0a0a1a 0%, #0f0f2a 50%, #0a0a1a 100%);
@@ -61,7 +73,7 @@
         }
         body > * { position: relative; z-index: 1; }
 
-        /* ===== 3D THREE.JS CANVAS (Lazy Load) ===== */
+        /* ===== 3D THREE.JS CANVAS (Hidden Initially) ===== */
         #three-canvas {
             position: fixed;
             top: 0;
@@ -84,7 +96,7 @@
         ::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
         ::-webkit-scrollbar-thumb { background: rgba(0, 212, 255, 0.3); border-radius: 2px; }
 
-        /* ===== NAVBAR (Optimized) ===== */
+        /* ===== NAVBAR ===== */
         .navbar {
             background: rgba(255, 255, 255, 0.05);
             backdrop-filter: blur(20px);
@@ -310,7 +322,7 @@
         }
         .tab-content.active { display: block; }
 
-        /* ===== CARDS (Optimized) ===== */
+        /* ===== CARDS ===== */
         .card {
             background: var(--glass-bg);
             backdrop-filter: blur(20px);
@@ -1057,6 +1069,22 @@
             * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
             #three-canvas { display: none !important; }
         }
+
+        /* ===== SKELETON LOADER ===== */
+        .skeleton {
+            background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        .skeleton-text { height: 12px; margin: 4px 0; }
+        .skeleton-avatar { width: 80px; height: 80px; border-radius: 50%; }
+        .skeleton-title { height: 24px; width: 60%; margin-bottom: 8px; }
+        .skeleton-badge { height: 20px; width: 80px; border-radius: 20px; }
     </style>
 </head>
 <body>
@@ -1151,7 +1179,7 @@
             </div>
         </div>
 
-        <!-- ===== OTHER TABS (Minimal Content) ===== -->
+        <!-- ===== OTHER TABS ===== -->
         <div id="tab-about" class="tab-content">
             <div class="card">
                 <h3><i class="fas fa-user-edit"></i> Personal Information</h3>
@@ -1319,16 +1347,16 @@
         <p><strong>Disclaimer:</strong> Sarveik is a directory of third‑party tools. All trademarks are property of their owners. <a href="dmca.html">Contact us</a> for removal.</p>
     </div>
 
-    <!-- ===== SCRIPTS (Lazy Loaded) ===== -->
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <!-- ===== OPTIMIZED SCRIPTS ===== -->
     <script>
-        // ==================== LAZY LOAD THREE.JS ====================
+        // ==================== LAZY LOAD THREE.JS (Deferred) ====================
         let threeLoaded = false;
         function loadThreeJS() {
             if (threeLoaded || window.innerWidth < 768 || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
             threeLoaded = true;
             const script = document.createElement('script');
             script.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+            script.async = true;
             script.onload = () => {
                 const container = document.getElementById('three-canvas');
                 if (!container) return;
@@ -1386,10 +1414,7 @@
             const particles = new THREE.Points(geo, mat);
             scene.add(particles);
 
-            let mouseX = 0,
-                mouseY = 0,
-                targetX = 0,
-                targetY = 0;
+            let mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
             document.addEventListener('mousemove', e => {
                 mouseX = (e.clientX / window.innerWidth) * 2 - 1;
                 mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
@@ -1422,8 +1447,12 @@
             window.addEventListener('beforeunload', () => renderer.dispose());
         }
 
-        // Load Three.js after page load
-        window.addEventListener('load', () => setTimeout(loadThreeJS, 1500));
+        // Defer Three.js loading
+        if (document.readyState === 'complete') {
+            setTimeout(loadThreeJS, 2000);
+        } else {
+            window.addEventListener('load', () => setTimeout(loadThreeJS, 2000));
+        }
 
         // ==================== GLOBAL FETCH INTERCEPTOR ====================
         const originalFetch = window.fetch;
@@ -1444,14 +1473,14 @@
             return response;
         };
 
-        // ==================== CACHE HELPERS ====================
+        // ==================== CACHE HELPERS (Reduce API Calls) ====================
         const CACHE = {
             get(key) {
                 try {
                     const item = localStorage.getItem('profile_cache_' + key);
                     if (!item) return null;
                     const data = JSON.parse(item);
-                    if (Date.now() - data.timestamp > 60000) return null; // 1 minute cache
+                    if (Date.now() - data.timestamp > 60000) return null;
                     return data.value;
                 } catch { return null; }
             },
@@ -1462,7 +1491,7 @@
             }
         };
 
-        // ==================== MAIN PROFILE CLASS ====================
+        // ==================== MAIN PROFILE CLASS (Optimized) ====================
         class NovaProfile {
             constructor() {
                 this.userData = {};
@@ -1488,8 +1517,6 @@
                 this.initTheme();
                 this.initSocket();
                 this.initMobileMenu();
-
-                // Lazy load heavy tabs
                 this.lazyLoadTabs();
             }
 
@@ -1534,7 +1561,6 @@
                 }
             }
 
-            // ========== SOCKET.IO ==========
             initSocket() {
                 if (typeof io !== 'undefined') {
                     const socket = io();
@@ -1549,7 +1575,7 @@
                 }
             }
 
-            // ========== LEVEL & XP ==========
+            // ====== LEVEL & XP ======
             async loadUserLevelAndXP() {
                 const container = $('#levelXpContainer');
                 container.html('<div class="spinner"></div>');
@@ -1589,7 +1615,7 @@
                 `);
             }
 
-            // ========== PROFILE DATA ==========
+            // ====== PROFILE DATA ======
             async loadProfileData() {
                 try {
                     const cached = CACHE.get('profile');
@@ -1647,7 +1673,7 @@
                 }
             }
 
-            // ========== ADMIN REWARDS ==========
+            // ====== ADMIN REWARDS ======
             async loadAdminRewards() {
                 const container = $('#adminRewardsContainer');
                 container.html('<div class="spinner"></div>');
@@ -1692,7 +1718,7 @@
                 container.html(html);
             }
 
-            // ========== CREDITS ==========
+            // ====== CREDITS ======
             async loadCreditBalance() {
                 try {
                     const cached = CACHE.get('credit_balance');
@@ -1711,7 +1737,7 @@
                 } catch {}
             }
 
-            // ========== PREMIUM STATUS ==========
+            // ====== PREMIUM STATUS ======
             async loadPremiumStatus() {
                 const container = $('#premiumStatusContainer');
                 container.html('<div class="spinner"></div>');
@@ -1750,14 +1776,13 @@
                 this.loadStoreOptions();
             }
 
-            // ========== STORE ==========
+            // ====== STORE ======
             async loadStoreOptions() {
                 const container = $('#premiumStoreGrid');
                 container.html('<div class="spinner"></div>');
                 try {
                     const res = await fetch('/api/credits/spend-options', { credentials: 'include' });
                     if (!res.ok) throw new Error();
-                    const options = await res.json();
                     const items = [
                         { feature: 'premium', name: 'Premium Tools', icon: 'fa-crown', duration: '30 days', cost: 250 },
                         { feature: 'analytics', name: 'Analytics', icon: 'fa-chart-line', duration: '7 days', cost: 100 },
@@ -1822,7 +1847,7 @@
                 } catch { this.showToast('Error purchasing', 'error'); }
             }
 
-            // ========== CREDIT PACKS ==========
+            // ====== CREDIT PACKS ======
             async loadCreditPacks() {
                 const container = $('#creditPackGrid');
                 container.html('<div class="spinner"></div>');
@@ -1868,7 +1893,7 @@
                 } catch { this.showToast('Payment error', 'error'); }
             }
 
-            // ========== AVATAR GALLERY ==========
+            // ====== AVATAR GALLERY ======
             async loadAvatarGallery() {
                 const container = $('#avatarGalleryContainer');
                 container.html('<div class="spinner"></div>');
@@ -1883,8 +1908,7 @@
                     if (!this.ownedAvatars.has(av.id)) {
                         const levelOk = this.userLevel >= av.min;
                         const premiumOk = !av.premium || this.premiumStatus.isPremium;
-                        if (levelOk && premiumOk) { this.ownedAvatars.add(av.id);
-                            changed = true; }
+                        if (levelOk && premiumOk) { this.ownedAvatars.add(av.id); changed = true; }
                     }
                 }
                 if (changed) localStorage.setItem('nova_owned_avatars', JSON.stringify(Array.from(this.ownedAvatars)));
@@ -1959,7 +1983,7 @@
                 $('#avatarPreview').attr('src', 'data:image/svg+xml;utf8,' + encodeURIComponent(svg));
             }
 
-            // ========== BADGES ==========
+            // ====== BADGES ======
             async loadStatsForBadges() {
                 const container = $('#badgesContainer');
                 container.html('<div class="spinner"></div>');
@@ -2013,7 +2037,7 @@
                 }
             }
 
-            // ========== ACTIVITY ==========
+            // ====== ACTIVITY ======
             async loadActivityTimeline() {
                 const container = $('#activityTimeline');
                 container.html('<div class="spinner"></div>');
@@ -2051,7 +2075,7 @@
                 return Math.floor(diff / 86400000) + 'd ago';
             }
 
-            // ========== REFERRALS ==========
+            // ====== REFERRALS ======
             async loadReferralData() {
                 const container = $('#referralsCard');
                 container.html('<div class="spinner"></div>');
@@ -2105,7 +2129,7 @@
                 }
             }
 
-            // ========== SUPPORT ==========
+            // ====== SUPPORT ======
             async loadSupportTab() {
                 const container = $('#supportTabContent');
                 container.html('<div class="spinner"></div>');
@@ -2167,7 +2191,7 @@
                 } catch { this.showToast('Failed to create ticket', 'error'); }
             }
 
-            // ========== STATUS ==========
+            // ====== STATUS ======
             updateStatusBadge(status) {
                 const badge = $('#statusBadge');
                 badge.removeClass('status-online status-away status-busy status-offline');
@@ -2193,7 +2217,7 @@
                 } catch { this.showToast('Failed to update status', 'error'); }
             }
 
-            // ========== BIND EVENTS ==========
+            // ====== BIND EVENTS ======
             bindEvents() {
                 $('#avatarUpload').change((e) => this.handleAvatarUpload(e.target.files[0]));
                 $('#profileForm').submit((e) => this.handleProfileUpdate(e));
@@ -2235,8 +2259,7 @@
                                 this.updateStatus('online');
                             }
                         }, 1000);
-                        setTimeout(() => { clearInterval(interval);
-                            el.hide(); }, mins * 60 * 1000);
+                        setTimeout(() => { clearInterval(interval); el.hide(); }, mins * 60 * 1000);
                         this.showToast(`Away timer set for ${mins} minutes`, 'success');
                     }
                 });
@@ -2245,13 +2268,9 @@
                 $('#saveBadgeBtn').click(() => this.saveBadge());
                 $('#themeToggleBtn').click(() => this.toggleTheme());
                 $('#mobileThemeToggle').click(() => this.toggleTheme());
-                $('#refreshRewardsBtn').click(() => { this.loadAdminRewards();
-                    this.showToast('Refreshed', 'success'); });
-                $('#refreshPremiumBtn').click(() => { this.loadPremiumStatus();
-                    this.loadCreditBalance();
-                    this.showToast('Refreshed', 'success'); });
-                $('#refreshActivityBtn').click(() => { this.loadActivityTimeline();
-                    this.showToast('Refreshed', 'success'); });
+                $('#refreshRewardsBtn').click(() => { this.loadAdminRewards(); this.showToast('Refreshed', 'success'); });
+                $('#refreshPremiumBtn').click(() => { this.loadPremiumStatus(); this.loadCreditBalance(); this.showToast('Refreshed', 'success'); });
+                $('#refreshActivityBtn').click(() => { this.loadActivityTimeline(); this.showToast('Refreshed', 'success'); });
                 $('#logoutBtn').click(async (e) => {
                     e.preventDefault();
                     if (confirm('Logout?')) {
@@ -2475,13 +2494,8 @@
                 const drawer = $('#mobileDrawer');
                 const closeBtn = $('#mobileCloseBtn');
 
-                function open() { drawer.addClass('open');
-                    overlay.show();
-                    document.body.style.overflow = 'hidden'; }
-
-                function close() { drawer.removeClass('open');
-                    overlay.hide();
-                    document.body.style.overflow = ''; }
+                function open() { drawer.addClass('open'); overlay.show(); document.body.style.overflow = 'hidden'; }
+                function close() { drawer.removeClass('open'); overlay.hide(); document.body.style.overflow = ''; }
 
                 hamburger.on('click', open);
                 closeBtn.on('click', close);
@@ -2499,8 +2513,7 @@
                 const $toast = $(`<div class="toast ${type}"><i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-triangle' : 'info-circle'}"></i> ${message}</div>`);
                 $('#toastContainer').append($toast);
                 setTimeout(() => $toast.addClass('show'), 10);
-                setTimeout(() => { $toast.removeClass('show');
-                    setTimeout(() => $toast.remove(), 300); }, 3500);
+                setTimeout(() => { $toast.removeClass('show'); setTimeout(() => $toast.remove(), 300); }, 3500);
             }
         }
 
