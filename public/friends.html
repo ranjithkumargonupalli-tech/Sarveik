@@ -94,6 +94,7 @@
         }
         .nav-brand i { font-size: 1rem; }
         
+        /* Desktop Navigation */
         .nav-links {
             display: flex;
             list-style: none;
@@ -122,6 +123,7 @@
             box-shadow: 0 0 16px rgba(0,229,255,0.12);
         }
         
+        /* Profile Section in Navbar */
         .nav-profile {
             display: flex;
             align-items: center;
@@ -166,6 +168,7 @@
             transform: rotate(180deg);
         }
 
+        /* Profile Dropdown Menu */
         .profile-dropdown {
             position: absolute;
             top: calc(100% + 8px);
@@ -258,6 +261,7 @@
             margin: 0.3rem 0;
         }
 
+        /* Badge */
         .badge {
             background: var(--rose);
             color: white;
@@ -268,6 +272,7 @@
             line-height: 1.5;
         }
 
+        /* Hamburger Button */
         .hamburger {
             display: none;
             flex-direction: column;
@@ -295,6 +300,7 @@
         .hamburger.active span:nth-child(2) { opacity: 0; transform: scaleX(0); }
         .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
 
+        /* Mobile Drawer */
         .nav-overlay {
             display: none;
             position: fixed;
@@ -350,9 +356,12 @@
         }
 
         @media (min-width: 769px) {
-            .nav-profile { position: relative; }
+            .nav-profile {
+                position: relative;
+            }
         }
 
+        /* ========== REST OF EXISTING STYLES (PRESERVED) ========== */
         .friends-container {
             max-width: 1240px;
             margin: 0 auto;
@@ -1145,79 +1154,6 @@
             position: fixed; inset: 0;
             z-index: 3050;
         }
-
-        .friend-count {
-            font-size: 0.7rem;
-            color: var(--text-secondary);
-            margin-left: 0.5rem;
-            background: rgba(0,229,255,0.08);
-            padding: 0.1rem 0.6rem;
-            border-radius: 20px;
-            border: 1px solid rgba(0,229,255,0.1);
-        }
-
-        .quick-actions {
-            display: flex;
-            gap: 0.4rem;
-            flex-wrap: wrap;
-        }
-        .quick-actions .btn {
-            font-size: 0.7rem;
-            padding: 0.3rem 0.7rem;
-        }
-
-        /* Debug panel */
-        .debug-panel {
-            background: rgba(239,68,68,0.08);
-            border: 1px solid rgba(239,68,68,0.2);
-            border-radius: 12px;
-            padding: 0.75rem 1rem;
-            margin-bottom: 1rem;
-            font-size: 0.7rem;
-            color: #fca5a5;
-            font-family: var(--font-mono);
-            display: none;
-            max-height: 300px;
-            overflow-y: auto;
-        }
-        .debug-panel.show {
-            display: block;
-        }
-        .debug-panel pre {
-            white-space: pre-wrap;
-            word-break: break-all;
-            margin-top: 0.3rem;
-            font-size: 0.65rem;
-            color: #94a3b8;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        .debug-panel .debug-success {
-            color: #6ee7b7;
-        }
-        .debug-panel .debug-error {
-            color: #fca5a5;
-        }
-        .debug-panel .debug-info {
-            color: #93c5fd;
-        }
-
-        /* Toggle debug button */
-        .debug-toggle {
-            background: transparent;
-            border: 1px solid rgba(100,140,180,0.15);
-            color: var(--text-muted);
-            padding: 0.2rem 0.6rem;
-            border-radius: 12px;
-            font-size: 0.6rem;
-            cursor: pointer;
-            font-family: var(--font-mono);
-            transition: all 0.2s;
-        }
-        .debug-toggle:hover {
-            border-color: rgba(0,229,255,0.3);
-            color: var(--cyan);
-        }
     </style>
 </head>
 <body>
@@ -1228,6 +1164,7 @@
             <i class="fas fa-shield-alt"></i> Sarveik
         </div>
         
+        <!-- Desktop Navigation Links -->
         <ul class="nav-links" id="navLinks">
             <li><a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a></li>
             <li><a href="profile.html"><i class="fas fa-user"></i> Profile</a></li>
@@ -1238,6 +1175,7 @@
             </a></li>
         </ul>
         
+        <!-- Right side: Profile Menu + Hamburger -->
         <div style="display: flex; align-items: center; gap: 0.5rem;">
             <div class="nav-profile" id="navProfileBtn">
                 <img src="https://via.placeholder.com/32" alt="Profile" class="nav-profile-avatar" id="navProfileAvatar" onerror="this.src='https://via.placeholder.com/32?text=U'">
@@ -1249,6 +1187,7 @@
             </button>
         </div>
         
+        <!-- Profile Dropdown Menu -->
         <div class="profile-dropdown" id="profileDropdown">
             <div class="profile-dropdown-header">
                 <img src="https://via.placeholder.com/44" alt="Profile" class="profile-dropdown-avatar" id="dropdownAvatar" onerror="this.src='https://via.placeholder.com/44?text=U'">
@@ -1258,48 +1197,45 @@
                 </div>
             </div>
             <div class="profile-dropdown-items">
-                <button class="profile-dropdown-item" id="profileMenuItem"><i class="fas fa-user-circle"></i> My Profile</button>
-                <button class="profile-dropdown-item" id="dashboardMenuItem"><i class="fas fa-tachometer-alt"></i> Dashboard</button>
-                <button class="profile-dropdown-item" id="savedMenuItem"><i class="fas fa-heart"></i> Saved Items</button>
-                <button class="profile-dropdown-item" id="notificationsMenuItem"><i class="fas fa-bell"></i> Notifications</button>
-                <button class="profile-dropdown-item" id="settingsMenuItem"><i class="fas fa-cog"></i> Settings</button>
-                <button class="profile-dropdown-item" id="helpMenuItem"><i class="fas fa-question-circle"></i> Help & Support</button>
+                <button class="profile-dropdown-item" id="profileMenuItem">
+                    <i class="fas fa-user-circle"></i> My Profile
+                </button>
+                <button class="profile-dropdown-item" id="dashboardMenuItem">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </button>
+                <button class="profile-dropdown-item" id="savedMenuItem">
+                    <i class="fas fa-heart"></i> Saved Items
+                </button>
+                <button class="profile-dropdown-item" id="notificationsMenuItem">
+                    <i class="fas fa-bell"></i> Notifications
+                </button>
+                <button class="profile-dropdown-item" id="settingsMenuItem">
+                    <i class="fas fa-cog"></i> Settings
+                </button>
+                <button class="profile-dropdown-item" id="helpMenuItem">
+                    <i class="fas fa-question-circle"></i> Help & Support
+                </button>
                 <div class="profile-dropdown-divider"></div>
-                <button class="profile-dropdown-item danger" id="logoutMenuItem"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                <button class="profile-dropdown-item danger" id="logoutMenuItem">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </button>
             </div>
         </div>
     </nav>
 
     <div class="friends-container">
 
-        <!-- DEBUG PANEL -->
-        <div class="debug-panel" id="debugPanel">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
-                <strong>🐛 Debug Console</strong>
-                <button class="debug-toggle" id="debugToggle">Hide</button>
-            </div>
-            <pre id="debugContent">Initializing...</pre>
-        </div>
-
-        <!-- Toggle Debug Button -->
-        <div style="display:flex;justify-content:flex-end;margin-bottom:0.5rem;">
-            <button class="debug-toggle" id="debugToggleBtn">🐛 Toggle Debug</button>
-        </div>
-
+        <!-- PAGE HEADER -->
         <div class="page-header">
             <div class="page-header-inner">
                 <div>
                     <div class="page-title">Your Network</div>
                     <div class="page-subtitle">Manage connections, groups, and professional relationships</div>
                 </div>
-                <div class="quick-actions">
-                    <button class="btn btn-primary btn-small" id="refreshBtn"><i class="fas fa-sync-alt"></i> Refresh</button>
-                    <button class="btn btn-outline btn-small" id="exportBtn"><i class="fas fa-download"></i> Export</button>
-                    <button class="btn btn-outline btn-small" id="loadMockBtn"><i class="fas fa-database"></i> Load Mock</button>
-                </div>
             </div>
         </div>
 
+        <!-- STATS -->
         <div class="stats-grid" id="statsGrid">
             <div class="stat-card">
                 <div class="stat-icon"><i class="fas fa-users"></i></div>
@@ -1318,6 +1254,7 @@
             </div>
         </div>
 
+        <!-- HEALTH -->
         <div class="health-card" id="healthCard">
             <div class="health-header">
                 <div>
@@ -1347,11 +1284,13 @@
             </ul>
         </div>
 
+        <!-- PINNED -->
         <div class="pinned-section" id="pinnedSection" style="display:none;">
             <div class="pinned-label"><i class="fas fa-star"></i> Favourite Connections</div>
             <div class="pinned-avatars" id="pinnedAvatars"></div>
         </div>
 
+        <!-- SEARCH -->
         <h2><i class="fas fa-search"></i> Find Professionals</h2>
         <div class="search-section">
             <input type="text" id="searchUser" placeholder="Search by username or name…" minlength="2" autocomplete="off">
@@ -1360,27 +1299,32 @@
         <div id="searchResults"></div>
         <hr>
 
+        <!-- ADD FRIEND -->
         <h2><i class="fas fa-user-plus"></i> Add Connection</h2>
         <div class="add-friend">
             <input type="text" id="friendUsername" placeholder="Enter exact username" autocomplete="off" autocapitalize="none">
             <button id="addFriendBtn" class="btn btn-primary"><i class="fas fa-user-plus"></i> Send Request</button>
         </div>
 
+        <!-- TRENDING -->
         <h2><i class="fas fa-fire"></i> Trending Professionals</h2>
         <div id="trendingSection">
             <div class="loading"><i class="fas fa-spinner"></i> Loading trending…</div>
         </div>
 
+        <!-- SUGGESTIONS -->
         <h2><i class="fas fa-user-astronaut"></i> People You May Know</h2>
         <div class="suggestion-grid" id="suggestionsGrid">
             <div class="no-results" style="grid-column:1/-1;">Loading suggestions…</div>
         </div>
 
+        <!-- FILTERS -->
         <div class="filters-section">
             <div class="filters-top-row">
                 <h3><i class="fas fa-filter"></i> Filters &amp; Search</h3>
                 <div class="filters-actions">
-                    <button id="clearFilters" class="btn btn-outline btn-small">Clear</button>
+                    <button class="export-btn" id="exportBtn"><i class="fas fa-download"></i> Export</button>
+                    <button id="refreshBtn" class="btn btn-outline btn-small"><i class="fas fa-sync-alt"></i> Refresh</button>
                 </div>
             </div>
             <div class="filters-row">
@@ -1392,16 +1336,17 @@
                     <option value="offline">Offline</option>
                 </select>
                 <input type="text" id="quickSearch" class="filter-input" placeholder="Quick search…">
+                <button id="clearFilters" class="btn btn-outline btn-small">Clear</button>
             </div>
         </div>
 
+        <!-- SORT + VIEW -->
         <div class="controls-row">
             <div class="sort-bar">
                 <span>Sort by</span>
                 <button class="sort-btn active" data-sort="name">Name</button>
                 <button class="sort-btn" data-sort="status">Status</button>
                 <button class="sort-btn" data-sort="starred">Starred</button>
-                <button class="sort-btn" data-sort="recent">Recent</button>
             </div>
             <div class="view-toggle">
                 <button class="view-toggle-btn active" data-view="grid" title="Grid view"><i class="fas fa-th-large"></i></button>
@@ -1409,21 +1354,22 @@
             </div>
         </div>
 
-        <h2>
-            <i class="fas fa-user-friends"></i> Your Network
-            <span class="friend-count" id="friendCount">0 connections</span>
-        </h2>
+        <!-- FRIENDS -->
+        <h2><i class="fas fa-user-friends"></i> Your Network</h2>
         <div id="friendsList" class="friend-grid"></div>
 
+        <!-- REQUESTS -->
         <h2 style="margin-top:2rem;"><i class="fas fa-clock"></i> Pending Requests</h2>
         <div id="requestsList"></div>
 
+        <!-- GROUPS -->
         <h2><i class="fas fa-users-viewfinder"></i> My Groups</h2>
         <div id="groupsList" class="friend-grid"></div>
         <div style="margin:1rem 0;">
             <button id="createGroupBtn" class="btn btn-primary"><i class="fas fa-plus"></i> Create New Group</button>
         </div>
 
+        <!-- ACTIVITY -->
         <h2><i class="fas fa-bolt"></i> Recent Activity</h2>
         <div class="activity-feed" id="activityFeed">
             <div class="loading"><i class="fas fa-spinner"></i> Loading activity…</div>
@@ -1436,6 +1382,7 @@
 
     <button id="backToTop" title="Back to top"><i class="fas fa-arrow-up"></i></button>
 
+    <!-- PROFILE MODAL -->
     <div id="profileModal" class="modal">
         <div class="modal-content">
             <span class="close-modal">&times;</span>
@@ -1443,6 +1390,7 @@
         </div>
     </div>
 
+    <!-- CREATE GROUP MODAL -->
     <div id="createGroupModal" class="modal">
         <div class="modal-content" style="max-width:540px;">
             <span class="close-modal" id="closeGroupModal">&times;</span>
@@ -1468,6 +1416,7 @@
         </div>
     </div>
 
+    <!-- NOTE MODAL -->
     <div id="noteModal" class="modal">
         <div class="modal-content" style="max-width:420px;">
             <span class="close-modal" id="closeNoteModal">&times;</span>
@@ -1482,32 +1431,12 @@
         </div>
     </div>
 
+    <!-- Context Menu -->
     <div id="ctxMenu" class="ctx-menu" style="display:none;"></div>
     <div id="ctxBackdrop" class="ctx-backdrop" style="display:none;"></div>
 
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script>
-        // ========== MOCK DATA ==========
-        const MOCK_FRIENDS = [
-            { id: 1, username: 'alex_chen', display_name: 'Alex Chen', avatar_url: 'https://i.pravatar.cc/150?img=1', status: 'online', profession: 'UI/UX Designer', is_pro: true, is_verified: true, bio: 'Designing beautiful interfaces for 8+ years', location: 'San Francisco, CA' },
-            { id: 2, username: 'sarah_jones', display_name: 'Sarah Jones', avatar_url: 'https://i.pravatar.cc/150?img=2', status: 'online', profession: 'Full Stack Developer', is_pro: false, is_verified: true, bio: 'Building scalable web applications', location: 'New York, NY' },
-            { id: 3, username: 'mike_rodriguez', display_name: 'Mike Rodriguez', avatar_url: 'https://i.pravatar.cc/150?img=3', status: 'away', profession: 'Data Scientist', is_pro: false, is_verified: false, bio: 'AI & Machine Learning enthusiast', location: 'Austin, TX' },
-            { id: 4, username: 'emily_wang', display_name: 'Emily Wang', avatar_url: 'https://i.pravatar.cc/150?img=4', status: 'busy', profession: 'DevOps Engineer', is_pro: true, is_verified: true, bio: 'Kubernetes & Cloud Architecture', location: 'Seattle, WA' },
-            { id: 5, username: 'james_kim', display_name: 'James Kim', avatar_url: 'https://i.pravatar.cc/150?img=5', status: 'offline', profession: 'Product Manager', is_pro: false, is_verified: false, bio: 'Building products that users love', location: 'Chicago, IL' },
-            { id: 6, username: 'lisa_patel', display_name: 'Lisa Patel', avatar_url: 'https://i.pravatar.cc/150?img=6', status: 'online', profession: 'Mobile Developer', is_pro: false, is_verified: true, bio: 'iOS & Android native apps', location: 'Los Angeles, CA' },
-        ];
-
-        const MOCK_REQUESTS = [
-            { id: 1, username: 'david_lee', display_name: 'David Lee', avatar_url: 'https://i.pravatar.cc/150?img=7', profession: 'Frontend Developer', is_pro: false },
-            { id: 2, username: 'anna_kowalski', display_name: 'Anna Kowalski', avatar_url: 'https://i.pravatar.cc/150?img=8', profession: 'Backend Engineer', is_pro: false },
-        ];
-
-        const MOCK_GROUPS = [
-            { id: 1, name: 'Tech Innovators', member_count: 12 },
-            { id: 2, name: 'Design Thinkers', member_count: 8 },
-            { id: 3, name: 'AI Enthusiasts', member_count: 15 },
-        ];
-
         // ========== CSRF ==========
         let csrfToken = null;
         async function fetchCsrfToken() {
@@ -1525,53 +1454,19 @@
                 options.body = JSON.stringify(options.body);
                 options.headers = { ...options.headers, 'Content-Type': 'application/json' };
             }
+            if (options.body && typeof options.body === 'string' && !options.headers?.['Content-Type']) {
+                options.headers = { ...options.headers, 'Content-Type': 'application/json' };
+            }
             if (options.method && options.method !== 'GET') {
                 const csrfHeader = await getCsrfHeader();
                 options.headers = { ...options.headers, ...csrfHeader };
             }
             const res = await fetch(url, { ...options, credentials: 'include' });
-            if (!res.ok) { 
-                let errorMsg;
-                try { errorMsg = await res.text(); } catch(e) { errorMsg = `Request failed with status ${res.status}`; }
-                throw new Error(errorMsg || `Request failed with status ${res.status}`);
-            }
+            if (!res.ok) { let errorMsg = await res.text(); throw new Error(errorMsg || `Request failed with status ${res.status}`); }
             const contentType = res.headers.get('content-type');
             if (contentType && contentType.includes('application/json')) return res.json();
             return res.text();
         }
-
-        // ========== Debug ==========
-        let debugVisible = true;
-        const debugPanel = document.getElementById('debugPanel');
-        const debugContent = document.getElementById('debugContent');
-
-        function logDebug(message, data, type = 'info') {
-            const timestamp = new Date().toLocaleTimeString();
-            const emoji = type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️';
-            const cls = type === 'success' ? 'debug-success' : type === 'error' ? 'debug-error' : 'debug-info';
-            let logMessage = `[${timestamp}] ${emoji} ${message}`;
-            if (data) {
-                logMessage += '\n' + (typeof data === 'string' ? data : JSON.stringify(data, null, 2));
-            }
-            debugContent.textContent += '\n' + logMessage;
-            debugContent.scrollTop = debugContent.scrollHeight;
-            console.log('🐛 Debug:', message, data || '');
-        }
-
-        function clearDebug() {
-            debugContent.textContent = '=== Debug Console ===\n';
-        }
-
-        document.getElementById('debugToggleBtn').addEventListener('click', () => {
-            debugVisible = !debugVisible;
-            debugPanel.classList.toggle('show', debugVisible);
-            document.getElementById('debugToggleBtn').textContent = debugVisible ? '🐛 Hide Debug' : '🐛 Show Debug';
-        });
-        document.getElementById('debugToggle').addEventListener('click', () => {
-            debugVisible = !debugVisible;
-            debugPanel.classList.remove('show');
-            document.getElementById('debugToggleBtn').textContent = '🐛 Show Debug';
-        });
 
         // ========== Globals ==========
         const socket = io({ withCredentials: true });
@@ -1590,8 +1485,9 @@
         let currentView = 'grid';
         let noteTargetId = null;
         let activityLog = JSON.parse(localStorage.getItem('nova_activity') || '[]');
+
+        // ========== Profile Data ==========
         let currentUserProfile = null;
-        let useMockData = false;
 
         // ========== Context Menu ==========
         const ctxMenu = document.getElementById('ctxMenu');
@@ -1687,20 +1583,12 @@
                 document.getElementById('totalConnections').textContent = stats.total || 0;
                 document.getElementById('onlineCount').textContent = stats.online || 0;
                 document.getElementById('requestsCount').textContent = stats.requests || 0;
-                document.getElementById('friendCount').textContent = `${stats.total || 0} connections`;
                 updateHealthScore(stats);
-            } catch (err) { 
-                logDebug('Stats error (using fallback)', err.message, 'error');
-                document.getElementById('totalConnections').textContent = friendsData.length || 0;
-                document.getElementById('onlineCount').textContent = onlineStatus.size || 0;
-                document.getElementById('requestsCount').textContent = requestsData.length || 0;
-            }
+            } catch (err) { console.error('Stats error:', err); }
         }
-
         async function getCurrentUserId() {
-            try { const user = await apiCall('/profile'); currentUserId = user.id; return user; } catch (err) { logDebug('Error getting user ID', err.message, 'error'); return null; }
+            try { const user = await apiCall('/profile'); currentUserId = user.id; return user; } catch (err) { console.error('Error getting user ID:', err); return null; }
         }
-
         async function loadCurrentUserProfile() {
             try {
                 const user = await apiCall('/profile');
@@ -1717,12 +1605,8 @@
                 if (dropdownName) dropdownName.textContent = user.display_name || user.username || 'User';
                 if (dropdownEmail) dropdownEmail.textContent = user.email || 'user@example.com';
                 return user;
-            } catch (err) { 
-                logDebug('Error loading profile', err.message, 'error');
-                return null; 
-            }
+            } catch (err) { console.error('Error loading profile:', err); return null; }
         }
-
         async function updateUnreadBadge() {
             try {
                 const data = await apiCall('/api/unread');
@@ -1734,18 +1618,13 @@
                 unreadCounts.clear();
                 data.unread.forEach(f => unreadCounts.set(f.friend_id, f.count));
                 if (friendsData.length) renderFriends(friendsData);
-            } catch (err) { 
-                logDebug('Unread badge error', err.message, 'error');
-            }
+            } catch (err) { console.error('Error updating unread badge:', err); }
         }
 
         // ========== Health Score ==========
         function updateHealthScore(stats) {
-            const total = stats.total || friendsData.length || 0;
-            const online = stats.online || 0;
-            const pending = stats.requests || requestsData.length || 0;
-            const hasGroups = groupsData.length > 0;
-            const hasStarred = starredFriends.size > 0;
+            const total = stats.total || 0, online = stats.online || 0, pending = stats.requests || 0;
+            const hasGroups = groupsData.length > 0, hasStarred = starredFriends.size > 0;
             const tips = [
                 { done: total >= 5, text: 'Have at least 5 connections' },
                 { done: online > 0, text: 'Someone in your network is online' },
@@ -1765,123 +1644,29 @@
                 </li>`).join('');
         }
 
-        // ========== FRIENDS LOADING ==========
+        // ========== Friends ==========
         async function loadFriends() {
             const container = document.getElementById('friendsList');
             showSkeleton(container);
-            clearDebug();
-            
             try {
                 const params = new URLSearchParams();
                 if (filters.status) params.append('status', filters.status);
                 if (filters.search) params.append('search', filters.search);
-                const url = `/api/friends${params.toString() ? '?' + params.toString() : ''}`;
-                
-                logDebug('📡 Fetching friends from:', url);
-                
-                const response = await fetch(url, { 
-                    credentials: 'include',
-                    headers: { 'Accept': 'application/json' }
-                });
-                
-                logDebug('📡 Response status:', response.status);
-                
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    logDebug('❌ API Error:', `Status ${response.status}: ${errorText}`, 'error');
-                    logDebug('💡 Using mock data as fallback', null, 'info');
-                    loadMockData();
-                    return;
-                }
-                
-                let data;
-                try {
-                    data = await response.json();
-                } catch (e) {
-                    logDebug('❌ Parse Error:', e.message, 'error');
-                    logDebug('💡 Using mock data as fallback', null, 'info');
-                    loadMockData();
-                    return;
-                }
-                
-                logDebug('✅ Friends data received:', data, 'success');
-                
-                if (!Array.isArray(data)) {
-                    logDebug('⚠️ Data is not an array, using mock', data, 'error');
-                    loadMockData();
-                    return;
-                }
-                
-                if (data.length === 0) {
-                    logDebug('ℹ️ No friends found, using mock data for demo', null, 'info');
-                    loadMockData();
-                    return;
-                }
-                
-                // Use real data
-                useMockData = false;
-                friendsData = data;
-                
-                for (const f of friendsData) { 
-                    if (!onlineStatus.has(f.id)) {
-                        onlineStatus.set(f.id, f.status || 'offline');
-                    }
-                }
-                
-                logDebug(`✅ Loaded ${friendsData.length} friends from API`, null, 'success');
+                friendsData = await apiCall(`/api/friends?${params.toString()}`);
+                for (const f of friendsData) { if (!onlineStatus.has(f.id)) onlineStatus.set(f.id, f.status || 'offline'); }
                 renderFriends(friendsData);
                 renderPinned();
                 renderSuggestions();
-                loadStats();
-                
             } catch (err) {
-                logDebug('❌ Error loading friends:', err.message, 'error');
-                logDebug('💡 Using mock data as fallback', null, 'info');
-                loadMockData();
+                console.error(err);
+                container.innerHTML = '<div class="no-results"><i class="fas fa-wifi"></i>Error loading network. Please try again.</div>';
             }
         }
-
-        // ========== LOAD MOCK DATA ==========
-        function loadMockData() {
-            useMockData = true;
-            logDebug('📦 Loading MOCK data', null, 'info');
-            
-            // Set mock friends
-            friendsData = MOCK_FRIENDS;
-            for (const f of friendsData) {
-                onlineStatus.set(f.id, f.status || 'offline');
-            }
-            
-            // Set mock requests
-            requestsData = MOCK_REQUESTS;
-            
-            // Set mock groups
-            groupsData = MOCK_GROUPS;
-            
-            // Render everything
-            renderFriends(friendsData);
-            renderPinned();
-            renderSuggestions();
-            renderRequests();
-            renderGroups();
-            renderActivityFeed();
-            loadStats();
-            
-            // Show notification
-            showToast('📦 Using demo data (API unavailable)', 'info');
-            logDebug('✅ Mock data loaded successfully!', `${friendsData.length} friends, ${requestsData.length} requests, ${groupsData.length} groups`, 'success');
-            
-            // Update the debug panel with success message
-            logDebug('🎯 Click "Load Mock" to reload demo data anytime', null, 'success');
-        }
-
-        // ========== RENDER FUNCTIONS ==========
         function getFriendStatusClass(friend) {
             let status = onlineStatus.get(friend.id);
             if (!status) status = friend.status || 'offline';
             return ['online', 'away', 'busy'].includes(status) ? status : '';
         }
-
         function sortedFriends(friends) {
             const arr = [...friends];
             if (currentSort === 'starred') {
@@ -1889,46 +1674,38 @@
             } else if (currentSort === 'status') {
                 const order = { online: 0, away: 1, busy: 2, offline: 3 };
                 arr.sort((a, b) => (order[onlineStatus.get(a.id) || 'offline'] ?? 3) - (order[onlineStatus.get(b.id) || 'offline'] ?? 3));
-            } else if (currentSort === 'recent') {
-                arr.sort((a, b) => (b.last_active || 0) - (a.last_active || 0));
             } else {
                 arr.sort((a, b) => (a.display_name || a.username).localeCompare(b.display_name || b.username));
             }
             return arr;
         }
-
         function renderFriends(friends) {
             const container = document.getElementById('friendsList');
             container.className = 'friend-grid' + (currentView === 'list' ? ' list-view' : '');
             const sorted = sortedFriends(friends);
-            
             if (sorted.length === 0) {
                 container.innerHTML = '<div class="no-results"><i class="fas fa-users-slash"></i>No connections yet. Add some professionals!</div>';
                 return;
             }
-            
             container.innerHTML = sorted.map((f, i) => {
                 const unread = unreadCounts.get(f.id) || 0;
                 const unreadHtml = unread > 0 ? `<span class="unread-badge">${unread}</span>` : '';
                 const statusClass = getFriendStatusClass(f);
                 const isStarred = starredFriends.has(String(f.id));
                 const note = friendNotes[f.id] ? `<span class="friend-tag"><i class="fas fa-sticky-note"></i> Note</span>` : '';
-                const displayName = f.display_name || f.username;
-                const avatarUrl = f.avatar_url || 'https://via.placeholder.com/44?text=U';
-                
                 return `
                     <div class="friend-card" data-friend-id="${f.id}" style="animation-delay:${i * 0.04}s;">
                         <div class="friend-info">
-                            <img src="${escapeHtml(avatarUrl)}" class="friend-avatar" alt="Avatar" onerror="this.src='https://via.placeholder.com/44?text=U'">
+                            <img src="${escapeHtml(f.avatar_url || 'https://via.placeholder.com/44?text=U')}" class="friend-avatar" alt="Avatar" onerror="this.src='https://via.placeholder.com/44?text=U'">
                             <div class="friend-text">
                                 <div class="friend-name">
-                                    <span class="friend-name-text">${escapeHtml(displayName)}</span>
+                                    <span class="friend-name-text">${escapeHtml(f.display_name || f.username)}</span>
                                     ${f.is_pro ? '<span class="pro-badge">PRO</span>' : ''}
                                     ${f.is_verified ? '<span class="verified-badge"><i class="fas fa-check"></i></span>' : ''}
                                     <span class="friend-status ${statusClass}"></span>
                                     ${unreadHtml}
                                 </div>
-                                <div class="friend-username">@${escapeHtml(f.username)}${f.profession ? ' · ' + escapeHtml(f.profession) : ''}</div>
+                                <div class="friend-username">@${escapeHtml(f.username)} · ${escapeHtml(f.profession || 'Professional')}</div>
                                 <div class="friend-tags">${note}</div>
                             </div>
                         </div>
@@ -1942,18 +1719,14 @@
                         </div>
                     </div>`;
             }).join('');
-            
             attachFriendEvents();
         }
-
         function attachFriendEvents() {
             document.querySelectorAll('.chat-btn').forEach(btn => {
                 btn.addEventListener('click', async () => {
                     const friendId = btn.dataset.id;
-                    if (!useMockData) {
-                        try { await apiCall(`/api/messages/read/${friendId}`, { method: 'POST' }); } catch(e) {}
-                    }
-                    if (unreadCounts.has(parseInt(friendId))) { unreadCounts.set(parseInt(friendId), 0); renderFriends(friendsData); }
+                    await apiCall(`/api/messages/read/${friendId}`, { method: 'POST' });
+                    if (unreadCounts.has(parseInt(friendId))) { unreadCounts.set(parseInt(friendId), 0); renderFriends(friendsData); updateUnreadBadge(); }
                     window.location.href = `chat.html?friend=${friendId}`;
                 });
             });
@@ -1966,7 +1739,7 @@
                     else { starredFriends.add(id); btn.classList.add('starred'); showToast('Added to favourites ⭐', 'success'); pushActivity('fa-star', 'message', 'You starred a connection'); }
                     localStorage.setItem('nova_starred', JSON.stringify([...starredFriends]));
                     renderPinned();
-                    loadStats();
+                    updateHealthScore({ total: friendsData.length, online: 0, requests: requestsData.length });
                 });
             });
             document.querySelectorAll('.note-btn').forEach(btn => {
@@ -2006,25 +1779,25 @@
                 });
             });
         }
-
         async function unfriend(friendId) {
             if (!confirm('Remove this connection?')) return;
-            if (!useMockData) {
-                try {
-                    await apiCall(`/api/friends/${friendId}`, { method: 'DELETE' });
-                } catch (err) {
-                    showToast(err.message || 'Failed to remove', 'error');
-                    return;
-                }
+            const friendCard = document.querySelector(`.friend-card[data-friend-id="${friendId}"]`);
+            const unfriendBtn = friendCard?.querySelector('.unfriend-btn');
+            const original = unfriendBtn ? unfriendBtn.innerHTML : '';
+            if (unfriendBtn) { unfriendBtn.disabled = true; unfriendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
+            try {
+                await apiCall(`/api/friends/${friendId}`, { method: 'DELETE' });
+                showToast('Connection removed.', 'success');
+                pushActivity('fa-user-minus', 'request', 'You removed a connection');
+                friendsData = friendsData.filter(f => f.id != friendId);
+                starredFriends.delete(String(friendId));
+                localStorage.setItem('nova_starred', JSON.stringify([...starredFriends]));
+                renderFriends(friendsData); renderPinned(); updateUnreadBadge(); loadStats();
+            } catch (err) {
+                showToast(err.message || 'Failed to remove', 'error');
+                if (unfriendBtn) { unfriendBtn.disabled = false; unfriendBtn.innerHTML = original; }
             }
-            showToast('Connection removed.', 'success');
-            pushActivity('fa-user-minus', 'request', 'You removed a connection');
-            friendsData = friendsData.filter(f => f.id != friendId);
-            starredFriends.delete(String(friendId));
-            localStorage.setItem('nova_starred', JSON.stringify([...starredFriends]));
-            renderFriends(friendsData); renderPinned(); loadStats();
         }
-
         function renderPinned() {
             const section = document.getElementById('pinnedSection');
             const container = document.getElementById('pinnedAvatars');
@@ -2037,7 +1810,6 @@
                     ${escapeHtml(f.display_name || f.username)}
                 </div>`).join('');
         }
-
         function renderSuggestions() {
             const container = document.getElementById('suggestionsGrid');
             const pool = trendingData.filter(t => !friendsData.some(f => f.id === t.id) && t.id !== currentUserId);
@@ -2055,120 +1827,14 @@
                     const uname = btn.dataset.username; const original = btn.innerHTML;
                     btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                     try {
-                        if (!useMockData) {
-                            await apiCall('/api/friends/request', { method: 'POST', body: JSON.stringify({ friendUsername: uname }) });
-                        }
+                        await apiCall('/api/friends/request', { method: 'POST', body: JSON.stringify({ friendUsername: uname }) });
                         btn.innerHTML = '<i class="fas fa-check"></i> Sent';
                         showToast('Request sent!', 'success');
                         pushActivity('fa-user-plus', 'connect', `You sent a request to @${uname}`);
-                        if (!useMockData) loadRequests();
                     } catch (err) { showToast(err.message || 'Failed', 'error'); btn.innerHTML = original; btn.disabled = false; }
                 });
             });
         }
-
-        function renderRequests() {
-            const container = document.getElementById('requestsList');
-            if (requestsData.length === 0) { container.innerHTML = '<div class="no-results"><i class="fas fa-inbox"></i>No pending requests.</div>'; return; }
-            container.innerHTML = requestsData.map(r => `
-                <div class="friend-card request-card">
-                    <div class="friend-info">
-                        <img src="${escapeHtml(r.avatar_url || 'https://via.placeholder.com/44?text=U')}" class="friend-avatar" alt="Avatar" onerror="this.src='https://via.placeholder.com/44?text=U'">
-                        <div class="friend-text">
-                            <div class="friend-name">
-                                <span class="friend-name-text">${escapeHtml(r.display_name || r.username)}</span>
-                                ${r.is_pro ? '<span class="pro-badge">PRO</span>' : ''}
-                            </div>
-                            <div class="friend-username">@${escapeHtml(r.username)}${r.profession ? ' · ' + escapeHtml(r.profession) : ''}</div>
-                        </div>
-                    </div>
-                    <div class="card-actions">
-                        <button class="btn btn-small btn-success accept-btn" data-id="${r.id}"><i class="fas fa-check"></i> <span class="chat-label">Accept</span></button>
-                        <button class="btn btn-small btn-outline btn-icon decline-btn" data-id="${r.id}" title="Decline"><i class="fas fa-times"></i></button>
-                    </div>
-                </div>`).join('');
-            document.querySelectorAll('.accept-btn').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    const requestId = btn.dataset.id; const btnText = btn.innerHTML;
-                    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                    try {
-                        if (!useMockData) {
-                            await apiCall(`/api/friends/accept/${requestId}`, { method: 'PUT' });
-                        }
-                        showToast('Request accepted!', 'success');
-                        pushActivity('fa-user-check', 'connect', 'You accepted a connection request');
-                        if (!useMockData) {
-                            await loadRequests();
-                            await loadFriends();
-                            updateUnreadBadge();
-                            loadStats();
-                        } else {
-                            requestsData = requestsData.filter(r => r.id != requestId);
-                            renderRequests();
-                        }
-                    } catch (err) { showToast(err.message || 'Failed to accept', 'error'); btn.disabled = false; btn.innerHTML = btnText; }
-                });
-            });
-            document.querySelectorAll('.decline-btn').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    const requestId = btn.dataset.id; const btnText = btn.innerHTML;
-                    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                    try {
-                        if (!useMockData) {
-                            await apiCall(`/api/friends/decline/${requestId}`, { method: 'PUT' });
-                        }
-                        showToast('Request declined.', 'info');
-                        pushActivity('fa-user-times', 'request', 'You declined a connection request');
-                        if (!useMockData) {
-                            loadRequests();
-                            updateUnreadBadge();
-                            loadStats();
-                        } else {
-                            requestsData = requestsData.filter(r => r.id != requestId);
-                            renderRequests();
-                        }
-                    } catch (err) { showToast(err.message || 'Failed to decline', 'error'); btn.disabled = false; btn.innerHTML = btnText; }
-                });
-            });
-        }
-
-        function renderGroups() {
-            const container = document.getElementById('groupsList');
-            if (groupsData.length === 0) { container.innerHTML = '<div class="no-results"><i class="fas fa-users"></i>Not in any groups yet. Create one!</div>'; return; }
-            container.innerHTML = groupsData.map(g => `
-                <div class="group-card" data-group-id="${g.id}">
-                    <div class="friend-info">
-                        <div class="friend-avatar" style="display:flex;align-items:center;justify-content:center;background:rgba(249,115,22,0.1);border-color:rgba(249,115,22,0.28);flex:0 0 44px;width:44px;height:44px;">
-                            <i class="fas fa-users" style="font-size:1.1rem;color:var(--orange);"></i>
-                        </div>
-                        <div class="friend-text">
-                            <div class="friend-name"><span class="friend-name-text">${escapeHtml(g.name)}</span></div>
-                            <div class="friend-username">${g.member_count} members</div>
-                        </div>
-                    </div>
-                    <div class="card-actions">
-                        <button class="btn btn-small btn-primary open-group-chat" data-id="${g.id}"><i class="fas fa-comments"></i> <span class="chat-label">Open</span></button>
-                        <button class="btn btn-small btn-outline btn-icon leave-group" data-id="${g.id}" title="Leave group"><i class="fas fa-sign-out-alt"></i></button>
-                    </div>
-                </div>`).join('');
-            document.querySelectorAll('.open-group-chat').forEach(btn => { btn.addEventListener('click', () => window.location.href = `chat.html?group=${btn.dataset.id}`); });
-            document.querySelectorAll('.leave-group').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    const groupId = btn.dataset.id;
-                    if (!confirm('Leave this group?')) return;
-                    try {
-                        if (!useMockData) {
-                            await apiCall(`/api/groups/${groupId}/leave`, { method: 'POST' });
-                        }
-                        showToast('Left group', 'info');
-                        pushActivity('fa-sign-out-alt', 'group', 'You left a group');
-                        groupsData = groupsData.filter(g => g.id != groupId);
-                        renderGroups();
-                    } catch (err) { showToast(err.message || 'Failed to leave group', 'error'); }
-                });
-            });
-        }
-
         function renderActivityFeed() {
             const container = document.getElementById('activityFeed');
             if (activityLog.length === 0) { container.innerHTML = '<div class="no-results"><i class="fas fa-bolt-lightning"></i>No recent activity yet.</div>'; return; }
@@ -2180,72 +1846,56 @@
                 </div>`).join('');
         }
 
-        // ========== REQUESTS LOADING ==========
+        // ========== Requests ==========
         async function loadRequests() {
-            if (useMockData) {
-                renderRequests();
-                return;
-            }
+            const container = document.getElementById('requestsList');
+            showSkeleton(container, 2);
             try {
-                const data = await apiCall('/api/friends/requests');
-                requestsData = data || [];
-                renderRequests();
-            } catch (err) {
-                logDebug('Error loading requests', err.message, 'error');
-                renderRequests();
-            }
-        }
-
-        // ========== GROUPS LOADING ==========
-        async function loadGroups() {
-            if (useMockData) {
-                renderGroups();
-                return;
-            }
-            try {
-                const data = await apiCall('/api/groups');
-                groupsData = data || [];
-                renderGroups();
-            } catch (err) {
-                logDebug('Error loading groups', err.message, 'error');
-                renderGroups();
-            }
-        }
-
-        // ========== TRENDING LOADING ==========
-        async function loadTrending() {
-            const container = document.getElementById('trendingSection');
-            try {
-                const data = await apiCall('/api/trending/professionals');
-                trendingData = data || [];
-                container.innerHTML = `<div class="trending-list">${trendingData.slice(0, 5).map((user, index) => `
-                    <div class="trending-item">
-                        <div class="trending-rank trending-rank-${index + 1}">${index + 1}</div>
-                        <img src="${escapeHtml(user.avatar_url)}" onerror="this.src='https://via.placeholder.com/36?text=U'" alt="">
-                        <div class="t-info">
-                            <div>${escapeHtml(user.display_name)}</div>
-                            <div>${escapeHtml(user.profession)}</div>
+                requestsData = await apiCall('/api/friends/requests');
+                if (requestsData.length === 0) { container.innerHTML = '<div class="no-results"><i class="fas fa-inbox"></i>No pending requests.</div>'; return; }
+                container.innerHTML = requestsData.map(r => `
+                    <div class="friend-card request-card">
+                        <div class="friend-info">
+                            <img src="${escapeHtml(r.avatar_url || 'https://via.placeholder.com/44?text=U')}" class="friend-avatar" alt="Avatar" onerror="this.src='https://via.placeholder.com/44?text=U'">
+                            <div class="friend-text">
+                                <div class="friend-name">
+                                    <span class="friend-name-text">${escapeHtml(r.display_name || r.username)}</span>
+                                    ${r.is_pro ? '<span class="pro-badge">PRO</span>' : ''}
+                                </div>
+                                <div class="friend-username">@${escapeHtml(r.username)} · ${escapeHtml(r.profession || 'Professional')}</div>
+                            </div>
                         </div>
-                        <button class="btn btn-small btn-primary connect-trending" data-username="${escapeHtml(user.username)}">Connect</button>
-                    </div>`).join('')}</div>`;
-                document.querySelectorAll('.connect-trending').forEach(btn => {
+                        <div class="card-actions">
+                            <button class="btn btn-small btn-success accept-btn" data-id="${r.id}"><i class="fas fa-check"></i> <span class="chat-label">Accept</span></button>
+                            <button class="btn btn-small btn-outline btn-icon decline-btn" data-id="${r.id}" title="Decline"><i class="fas fa-times"></i></button>
+                        </div>
+                    </div>`).join('');
+                document.querySelectorAll('.accept-btn').forEach(btn => {
                     btn.addEventListener('click', async () => {
-                        const username = btn.dataset.username;
-                        btn.disabled = true; btn.innerHTML = '<i class="fas fa-check"></i>';
+                        const requestId = btn.dataset.id; const btnText = btn.innerHTML;
+                        btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                         try {
-                            if (!useMockData) {
-                                await apiCall('/api/friends/request', { method: 'POST', body: JSON.stringify({ friendUsername: username }) });
-                            }
-                            showToast('Request sent!', 'success');
-                            pushActivity('fa-user-plus', 'connect', `You connected with @${username}`);
-                            if (!useMockData) loadRequests();
-                        } catch (err) { showToast(err.message || 'Failed to send request', 'error'); btn.disabled = false; btn.innerHTML = 'Connect'; }
+                            await apiCall(`/api/friends/accept/${requestId}`, { method: 'PUT' });
+                            showToast('Request accepted!', 'success');
+                            pushActivity('fa-user-check', 'connect', 'You accepted a connection request');
+                            await Promise.all([loadRequests(), loadFriends()]);
+                            updateUnreadBadge(); loadStats();
+                        } catch (err) { showToast(err.message || 'Failed to accept', 'error'); btn.disabled = false; btn.innerHTML = btnText; }
                     });
                 });
-                renderSuggestions();
-            } catch (err) { 
-                container.innerHTML = '<div class="no-results"><i class="fas fa-fire-flame-curved"></i>No trending professionals</div>';
-            }
+                document.querySelectorAll('.decline-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const requestId = btn.dataset.id; const btnText = btn.innerHTML;
+                        btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                        try {
+                            await apiCall(`/api/friends/decline/${requestId}`, { method: 'PUT' });
+                            showToast('Request declined.', 'info');
+                            pushActivity('fa-user-times', 'request', 'You declined a connection request');
+                            loadRequests(); updateUnreadBadge(); loadStats();
+                        } catch (err) { showToast(err.message || 'Failed to decline', 'error'); btn.disabled = false; btn.innerHTML = btnText; }
+                    });
+                });
+            } catch (err) { console.error(err); container.innerHTML = '<div class="no-results"><i class="fas fa-triangle-exclamation"></i>Error loading requests.</div>'; }
         }
 
         // ========== Add Friend ==========
@@ -2256,16 +1906,11 @@
             const original = btn.innerHTML;
             btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
             try {
-                if (!useMockData) {
-                    await apiCall('/api/friends/request', { method: 'POST', body: JSON.stringify({ friendUsername: username }) });
-                }
+                await apiCall('/api/friends/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ friendUsername: username }) });
                 document.getElementById('friendUsername').value = '';
                 showToast('Request sent!', 'success');
                 pushActivity('fa-user-plus', 'connect', `You sent a request to @${username}`);
-                if (!useMockData) {
-                    updateUnreadBadge();
-                    loadRequests();
-                }
+                updateUnreadBadge();
             } catch (err) { showToast(err.message || 'Failed to send request', 'error'); }
             finally { btn.disabled = false; btn.innerHTML = original; }
         });
@@ -2289,7 +1934,7 @@
                                     <span class="friend-name-text">${escapeHtml(user.display_name || user.username)}</span>
                                     ${user.is_pro ? '<span class="pro-badge">PRO</span>' : ''}
                                 </div>
-                                <div class="friend-username">@${escapeHtml(user.username)}${user.profession ? ' · ' + escapeHtml(user.profession) : ''}</div>
+                                <div class="friend-username">@${escapeHtml(user.username)} · ${escapeHtml(user.profession || 'Professional')}</div>
                             </div>
                         </div>
                         <div class="card-actions">
@@ -2301,16 +1946,11 @@
                         const username = btn.dataset.username; const original = btn.innerHTML;
                         btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
                         try {
-                            if (!useMockData) {
-                                await apiCall('/api/friends/request', { method: 'POST', body: JSON.stringify({ friendUsername: username }) });
-                            }
+                            await apiCall('/api/friends/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ friendUsername: username }) });
                             btn.innerHTML = '<i class="fas fa-check"></i>';
                             showToast(`Request sent to ${username}!`, 'success');
                             pushActivity('fa-user-plus', 'connect', `You sent a request to @${username}`);
-                            if (!useMockData) {
-                                updateUnreadBadge();
-                                loadRequests();
-                            }
+                            updateUnreadBadge();
                         } catch (err) { showToast(err.message || 'Failed to send request', 'error'); btn.innerHTML = original; btn.disabled = false; }
                     });
                 });
@@ -2330,14 +1970,9 @@
         });
         document.getElementById('refreshBtn').addEventListener('click', async () => {
             showToast('Refreshing...', 'info');
-            useMockData = false;
             await Promise.all([loadFriends(), loadRequests(), loadStats(), loadTrending(), loadGroups()]);
             await updateUnreadBadge();
             showToast('Refreshed!', 'success');
-        });
-        document.getElementById('loadMockBtn').addEventListener('click', () => {
-            loadMockData();
-            showToast('📦 Mock data loaded!', 'info');
         });
 
         // ========== Sort & View ==========
@@ -2377,6 +2012,76 @@
                 renderFriends(friendsData);
             }
         });
+
+        // ========== Trending ==========
+        async function loadTrending() {
+            const container = document.getElementById('trendingSection');
+            try {
+                trendingData = await apiCall('/api/trending/professionals');
+                container.innerHTML = `<div class="trending-list">${trendingData.slice(0, 5).map((user, index) => `
+                    <div class="trending-item">
+                        <div class="trending-rank trending-rank-${index + 1}">${index + 1}</div>
+                        <img src="${escapeHtml(user.avatar_url)}" onerror="this.src='https://via.placeholder.com/36?text=U'" alt="">
+                        <div class="t-info">
+                            <div>${escapeHtml(user.display_name)}</div>
+                            <div>${escapeHtml(user.profession)}</div>
+                        </div>
+                        <button class="btn btn-small btn-primary connect-trending" data-username="${escapeHtml(user.username)}">Connect</button>
+                    </div>`).join('')}</div>`;
+                document.querySelectorAll('.connect-trending').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const username = btn.dataset.username;
+                        btn.disabled = true; btn.innerHTML = '<i class="fas fa-check"></i>';
+                        try {
+                            await apiCall('/api/friends/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ friendUsername: username }) });
+                            showToast('Request sent!', 'success');
+                            pushActivity('fa-user-plus', 'connect', `You connected with @${username}`);
+                        } catch (err) { showToast(err.message || 'Failed to send request', 'error'); btn.disabled = false; btn.innerHTML = 'Connect'; }
+                    });
+                });
+                renderSuggestions();
+            } catch (err) { container.innerHTML = '<div class="no-results"><i class="fas fa-fire-flame-curved"></i>No trending professionals</div>'; }
+        }
+
+        // ========== Groups ==========
+        async function loadGroups() {
+            const container = document.getElementById('groupsList');
+            showSkeleton(container);
+            try {
+                const groups = await apiCall('/api/groups');
+                groupsData = groups;
+                if (groupsData.length === 0) { container.innerHTML = '<div class="no-results"><i class="fas fa-users"></i>Not in any groups yet. Create one!</div>'; return; }
+                container.innerHTML = groupsData.map(g => `
+                    <div class="group-card" data-group-id="${g.id}">
+                        <div class="friend-info">
+                            <div class="friend-avatar" style="display:flex;align-items:center;justify-content:center;background:rgba(249,115,22,0.1);border-color:rgba(249,115,22,0.28);flex:0 0 44px;width:44px;height:44px;">
+                                <i class="fas fa-users" style="font-size:1.1rem;color:var(--orange);"></i>
+                            </div>
+                            <div class="friend-text">
+                                <div class="friend-name"><span class="friend-name-text">${escapeHtml(g.name)}</span></div>
+                                <div class="friend-username">${g.member_count} members</div>
+                            </div>
+                        </div>
+                        <div class="card-actions">
+                            <button class="btn btn-small btn-primary open-group-chat" data-id="${g.id}"><i class="fas fa-comments"></i> <span class="chat-label">Open</span></button>
+                            <button class="btn btn-small btn-outline btn-icon leave-group" data-id="${g.id}" title="Leave group"><i class="fas fa-sign-out-alt"></i></button>
+                        </div>
+                    </div>`).join('');
+                document.querySelectorAll('.open-group-chat').forEach(btn => { btn.addEventListener('click', () => window.location.href = `chat.html?group=${btn.dataset.id}`); });
+                document.querySelectorAll('.leave-group').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const groupId = btn.dataset.id;
+                        if (!confirm('Leave this group?')) return;
+                        try {
+                            await apiCall(`/api/groups/${groupId}/leave`, { method: 'POST' });
+                            showToast('Left group', 'info');
+                            pushActivity('fa-sign-out-alt', 'group', 'You left a group');
+                            loadGroups();
+                        } catch (err) { showToast(err.message || 'Failed to leave group', 'error'); }
+                    });
+                });
+            } catch (err) { console.error(err); container.innerHTML = '<div class="no-results"><i class="fas fa-triangle-exclamation"></i>Failed to load groups.</div>'; }
+        }
 
         // ========== Create Group ==========
         const createGroupBtn = document.getElementById('createGroupBtn');
@@ -2444,13 +2149,10 @@
             const memberIds = selectedMembers.map(m => m.id);
             confirmCreateGroupBtn.disabled = true; confirmCreateGroupBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
             try {
-                if (!useMockData) {
-                    await apiCall('/api/groups', { method: 'POST', body: JSON.stringify({ name: groupName, members: memberIds }) });
-                }
+                await apiCall('/api/groups', { method: 'POST', body: JSON.stringify({ name: groupName, members: memberIds }) });
                 showToast('Group created!', 'success');
                 pushActivity('fa-layer-group', 'group', `You created group "${groupName}"`);
-                createGroupModal.style.display = 'none';
-                if (!useMockData) loadGroups();
+                createGroupModal.style.display = 'none'; loadGroups();
             } catch (err) { showToast(err.message || 'Failed to create group', 'error'); }
             finally { confirmCreateGroupBtn.disabled = false; confirmCreateGroupBtn.innerHTML = '<i class="fas fa-check-circle"></i> Create Group'; }
         });
@@ -2463,17 +2165,7 @@
             contentDiv.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading profile...</div>';
             try {
                 let friend = friendsData.find(f => String(f.id) == String(userId));
-                if (!friend) { 
-                    try {
-                        const userData = await apiCall(`/api/users/${userId}`);
-                        friend = userData;
-                    } catch(e) {
-                        contentDiv.innerHTML = '<div class="no-results">Profile information not available.</div>';
-                        return;
-                    }
-                }
                 if (!friend) { contentDiv.innerHTML = '<div class="no-results">Profile information not available.</div>'; return; }
-                
                 const displayName = friend.display_name || friend.username;
                 const avatar = friend.avatar_url || 'https://via.placeholder.com/80?text=U';
                 const bio = friend.bio || 'No bio available.';
@@ -2556,12 +2248,31 @@
             }
         });
 
-        document.getElementById('profileMenuItem')?.addEventListener('click', () => { closeProfileDropdown(); window.location.href = 'profile.html'; });
-        document.getElementById('dashboardMenuItem')?.addEventListener('click', () => { closeProfileDropdown(); window.location.href = 'dashboard.html'; });
-        document.getElementById('savedMenuItem')?.addEventListener('click', () => { closeProfileDropdown(); window.location.href = 'profile.html?tab=favorites'; });
-        document.getElementById('notificationsMenuItem')?.addEventListener('click', () => { closeProfileDropdown(); window.location.href = 'profile.html?tab=notifications'; });
-        document.getElementById('settingsMenuItem')?.addEventListener('click', () => { closeProfileDropdown(); window.location.href = 'profile.html?tab=settings'; });
-        document.getElementById('helpMenuItem')?.addEventListener('click', () => { closeProfileDropdown(); window.location.href = 'support.html'; });
+        // Profile Menu Item Actions
+        document.getElementById('profileMenuItem')?.addEventListener('click', () => {
+            closeProfileDropdown();
+            window.location.href = 'profile.html';
+        });
+        document.getElementById('dashboardMenuItem')?.addEventListener('click', () => {
+            closeProfileDropdown();
+            window.location.href = 'dashboard.html';
+        });
+        document.getElementById('savedMenuItem')?.addEventListener('click', () => {
+            closeProfileDropdown();
+            window.location.href = 'profile.html?tab=favorites';
+        });
+        document.getElementById('notificationsMenuItem')?.addEventListener('click', () => {
+            closeProfileDropdown();
+            window.location.href = 'profile.html?tab=notifications';
+        });
+        document.getElementById('settingsMenuItem')?.addEventListener('click', () => {
+            closeProfileDropdown();
+            window.location.href = 'profile.html?tab=settings';
+        });
+        document.getElementById('helpMenuItem')?.addEventListener('click', () => {
+            closeProfileDropdown();
+            window.location.href = 'support.html';
+        });
         document.getElementById('logoutMenuItem')?.addEventListener('click', async (e) => {
             e.preventDefault();
             if (confirm('Are you sure you want to logout?')) {
@@ -2576,7 +2287,7 @@
         socket.on('friend_request_notification', (data) => {
             showToast(`New request from ${data.fromUsername || data.from}!`, 'info');
             pushActivity('fa-user-clock', 'request', `New request from @${data.fromUsername || data.from}`);
-            if (!useMockData) { loadRequests(); updateUnreadBadge(); loadStats(); }
+            loadRequests(); updateUnreadBadge(); loadStats();
         });
         socket.on('private_message', (data) => {
             if (data.from !== currentUserId) {
@@ -2588,19 +2299,15 @@
                 pushActivity('fa-comment', 'message', `New message from @${data.fromUsername || 'a connection'}`);
             }
         });
-        socket.on('user_status', (data) => { 
-            onlineStatus.set(data.userId, data.status); 
-            if (friendsData.length) renderFriends(friendsData); 
-            loadStats(); 
-        });
-        socket.on('group_created', () => { if (!useMockData) { loadGroups(); showToast('A new group was created!', 'info'); pushActivity('fa-users', 'group', 'A new group was created'); } });
+        socket.on('user_status', (data) => { onlineStatus.set(data.userId, data.status); if (friendsData.length) renderFriends(friendsData); loadStats(); });
+        socket.on('group_created', () => { loadGroups(); showToast('A new group was created!', 'info'); pushActivity('fa-users', 'group', 'A new group was created'); });
 
         // ========== Back to top ==========
         const backToTopBtn = document.getElementById('backToTop');
         window.addEventListener('scroll', () => backToTopBtn.classList.toggle('visible', window.scrollY > 400));
         backToTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
-        // ========== Hamburger Menu ==========
+        // ========== Hamburger Menu - FIXED ==========
         const hamburger = document.getElementById('hamburger');
         const navLinks = document.getElementById('navLinks');
         const navOverlay = document.getElementById('navOverlay');
@@ -2623,39 +2330,51 @@
         }
 
         function toggleNav() {
-            if (navLinks.classList.contains('active')) { closeNav(); } else { openNav(); }
+            if (navLinks.classList.contains('active')) {
+                closeNav();
+            } else {
+                openNav();
+            }
         }
 
-        hamburger.addEventListener('click', (e) => { e.stopPropagation(); toggleNav(); });
-        hamburger.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleNav(); } });
+        hamburger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleNav();
+        });
+
+        hamburger.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleNav();
+            }
+        });
+
         navOverlay.addEventListener('click', closeNav);
-        navLinks.querySelectorAll('a').forEach(link => { link.addEventListener('click', closeNav); });
-        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeNav(); hideCtxMenu(); } });
+
+        // Close nav when links are clicked
+        navLinks.querySelectorAll('a').forEach(link => {
+            link.addEventListener('click', closeNav);
+        });
+
+        // Close nav on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeNav();
+                hideCtxMenu();
+            }
+        });
 
         // ========== Periodic refresh ==========
-        setInterval(() => { if (currentUserId && !useMockData) { updateUnreadBadge(); loadStats(); } }, 30000);
+        setInterval(() => { if (currentUserId) { updateUnreadBadge(); loadStats(); } }, 30000);
 
         // ========== Init ==========
         (async () => {
             await fetchCsrfToken();
             await getCurrentUserId();
             await loadCurrentUserProfile();
-            
-            // Try loading real data first, fallback to mock
-            await loadFriends();
-            await loadRequests();
-            await loadStats();
-            await loadTrending();
-            await loadGroups();
+            await Promise.all([loadFriends(), loadRequests(), loadStats(), loadTrending(), loadGroups()]);
             await updateUnreadBadge();
             renderActivityFeed();
-            
-            // Show debug panel by default if there's an issue
-            if (useMockData) {
-                debugVisible = true;
-                debugPanel.classList.add('show');
-                document.getElementById('debugToggleBtn').textContent = '🐛 Hide Debug';
-            }
         })();
     </script>
 </body>

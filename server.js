@@ -235,26 +235,6 @@ app.use(sessionMiddleware);
 app.use(passport.initialize());
 app.use(passport.session());
 
-// ==================== CSRF PROTECTION ====================
-// Generate CSRF token endpoint (already present)
-app.get('/api/csrf-token', (req, res) => {
-    const token = crypto.randomBytes(32).toString('hex');
-    req.session.csrfToken = token;
-    res.json({ csrfToken: token });
-});
-
-// CSRF validation middleware – apply to all non-GET routes
-function csrfProtection(req, res, next) {
-    if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
-    const token = req.headers['x-csrf-token'] || req.body._csrf;
-    if (!token || token !== req.session.csrfToken) {
-        console.warn(`CSRF validation failed for ${req.method} ${req.path}`);
-        return res.status(403).json({ error: 'Invalid CSRF token' });
-    }
-    next();
-}
-app.use(csrfProtection);
-
 // ==================== XSS HELPER ====================
 function escapeHtml(str) {
     if (!str) return '';
@@ -301,6 +281,7 @@ const otpVerificationLimiter = rateLimit({
 // ==================== SETUP MONETIZATION TABLES ====================
 async function setupMonetizationTables() {
     try {
+        // Sponsored listings table
         await pool.query(`
             CREATE TABLE IF NOT EXISTS sponsored_listings (
                 id SERIAL PRIMARY KEY,
@@ -317,6 +298,8 @@ async function setupMonetizationTables() {
                 updated_at TIMESTAMP DEFAULT NOW()
             )
         `);
+        
+        // Sponsored packages table
         await pool.query(`
             CREATE TABLE IF NOT EXISTS sponsored_packages (
                 id SERIAL PRIMARY KEY,
@@ -327,6 +310,8 @@ async function setupMonetizationTables() {
                 features JSONB
             )
         `);
+        
+        // Insert default packages if not exist
         const pkgCheck = await pool.query('SELECT COUNT(*) FROM sponsored_packages');
         if (parseInt(pkgCheck.rows[0].count) === 0) {
             await pool.query(`
@@ -336,6 +321,8 @@ async function setupMonetizationTables() {
                 ('Enterprise Dominance', 30, 14999, 0, '{"impressions": 100000, "badge": "👑 Official Partner", "custom_message": true, "homepage_banner": true}'::jsonb)
             `);
         }
+        
+        // Affiliate links table
         await pool.query(`
             CREATE TABLE IF NOT EXISTS affiliate_links (
                 id SERIAL PRIMARY KEY,
@@ -352,6 +339,8 @@ async function setupMonetizationTables() {
                 updated_at TIMESTAMP DEFAULT NOW()
             )
         `);
+        
+        // Affiliate clicks tracking
         await pool.query(`
             CREATE TABLE IF NOT EXISTS affiliate_clicks (
                 id SERIAL PRIMARY KEY,
@@ -364,6 +353,8 @@ async function setupMonetizationTables() {
                 session_id VARCHAR(100)
             )
         `);
+        
+        // Affiliate conversions (sales)
         await pool.query(`
             CREATE TABLE IF NOT EXISTS affiliate_conversions (
                 id SERIAL PRIMARY KEY,
@@ -380,6 +371,8 @@ async function setupMonetizationTables() {
                 paid_at TIMESTAMP
             )
         `);
+        
+        // Business settings for affiliate
         await pool.query(`
             CREATE TABLE IF NOT EXISTS business_affiliate_settings (
                 business_id INT REFERENCES businesses(id) PRIMARY KEY,
@@ -390,11 +383,14 @@ async function setupMonetizationTables() {
                 created_at TIMESTAMP DEFAULT NOW()
             )
         `);
+        
         console.log('✅ Monetization tables setup complete');
     } catch (err) {
         console.error('Error setting up monetization tables:', err);
     }
 }
+
+// Call setup function
 setupMonetizationTables();
 
 // ==================== STAFF LOUNGE ====================
@@ -421,39 +417,6 @@ async function ensureStaffLoungeGroup() {
         console.error('Error ensuring Staff Lounge group:', err);
     }
 }
-
-// ==================== DATABASE SCHEMA UPGRADE ====================
-async function upgradeUserSchema() {
-    try {
-        // Add missing columns if they don't exist
-        const columns = ['profession', 'is_pro', 'is_verified'];
-        for (const col of columns) {
-            const check = await pool.query(`
-                SELECT column_name FROM information_schema.columns 
-                WHERE table_name = 'users' AND column_name = $1
-            `, [col]);
-            if (check.rows.length === 0) {
-                let type = 'VARCHAR(100)';
-                if (col === 'is_pro' || col === 'is_verified') type = 'BOOLEAN DEFAULT false';
-                await pool.query(`ALTER TABLE users ADD COLUMN ${col} ${type}`);
-                console.log(`✅ Added column ${col} to users table`);
-            }
-        }
-        // Also ensure display_name exists, fallback to username if missing
-        const displayCheck = await pool.query(`
-            SELECT column_name FROM information_schema.columns 
-            WHERE table_name = 'users' AND column_name = 'display_name'
-        `);
-        if (displayCheck.rows.length === 0) {
-            await pool.query(`ALTER TABLE users ADD COLUMN display_name VARCHAR(100)`);
-            await pool.query(`UPDATE users SET display_name = username WHERE display_name IS NULL`);
-            console.log('✅ Added display_name column and populated from username');
-        }
-    } catch (err) {
-        console.error('Error upgrading user schema:', err);
-    }
-}
-upgradeUserSchema();
 
 // ==================== GAMIFICATION HELPER FUNCTIONS ====================
 const xpCache = new Map();
@@ -582,6 +545,7 @@ async function updateStreak(userId) {
         const now = new Date();
         let current = current_streak;
         let multiplier = 1.0;
+
         if (lastDate) {
             const diffDays = Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
             if (diffDays === 1) {
@@ -635,6 +599,7 @@ async function updateQuestProgress(userId, action, increment = 1) {
             WHERE q.target_action = $3
             ON CONFLICT (user_id, quest_id, date) DO NOTHING
         `, [userId, today, action]);
+
         const updateRes = await pool.query(`
             UPDATE user_daily_quests
             SET progress = progress + $1
@@ -644,6 +609,7 @@ async function updateQuestProgress(userId, action, increment = 1) {
               AND completed = false
         `, [increment, userId, action, today]);
         console.log(`[Quest] Updated ${updateRes.rowCount} quest(s)`);
+
         const completedRes = await pool.query(`
             UPDATE user_daily_quests
             SET completed = true
@@ -672,6 +638,7 @@ async function checkAchievements(userId) {
             WHERE ua.user_id = $1 AND ua.achievement_id = a.id
         )
     `, [userId]);
+    
     for (const ach of achievements.rows) {
         let achieved = false;
         switch (ach.condition_type) {
@@ -762,6 +729,7 @@ passport.deserializeUser(async (id, done) => {
     }
 });
 
+// Enhanced Google Strategy with proper credits initialization and admin notifications
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -775,6 +743,7 @@ passport.use(new GoogleStrategy({
       );
       let user = userResult.rows[0];
       let isNewUser = false;
+
       if (!user) {
         const email = profile.emails[0].value;
         let existingUserResult = await pool.query(
@@ -782,6 +751,7 @@ passport.use(new GoogleStrategy({
           [email]
         );
         let existingUser = existingUserResult.rows[0];
+
         if (existingUser) {
           await pool.query(
             'UPDATE users SET google_id = $1 WHERE email = $2',
@@ -802,7 +772,9 @@ passport.use(new GoogleStrategy({
           if (checkUsernameResult.rows.length > 0) {
             username += Math.floor(Math.random() * 1000);
           }
+          
           const dummyPassword = await bcrypt.hash('google_oauth_' + Date.now() + Math.random(), 10);
+          
           const insertResult = await pool.query(
             `INSERT INTO users (username, email, google_id, password) 
              VALUES ($1, $2, $3, $4)
@@ -810,8 +782,14 @@ passport.use(new GoogleStrategy({
             [username, email, profile.id, dummyPassword]
           );
           user = insertResult.rows[0];
+          
+          // Initialize credits for new Google user (same as email/password signup)
           await initializeUserCredits(user.id);
+          
+          // Send welcome email (same as email/password signup)
           sendWelcomeEmail(email, username).catch(err => console.error('Welcome email failed:', err.message));
+          
+          // Send admin notification email for new Google signup (same as email/password registration)
           sendAdminAlert({ 
             subject: 'New User Registration (Google Sign-In)', 
             message: `New user ${username} (${email}) registered via Google Sign-In.` 
@@ -839,6 +817,7 @@ const avatarStorage = multer.diskStorage({
         cb(null, 'avatar-' + req.session.userId + '-' + unique + ext);
     }
 });
+
 const upload = multer({
     storage: avatarStorage,
     limits: { fileSize: 2 * 1024 * 1024 },
@@ -957,6 +936,7 @@ async function spendCredits(userId, amount, reason, feature, durationDays = 0, u
     const client = await pool.connect();
     try {
         await client.query('BEGIN');
+        
         const updateResult = await client.query(
             `UPDATE user_credits 
              SET balance = balance - $1, lifetime_spent = lifetime_spent + $1, last_updated = NOW()
@@ -966,11 +946,13 @@ async function spendCredits(userId, amount, reason, feature, durationDays = 0, u
         if (updateResult.rowCount === 0) {
             throw new Error('Insufficient credits');
         }
+        
         await client.query(
             `INSERT INTO credit_transactions (user_id, amount, type, description)
              VALUES ($1, $2, 'spend', $3)`,
             [userId, amount, reason || `Spent ${amount} credits on ${feature}`]
         );
+        
         const now = new Date();
         if (feature === 'badge') {
             await client.query(
@@ -1009,7 +991,9 @@ async function spendCredits(userId, amount, reason, feature, durationDays = 0, u
                 );
             }
         }
+        
         await client.query('COMMIT');
+        
         const balanceResult = await pool.query(
             'SELECT balance FROM user_credits WHERE user_id = $1',
             [userId]
@@ -1071,8 +1055,9 @@ async function awardCreditsForToolApproval(userId, toolName) {
     }
 }
 
+// ==================== BUSINESS CREDIT HELPER (15 CREDITS FOR BUSINESS APPROVAL) ====================
 async function awardCreditsForBusinessApproval(userId, businessName) {
-    const approvalBonus = 15;
+    const approvalBonus = 15; // Changed from 50 to 15 credits
     await ensureUserCredits(userId);
     await pool.query(
         `UPDATE user_credits 
@@ -1193,31 +1178,38 @@ app.get('/api/verify-payment', isAuthenticated, async (req, res) => {
     if (!order_id) {
         return res.status(400).json({ error: 'Missing order_id parameter' });
     }
+
     try {
         const purchase = await pool.query(
             `SELECT * FROM credit_purchases 
              WHERE merchant_order_id = $1 AND user_id = $2 AND status = 'PENDING'`,
             [order_id, req.session.userId]
         );
+
         if (purchase.rows.length === 0) {
             return res.json({ status: 'not_found', message: 'No pending purchase found' });
         }
+
         const { id, credits, user_id } = purchase.rows[0];
+
         await pool.query(
             `UPDATE user_credits 
              SET balance = balance + $1, lifetime_earned = lifetime_earned + $1
              WHERE user_id = $2`,
             [credits, user_id]
         );
+
         await pool.query(
             `INSERT INTO credit_transactions (user_id, amount, type, description)
              VALUES ($1, $2, 'earn', $3)`,
             [user_id, credits, `Purchased ${credits} credits via PhonePe (manual verification)`]
         );
+
         await pool.query(
             `UPDATE credit_purchases SET status = 'COMPLETED', updated_at = NOW() WHERE id = $1`,
             [id]
         );
+
         res.json({ success: true, credits_added: credits });
     } catch (err) {
         console.error('Manual verification error:', err);
@@ -1249,25 +1241,15 @@ app.post('/api/create-phonepe-premium-order', isAuthenticated, async (req, res) 
 
 // ==================== SOCKET.IO SETUP ====================
 const server = http.createServer(app);
-const io = socketIo(server, {
-    cors: {
-        origin: allowedOrigins,
-        credentials: true,
-        methods: ["GET", "POST"]
-    },
-    pingTimeout: 60000,
-    pingInterval: 25000
-});
-
+const io = socketIo(server, { cors: { origin: allowedOrigins, credentials: true } });
 io.use(sharedsession(sessionMiddleware, { autoSave: true }));
 
 const onlineUsers = new Map();
 
-async function getFriendsListWithStatus(userId) {
+async function getFriendsList(userId) {
     try {
         const result = await pool.query(
-            `SELECT u.id, u.username, u.display_name, u.avatar_url, u.status,
-                    u.profession, u.is_pro, u.is_verified
+            `SELECT u.id, u.username, u.display_name, u.avatar_url, u.status
              FROM friendships f
              JOIN users u ON (f.user_id = u.id OR f.friend_id = u.id)
              WHERE (f.user_id = $1 OR f.friend_id = $1)
@@ -1275,46 +1257,30 @@ async function getFriendsListWithStatus(userId) {
                AND u.id != $1`,
             [userId]
         );
-        return result.rows.map(friend => ({
-            ...friend,
-            online: onlineUsers.has(friend.id)
-        }));
+        return result.rows;
     } catch (err) {
-        console.error('getFriendsListWithStatus error:', err);
+        console.error('getFriendsList error:', err);
         return [];
     }
 }
 
-async function broadcastStatusToFriends(userId, status) {
-    try {
-        const friends = await pool.query(
-            `SELECT u.id FROM friendships f
-             JOIN users u ON (f.user_id = u.id OR f.friend_id = u.id)
-             WHERE (f.user_id = $1 OR f.friend_id = $1)
-               AND f.status = 'accepted'
-               AND u.id != $1`,
-            [userId]
-        );
-        for (const friend of friends.rows) {
-            const friendEntry = onlineUsers.get(friend.id);
-            if (friendEntry && friendEntry.socketId) {
-                io.to(friendEntry.socketId).emit('user_status', { userId, status });
-            }
-        }
-    } catch (err) {
-        console.error('broadcastStatusToFriends error:', err);
-    }
+async function getTotalUsersCount() {
+    const result = await pool.query('SELECT COUNT(*) as count FROM users');
+    return result.rows[0].count;
+}
+async function getRecentActivities() {
+    const result = await pool.query(`SELECT action, moderator_name, created_at FROM moderator_activity ORDER BY created_at DESC LIMIT 5`);
+    return result.rows;
 }
 
 io.on('connection', (socket) => {
     const session = socket.handshake.session;
     const userId = session.userId;
     if (!userId) {
-        console.warn('Socket connection without userId, disconnecting.');
         socket.disconnect();
         return;
     }
-    console.log(`User ${userId} connected (socket ${socket.id})`);
+    
     let userEntry = onlineUsers.get(userId);
     if (!userEntry) {
         userEntry = { socketId: socket.id, socketIds: new Set() };
@@ -1322,31 +1288,30 @@ io.on('connection', (socket) => {
     }
     userEntry.socketIds.add(socket.id);
     userEntry.socketId = socket.id;
+    
     socket.join(`user_${userId}`);
+    
     if (session.role === 'admin' || session.role === 'moderator') {
         socket.join('admin_room');
         (async () => {
-            try {
-                const totalUsers = await pool.query('SELECT COUNT(*) as count FROM users');
-                const recentActivities = await pool.query(
-                    'SELECT action, moderator_name, created_at FROM moderator_activity ORDER BY created_at DESC LIMIT 5'
-                );
-                socket.emit('admin_stats', {
-                    onlineUsers: onlineUsers.size,
-                    totalUsers: totalUsers.rows[0].count,
-                    recentActivities: recentActivities.rows
-                });
-            } catch (err) {
-                console.error('Admin stats error:', err);
-            }
+            const totalUsers = await getTotalUsersCount();
+            const recentActivities = await getRecentActivities();
+            socket.emit('admin_stats', {
+                onlineUsers: onlineUsers.size,
+                totalUsers,
+                recentActivities
+            });
         })();
     }
+
     (async () => {
         try {
-            await broadcastStatusToFriends(userId, 'online');
-        } catch (err) {
-            console.error('Error broadcasting online status:', err);
-        }
+            const friends = await getFriendsList(userId);
+            friends.forEach(friend => {
+                const friendEntry = onlineUsers.get(friend.id);
+                if (friendEntry && friendEntry.socketId) io.to(friendEntry.socketId).emit('user_status', { userId, status: 'online' });
+            });
+        } catch (err) { console.error('Error broadcasting online status:', err); }
     })();
 
     socket.on('private_message', async (data) => {
@@ -1365,24 +1330,15 @@ io.on('connection', (socket) => {
                 created_at: new Date().toISOString(),
                 is_boosted: false
             };
-            const receiverEntry = onlineUsers.get(to);
-            if (receiverEntry && receiverEntry.socketId) {
-                io.to(receiverEntry.socketId).emit('private_message', {
-                    from: userId,
-                    message,
-                    timestamp: new Date().toISOString(),
-                    id: newMessageId
-                });
-            }
+            const toEntry = onlineUsers.get(to);
+            if (toEntry && toEntry.socketId) io.to(toEntry.socketId).emit('private_message', { from: userId, message, timestamp: new Date().toISOString(), id: newMessageId });
             if (tempId) {
                 socket.emit('message_confirmed', { tempId, realMessage });
             }
-        } catch (err) {
-            console.error('Error saving message:', err);
-        }
+        } catch (err) { console.error('Error saving message:', err); }
     });
 
-    socket.on('join_group', (groupId) => {
+    socket.on('join_group', async (groupId) => {
         socket.join(`group_${groupId}`);
     });
     socket.on('leave_group', (groupId) => {
@@ -1397,11 +1353,13 @@ io.on('connection', (socket) => {
                 [groupId, userId]
             );
             if (membership.rows.length === 0) return;
+
             const result = await pool.query(
                 'INSERT INTO group_messages (group_id, sender_id, content) VALUES ($1, $2, $3) RETURNING id',
                 [groupId, userId, message]
             );
             const newId = result.rows[0].id;
+
             io.to(`group_${groupId}`).emit('group_message', {
                 groupId,
                 from: userId,
@@ -1413,9 +1371,7 @@ io.on('connection', (socket) => {
             console.error('Group message error:', err);
         }
     });
-
     socket.on('disconnect', () => {
-        console.log(`User ${userId} disconnected (socket ${socket.id})`);
         const userEntry = onlineUsers.get(userId);
         if (userEntry) {
             userEntry.socketIds.delete(socket.id);
@@ -1423,19 +1379,18 @@ io.on('connection', (socket) => {
                 onlineUsers.delete(userId);
                 (async () => {
                     try {
-                        await broadcastStatusToFriends(userId, 'offline');
-                    } catch (err) {
-                        console.error('Error broadcasting offline status:', err);
-                    }
+                        const friends = await getFriendsList(userId);
+                        friends.forEach(friend => {
+                            const friendEntry = onlineUsers.get(friend.id);
+                            if (friendEntry && friendEntry.socketId) io.to(friendEntry.socketId).emit('user_status', { userId, status: 'offline' });
+                        });
+                    } catch (err) { console.error('Error broadcasting offline status:', err); }
                 })();
             } else {
                 userEntry.socketId = Array.from(userEntry.socketIds)[0];
             }
         }
-    });
-
-    socket.on('ping', () => {
-        socket.emit('pong');
+        console.log(`User ${userId} disconnected`);
     });
 });
 
@@ -1549,10 +1504,13 @@ app.delete('/api/groups/:id/members/:userId', isAuthenticated, async (req, res) 
 app.post('/api/groups/:id/leave', isAuthenticated, async (req, res) => {
     const groupId = parseInt(req.params.id);
     if (isNaN(groupId)) return res.status(400).json({ error: 'Invalid group ID' });
+
     try {
         const group = await pool.query('SELECT created_by FROM groups WHERE id = $1', [groupId]);
         if (group.rows.length === 0) return res.status(404).json({ error: 'Group not found' });
+
         const isCreator = (group.rows[0].created_by === req.session.userId);
+
         if (isCreator) {
             await pool.query('DELETE FROM groups WHERE id = $1', [groupId]);
             const members = await pool.query('SELECT user_id FROM group_members WHERE group_id = $1', [groupId]);
@@ -1564,14 +1522,17 @@ app.post('/api/groups/:id/leave', isAuthenticated, async (req, res) => {
             }
             return res.json({ success: true, message: 'Group deleted because you were the creator' });
         }
+
         await pool.query(
             'DELETE FROM group_members WHERE group_id = $1 AND user_id = $2',
             [groupId, req.session.userId]
         );
+
         const userEntry = onlineUsers.get(req.session.userId);
         if (userEntry && userEntry.socketId) {
             io.to(userEntry.socketId).emit('leave_group', groupId);
         }
+
         res.json({ success: true, message: 'Left group' });
     } catch (err) {
         console.error(err);
@@ -1584,6 +1545,7 @@ app.post('/api/admin/groups', isAdminOrModerator, async (req, res) => {
     if (!name || !Array.isArray(members)) {
         return res.status(400).json({ error: 'Group name and members array required' });
     }
+
     try {
         for (const userId of members) {
             const roleCheck = await pool.query('SELECT role FROM users WHERE id = $1', [userId]);
@@ -1594,15 +1556,18 @@ app.post('/api/admin/groups', isAdminOrModerator, async (req, res) => {
                 return res.status(403).json({ error: 'Only admins and moderators can be added to staff groups' });
             }
         }
+
         const result = await pool.query(
             `INSERT INTO groups (name, created_by) VALUES ($1, $2) RETURNING id`,
             [name, req.session.userId]
         );
         const groupId = result.rows[0].id;
+
         await pool.query(
             `INSERT INTO group_members (group_id, user_id) VALUES ($1, $2)`,
             [groupId, req.session.userId]
         );
+
         for (const userId of members) {
             if (userId === req.session.userId) continue;
             const isFriend = await pool.query(
@@ -1620,10 +1585,12 @@ app.post('/api/admin/groups', isAdminOrModerator, async (req, res) => {
                 [groupId, userId]
             );
         }
+
         for (const userId of [req.session.userId, ...members]) {
             const userEntry = onlineUsers.get(userId);
             if (userEntry && userEntry.socketId) io.to(userEntry.socketId).emit('group_created', { groupId, name });
         }
+
         res.status(201).json({ success: true, groupId, name });
     } catch (err) {
         console.error('Group creation error:', err);
@@ -1687,12 +1654,14 @@ app.post('/send-otp', authLimiter, async (req, res) => {
     try {
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const expires = new Date(Date.now() + 10 * 60 * 1000);
+ 
         await pool.query(
             `INSERT INTO otp_store (email, otp, expires_at)
              VALUES ($1, $2, $3)
              ON CONFLICT (email) DO UPDATE SET otp = $2, expires_at = $3`,
             [email, otp, expires]
         );
+ 
         const emailSent = await sendOtpEmail(email, otp);
         if (!emailSent.success) return res.status(500).send('Failed to send OTP email');
         res.status(200).send('OTP sent successfully');
@@ -1713,22 +1682,26 @@ app.post('/api/groups', isAuthenticated, async (req, res) => {
             [name, req.session.userId]
         );
         const groupId = result.rows[0].id;
+        
         await pool.query(
             `INSERT INTO group_members (group_id, user_id) VALUES ($1, $2)`,
             [groupId, req.session.userId]
         );
+        
         for (const memberId of members) {
             await pool.query(
                 `INSERT INTO group_members (group_id, user_id) VALUES ($1, $2)`,
                 [groupId, memberId]
             );
         }
+        
         for (const userId of [req.session.userId, ...members]) {
             const userEntry = onlineUsers.get(userId);
             if (userEntry && userEntry.socketId) {
                 io.to(userEntry.socketId).emit('group_created', { groupId, name });
             }
         }
+        
         res.status(201).json({ success: true, groupId, name });
     } catch (err) {
         console.error('Group creation error:', err);
@@ -1757,8 +1730,10 @@ app.post('/register', authLimiter, async (req, res) => {
     const { username, email, password, otp, ref } = req.body;
     if (!username || !email || !password || !otp)
         return res.status(400).send('All fields (including OTP) are required');
+
     const strength = validatePasswordStrength(password);
     if (!strength.valid) return res.status(400).send(strength.message);
+
     try {
         const existingUsername = await pool.query(
             'SELECT id FROM users WHERE username = $1',
@@ -1767,6 +1742,7 @@ app.post('/register', authLimiter, async (req, res) => {
         if (existingUsername.rows.length > 0) {
             return res.status(409).send('Username already exists');
         }
+
         const storedOtp = await pool.query(
             'SELECT otp, expires_at FROM otp_store WHERE email = $1',
             [email]
@@ -1778,12 +1754,15 @@ app.post('/register', authLimiter, async (req, res) => {
             return res.status(400).send('OTP expired. Please request a new one.');
         }
         if (storedOtpCode !== otp) return res.status(400).send('Invalid OTP');
+
         const checkEmail = await pool.query(
             'SELECT id FROM users WHERE email = $1',
             [email]
         );
         if (checkEmail.rows.length > 0) return res.status(409).send('Email already registered');
+
         const hashedPassword = await bcrypt.hash(password, 10);
+        
         let referrerId = null;
         if (ref) {
             const referrer = await pool.query(
@@ -1794,6 +1773,7 @@ app.post('/register', authLimiter, async (req, res) => {
                 referrerId = referrer.rows[0].id;
             }
         }
+        
         const result = await pool.query(
             `INSERT INTO users (username, email, password, referrer_id)
              VALUES ($1, $2, $3, $4)
@@ -1801,9 +1781,12 @@ app.post('/register', authLimiter, async (req, res) => {
             [username, email, hashedPassword, referrerId]
         );
         const newUserId = result.rows[0].id;
+
         io.emit('new_user_registration', { userId: newUserId, username, email });
+        
         await pool.query('DELETE FROM otp_store WHERE email = $1', [email]);
         await initializeUserCredits(newUserId);
+        
         if (referrerId) {
             const referralBonus = 50;
             await pool.query(
@@ -1812,6 +1795,7 @@ app.post('/register', authLimiter, async (req, res) => {
                  WHERE user_id = $2`,
                 [referralBonus, referrerId]
             );
+            
             await pool.query(
                 `INSERT INTO credit_transactions (user_id, amount, type, description)
                  VALUES ($1, $2, 'earn', $3)`,
@@ -1821,6 +1805,7 @@ app.post('/register', authLimiter, async (req, res) => {
             await updateQuestProgress(referrerId, 'referral');
             await checkAchievements(referrerId);
         }
+        
         sendWelcomeEmail(email, username).catch(err => console.error('Welcome email failed:', err.message));
         sendAdminAlert({ subject: 'New User Registration', message: `New user ${username} (${email}) registered.` }).catch(err => console.error('Admin alert failed:', err.message));
         res.status(201).send('Registration successful! Please login.');
@@ -1847,6 +1832,7 @@ function validatePasswordStrength(password) {
 app.post('/login', authLimiter, async (req, res) => {
     const { username, password } = req.body;
     if (!username || !password) return res.status(400).send('Username/email and password required');
+    
     try {
         const isEmail = username.includes('@') && username.includes('.');
         const column = isEmail ? 'email' : 'username';
@@ -1854,20 +1840,24 @@ app.post('/login', authLimiter, async (req, res) => {
             `SELECT * FROM users WHERE ${column} = $1`, 
             [username]
         );
+        
         if (result.rows.length === 0) {
             return res.status(401).send('Invalid username/email or password');
         }
         const user = result.rows[0];
+
         if (user.google_id && !user.password) {
             return res.status(401).send('This account uses Google Sign-In. Please log in with Google.');
         }
         if (user.is_banned) {
             return res.status(401).send('Your account has been banned. Contact support.');
         }
+
         const isAdminUser = user.role === 'admin';
         if (!isAdminUser && user.lock_until && new Date() < new Date(user.lock_until)) {
             return res.status(401).send('Account temporarily locked. Try again later.');
         }
+
         const match = await bcrypt.compare(password, user.password);
         if (!match) {
             if (!isAdminUser) {
@@ -1884,12 +1874,14 @@ app.post('/login', authLimiter, async (req, res) => {
             }
             return res.status(401).send('Invalid username/email or password');
         }
+
         if (!isAdminUser) {
             await pool.query(
                 'UPDATE users SET login_attempts = 0, lock_until = NULL WHERE id = $1',
                 [user.id]
             );
         }
+
         req.session.regenerate((err) => {
             if (err) return res.status(500).send('Session error');
             req.session.userId = user.id;
@@ -1899,9 +1891,11 @@ app.post('/login', authLimiter, async (req, res) => {
             if (user.role === 'admin') res.send('Login successful:admin');
             else res.send('Login successful');
         });
+
         updateStreak(user.id).catch(err => console.error('Streak error:', err));
         updateQuestProgress(user.id, 'login').catch(err => console.error('Quest error:', err));
         checkAchievements(user.id).catch(err => console.error('Achievement error:', err));
+
     } catch (err) {
         console.error('Login error:', err);
         res.status(500).send('Server error');
@@ -2055,8 +2049,10 @@ app.post('/api/credits/spend', isAuthenticated, async (req, res) => {
     const { amount, reason, feature, duration } = req.body;
     if (!amount || amount <= 0) return res.status(400).json({ error: 'Invalid amount' });
     if (!feature) return res.status(400).json({ error: 'Feature is required' });
+
     try {
         await ensureUserCredits(req.session.userId);
+        
         let days = 0, uses = 0;
         if (duration) {
             if (typeof duration === 'number') days = duration;
@@ -2069,6 +2065,7 @@ app.post('/api/credits/spend', isAuthenticated, async (req, res) => {
             }
         }
         if (feature === 'boost' && uses === 0) uses = 10;
+        
         const newBalance = await spendCredits(req.session.userId, amount, reason, feature, days, uses);
         const updatedPremiumStatus = await getPremiumStatus(req.session.userId);
         res.json({ success: true, message: `Spent ${amount} credits on ${feature}`, newBalance, premiumStatus: updatedPremiumStatus });
@@ -2084,15 +2081,14 @@ app.post('/api/credits/spend', isAuthenticated, async (req, res) => {
 
 // ==================== PROFILE UPDATE ====================
 app.put('/profile/update', isAuthenticated, async (req, res) => {
-    const { display_name, bio, phone, github, twitter, linkedin, profession } = req.body;
+    const { display_name, bio, phone, github, twitter, linkedin } = req.body;
     try {
         await pool.query(
             `UPDATE users SET
                 display_name = $1, bio = $2, phone = $3,
                 github = $4, twitter = $5, linkedin = $6,
-                profession = $7,
                 updated_at = NOW()
-             WHERE id = $8`,
+             WHERE id = $7`,
             [
                 display_name ? escapeHtml(display_name) : null,
                 bio ? escapeHtml(bio) : null,
@@ -2100,13 +2096,12 @@ app.put('/profile/update', isAuthenticated, async (req, res) => {
                 github ? escapeHtml(github) : null,
                 twitter ? escapeHtml(twitter) : null,
                 linkedin ? escapeHtml(linkedin) : null,
-                profession ? escapeHtml(profession) : null,
                 req.session.userId
             ]
         );
         const updated = await pool.query(
             `SELECT id, username, display_name, email, bio, phone,
-                    github, twitter, linkedin, profession, email_verified,
+                    github, twitter, linkedin, email_verified,
                     two_factor_enabled, created_at, updated_at, avatar_url
              FROM users WHERE id = $1`,
             [req.session.userId]
@@ -2144,26 +2139,33 @@ app.post('/profile/avatar', isAuthenticated, upload.single('avatar'), async (req
 // ==================== TOOL SUBMISSION & APPROVAL ====================
 app.post('/api/tools/submit', isAuthenticated, async (req, res) => {
     const { name, url, description, category, pageType } = req.body;
+    
     if (!name || !url) {
         return res.status(400).json({ error: 'Name and URL are required' });
     }
+    
     const urlPattern = /^https?:\/\/.+/;
     if (!urlPattern.test(url)) {
         return res.status(400).json({ error: 'Invalid URL format. Use http:// or https://' });
     }
+    
     const finalPageType = pageType || 'student';
+    
     try {
         const existing = await pool.query(
             'SELECT id FROM tools WHERE name = $1 OR url = $2',
             [name, url]
         );
+        
         if (existing.rows.length > 0) {
             return res.status(409).json({ error: 'A tool with this name or URL already exists' });
         }
+        
         await pool.query(`
             INSERT INTO tools (name, url, description, category, user_id, page_type, approved, submitted_at, created_at)
             VALUES ($1, $2, $3, $4, $5, $6, false, NOW(), NOW())
         `, [name, url, description || '', category || 'study', req.session.userId, finalPageType]);
+        
         try {
             await sendToolSubmissionAlert({
                 username: req.session.username,
@@ -2177,6 +2179,7 @@ app.post('/api/tools/submit', isAuthenticated, async (req, res) => {
         } catch(emailErr) {
             console.error('Admin notification failed:', emailErr);
         }
+        
         res.status(201).json({ 
             success: true, 
             message: 'Tool submitted successfully! Admin will review it shortly.' 
@@ -2228,7 +2231,9 @@ app.put('/api/admin/tools/:id/approve', isAdmin, async (req, res) => {
         );
         if (toolResult.rows.length === 0) return res.status(404).json({ error: 'Tool not found' });
         const tool = toolResult.rows[0];
+ 
         await pool.query('UPDATE tools SET approved = true WHERE id = $1', [toolId]);
+ 
         if (tool.user_id) {
             const approvalBonus = 25;
             await pool.query(
@@ -2342,6 +2347,7 @@ app.get('/api/tools', isAuthenticated, async (req, res) => {
             query += ` AND (is_premium = false OR is_premium IS NULL)`;
         }
         query += ` ORDER BY is_featured DESC, created_at DESC`;
+        
         const result = await pool.query(query, params);
         res.json(result.rows);
     } catch (err) {
@@ -2423,9 +2429,42 @@ app.delete('/api/admin/tools/:id', isAdmin, async (req, res) => {
 
 // ==================== BUSINESS DIRECTORY ENDPOINTS ====================
 
+// Award credits for business approval (15 credits)
+async function awardCreditsForBusinessApproval(userId, businessName) {
+    const approvalBonus = 15;
+    try {
+        const checkCredits = await pool.query('SELECT id FROM user_credits WHERE user_id = $1', [userId]);
+        if (checkCredits.rows.length === 0) {
+            await pool.query(
+                `INSERT INTO user_credits (user_id, balance, lifetime_earned) VALUES ($1, $2, $2)`,
+                [userId, approvalBonus]
+            );
+        } else {
+            await pool.query(
+                `UPDATE user_credits 
+                 SET balance = balance + $1, lifetime_earned = lifetime_earned + $1
+                 WHERE user_id = $2`,
+                [approvalBonus, userId]
+            );
+        }
+        
+        await pool.query(
+            `INSERT INTO credit_transactions (user_id, amount, type, description)
+             VALUES ($1, $2, 'earn', $3)`,
+            [userId, approvalBonus, `Business approved: ${businessName} - Earned ${approvalBonus} credits`]
+        );
+        console.log(`✅ Awarded ${approvalBonus} credits to user ${userId} for business approval: ${businessName}`);
+        return true;
+    } catch (err) {
+        console.error('Error awarding credits:', err);
+        return false;
+    }
+}
+
 // PUBLIC: Get approved businesses with filters
 app.get('/api/businesses', async (req, res) => {
     const { category, city, search, verifiedOnly, featured, limit = 50, offset = 0 } = req.query;
+
     let query = `
         SELECT id, name, type, category, description, address, city, state,
                phone, email, website, whatsapp, maps, instagram, facebook,
@@ -2438,6 +2477,7 @@ app.get('/api/businesses', async (req, res) => {
     `;
     const params = [];
     let paramIndex = 1;
+
     if (category && category !== 'all') {
         query += ` AND category = $${paramIndex++}`;
         params.push(category);
@@ -2457,10 +2497,13 @@ app.get('/api/businesses', async (req, res) => {
         params.push(`%${search}%`);
         paramIndex++;
     }
+
     query += ` ORDER BY featured DESC, created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
     params.push(parseInt(limit), parseInt(offset));
+
     try {
         const result = await pool.query(query, params);
+        
         let countQuery = `SELECT COUNT(*) as total FROM businesses WHERE approved = true`;
         const countParams = [];
         let countIndex = 1;
@@ -2479,9 +2522,12 @@ app.get('/api/businesses', async (req, res) => {
             countQuery += ` AND (name ILIKE $${countIndex} OR description ILIKE $${countIndex})`;
             countParams.push(`%${search}%`);
         }
+        
         const countResult = await pool.query(countQuery, countParams);
         const total = parseInt(countResult.rows[0]?.total || 0);
+        
         console.log(`✅ Found ${result.rows.length} businesses (Total: ${total})`);
+        
         res.json({
             businesses: result.rows,
             total: total,
@@ -2497,9 +2543,11 @@ app.get('/api/businesses', async (req, res) => {
 // PUBLIC: Get single business by ID
 app.get('/api/businesses/:id', async (req, res) => {
     const businessId = req.params.id;
+    
     if (isNaN(businessId) || businessId === 'cities' || businessId === 'categories') {
         return res.status(400).json({ error: 'Invalid business ID format' });
     }
+    
     try {
         const result = await pool.query(
             `SELECT b.*, u.username as owner_name, u.email as owner_email
@@ -2511,10 +2559,12 @@ app.get('/api/businesses/:id', async (req, res) => {
         if (result.rows.length === 0) {
             return res.status(404).json({ error: 'Business not found' });
         }
+        
         await pool.query(
             `UPDATE businesses SET views = COALESCE(views, 0) + 1 WHERE id = $1`,
             [businessId]
         );
+        
         res.json(result.rows[0]);
     } catch (err) {
         console.error('Error fetching business:', err);
@@ -2527,6 +2577,7 @@ app.get('/api/businesses/:id/reviews', async (req, res) => {
     const businessId = req.params.id;
     const limit = parseInt(req.query.limit) || 20;
     const offset = parseInt(req.query.offset) || 0;
+    
     try {
         const result = await pool.query(
             `SELECT r.*, u.username, u.avatar_url
@@ -2537,10 +2588,12 @@ app.get('/api/businesses/:id/reviews', async (req, res) => {
              LIMIT $2 OFFSET $3`,
             [businessId, limit, offset]
         );
+        
         const countResult = await pool.query(
             `SELECT COUNT(*) FROM business_reviews WHERE business_id = $1 AND (is_approved = true OR is_approved IS NULL)`,
             [businessId]
         );
+        
         res.json({
             reviews: result.rows,
             total: parseInt(countResult.rows[0].count),
@@ -2610,14 +2663,17 @@ app.post('/api/businesses/submit', isAuthenticated, async (req, res) => {
         name, type, category, description, address, city, state, phone, email,
         website, whatsapp, maps, instagram, facebook, hours, amenities
     } = req.body;
+
     if (!name || !type || !address || !city || !phone || !email) {
         return res.status(400).json({ error: 'Missing required fields: name, type, address, city, phone, email are required' });
     }
+
     try {
         const columnsCheck = await pool.query(`
             SELECT column_name FROM information_schema.columns WHERE table_name = 'businesses'
         `);
         const existingColumns = columnsCheck.rows.map(c => c.column_name);
+        
         const insertColumns = ['name', 'type', 'category', 'description', 'address', 'city', 'state', 'phone', 'email', 'website', 'whatsapp', 'hours', 'amenities', 'user_id', 'approved', 'created_at', 'updated_at'];
         const insertValues = [
             name, type, category || 'other', description || '', address, city, state || null, phone, email,
@@ -2626,6 +2682,7 @@ app.post('/api/businesses/submit', isAuthenticated, async (req, res) => {
             amenities ? JSON.stringify(amenities) : null,
             req.session.userId, false, new Date(), new Date()
         ];
+        
         let colIndex = insertColumns.length;
         if (existingColumns.includes('maps')) {
             insertColumns.push('maps');
@@ -2639,15 +2696,19 @@ app.post('/api/businesses/submit', isAuthenticated, async (req, res) => {
             insertColumns.push('facebook');
             insertValues.push(facebook || null);
         }
+        
         const placeholders = insertValues.map((_, i) => `$${i + 1}`).join(', ');
         const query = `INSERT INTO businesses (${insertColumns.join(', ')}) VALUES (${placeholders}) RETURNING id`;
+        
         const result = await pool.query(query, insertValues);
         const businessId = result.rows[0].id;
+
         io.to('admin_room').emit('new_business_pending', {
             id: businessId,
             name: name,
             submittedBy: req.session.username
         });
+
         res.status(201).json({
             success: true,
             message: 'Business submitted for review. You will earn 15 credits upon approval!',
@@ -2663,9 +2724,11 @@ app.post('/api/businesses/submit', isAuthenticated, async (req, res) => {
 app.post('/api/businesses/:id/reviews', isAuthenticated, async (req, res) => {
     const businessId = req.params.id;
     const { rating, comment, title } = req.body;
+    
     if (!rating || rating < 1 || rating > 5) {
         return res.status(400).json({ error: 'Rating must be between 1 and 5' });
     }
+    
     try {
         const business = await pool.query(
             `SELECT id FROM businesses WHERE id = $1 AND approved = true`,
@@ -2674,17 +2737,21 @@ app.post('/api/businesses/:id/reviews', isAuthenticated, async (req, res) => {
         if (business.rows.length === 0) {
             return res.status(404).json({ error: 'Business not found' });
         }
+        
         const existingReview = await pool.query(
             `SELECT id FROM business_reviews WHERE business_id = $1 AND user_id = $2`,
             [businessId, req.session.userId]
         );
+        
         if (existingReview.rows.length > 0) {
             return res.status(400).json({ error: 'You have already reviewed this business' });
         }
+        
         await pool.query(`
             INSERT INTO business_reviews (business_id, user_id, rating, comment, title, created_at)
             VALUES ($1, $2, $3, $4, $5, NOW())
         `, [businessId, req.session.userId, rating, comment || null, title || null]);
+        
         await pool.query(`
             UPDATE businesses 
             SET avg_rating = (
@@ -2697,6 +2764,7 @@ app.post('/api/businesses/:id/reviews', isAuthenticated, async (req, res) => {
             )
             WHERE id = $1
         `, [businessId]);
+        
         res.json({ success: true, message: 'Review submitted successfully!' });
     } catch (err) {
         console.error('Review submission error:', err);
@@ -2707,11 +2775,13 @@ app.post('/api/businesses/:id/reviews', isAuthenticated, async (req, res) => {
 // AUTHENTICATED: Toggle favorite business
 app.post('/api/businesses/:id/favorite', isAuthenticated, async (req, res) => {
     const businessId = req.params.id;
+    
     try {
         const existing = await pool.query(
             `SELECT id FROM business_favorites WHERE business_id = $1 AND user_id = $2`,
             [businessId, req.session.userId]
         );
+        
         if (existing.rows.length > 0) {
             await pool.query(
                 `DELETE FROM business_favorites WHERE business_id = $1 AND user_id = $2`,
@@ -2742,6 +2812,7 @@ app.get('/api/user/favorites', isAuthenticated, async (req, res) => {
             WHERE f.user_id = $1 AND b.approved = true
             ORDER BY f.created_at DESC
         `, [req.session.userId]);
+        
         res.json(result.rows);
     } catch (err) {
         console.error('Fetch favorites error:', err);
@@ -2785,8 +2856,10 @@ app.get('/api/admin/businesses/approved', isAdminOrModerator, async (req, res) =
 // Approve a business - Awards 15 credits to user
 app.put('/api/admin/businesses/:id/approve', isAdmin, async (req, res) => {
     const businessId = req.params.id;
+    
     try {
         console.log(`📝 Approving business ID: ${businessId}`);
+        
         const bizResult = await pool.query(
             `SELECT b.*, u.email as submitter_email, u.username as submitter_name, u.id as user_id
              FROM businesses b
@@ -2794,13 +2867,17 @@ app.put('/api/admin/businesses/:id/approve', isAdmin, async (req, res) => {
              WHERE b.id = $1`,
             [businessId]
         );
+        
         if (bizResult.rows.length === 0) {
             return res.status(404).json({ error: 'Business not found' });
         }
+        
         const biz = bizResult.rows[0];
+        
         if (biz.approved === true) {
             return res.status(400).json({ error: 'Business already approved' });
         }
+
         const updateResult = await pool.query(
             `UPDATE businesses 
              SET approved = true, 
@@ -2810,21 +2887,28 @@ app.put('/api/admin/businesses/:id/approve', isAdmin, async (req, res) => {
              RETURNING id, approved`,
             [businessId]
         );
+        
         if (updateResult.rowCount === 0) {
             return res.status(500).json({ error: 'Failed to update business approval status' });
         }
+
         console.log(`✅ Business ${businessId} (${biz.name}) approved in database`);
+
+        // Award 15 credits to the user who submitted the business
         if (biz.user_id) {
             await awardCreditsForBusinessApproval(biz.user_id, biz.name);
+            
             if (biz.submitter_email) {
                 await sendBusinessApprovalEmail(biz.submitter_email, biz.submitter_name || biz.name, biz.name, 15);
             }
         }
+
         await pool.query(
             `INSERT INTO moderator_activity (moderator_id, moderator_name, action, target, details, created_at)
              VALUES ($1, $2, $3, $4, $5, NOW())`,
             [req.session.userId, req.session.username, 'Approve business', `Business ID ${businessId}`, `Approved ${biz.name} - User earned 15 credits`]
         );
+
         if (biz.user_id) {
             const userSocket = onlineUsers.get(biz.user_id);
             if (userSocket && userSocket.socketId) {
@@ -2835,11 +2919,13 @@ app.put('/api/admin/businesses/:id/approve', isAdmin, async (req, res) => {
                 });
             }
         }
+
         res.json({ 
             success: true, 
             message: 'Business approved and user awarded 15 credits.',
             business: { id: businessId, name: biz.name, approved: true }
         });
+        
     } catch (err) {
         console.error('Business approval error:', err);
         res.status(500).json({ error: 'Server error: ' + err.message });
@@ -2850,6 +2936,7 @@ app.put('/api/admin/businesses/:id/approve', isAdmin, async (req, res) => {
 app.delete('/api/admin/businesses/:id/reject', isAdmin, async (req, res) => {
     const businessId = req.params.id;
     const { reason } = req.body;
+    
     try {
         const bizResult = await pool.query(
             `SELECT b.*, u.email as submitter_email, u.username as submitter_name
@@ -2858,14 +2945,19 @@ app.delete('/api/admin/businesses/:id/reject', isAdmin, async (req, res) => {
              WHERE b.id = $1`,
             [businessId]
         );
+        
         if (bizResult.rows.length === 0) {
             return res.status(404).json({ error: 'Business not found' });
         }
+        
         const biz = bizResult.rows[0];
+
         if (biz.submitter_email) {
             await sendBusinessRejectionEmail(biz.submitter_email, biz.submitter_name, biz.name, reason);
         }
+
         await pool.query(`DELETE FROM businesses WHERE id = $1`, [businessId]);
+
         res.json({ success: true, message: 'Business rejected and removed.' });
     } catch (err) {
         console.error('Business rejection error:', err);
@@ -2880,11 +2972,13 @@ app.put('/api/admin/businesses/:id', isAdminOrModerator, async (req, res) => {
         name, type, category, description, address, city, state, phone, email,
         website, whatsapp, maps, instagram, facebook, verified, featured
     } = req.body;
+    
     try {
         const existing = await pool.query('SELECT id FROM businesses WHERE id = $1', [businessId]);
         if (existing.rows.length === 0) {
             return res.status(404).json({ error: 'Business not found' });
         }
+
         await pool.query(`
             UPDATE businesses SET
                 name = $1, type = $2, category = $3, description = $4,
@@ -2897,6 +2991,7 @@ app.put('/api/admin/businesses/:id', isAdminOrModerator, async (req, res) => {
             verified === true || verified === 'true', 
             featured === true || featured === 'true', 
             businessId]);
+
         res.json({ success: true, message: 'Business updated' });
     } catch (err) {
         console.error('Business update error:', err);
@@ -2910,7 +3005,9 @@ app.delete('/api/admin/businesses/:id', isAdmin, async (req, res) => {
     try {
         const biz = await pool.query('SELECT name FROM businesses WHERE id = $1', [businessId]);
         if (biz.rows.length === 0) return res.status(404).json({ error: 'Business not found' });
+
         await pool.query(`DELETE FROM businesses WHERE id = $1`, [businessId]);
+
         res.json({ success: true });
     } catch (err) {
         console.error('Business delete error:', err);
@@ -2973,6 +3070,8 @@ app.get('/api/admin/businesses/stats', isAdminOrModerator, async (req, res) => {
 });
 
 // ==================== SPONSORED ADS SYSTEM (METHOD 1) ====================
+
+// Get sponsored packages
 app.get('/api/sponsored/packages', async (req, res) => {
     try {
         const packages = await pool.query(`
@@ -2989,74 +3088,101 @@ app.get('/api/sponsored/packages', async (req, res) => {
     }
 });
 
+// Business buys sponsored listing
 app.post('/api/business/sponsor', isAuthenticated, async (req, res) => {
     const { businessId, packageType, customMessage } = req.body;
+    
     try {
+        // Verify business ownership
         const bizCheck = await pool.query(
             'SELECT id, name, user_id FROM businesses WHERE id = $1 AND user_id = $2',
             [businessId, req.session.userId]
         );
+        
         if (bizCheck.rows.length === 0) {
             return res.status(403).json({ error: 'Not your business' });
         }
+        
+        // Get package details
         const packageData = await pool.query(
             'SELECT * FROM sponsored_packages WHERE name = $1',
             [packageType]
         );
+        
         if (packageData.rows.length === 0) {
             return res.status(400).json({ error: 'Invalid package' });
         }
+        
         const pkg = packageData.rows[0];
+        
+        // Check if business has enough credits
         const credits = await pool.query(
             'SELECT balance FROM user_credits WHERE user_id = $1',
             [req.session.userId]
         );
+        
         if ((credits.rows[0]?.balance || 0) < pkg.price) {
             return res.status(400).json({ 
                 error: `Need ${pkg.price} credits. Current balance: ${credits.rows[0]?.balance || 0}` 
             });
         }
+        
+        // Deduct credits
         await pool.query(
             'UPDATE user_credits SET balance = balance - $1 WHERE user_id = $2',
             [pkg.price, req.session.userId]
         );
+        
+        // Record transaction
         await pool.query(
             `INSERT INTO credit_transactions (user_id, amount, type, description)
              VALUES ($1, $2, 'spend', $3)`,
             [req.session.userId, pkg.price, `Sponsored listing: ${packageType} for ${bizCheck.rows[0].name}`]
         );
+        
+        // Calculate dates
         const startDate = new Date();
         const endDate = new Date();
         endDate.setDate(endDate.getDate() + pkg.duration_days);
+        
+        // Deactivate existing sponsored listings for this business
         await pool.query(
             `UPDATE sponsored_listings SET is_active = false 
              WHERE business_id = $1 AND is_active = true`,
             [businessId]
         );
+        
+        // Create new sponsored listing
         const result = await pool.query(
             `INSERT INTO sponsored_listings (business_id, package_type, start_date, end_date, price_paid, custom_message)
              VALUES ($1, $2, $3, $4, $5, $6)
              RETURNING id`,
             [businessId, packageType, startDate, endDate, pkg.price, customMessage || null]
         );
+        
+        // Update business table to mark as featured
         await pool.query(
             `UPDATE businesses SET featured = true, featured_until = $1 WHERE id = $2`,
             [endDate, businessId]
         );
+        
         res.json({ 
             success: true, 
             message: `Business is now sponsored until ${endDate.toLocaleDateString()}!`,
             sponsoredId: result.rows[0].id,
             endDate: endDate
         });
+        
     } catch (err) {
         console.error('Sponsorship error:', err);
         res.status(500).json({ error: 'Failed to process sponsorship' });
     }
 });
 
+// Get sponsored businesses for search results
 app.get('/api/sponsored/list', async (req, res) => {
     const { category, city, limit = 3 } = req.query;
+    
     try {
         let query = `
             SELECT s.*, b.id as business_id, b.name, b.type, b.category, b.city, 
@@ -3069,18 +3195,22 @@ app.get('/api/sponsored/list', async (req, res) => {
             AND s.end_date > NOW()
             AND b.approved = true
         `;
+        
         const params = [];
         let paramCount = 1;
+        
         if (category && category !== 'all') {
             query += ` AND b.category = $${paramCount}`;
             params.push(category);
             paramCount++;
         }
+        
         if (city && city !== 'all') {
             query += ` AND b.city ILIKE $${paramCount}`;
             params.push(`%${city}%`);
             paramCount++;
         }
+        
         query += ` ORDER BY 
             CASE s.package_type 
                 WHEN 'Enterprise Dominance' THEN 1
@@ -3090,28 +3220,36 @@ app.get('/api/sponsored/list', async (req, res) => {
             s.created_at DESC
             LIMIT $${paramCount}`;
         params.push(limit);
+        
         const result = await pool.query(query, params);
+        
+        // Update view counts
         for (const row of result.rows) {
             await pool.query(
                 `UPDATE sponsored_listings SET views = views + 1 WHERE id = $1`,
                 [row.id]
             );
         }
+        
         res.json(result.rows);
+        
     } catch (err) {
         console.error('Error fetching sponsored:', err);
         res.json([]);
     }
 });
 
+// Track sponsored click
 app.post('/api/sponsored/:id/click', async (req, res) => {
     const sponsoredId = req.params.id;
     const userId = req.session?.userId || null;
+    
     try {
         await pool.query(
             `UPDATE sponsored_listings SET clicks = clicks + 1 WHERE id = $1`,
             [sponsoredId]
         );
+        
         if (userId) {
             await pool.query(
                 `INSERT INTO sponsored_clicks (sponsored_id, user_id, clicked_at)
@@ -3119,6 +3257,7 @@ app.post('/api/sponsored/:id/click', async (req, res) => {
                 [sponsoredId, userId]
             );
         }
+        
         res.json({ success: true });
     } catch (err) {
         console.error('Click tracking error:', err);
@@ -3126,6 +3265,7 @@ app.post('/api/sponsored/:id/click', async (req, res) => {
     }
 });
 
+// Get sponsorship stats for business
 app.get('/api/business/sponsor/stats', isAuthenticated, async (req, res) => {
     try {
         const stats = await pool.query(`
@@ -3139,6 +3279,7 @@ app.get('/api/business/sponsor/stats', isAuthenticated, async (req, res) => {
             WHERE b.user_id = $1 AND s.is_active = true
             ORDER BY s.created_at DESC
         `, [req.session.userId]);
+        
         res.json(stats.rows);
     } catch (err) {
         console.error(err);
@@ -3148,32 +3289,45 @@ app.get('/api/business/sponsor/stats', isAuthenticated, async (req, res) => {
 
 // ==================== AFFILIATE COMMISSION SYSTEM (METHOD 2) ====================
 
+// Generate session ID for affiliate tracking
 function generateSessionId() {
     return crypto.randomBytes(32).toString('hex');
 }
 
+// Business creates affiliate link for their product
 app.post('/api/affiliate/create-link', isAuthenticated, async (req, res) => {
     const { productName, productUrl, commissionRate } = req.body;
+    
     if (!productName || !productUrl) {
         return res.status(400).json({ error: 'Product name and URL required' });
     }
+    
     try {
+        // Verify business ownership
         const business = await pool.query(
             'SELECT id, name FROM businesses WHERE user_id = $1',
             [req.session.userId]
         );
+        
         if (business.rows.length === 0) {
             return res.status(403).json({ error: 'No business found. List your business first.' });
         }
+        
         const businessId = business.rows[0].id;
+        
+        // Create affiliate link
         const result = await pool.query(
             `INSERT INTO affiliate_links (business_id, product_name, product_url, commission_rate)
              VALUES ($1, $2, $3, $4)
              RETURNING id`,
             [businessId, productName, productUrl, commissionRate || 7.00]
         );
+        
         const linkId = result.rows[0].id;
+        
+        // Generate unique affiliate URL
         const affiliateUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/go/${linkId}`;
+        
         res.json({
             success: true,
             affiliateUrl: affiliateUrl,
@@ -3182,19 +3336,23 @@ app.post('/api/affiliate/create-link', isAuthenticated, async (req, res) => {
             commissionRate: commissionRate || 7.00,
             trackingPixel: `<img src="${process.env.FRONTEND_URL}/api/affiliate/pixel/${linkId}" width="1" height="1" />`
         });
+        
     } catch (err) {
         console.error('Affiliate link creation error:', err);
         res.status(500).json({ error: 'Failed to create affiliate link' });
     }
 });
 
+// Track click on affiliate link (redirect endpoint)
 app.get('/go/:linkId', async (req, res) => {
     const linkId = parseInt(req.params.linkId);
     const userId = req.session?.userId || null;
     const ipAddress = req.ip || req.connection.remoteAddress;
     const userAgent = req.headers['user-agent'];
     const referrer = req.headers['referer'] || null;
+    
     try {
+        // Get affiliate link details
         const linkData = await pool.query(
             `SELECT al.*, b.name as business_name, b.id as business_id
              FROM affiliate_links al
@@ -3202,10 +3360,14 @@ app.get('/go/:linkId', async (req, res) => {
              WHERE al.id = $1 AND al.is_active = true`,
             [linkId]
         );
+        
         if (linkData.rows.length === 0) {
             return res.status(404).send('Affiliate link not found');
         }
+        
         const link = linkData.rows[0];
+        
+        // Generate or get session ID from cookie
         let sessionId = req.cookies?.affiliate_session;
         if (!sessionId) {
             sessionId = generateSessionId();
@@ -3216,31 +3378,42 @@ app.get('/go/:linkId', async (req, res) => {
                 sameSite: 'lax'
             });
         }
+        
+        // Store the affiliate source in cookie
         res.cookie(`affiliate_source_${link.business_id}`, linkId, {
             maxAge: (link.tracking_days || 30) * 24 * 60 * 60 * 1000,
             httpOnly: false,
             sameSite: 'lax'
         });
+        
+        // Record the click
         const clickResult = await pool.query(
             `INSERT INTO affiliate_clicks (affiliate_link_id, user_id, ip_address, user_agent, referrer, session_id)
              VALUES ($1, $2, $3, $4, $5, $6)
              RETURNING id`,
             [linkId, userId, ipAddress, userAgent, referrer, sessionId]
         );
+        
+        // Update click count on link
         await pool.query(
             `UPDATE affiliate_links SET click_count = click_count + 1 WHERE id = $1`,
             [linkId]
         );
+        
+        // Redirect to actual business product URL with tracking parameter
         const redirectUrl = new URL(link.product_url);
         redirectUrl.searchParams.set('ref', 'sarveik');
         redirectUrl.searchParams.set('affiliate_id', linkId);
+        
         res.redirect(redirectUrl.toString());
+        
     } catch (err) {
         console.error('Affiliate redirect error:', err);
         res.redirect('/businessdirectory.html');
     }
 });
 
+// Webhook for businesses to report sales
 app.post('/api/affiliate/conversion-webhook', async (req, res) => {
     const { 
         affiliate_link_id, 
@@ -3250,12 +3423,17 @@ app.post('/api/affiliate/conversion-webhook', async (req, res) => {
         customer_session_id,
         api_key 
     } = req.body;
+    
+    // Simple API key validation (businesses should use their own key)
     const validApiKey = process.env.AFFILIATE_API_KEY || 'test_key_123';
     if (api_key !== validApiKey) {
         return res.status(401).json({ error: 'Invalid API key' });
     }
+    
     try {
+        // Find the click that led to this sale
         let clickId = null;
+        
         if (customer_session_id) {
             const click = await pool.query(
                 `SELECT id FROM affiliate_clicks 
@@ -3267,15 +3445,21 @@ app.post('/api/affiliate/conversion-webhook', async (req, res) => {
                 clickId = click.rows[0].id;
             }
         }
+        
+        // Get affiliate link details
         const link = await pool.query(
             `SELECT * FROM affiliate_links WHERE id = $1`,
             [affiliate_link_id]
         );
+        
         if (link.rows.length === 0) {
             return res.status(404).json({ error: 'Affiliate link not found' });
         }
+        
         const commissionRate = link.rows[0].commission_rate;
         const commissionEarned = (sale_amount * commissionRate) / 100;
+        
+        // Record conversion
         await pool.query(
             `INSERT INTO affiliate_conversions (
                 affiliate_link_id, click_id, order_id, sale_amount, 
@@ -3284,6 +3468,8 @@ app.post('/api/affiliate/conversion-webhook', async (req, res) => {
              RETURNING id`,
             [affiliate_link_id, clickId, order_id, sale_amount, commissionEarned, commissionRate]
         );
+        
+        // Update link stats
         await pool.query(
             `UPDATE affiliate_links 
              SET sale_count = sale_count + 1, 
@@ -3292,20 +3478,24 @@ app.post('/api/affiliate/conversion-webhook', async (req, res) => {
              WHERE id = $3`,
             [sale_amount, commissionEarned, affiliate_link_id]
         );
+        
         res.json({
             success: true,
             commissionEarned: commissionEarned,
             message: `Commission recorded: ₹${commissionEarned} (${commissionRate}% of ₹${sale_amount})`
         });
+        
     } catch (err) {
         console.error('Conversion webhook error:', err);
         res.status(500).json({ error: 'Failed to record conversion' });
     }
 });
 
+// Business approves a conversion
 app.post('/api/affiliate/conversion/:conversionId/approve', isAuthenticated, async (req, res) => {
     const conversionId = req.params.conversionId;
     const { status, notes } = req.body;
+    
     try {
         const conversion = await pool.query(`
             SELECT ac.*, al.business_id
@@ -3314,22 +3504,27 @@ app.post('/api/affiliate/conversion/:conversionId/approve', isAuthenticated, asy
             JOIN businesses b ON al.business_id = b.id
             WHERE ac.id = $1 AND b.user_id = $2
         `, [conversionId, req.session.userId]);
+        
         if (conversion.rows.length === 0) {
             return res.status(403).json({ error: 'Not authorized' });
         }
+        
         await pool.query(
             `UPDATE affiliate_conversions 
              SET status = $1, business_notes = $2, approved_at = $3
              WHERE id = $4`,
             [status, notes || null, status === 'approved' ? new Date() : null, conversionId]
         );
+        
         res.json({ success: true, status: status });
+        
     } catch (err) {
         console.error('Conversion approval error:', err);
         res.status(500).json({ error: 'Failed to update conversion' });
     }
 });
 
+// Get affiliate earnings for business
 app.get('/api/affiliate/earnings', isAuthenticated, async (req, res) => {
     try {
         const earnings = await pool.query(`
@@ -3349,6 +3544,7 @@ app.get('/api/affiliate/earnings', isAuthenticated, async (req, res) => {
             GROUP BY al.id
             ORDER BY al.created_at DESC
         `, [req.session.userId]);
+        
         const recentConversions = await pool.query(`
             SELECT ac.*, al.product_name
             FROM affiliate_conversions ac
@@ -3358,16 +3554,19 @@ app.get('/api/affiliate/earnings', isAuthenticated, async (req, res) => {
             ORDER BY ac.conversion_date DESC
             LIMIT 20
         `, [req.session.userId]);
+        
         res.json({
             earnings: earnings.rows,
             recentConversions: recentConversions.rows
         });
+        
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
     }
 });
 
+// Get user's own affiliate stats
 app.get('/api/user/affiliate-earnings', isAuthenticated, async (req, res) => {
     try {
         const stats = await pool.query(`
@@ -3379,6 +3578,7 @@ app.get('/api/user/affiliate-earnings', isAuthenticated, async (req, res) => {
             LEFT JOIN affiliate_clicks ac2 ON ac.click_id = ac2.id
             WHERE ac2.user_id = $1 AND ac.status = 'approved'
         `, [req.session.userId]);
+        
         res.json(stats.rows[0] || { total_sales: 0, total_commission: 0, unique_businesses: 0 });
     } catch (err) {
         console.error(err);
@@ -3386,6 +3586,7 @@ app.get('/api/user/affiliate-earnings', isAuthenticated, async (req, res) => {
     }
 });
 
+// Get all affiliate links for a business
 app.get('/api/affiliate/links', isAuthenticated, async (req, res) => {
     try {
         const links = await pool.query(`
@@ -3395,6 +3596,7 @@ app.get('/api/affiliate/links', isAuthenticated, async (req, res) => {
             WHERE b.user_id = $1 AND al.is_active = true
             ORDER BY al.created_at DESC
         `, [req.session.userId]);
+        
         res.json(links.rows);
     } catch (err) {
         console.error(err);
@@ -3648,8 +3850,10 @@ app.post('/api/messages/boost/:messageId', isAuthenticated, async (req, res) => 
         if (msg.rows.length === 0) {
             return res.status(404).json({ error: 'Message not found or not yours' });
         }
+        
         const boostsResult = await pool.query('SELECT message_boosts_remaining FROM users WHERE id = $1', [userId]);
         let boostsRemaining = boostsResult.rows[0]?.message_boosts_remaining || 0;
+        
         if (boostsRemaining > 0) {
             await pool.query('UPDATE users SET message_boosts_remaining = message_boosts_remaining - 1 WHERE id = $1', [userId]);
         } else {
@@ -3665,6 +3869,7 @@ app.post('/api/messages/boost/:messageId', isAuthenticated, async (req, res) => 
                 [userId, 10]
             );
         }
+        
         await pool.query('UPDATE messages SET is_boosted = true WHERE id = $1', [messageId]);
         res.json({ success: true });
     } catch (err) {
@@ -3749,6 +3954,7 @@ app.post('/api/support/tickets', isAuthenticated, async (req, res) => {
             [req.session.userId, subject, message]
         );
         const ticketId = result.rows[0].id;
+
         const systemReply = {
             id: Date.now(),
             message: 'Your ticket has been submitted. A moderator will respond soon.',
@@ -3761,6 +3967,7 @@ app.post('/api/support/tickets', isAuthenticated, async (req, res) => {
             `UPDATE support_tickets SET replies = $1 WHERE id = $2`,
             [JSON.stringify([systemReply]), ticketId]
         );
+
         res.status(201).json({ success: true, ticketId });
     } catch (err) {
         console.error(err);
@@ -3774,21 +3981,26 @@ app.post('/api/support/tickets/:id/escalate', isAuthenticated, async (req, res) 
         const ticket = await pool.query('SELECT * FROM support_tickets WHERE id = $1', [ticketId]);
         if (ticket.rows.length === 0) return res.status(404).json({ error: 'Ticket not found' });
         const ticketData = ticket.rows[0];
+
         if (ticketData.user_id !== req.session.userId && !['admin', 'moderator'].includes(req.session.role)) {
             return res.status(403).json({ error: 'Access denied' });
         }
+
         if (ticketData.assigned_to) {
             return res.json({ success: true, message: 'Ticket already assigned', moderatorName: ticketData.assigned_to });
         }
+
         const moderator = await getAvailableModerator();
         if (!moderator) {
             return res.status(503).json({ error: 'No moderator available. Please try again later.' });
         }
+
         await pool.query(
             `UPDATE support_tickets SET assigned_to = $1, escalated_at = NOW(), status = 'in_progress' WHERE id = $2`,
             [moderator.id, ticketId]
         );
         await updateModeratorTicketCount(moderator.id, true);
+
         const modSocket = onlineUsers.get(moderator.id);
         if (modSocket?.socketId) {
             io.to(modSocket.socketId).emit('new_support_ticket', {
@@ -3798,6 +4010,7 @@ app.post('/api/support/tickets/:id/escalate', isAuthenticated, async (req, res) 
                 priority: ticketData.priority
             });
         }
+
         const user = await pool.query('SELECT email, username FROM users WHERE id = $1', [ticketData.user_id]);
         if (user.rows[0]) {
             await sendTicketNotification(
@@ -3807,6 +4020,7 @@ app.post('/api/support/tickets/:id/escalate', isAuthenticated, async (req, res) 
                  <p>Your ticket <strong>#${ticketId}</strong> has been assigned to a moderator. You will receive a reply soon.</p>`
             );
         }
+
         res.json({ success: true, moderatorName: moderator.username });
     } catch (err) {
         console.error(err);
@@ -3819,6 +4033,7 @@ app.get('/api/support/tickets', isAuthenticated, async (req, res) => {
         const { status, priority, category, search, limit = 50, offset = 0 } = req.query;
         const userRole = await pool.query('SELECT role FROM users WHERE id = $1', [req.session.userId]);
         const isModOrAdmin = ['admin', 'moderator'].includes(userRole.rows[0]?.role);
+
         let baseQuery = `
             SELECT t.*, u.username as user_name, u.email as user_email
             FROM support_tickets t
@@ -3827,6 +4042,7 @@ app.get('/api/support/tickets', isAuthenticated, async (req, res) => {
         const conditions = [];
         const params = [];
         let paramIndex = 1;
+
         if (!isModOrAdmin) {
             conditions.push(`t.user_id = $${paramIndex++}`);
             params.push(req.session.userId);
@@ -3848,9 +4064,11 @@ app.get('/api/support/tickets', isAuthenticated, async (req, res) => {
             params.push(`%${search}%`);
             paramIndex++;
         }
+
         if (conditions.length) {
             baseQuery += ' WHERE ' + conditions.join(' AND ');
         }
+
         baseQuery += ` ORDER BY 
             CASE t.priority 
                 WHEN 'urgent' THEN 1
@@ -3861,6 +4079,7 @@ app.get('/api/support/tickets', isAuthenticated, async (req, res) => {
             t.created_at DESC
             LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
         params.push(parseInt(limit), parseInt(offset));
+
         const result = await pool.query(baseQuery, params);
         const tickets = result.rows.map(t => {
             let replies = [];
@@ -3869,10 +4088,12 @@ app.get('/api/support/tickets', isAuthenticated, async (req, res) => {
             }
             return { ...t, replies };
         });
+
         let countQuery = `SELECT COUNT(*) FROM support_tickets t`;
         if (!isModOrAdmin) countQuery += ` WHERE t.user_id = $1`;
         const countRes = await pool.query(countQuery, !isModOrAdmin ? [req.session.userId] : []);
         const total = parseInt(countRes.rows[0].count);
+
         res.json({ tickets, total, limit: parseInt(limit), offset: parseInt(offset) });
     } catch (err) {
         console.error(err);
@@ -3885,6 +4106,7 @@ app.get('/api/support/tickets/:id', isAuthenticated, async (req, res) => {
     try {
         const userRole = await pool.query('SELECT role FROM users WHERE id = $1', [req.session.userId]);
         const isModOrAdmin = ['admin', 'moderator'].includes(userRole.rows[0]?.role);
+
         const query = `
             SELECT t.*, u.username as user_name, u.email as user_email
             FROM support_tickets t
@@ -3894,14 +4116,17 @@ app.get('/api/support/tickets/:id', isAuthenticated, async (req, res) => {
         const result = await pool.query(query, [ticketId]);
         if (result.rows.length === 0) return res.status(404).json({ error: 'Ticket not found' });
         const ticketData = result.rows[0];
+
         if (!isModOrAdmin && ticketData.user_id !== req.session.userId) {
             return res.status(403).json({ error: 'Access denied' });
         }
+
         let replies = [];
         if (ticketData.replies) {
             try { replies = JSON.parse(ticketData.replies); } catch(e) { replies = []; }
         }
         ticketData.replies = replies;
+
         let internalNotes = [];
         if (isModOrAdmin && ticketData.internal_notes) {
             try { internalNotes = JSON.parse(ticketData.internal_notes); } catch(e) { internalNotes = []; }
@@ -3909,6 +4134,7 @@ app.get('/api/support/tickets/:id', isAuthenticated, async (req, res) => {
         } else {
             delete ticketData.internal_notes;
         }
+
         res.json(ticketData);
     } catch (err) {
         console.error(err);
@@ -3920,25 +4146,30 @@ app.post('/api/support/tickets/:id/reply', isAuthenticated, async (req, res) => 
     const ticketId = req.params.id;
     const { message, changeStatusTo } = req.body;
     if (!message) return res.status(400).json({ error: 'Message is required' });
+
     try {
         const userRole = await pool.query('SELECT role FROM users WHERE id = $1', [req.session.userId]);
         const isModOrAdmin = ['admin', 'moderator'].includes(userRole.rows[0]?.role);
+
         const ticket = await pool.query(
             'SELECT user_id, status, replies, assigned_to, priority FROM support_tickets WHERE id = $1',
             [ticketId]
         );
         if (ticket.rows.length === 0) return res.status(404).json({ error: 'Ticket not found' });
         const ticketData = ticket.rows[0];
+
         if (!isModOrAdmin && ticketData.user_id !== req.session.userId) {
             return res.status(403).json({ error: 'Access denied' });
         }
         if (ticketData.status === 'closed') {
             return res.status(400).json({ error: 'Cannot reply to a closed ticket' });
         }
+
         let replies = [];
         if (ticketData.replies) {
             try { replies = JSON.parse(ticketData.replies); } catch(e) { replies = []; }
         }
+
         const newReply = {
             id: replies.length + 1,
             message: message,
@@ -3948,17 +4179,20 @@ app.post('/api/support/tickets/:id/reply', isAuthenticated, async (req, res) => 
             created_at: new Date().toISOString()
         };
         replies.push(newReply);
+
         let newStatus = ticketData.status;
         if (isModOrAdmin && changeStatusTo && ['new', 'in_progress', 'resolved', 'closed'].includes(changeStatusTo)) {
             newStatus = changeStatusTo;
         } else if (!isModOrAdmin && ticketData.status === 'new') {
             newStatus = 'in_progress';
         }
+
         let assignMod = null;
         if (isModOrAdmin && !ticketData.assigned_to) {
             assignMod = req.session.userId;
             await updateModeratorTicketCount(assignMod, true);
         }
+
         await pool.query(
             `UPDATE support_tickets 
              SET replies = $1, 
@@ -3969,6 +4203,7 @@ app.post('/api/support/tickets/:id/reply', isAuthenticated, async (req, res) => 
              WHERE id = $4`,
             [JSON.stringify(replies), newStatus, assignMod, ticketId]
         );
+
         if (isModOrAdmin) {
             const userSocket = onlineUsers.get(ticketData.user_id);
             if (userSocket?.socketId) {
@@ -3993,6 +4228,7 @@ app.post('/api/support/tickets/:id/reply', isAuthenticated, async (req, res) => 
                 }
             }
         }
+
         res.json({ success: true, reply: newReply });
     } catch (err) {
         console.error(err);
@@ -4004,9 +4240,11 @@ app.post('/api/support/tickets/:id/note', isAdminOrModerator, async (req, res) =
     const ticketId = req.params.id;
     const { note } = req.body;
     if (!note) return res.status(400).json({ error: 'Note is required' });
+
     try {
         const ticket = await pool.query('SELECT internal_notes FROM support_tickets WHERE id = $1', [ticketId]);
         if (ticket.rows.length === 0) return res.status(404).json({ error: 'Ticket not found' });
+
         let notes = [];
         if (ticket.rows[0].internal_notes) {
             try { notes = JSON.parse(ticket.rows[0].internal_notes); } catch(e) { notes = []; }
@@ -4018,6 +4256,7 @@ app.post('/api/support/tickets/:id/note', isAdminOrModerator, async (req, res) =
             created_by_name: req.session.username,
             created_at: new Date().toISOString()
         });
+
         await pool.query(
             'UPDATE support_tickets SET internal_notes = $1, updated_at = NOW() WHERE id = $2',
             [JSON.stringify(notes), ticketId]
@@ -4036,6 +4275,7 @@ app.patch('/api/support/tickets/:id/status', isAdminOrModerator, async (req, res
     if (!status || !validStatuses.includes(status)) {
         return res.status(400).json({ error: 'Invalid status' });
     }
+
     try {
         const result = await pool.query(
             'UPDATE support_tickets SET status = $1, updated_at = NOW() WHERE id = $2 RETURNING id',
@@ -4094,6 +4334,7 @@ cron.schedule('*/5 * * * *', async () => {
     console.log('🔔 Running moderator reminder cron job...');
     const REMINDER_THRESHOLD_MINUTES = parseInt(process.env.REMINDER_THRESHOLD_MINUTES) || 5;
     const BATCH_LIMIT = parseInt(process.env.REMINDER_BATCH_LIMIT) || 50;
+
     try {
         const staleTickets = await pool.query(`
             SELECT t.id, t.subject, t.assigned_to, u.username as moderator_name, u.email as moderator_email,
@@ -4108,13 +4349,17 @@ cron.schedule('*/5 * * * *', async () => {
             ORDER BY t.escalated_at ASC
             LIMIT $2
         `, [REMINDER_THRESHOLD_MINUTES, BATCH_LIMIT]);
+
         if (staleTickets.rows.length === 0) {
             console.log('ℹ️ No stale tickets found.');
             return;
         }
+
         console.log(`📋 Found ${staleTickets.rows.length} stale tickets to process.`);
+
         let reminderCount = 0;
         let errorCount = 0;
+
         for (const ticket of staleTickets.rows) {
             try {
                 const moderatorEntry = onlineUsers.get(ticket.assigned_to);
@@ -4125,11 +4370,13 @@ cron.schedule('*/5 * * * *', async () => {
                         minutesSince: Math.floor((Date.now() - new Date(ticket.escalated_at).getTime()) / 60000)
                     });
                 }
+
                 await sendEmail(
                     ticket.moderator_email,
                     `Support Ticket Reminder #${ticket.id}`,
                     `<p>You have a pending support ticket <strong>#${ticket.id}: "${escapeHtml(ticket.subject)}"</strong> that was escalated ${Math.floor((Date.now() - new Date(ticket.escalated_at).getTime()) / 60000)} minutes ago.</p><p>Please respond soon.</p>`
                 );
+
                 await pool.query(
                     `UPDATE support_tickets SET last_reminder_sent = NOW() WHERE id = $1`,
                     [ticket.id]
@@ -4141,6 +4388,7 @@ cron.schedule('*/5 * * * *', async () => {
                 console.error(`❌ Failed to process reminder for ticket ${ticket.id}:`, err.message);
             }
         }
+
         console.log(`✅ Cron job finished: ${reminderCount} reminders sent, ${errorCount} errors.`);
     } catch (err) {
         console.error('❌ Reminder cron error (query level):', err);
@@ -4231,6 +4479,7 @@ app.post('/api/friends/request', isAuthenticated, async (req, res) => {
         const friendId = friendResult.rows[0].id;
         const friendEmail = friendResult.rows[0].email;
         if (friendId === req.session.userId) return res.status(400).send('Cannot add yourself');
+ 
         const existing = await pool.query(
             `SELECT * FROM friendships
              WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1)`,
@@ -4241,14 +4490,17 @@ app.post('/api/friends/request', isAuthenticated, async (req, res) => {
             if (row.status === 'accepted') return res.status(409).send('Already friends');
             if (row.status === 'pending') return res.status(409).send('Friend request already pending');
         }
+ 
         const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
         await pool.query(
             `INSERT INTO friendships (user_id, friend_id, status, expires_at)
              VALUES ($1, $2, 'pending', $3)`,
             [req.session.userId, friendId, expiresAt]
         );
+ 
         sendFriendRequestEmail(friendEmail, req.session.username)
             .catch(err => console.error('Friend request email failed:', err));
+ 
         const friendEntry = onlineUsers.get(friendId);
         if (friendEntry?.socketId) {
             io.to(friendEntry.socketId).emit('friend_request_notification', {
@@ -4256,6 +4508,7 @@ app.post('/api/friends/request', isAuthenticated, async (req, res) => {
                 fromUsername: req.session.username
             });
         }
+ 
         await updateQuestProgress(req.session.userId, 'friend_request');
         await checkAchievements(req.session.userId);
         res.send('Friend request sent');
@@ -4299,8 +4552,7 @@ app.get('/api/friends', isAuthenticated, async (req, res) => {
     try {
         const { search } = req.query;
         let query = `
-            SELECT u.id, u.username, u.display_name, u.avatar_url, u.status,
-                   u.profession, u.is_pro, u.is_verified
+            SELECT u.id, u.username, u.display_name, u.avatar_url, u.status
             FROM friendships f
             JOIN users u ON (f.user_id = u.id OR f.friend_id = u.id)
             WHERE (f.user_id = $1 OR f.friend_id = $1)
@@ -4312,12 +4564,7 @@ app.get('/api/friends', isAuthenticated, async (req, res) => {
             params.push(`%${search}%`);
         }
         const result = await pool.query(query, params);
-        // Include online status
-        const friends = result.rows.map(friend => ({
-            ...friend,
-            online: onlineUsers.has(friend.id)
-        }));
-        res.json(friends);
+        res.json(result.rows);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -4327,8 +4574,7 @@ app.get('/api/friends', isAuthenticated, async (req, res) => {
 app.get('/api/friends/requests', isAuthenticated, async (req, res) => {
     try {
         const result = await pool.query(
-            `SELECT f.id, u.id as sender_id, u.username, u.display_name, u.avatar_url,
-                    u.profession, u.is_pro, u.is_verified
+            `SELECT f.id, u.id as sender_id, u.username, u.display_name, u.avatar_url
              FROM friendships f JOIN users u ON f.user_id = u.id
              WHERE f.friend_id = $1 AND f.status = 'pending'`,
             [req.session.userId]
@@ -4411,35 +4657,21 @@ app.post('/api/messages/read/:friendId', isAuthenticated, async (req, res) => {
 app.get('/api/network/stats', isAuthenticated, async (req, res) => {
     try {
         const userId = req.session.userId;
-        const totalResult = await pool.query(
+        const total = await pool.query(
             `SELECT COUNT(*) as count FROM friendships
              WHERE (user_id = $1 OR friend_id = $1) AND status = 'accepted'`,
             [userId]
         );
-        const total = parseInt(totalResult.rows[0].count);
-
-        // Compute online friends
-        const friendIdsResult = await pool.query(
-            `SELECT u.id FROM friendships f
-             JOIN users u ON (f.user_id = u.id OR f.friend_id = u.id)
-             WHERE (f.user_id = $1 OR f.friend_id = $1)
-               AND f.status = 'accepted'
-               AND u.id != $1`,
-            [userId]
-        );
-        const friendIds = friendIdsResult.rows.map(r => r.id);
-        let online = 0;
-        for (const id of friendIds) {
-            if (onlineUsers.has(id)) online++;
-        }
-
-        const pendingResult = await pool.query(
+        const pending = await pool.query(
             `SELECT COUNT(*) as count FROM friendships
              WHERE friend_id = $1 AND status = 'pending'`,
             [userId]
         );
-        const pending = parseInt(pendingResult.rows[0].count);
-        res.json({ total, online, requests: pending });
+        res.json({
+            total: parseInt(total.rows[0].count),
+            online: 0,
+            requests: parseInt(pending.rows[0].count)
+        });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -4468,7 +4700,10 @@ app.get('/api/trending/professionals', isAuthenticated, async (req, res) => {
     try {
         const userId = req.session.userId;
         const result = await pool.query(`
-            SELECT id, username, display_name, avatar_url, profession, is_pro, is_verified
+            SELECT id, username, display_name, avatar_url, 
+                   'Professional' as profession, 
+                   false as is_pro, 
+                   false as is_verified
             FROM users
             WHERE id != $1
             ORDER BY RANDOM()
@@ -4484,10 +4719,10 @@ app.get('/api/trending/professionals', isAuthenticated, async (req, res) => {
 app.get('/api/network/unread', isAuthenticated, async (req, res) => {
     try {
         const userId = req.session.userId;
-        const unread = await pool.query('SELECT sender_id as friend_id, COUNT(*) as count FROM messages WHERE receiver_id = $1 AND is_read = false GROUP BY sender_id', [userId]);
+        const unread = await pool.query('SELECT COUNT(*) as count FROM messages WHERE receiver_id = $1 AND is_read = false', [userId]);
         const pending = await pool.query('SELECT COUNT(*) as count FROM friendships WHERE friend_id = $1 AND status = $2', [userId, 'pending']);
         const total = (unread.rows[0]?.count || 0) + (pending.rows[0]?.count || 0);
-        res.json({ unread: unread.rows, pendingRequests: parseInt(pending.rows[0].count) });
+        res.json({ total });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -4510,7 +4745,7 @@ app.get('/api/network/export', isAuthenticated, async (req, res) => {
         });
         const csv = csvRows.map(row => row.join(',')).join('\n');
         res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', 'attachment; filename="Sarveik-network.csv"');
+        res.setHeader('Content-Disposition', 'attachment; filename="Sraveik-network.csv"');
         res.send(csv);
     } catch (err) {
         console.error(err);
@@ -4584,7 +4819,6 @@ app.post('/api/update-status', isAuthenticated, async (req, res) => {
             'UPDATE users SET status = $1 WHERE id = $2',
             [status, req.session.userId]
         );
-        await broadcastStatusToFriends(req.session.userId, status);
         res.send('Status updated');
     } catch (err) {
         console.error(err);
@@ -4636,6 +4870,7 @@ app.delete('/admin/users/:id', isAdmin, async (req, res) => {
         await pool.query('DELETE FROM business_reviews WHERE user_id = $1', [userId]);
         await pool.query('DELETE FROM businesses WHERE user_id = $1', [userId]);
         await pool.query('DELETE FROM users WHERE id = $1', [userId]);
+
         res.send('User deleted');
     } catch (err) {
         console.error('Admin delete user error:', err);
@@ -4666,6 +4901,7 @@ app.patch('/admin/users/:id', isAdmin, async (req, res) => {
         values.push(userId);
         const query = `UPDATE users SET ${updateFields.join(', ')} WHERE id = $${paramIndex}`;
         await pool.query(query, values);
+
         if (role && (role === 'admin' || role === 'moderator')) {
             const groupResult = await pool.query(`SELECT id FROM groups WHERE name = 'Staff Lounge'`);
             if (groupResult.rows.length > 0) {
@@ -4706,13 +4942,16 @@ app.post('/api/forgot-password', authLimiter, async (req, res) => {
     try {
         const user = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
         if (user.rows.length === 0) return res.status(404).send('No account with that email');
+ 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
         const expires = new Date(Date.now() + 10 * 60 * 1000);
+ 
         await pool.query('DELETE FROM password_resets WHERE email = $1', [email]);
         await pool.query(
             'INSERT INTO password_resets (email, otp, expires_at) VALUES ($1, $2, $3)',
             [email, otp, expires]
         );
+ 
         const emailSent = await sendPasswordResetOtp(email, otp);
         if (!emailSent.success) {
             console.error('Email send failed:', emailSent.error);
@@ -4735,8 +4974,10 @@ app.post('/api/reset-password', authLimiter, async (req, res) => {
             [email, otp]
         );
         if (result.rows.length === 0) return res.status(400).send('Invalid or expired OTP');
+ 
         const strength = validatePasswordStrength(newPassword);
         if (!strength.valid) return res.status(400).send(strength.message);
+ 
         const hashedPassword = await bcrypt.hash(newPassword, 10);
         await pool.query(
             'UPDATE users SET password = $1 WHERE LOWER(email) = LOWER($2)',
@@ -4756,7 +4997,7 @@ app.get('/api/users/search', isAuthenticated, async (req, res) => {
     if (!query || query.length < 2) return res.json([]);
     try {
         const result = await pool.query(
-            `SELECT id, username, display_name, avatar_url, profession, is_pro, is_verified
+            `SELECT id, username, display_name, avatar_url
              FROM users
              WHERE (username ILIKE $1 OR display_name ILIKE $1) AND id != $2
              ORDER BY username LIMIT 10`,
@@ -4773,7 +5014,7 @@ app.get('/profile', isAuthenticated, async (req, res) => {
     try {
         const result = await pool.query(
             `SELECT id, username, email, role, display_name, 
-                    bio, phone, github, twitter, linkedin, profession,
+                    bio, phone, github, twitter, linkedin,
                     avatar_url, created_at, updated_at,
                     email_verified
              FROM users WHERE id = $1`,
@@ -4787,15 +5028,14 @@ app.get('/profile', isAuthenticated, async (req, res) => {
 });
 
 app.put('/profile/update', isAuthenticated, async (req, res) => {
-    const { display_name, bio, phone, github, twitter, linkedin, profession } = req.body;
+    const { display_name, bio, phone, github, twitter, linkedin } = req.body;
     try {
         await pool.query(
             `UPDATE users SET
                 display_name = $1, bio = $2, phone = $3,
                 github = $4, twitter = $5, linkedin = $6,
-                profession = $7,
                 updated_at = NOW()
-             WHERE id = $8`,
+             WHERE id = $7`,
             [
                 display_name ? escapeHtml(display_name) : null,
                 bio ? escapeHtml(bio) : null,
@@ -4803,13 +5043,12 @@ app.put('/profile/update', isAuthenticated, async (req, res) => {
                 github ? escapeHtml(github) : null,
                 twitter ? escapeHtml(twitter) : null,
                 linkedin ? escapeHtml(linkedin) : null,
-                profession ? escapeHtml(profession) : null,
                 req.session.userId
             ]
         );
         const updated = await pool.query(
             `SELECT id, username, display_name, email, bio, phone,
-                    github, twitter, linkedin, profession, email_verified,
+                    github, twitter, linkedin, email_verified,
                     two_factor_enabled, created_at, updated_at, avatar_url
              FROM users WHERE id = $1`,
             [req.session.userId]
@@ -4888,6 +5127,7 @@ app.delete('/profile/delete', isAuthenticated, async (req, res) => {
         const userId = req.session.userId;
         const userEmail = req.session.email;
         const username = req.session.username;
+
         const tables = [
             'DELETE FROM messages WHERE sender_id = $1 OR receiver_id = $1',
             'DELETE FROM friendships WHERE user_id = $1 OR friend_id = $1',
@@ -4909,10 +5149,13 @@ app.delete('/profile/delete', isAuthenticated, async (req, res) => {
             'DELETE FROM businesses WHERE user_id = $1',
             'DELETE FROM users WHERE id = $1'
         ];
+
         for (const query of tables) {
             await pool.query(query, [userId]);
         }
+
         await sendAccountDeletionAlert({ id: userId, username, email: userEmail });
+
         req.session.destroy((err) => {
             if (err) console.error(err);
             res.send('Account deleted');
@@ -5003,6 +5246,7 @@ app.get('/api/admin/analytics', isAdmin, async (req, res) => {
         const totalUsers = await pool.query('SELECT COUNT(*) as count FROM users');
         const activeUsers = await pool.query('SELECT COUNT(*) as count FROM users WHERE is_banned = false');
         const suspendedUsers = await pool.query('SELECT COUNT(*) as count FROM users WHERE is_banned = true');
+        
         const weeklyUsage = await pool.query(`
             SELECT DATE(used_at) as date, COUNT(*) as count
             FROM tool_usage
@@ -5010,11 +5254,14 @@ app.get('/api/admin/analytics', isAdmin, async (req, res) => {
             GROUP BY DATE(used_at)
             ORDER BY date
         `);
+        
         const thisMonth = await pool.query(`SELECT COUNT(*) as count FROM users WHERE EXTRACT(MONTH FROM created_at) = EXTRACT(MONTH FROM NOW())`);
         const lastMonth = await pool.query(`SELECT COUNT(*) as count FROM users WHERE EXTRACT(MONTH FROM created_at) = EXTRACT(MONTH FROM NOW() - INTERVAL '1 month')`);
+        
         const growthRate = lastMonth.rows[0].count > 0 
             ? Math.round(((thisMonth.rows[0].count - lastMonth.rows[0].count) / lastMonth.rows[0].count) * 100)
             : 100;
+        
         res.json({
             totalUsers: totalUsers.rows[0].count,
             activeUsers: activeUsers.rows[0].count,
@@ -5351,6 +5598,7 @@ app.get('/api/users/:id/activity', isAdminOrModerator, async (req, res) => {
             FROM support_tickets, jsonb_array_elements(CASE WHEN replies IS NULL THEN '[]'::jsonb ELSE replies::jsonb END) AS r
             WHERE user_id = $1
         `, [userId]);
+
         const all = [...toolUsage.rows, ...tickets.rows, ...replies.rows];
         all.sort((a, b) => new Date(b.time) - new Date(a.time));
         res.json(all);
@@ -5449,22 +5697,26 @@ app.get('/api/gamification/status', isAuthenticated, async (req, res) => {
             [userId]
         );
         if (!user.rows[0]) return res.status(404).json({ error: 'User not found' });
+ 
         const { level, xp, total_xp_earned } = user.rows[0];
         const nextLevelXP = xpForLevel(level + 1);
         const currentLevelXP = xpForLevel(level);
         const progress = nextLevelXP > currentLevelXP
             ? Math.min(100, Math.max(0, ((xp - currentLevelXP) / (nextLevelXP - currentLevelXP)) * 100))
             : 100;
+ 
         const streak = await pool.query(
             'SELECT current_streak, longest_streak, multiplier FROM user_streak WHERE user_id = $1',
             [userId]
         );
+ 
         const achievements = await pool.query(
             `SELECT a.id, a.name, a.description, a.icon, a.xp_reward, ua.earned_at
              FROM achievements a
              LEFT JOIN user_achievements ua ON a.id = ua.achievement_id AND ua.user_id = $1`,
             [userId]
         );
+ 
         const today = new Date().toISOString().slice(0, 10);
         const quests = await pool.query(
             `SELECT q.id, q.name, q.description, q.target_count, q.xp_reward, q.credits_reward,
@@ -5476,6 +5728,7 @@ app.get('/api/gamification/status', isAuthenticated, async (req, res) => {
                AND uqd.user_id = $1 AND uqd.date = $2`,
             [userId, today]
         );
+ 
         res.json({
             level,
             xp,
@@ -5538,6 +5791,7 @@ app.post('/api/quests/:questId/claim', isAuthenticated, async (req, res) => {
             JOIN daily_quests q ON uqd.quest_id = q.id
             WHERE uqd.user_id = $1 AND uqd.quest_id = $2 AND uqd.date = $3
         `, [userId, questId, today]);
+
         if (questRow.rows.length === 0) {
             return res.status(404).json({ error: 'Quest not found for today' });
         }
@@ -5548,7 +5802,9 @@ app.post('/api/quests/:questId/claim', isAuthenticated, async (req, res) => {
         if (quest.claimed) {
             return res.status(400).json({ error: 'Quest already claimed' });
         }
+
         await addXP(userId, quest.xp_reward, `Daily quest: ${quest.name}`);
+
         await pool.query(
             'UPDATE user_credits SET balance = balance + $1 WHERE user_id = $2',
             [quest.credits_reward, userId]
@@ -5558,11 +5814,13 @@ app.post('/api/quests/:questId/claim', isAuthenticated, async (req, res) => {
              VALUES ($1, $2, 'earn', $3)`,
             [userId, quest.credits_reward, `Claimed quest: ${quest.name}`]
         );
+
         await pool.query(
             `UPDATE user_daily_quests SET claimed = true 
              WHERE user_id = $1 AND quest_id = $2 AND date = $3`,
             [userId, questId, today]
         );
+
         const userEntry = onlineUsers.get(userId);
         if (userEntry && userEntry.socketId) {
             io.to(userEntry.socketId).emit('quest_claimed', {
@@ -5572,6 +5830,7 @@ app.post('/api/quests/:questId/claim', isAuthenticated, async (req, res) => {
                 credits: quest.credits_reward
             });
         }
+
         res.json({
             success: true,
             message: `Claimed ${quest.name}! +${quest.xp_reward} XP, +${quest.credits_reward} credits`
@@ -5615,8 +5874,12 @@ app.get('/api/admin/feedback', isAdmin, async (req, res) => {
     }
 });
 
-// ==================== CSRF TOKEN ENDPOINT (already defined) ====================
-// (already present above)
+// ==================== CSRF TOKEN ENDPOINT ====================
+app.get('/api/csrf-token', (req, res) => {
+    const token = crypto.randomBytes(32).toString('hex');
+    req.session.csrfToken = token;
+    res.json({ csrfToken: token });
+});
 
 // ==================== DATABASE CONNECTION TEST ====================
 (async () => {
@@ -5654,14 +5917,11 @@ server.listen(PORT, HOST, () => {
     console.log(`✅ Admin can add featured tools (is_featured flag)`);
     console.log(`✅ Username uniqueness check fixed during registration`);
     console.log(`✅ Account deletion fully fixed with cascade deletion of all related data`);
-    console.log(`✅ CSRF token endpoint and validation active for all non-GET requests`);
+    console.log(`✅ CSRF token endpoint added for state‑changing requests`);
     console.log(`🏢 Business directory management endpoints active`);
     console.log(`💰 NEW: Sponsored Ads System (Method 1) - Businesses pay to appear at top`);
     console.log(`💰 NEW: Affiliate Commission System (Method 2) - Earn 5-8% on every sale`);
     console.log(`💰 NEW: Users earn 15 CREDITS when their submitted business gets approved`);
-    console.log(`🔐 CSRF protection enabled`);
-    console.log(`👥 Online friends count now computed correctly in /api/network/stats`);
-    console.log(`🆕 User fields (profession, is_pro, is_verified) added to friends/search/trending`);
 });
 
 // ==================== GRACEFUL SHUTDOWN ====================
@@ -5693,10 +5953,13 @@ cron.schedule('0 9 * * 1', async () => {
                 const newToolsResult = await pool.query('SELECT COUNT(*) as count FROM tools WHERE created_at >= $1', [weekAgo]);
                 newToolsCount = newToolsResult.rows[0].count;
             } catch (err) { }
+
             const pendingResult = await pool.query('SELECT COUNT(*) as count FROM friendships WHERE friend_id = $1 AND status = $2', [user.id, 'pending']);
             const pendingRequestsCount = pendingResult.rows[0]?.count || 0;
+
             const unreadResult = await pool.query('SELECT COUNT(*) as count FROM messages WHERE receiver_id = $1 AND is_read = false', [user.id]);
             const unreadMessagesCount = unreadResult.rows[0]?.count || 0;
+
             await sendWeeklyDigest(user.email, user.username, newToolsCount, pendingRequestsCount, unreadMessagesCount);
         }
         console.log('✅ Weekly digest cron job finished');
