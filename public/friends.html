@@ -63,30 +63,6 @@
 
         body > * { position: relative; z-index: 1; }
 
-        /* ========== DIAGNOSTIC BANNER (NEW) ========== */
-        #diagBanner {
-            display: none;
-            position: sticky;
-            top: 60px;
-            z-index: 1000;
-            padding: 0.75rem 1rem;
-            text-align: center;
-            font-size: 0.82rem;
-            font-weight: 500;
-            border-bottom: 1px solid rgba(239,68,68,0.4);
-        }
-        #diagBanner.show { display: block; }
-        #diagBanner.error { background: #7f1d1d; color: #fecaca; }
-        #diagBanner.warning { background: #78350f; color: #fde68a; }
-        #diagBanner a { color: #fff; text-decoration: underline; font-weight: 700; }
-        #diagBanner code {
-            background: rgba(0,0,0,0.25);
-            padding: 1px 6px;
-            border-radius: 4px;
-            font-family: var(--font-mono);
-            font-size: 0.76rem;
-        }
-
         /* ========== NAVBAR ========== */
         .navbar {
             background: rgba(3,10,22,0.97);
@@ -1247,9 +1223,6 @@
         </div>
     </nav>
 
-    <!-- DIAGNOSTIC BANNER (NEW) - tells you exactly what's broken instead of failing silently -->
-    <div id="diagBanner"></div>
-
     <div class="friends-container">
 
         <!-- PAGE HEADER -->
@@ -1464,57 +1437,19 @@
 
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
     <script>
-        // ==================================================================
-        // DIAGNOSTIC LAYER (NEW)
-        // Every fetch now logs to console AND, on auth/network failure,
-        // shows a banner explaining exactly what's wrong so you don't have
-        // to guess. Open DevTools console for full request-by-request logs.
-        // ==================================================================
-        const API_BASE = window.location.origin; // change this if the API is on a different host/port
-        let diagBannerLevel = null; // tracks worst level shown so we don't downgrade the message
-
-        function setDiagBanner(html, level) {
-            // level: 'error' > 'warning'. Once an error is shown, don't overwrite with a warning.
-            if (diagBannerLevel === 'error' && level !== 'error') return;
-            diagBannerLevel = level;
-            const el = document.getElementById('diagBanner');
-            el.className = 'show ' + level;
-            el.innerHTML = html;
-        }
-        function clearDiagBanner() {
-            diagBannerLevel = null;
-            const el = document.getElementById('diagBanner');
-            el.className = '';
-            el.innerHTML = '';
-        }
-
         // ========== CSRF ==========
         let csrfToken = null;
         async function fetchCsrfToken() {
             try {
-                const res = await fetch(`${API_BASE}/api/csrf-token`, { credentials: 'include' });
-                if (res.ok) {
-                    const data = await res.json();
-                    csrfToken = data.csrfToken;
-                } else {
-                    console.warn('[CSRF] token endpoint returned', res.status);
-                }
-            } catch (err) {
-                console.error('[CSRF] Could not reach /api/csrf-token — likely a network/CORS problem:', err);
-                setDiagBanner(
-                    `Can't reach the server at <code>${API_BASE}</code>. Check that the backend is running and that this page's origin is in the server's <code>ALLOWED_ORIGINS</code>.`,
-                    'error'
-                );
-            }
+                const res = await fetch('/api/csrf-token', { credentials: 'include' });
+                if (res.ok) { const data = await res.json(); csrfToken = data.csrfToken; }
+            } catch (err) { console.error('CSRF token fetch failed:', err); }
         }
         async function getCsrfHeader() {
             if (!csrfToken) await fetchCsrfToken();
-            return csrfToken ? { 'X-CSRF-Token': csrfToken } : {};
+            return { 'X-CSRF-Token': csrfToken };
         }
-
-        // ========== Core API wrapper (hardened) ==========
         async function apiCall(url, options = {}) {
-            const fullUrl = url.startsWith('http') ? url : url; // relative URLs already resolve against current origin
             if (options.body && typeof options.body === 'object') {
                 options.body = JSON.stringify(options.body);
                 options.headers = { ...options.headers, 'Content-Type': 'application/json' };
@@ -1526,73 +1461,11 @@
                 const csrfHeader = await getCsrfHeader();
                 options.headers = { ...options.headers, ...csrfHeader };
             }
-
-            let res;
-            try {
-                res = await fetch(fullUrl, { ...options, credentials: 'include' });
-            } catch (networkErr) {
-                console.error(`[apiCall] Network/CORS failure calling ${fullUrl}:`, networkErr);
-                setDiagBanner(
-                    `Request to <code>${fullUrl}</code> failed before reaching the server. This is almost always CORS (server's <code>ALLOWED_ORIGINS</code> doesn't include <code>${window.location.origin}</code>) or the backend not running.`,
-                    'error'
-                );
-                throw new Error('Network error: could not reach ' + fullUrl);
-            }
-
-            if (!res.ok) {
-                let errorMsg = '';
-                try { errorMsg = await res.text(); } catch (e) { /* ignore */ }
-                console.error(`[apiCall] ${fullUrl} -> HTTP ${res.status} ${res.statusText}`, errorMsg);
-
-                if (res.status === 401) {
-                    setDiagBanner(
-                        `Not logged in (HTTP 401 on <code>${fullUrl}</code>). Your session cookie isn't being sent or has expired. If the API and this page are on different origins/ports, or the server has <code>secure: true</code> cookies without HTTPS, the cookie will silently be dropped. <a href="index.html">Log in again</a>.`,
-                        'error'
-                    );
-                } else if (res.status === 403) {
-                    setDiagBanner(`Access denied (HTTP 403 on <code>${fullUrl}</code>): ${escapeHtml(errorMsg || '')}`, 'warning');
-                }
-
-                throw new Error(errorMsg || `Request failed with status ${res.status}`);
-            }
-
-            // A successful call means the connection/auth pipeline works — clear any stale banner.
-            if (diagBannerLevel !== 'error') clearDiagBanner();
-
+            const res = await fetch(url, { ...options, credentials: 'include' });
+            if (!res.ok) { let errorMsg = await res.text(); throw new Error(errorMsg || `Request failed with status ${res.status}`); }
             const contentType = res.headers.get('content-type');
             if (contentType && contentType.includes('application/json')) return res.json();
             return res.text();
-        }
-
-        // Cheap upfront session check so the banner appears immediately on load,
-        // rather than after several silent per-section failures.
-        async function runStartupDiagnostics() {
-            try {
-                const res = await fetch(`${API_BASE}/check-session`, { credentials: 'include' });
-                if (!res.ok) {
-                    console.error('[diagnostics] /check-session returned', res.status);
-                    setDiagBanner(`Server responded with HTTP ${res.status} on <code>/check-session</code>. Check server logs.`, 'error');
-                    return false;
-                }
-                const data = await res.json();
-                console.log('[diagnostics] /check-session ->', data);
-                if (!data.loggedIn) {
-                    setDiagBanner(
-                        `You're not logged in. <a href="index.html">Go to login</a>.`,
-                        'warning'
-                    );
-                    return false;
-                }
-                clearDiagBanner();
-                return true;
-            } catch (err) {
-                console.error('[diagnostics] Could not reach server at all:', err);
-                setDiagBanner(
-                    `Cannot connect to <code>${API_BASE}</code> at all. Likely causes: (1) the backend server isn't running, (2) it's running on a different port than this page expects, or (3) a CORS preflight is being rejected. Open DevTools → Network tab and check the failed request for details.`,
-                    'error'
-                );
-                return false;
-            }
         }
 
         // ========== Globals ==========
@@ -1786,7 +1659,7 @@
                 renderSuggestions();
             } catch (err) {
                 console.error(err);
-                container.innerHTML = `<div class="no-results"><i class="fas fa-wifi"></i>Error loading network: ${escapeHtml(err.message || 'unknown error')}. Check the diagnostic banner above and the browser console.</div>`;
+                container.innerHTML = '<div class="no-results"><i class="fas fa-wifi"></i>Error loading network. Please try again.</div>';
             }
         }
         function getFriendStatusClass(friend) {
@@ -2022,7 +1895,7 @@
                         } catch (err) { showToast(err.message || 'Failed to decline', 'error'); btn.disabled = false; btn.innerHTML = btnText; }
                     });
                 });
-            } catch (err) { console.error(err); container.innerHTML = `<div class="no-results"><i class="fas fa-triangle-exclamation"></i>Error loading requests: ${escapeHtml(err.message || '')}</div>`; }
+            } catch (err) { console.error(err); container.innerHTML = '<div class="no-results"><i class="fas fa-triangle-exclamation"></i>Error loading requests.</div>'; }
         }
 
         // ========== Add Friend ==========
@@ -2081,7 +1954,7 @@
                         } catch (err) { showToast(err.message || 'Failed to send request', 'error'); btn.innerHTML = original; btn.disabled = false; }
                     });
                 });
-            } catch (err) { console.error(err); container.innerHTML = `<div class="no-results"><i class="fas fa-triangle-exclamation"></i>Error searching professionals: ${escapeHtml(err.message || '')}</div>`; }
+            } catch (err) { console.error(err); container.innerHTML = '<div class="no-results"><i class="fas fa-triangle-exclamation"></i>Error searching professionals.</div>'; }
         }
         document.getElementById('searchBtn').addEventListener('click', searchUsers);
         document.getElementById('searchUser').addEventListener('input', () => { clearTimeout(searchTimeout); searchTimeout = setTimeout(searchUsers, 350); });
@@ -2167,7 +2040,7 @@
                     });
                 });
                 renderSuggestions();
-            } catch (err) { console.error(err); container.innerHTML = `<div class="no-results"><i class="fas fa-fire-flame-curved"></i>No trending professionals (${escapeHtml(err.message || 'error')})</div>`; }
+            } catch (err) { container.innerHTML = '<div class="no-results"><i class="fas fa-fire-flame-curved"></i>No trending professionals</div>'; }
         }
 
         // ========== Groups ==========
@@ -2207,7 +2080,7 @@
                         } catch (err) { showToast(err.message || 'Failed to leave group', 'error'); }
                     });
                 });
-            } catch (err) { console.error(err); container.innerHTML = `<div class="no-results"><i class="fas fa-triangle-exclamation"></i>Failed to load groups: ${escapeHtml(err.message || '')}</div>`; }
+            } catch (err) { console.error(err); container.innerHTML = '<div class="no-results"><i class="fas fa-triangle-exclamation"></i>Failed to load groups.</div>'; }
         }
 
         // ========== Create Group ==========
@@ -2225,7 +2098,7 @@
                 const friends = await apiCall('/api/friends');
                 allFriendsForModal = friends.map(f => ({ id: f.id, username: f.username, avatar: f.avatar_url }));
                 renderMemberList(allFriendsForModal);
-            } catch (err) { memberListContainer.innerHTML = `<div class="no-results">Failed to load friends: ${escapeHtml(err.message || '')}</div>`; }
+            } catch (err) { memberListContainer.innerHTML = '<div class="no-results">Failed to load friends</div>'; }
         }
         function renderMemberList(friends) {
             if (friends.length === 0) { memberListContainer.innerHTML = '<div class="no-results">No friends available to add</div>'; return; }
@@ -2409,8 +2282,7 @@
         });
 
         // ========== Socket ==========
-        socket.on('connect', () => console.log('[socket] connected'));
-        socket.on('connect_error', (err) => console.error('[socket] connect_error:', err.message));
+        socket.on('connect', () => console.log('Realtime connected'));
         socket.on('disconnect', () => { setTimeout(() => { if (!socket.connected) socket.connect(); }, 5000); });
         socket.on('friend_request_notification', (data) => {
             showToast(`New request from ${data.fromUsername || data.from}!`, 'info');
@@ -2435,7 +2307,7 @@
         window.addEventListener('scroll', () => backToTopBtn.classList.toggle('visible', window.scrollY > 400));
         backToTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
-        // ========== Hamburger Menu ==========
+        // ========== Hamburger Menu - FIXED ==========
         const hamburger = document.getElementById('hamburger');
         const navLinks = document.getElementById('navLinks');
         const navOverlay = document.getElementById('navOverlay');
@@ -2479,10 +2351,12 @@
 
         navOverlay.addEventListener('click', closeNav);
 
+        // Close nav when links are clicked
         navLinks.querySelectorAll('a').forEach(link => {
             link.addEventListener('click', closeNav);
         });
 
+        // Close nav on Escape key
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 closeNav();
@@ -2495,15 +2369,12 @@
 
         // ========== Init ==========
         (async () => {
-            console.log('[init] Starting friends.html on origin', window.location.origin);
-            const sessionOk = await runStartupDiagnostics();
             await fetchCsrfToken();
             await getCurrentUserId();
             await loadCurrentUserProfile();
             await Promise.all([loadFriends(), loadRequests(), loadStats(), loadTrending(), loadGroups()]);
             await updateUnreadBadge();
             renderActivityFeed();
-            if (sessionOk) console.log('[init] Startup complete, session looked valid.');
         })();
     </script>
 </body>
