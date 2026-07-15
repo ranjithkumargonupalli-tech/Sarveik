@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Sarveik  | Next-Gen Digital Workspace</title>
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <title>Sarveik | Next-Gen Digital Workspace</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
         /* ===== CSS VARIABLES ===== */
         :root {
@@ -29,7 +30,6 @@
             --glow-purple: rgba(124,58,237,0.4);
             --glow-cyan: rgba(0,230,255,0.3);
 
-            /* ── THEME TRANSITION ── */
             --theme-transition: background 0.5s cubic-bezier(0.4,0,0.2,1),
                                 color 0.5s cubic-bezier(0.4,0,0.2,1),
                                 border-color 0.5s cubic-bezier(0.4,0,0.2,1),
@@ -37,10 +37,9 @@
         }
 
         /* ======================================================
-           DARK THEME (default — matches original dark background)
+           DARK THEME (default)
            ====================================================== */
         [data-theme="dark"] {
-            /* palette */
             --primary: #a78bfa;
             --primary-dark: #7c3aed;
             --primary-light: #c4b5fd;
@@ -49,7 +48,6 @@
             --glow-purple: rgba(167,139,250,0.35);
             --glow-cyan: rgba(34,211,238,0.25);
 
-            /* surface */
             --dark: #f1f0ff;
             --light: #08061a;
             --gray: #110e2a;
@@ -59,23 +57,19 @@
             --card-bg: rgba(255,255,255,0.035);
             --card-border: rgba(167,139,250,0.15);
 
-            /* backgrounds — richer deep-space palette */
             --body-bg: #06040f;
             --bg-mesh-1: radial-gradient(ellipse 90% 65% at 15% 8%,  rgba(139,92,246,0.30) 0%, transparent 65%);
             --bg-mesh-2: radial-gradient(ellipse 65% 85% at 85% 85%, rgba(34,211,238,0.18) 0%, transparent 65%);
             --bg-mesh-3: radial-gradient(ellipse 55% 55% at 50% 55%, rgba(244,114,182,0.10) 0%, transparent 72%);
             --bg-mesh-4: radial-gradient(ellipse 40% 40% at 80% 15%,  rgba(99,102,241,0.15) 0%, transparent 60%);
 
-            /* header */
             --header-bg: rgba(255,255,255,0.035);
             --header-border: rgba(167,139,250,0.18);
             --header-shadow: 0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.06);
 
-            /* cards */
             --card-hover-border: rgba(167,139,250,0.45);
             --card-hover-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px rgba(139,92,246,0.25);
 
-            /* auth modal */
             --modal-bg: #0e0c22;
             --modal-border: rgba(167,139,250,0.15);
             --input-bg: rgba(255,255,255,0.05);
@@ -84,33 +78,28 @@
             --input-focus-border: rgba(167,139,250,0.6);
             --input-focus-shadow: 0 0 0 3px rgba(139,92,246,0.18);
 
-            /* scrollbar */
             --scrollbar-track: #0e0c22;
             --scrollbar-thumb: #3b2f6e;
             --scrollbar-thumb-hover: #5b21b6;
 
-            /* theme toggle */
             --toggle-bg: rgba(167,139,250,0.12);
             --toggle-border: rgba(167,139,250,0.25);
             --toggle-hover: rgba(167,139,250,0.22);
 
-            /* text in hero */
             --hero-text: rgba(255,255,255,0.90);
             --hero-sub: rgba(255,255,255,0.60);
             --stat-label: rgba(255,255,255,0.45);
             --section-sub: rgba(255,255,255,0.50);
 
-            /* footer */
             --footer-color: rgba(255,255,255,0.30);
             --footer-border: rgba(255,255,255,0.06);
             --footer-link: rgba(255,255,255,0.50);
         }
 
         /* ======================================================
-           LIGHT THEME — clean "aurora on white" aesthetic
+           LIGHT THEME
            ====================================================== */
         [data-theme="light"] {
-            /* palette */
             --primary: #6d28d9;
             --primary-light: #7c3aed;
             --primary-dark: #4c1d95;
@@ -119,7 +108,6 @@
             --glow-purple: rgba(109,40,217,0.20);
             --glow-cyan: rgba(8,145,178,0.15);
 
-            /* surface */
             --dark: #1e1b4b;
             --light: #fafbff;
             --gray: #f1f5fb;
@@ -129,23 +117,19 @@
             --card-bg: rgba(255,255,255,0.75);
             --card-border: rgba(109,40,217,0.12);
 
-            /* backgrounds — soft daylight with aurora undertones */
             --body-bg: #f4f6ff;
             --bg-mesh-1: radial-gradient(ellipse 80% 60% at 10% 5%,  rgba(139,92,246,0.12) 0%, transparent 65%);
             --bg-mesh-2: radial-gradient(ellipse 60% 75% at 90% 90%, rgba(8,145,178,0.10) 0%, transparent 65%);
             --bg-mesh-3: radial-gradient(ellipse 50% 50% at 55% 50%, rgba(219,39,119,0.06) 0%, transparent 70%);
             --bg-mesh-4: radial-gradient(ellipse 45% 45% at 75% 10%, rgba(99,102,241,0.08) 0%, transparent 60%);
 
-            /* header */
             --header-bg: rgba(255,255,255,0.70);
             --header-border: rgba(109,40,217,0.14);
             --header-shadow: 0 4px 24px rgba(109,40,217,0.08), 0 1px 0 rgba(255,255,255,0.9) inset;
 
-            /* cards */
             --card-hover-border: rgba(109,40,217,0.30);
             --card-hover-shadow: 0 16px 48px rgba(109,40,217,0.12), 0 0 0 1px rgba(109,40,217,0.20);
 
-            /* auth modal */
             --modal-bg: #ffffff;
             --modal-border: rgba(109,40,217,0.14);
             --input-bg: rgba(109,40,217,0.04);
@@ -154,23 +138,19 @@
             --input-focus-border: rgba(109,40,217,0.55);
             --input-focus-shadow: 0 0 0 3px rgba(109,40,217,0.12);
 
-            /* scrollbar */
             --scrollbar-track: #eef0fa;
             --scrollbar-thumb: #c4b5fd;
             --scrollbar-thumb-hover: #7c3aed;
 
-            /* theme toggle */
             --toggle-bg: rgba(109,40,217,0.10);
             --toggle-border: rgba(109,40,217,0.20);
             --toggle-hover: rgba(109,40,217,0.18);
 
-            /* text */
             --hero-text: #1e1b4b;
             --hero-sub: #4a5568;
             --stat-label: #64748b;
             --section-sub: #4a5568;
 
-            /* footer */
             --footer-color: #64748b;
             --footer-border: rgba(109,40,217,0.10);
             --footer-link: #7c3aed;
@@ -188,11 +168,24 @@
             transition: var(--theme-transition);
         }
 
-        /* ── scrollbar ── */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: var(--scrollbar-track, #0a0812); }
         ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb, #3b2f6e); border-radius: 99px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover, #5b21b6); }
+
+        /* ===== 3D CANVAS LAYER ===== */
+        #webgl-bg {
+            position: fixed; top: 0; left: 0;
+            width: 100%; height: 100%; z-index: -3;
+            opacity: 0; transition: opacity 1.4s ease;
+        }
+        #webgl-bg.ready { opacity: 1; }
+        #webgl-hero-canvas {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            cursor: grab;
+        }
+        #webgl-hero-canvas:active { cursor: grabbing; }
 
         /* ===== ANIMATED BACKGROUND ===== */
         .animated-bg {
@@ -221,6 +214,8 @@
                 linear-gradient(90deg, rgba(130,100,255,0.04) 1px, transparent 1px);
             background-size: 60px 60px;
             transition: opacity 0.5s;
+            mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, black 0%, transparent 75%);
+            -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, black 0%, transparent 75%);
         }
         [data-theme="light"] .bg-grid {
             background-image:
@@ -231,11 +226,18 @@
             position: absolute; width: 100%; height: 100%; opacity: 0.03;
             background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
         }
-
-        /* ── LIGHT: subtle warm paper texture overlay ── */
         [data-theme="light"] .bg-noise { opacity: 0.025; }
 
-        /* ===== PARTICLES ===== */
+        /* ===== SCAN LINE SWEEP ===== */
+        .scan-sweep {
+            position: fixed; top: 0; left: -100%; width: 40%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(34,211,238,0.04), transparent);
+            z-index: -1; pointer-events: none;
+            animation: scanSweep 9s linear infinite;
+        }
+        @keyframes scanSweep { 0%{left:-40%} 100%{left:110%} }
+
+        /* ===== PARTICLES (CSS fallback) ===== */
         .particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
         .particle {
             position: absolute; border-radius: 50%;
@@ -270,7 +272,7 @@
         [data-theme="light"] .theme-toggle i { color: var(--primary); }
 
         /* ===== CONTAINER ===== */
-        .container { max-width: 1300px; margin: 0 auto; padding: 24px; }
+        .container { max-width: 1300px; margin: 0 auto; padding: 24px; position: relative; }
 
         /* ===== NAVBAR ===== */
         .header {
@@ -296,7 +298,17 @@
             box-shadow: 0 0 20px var(--glow-purple);
             animation: logoPulse 3s ease-in-out infinite;
             transition: box-shadow 0.5s;
+            position: relative;
         }
+        .logo-icon::before {
+            content: '';
+            position: absolute; inset: -3px;
+            border-radius: 15px;
+            background: conic-gradient(from 0deg, #7c3aed, #00e6ff, #ff6b9d, #7c3aed);
+            z-index: -1; opacity: 0.6;
+            animation: iconRimSpin 4s linear infinite;
+        }
+        @keyframes iconRimSpin { to { transform: rotate(360deg); } }
         @keyframes logoPulse {
             0%,100% { box-shadow: 0 0 20px var(--glow-purple); }
             50%      { box-shadow: 0 0 35px var(--glow-cyan), 0 0 60px var(--glow-purple); }
@@ -309,6 +321,7 @@
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             background-clip: text;
             transition: var(--theme-transition);
+            letter-spacing: -0.3px;
         }
 
         /* ===== HERO ===== */
@@ -330,12 +343,13 @@
             letter-spacing: 1.5px; text-transform: uppercase;
             margin-bottom: 20px;
             transition: var(--theme-transition);
+            font-family: 'Space Grotesk', sans-serif;
         }
         [data-theme="light"] .hero-eyebrow {
             background: rgba(109,40,217,0.08);
             border-color: rgba(109,40,217,0.25);
         }
-        .hero-eyebrow span { width: 6px; height: 6px; background: var(--accent, #00e6ff); border-radius: 50%; animation: blink 1.5s ease-in-out infinite; }
+        .hero-eyebrow span { width: 6px; height: 6px; background: var(--accent, #00e6ff); border-radius: 50%; animation: blink 1.5s ease-in-out infinite; box-shadow: 0 0 8px var(--accent); }
         @keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0.2;} }
 
         .hero-content h1 {
@@ -352,6 +366,8 @@
             background-clip: text;
             background-size: 200%;
             animation: gradWord 4s ease-in-out infinite alternate;
+            position: relative;
+            display: inline-block;
         }
         [data-theme="light"] .hero-content h1 .gradient-word {
             background: linear-gradient(135deg, #6d28d9, #0891b2, #db2777);
@@ -377,7 +393,16 @@
             box-shadow: 0 8px 30px var(--glow-purple);
             display: inline-flex; align-items: center; gap: 8px;
             font-family: 'DM Sans', sans-serif;
+            position: relative; overflow: hidden;
         }
+        .btn-primary-hero::before {
+            content: '';
+            position: absolute; top: 0; left: -60%; width: 40%; height: 100%;
+            background: linear-gradient(120deg, transparent, rgba(255,255,255,0.35), transparent);
+            transform: skewX(-20deg);
+            transition: left 0.6s ease;
+        }
+        .btn-primary-hero:hover::before { left: 130%; }
         .btn-primary-hero:hover { transform: translateY(-3px); box-shadow: 0 14px 40px var(--glow-purple); }
         .btn-secondary-hero {
             padding: 14px 32px;
@@ -413,7 +438,7 @@
         }
         .stat-label { font-size: 12px; color: var(--stat-label, rgba(255,255,255,0.5)); margin-top: 4px; letter-spacing: 0.5px; transition: color 0.5s; }
 
-        /* ===== HERO ANIMATION SIDE ===== */
+        /* ===== HERO 3D ANIMATION SIDE ===== */
         .hero-animation {
             position: relative; height: 460px;
             display: flex; align-items: center; justify-content: center;
@@ -435,45 +460,25 @@
             50%      { transform: translateY(-20px) scale(1.05); }
         }
 
-        .animated-logo {
-            position: relative; width: 280px; height: 280px;
+        .hero-3d-stage {
+            position: relative; width: 100%; height: 100%;
             display: flex; align-items: center; justify-content: center;
             z-index: 2;
         }
-        .logo-ring {
-            position: absolute; border-radius: 50%;
-            border: 1px solid transparent;
+        #hero-canvas-wrap {
+            width: 340px; height: 340px;
+            position: relative;
         }
-        .ring1 {
-            width: 100%; height: 100%;
-            border-color: rgba(124,58,237,0.4);
-            border-top-color: #7c3aed;
-            animation: ringRotate 10s linear infinite;
-        }
-        .ring2 {
-            width: 78%; height: 78%;
-            border-color: rgba(0,230,255,0.3);
-            border-right-color: #00e6ff;
-            animation: ringRotate 7s linear infinite reverse;
-        }
-        .ring3 {
-            width: 56%; height: 56%;
-            border-color: rgba(255,107,157,0.25);
-            border-bottom-color: #ff6b9d;
-            animation: ringRotate 5s linear infinite;
-        }
-        [data-theme="light"] .ring1 { border-color: rgba(109,40,217,0.25); border-top-color: #6d28d9; }
-        [data-theme="light"] .ring2 { border-color: rgba(8,145,178,0.2); border-right-color: #0891b2; }
-        [data-theme="light"] .ring3 { border-color: rgba(219,39,119,0.18); border-bottom-color: #db2777; }
-        @keyframes ringRotate { to { transform: rotate(360deg); } }
+        #hero-canvas-wrap canvas { display: block; width: 100% !important; height: 100% !important; }
 
         .logo-center-wrap {
-            position: relative; z-index: 3;
-            width: 110px; height: 110px;
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+            z-index: 3; pointer-events: none;
+            width: 92px; height: 92px;
             background: var(--card-bg, rgba(255,255,255,0.06));
             backdrop-filter: blur(20px);
             border: 1px solid var(--card-border, rgba(255,255,255,0.15));
-            border-radius: 28px;
+            border-radius: 24px;
             display: flex; align-items: center; justify-content: center;
             box-shadow: 0 0 40px var(--glow-purple), inset 0 1px 0 rgba(255,255,255,0.1);
             animation: centerPulse 3s ease-in-out infinite;
@@ -483,9 +488,9 @@
             0%,100% { box-shadow: 0 0 40px var(--glow-purple), inset 0 1px 0 rgba(255,255,255,0.1); }
             50%      { box-shadow: 0 0 70px var(--glow-purple), 0 0 100px var(--glow-cyan), inset 0 1px 0 rgba(255,255,255,0.1); }
         }
-        .logo-center-wrap img { width: 70px; height: auto; }
+        .logo-center-wrap i { font-size: 40px; background: linear-gradient(135deg, var(--primary-light), var(--accent)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
 
-        /* floating cards around the logo */
+        /* floating cards around the 3D object */
         .float-card {
             position: absolute; z-index: 4;
             background: var(--card-bg, rgba(255,255,255,0.06));
@@ -501,10 +506,10 @@
         }
         [data-theme="light"] .float-card { box-shadow: 0 8px 28px rgba(109,40,217,0.12); }
         .float-card i { font-size: 16px; }
-        .fc1 { top: 6%;  left: -10%; animation-delay: 0s; }
-        .fc2 { bottom: 12%; left: -8%; animation-delay: 1s; }
-        .fc3 { top: 12%; right: -10%; animation-delay: 2s; }
-        .fc4 { bottom: 6%; right: -8%; animation-delay: 3s; }
+        .fc1 { top: 6%;  left: -6%; animation-delay: 0s; }
+        .fc2 { bottom: 12%; left: -4%; animation-delay: 1s; }
+        .fc3 { top: 12%; right: -6%; animation-delay: 2s; }
+        .fc4 { bottom: 6%; right: -4%; animation-delay: 3s; }
         @keyframes floatCard {
             0%,100% { transform: translateY(0); }
             50%      { transform: translateY(-8px); }
@@ -518,6 +523,7 @@
             text-transform: uppercase; color: var(--accent);
             margin-bottom: 12px;
             transition: color 0.5s;
+            font-family: 'Space Grotesk', sans-serif;
         }
         .section-title {
             font-family: 'Syne', sans-serif;
@@ -538,6 +544,7 @@
             border-radius: 24px; padding: 32px;
             transition: all 0.4s cubic-bezier(0.2,0.9,0.4,1);
             cursor: pointer; position: relative; overflow: hidden;
+            transform-style: preserve-3d;
         }
         [data-theme="light"] .feature-card { backdrop-filter: blur(12px); }
         .feature-card::before {
@@ -551,13 +558,14 @@
         .feature-card::after {
             content: '';
             position: absolute; inset: 0; border-radius: 24px;
-            background: radial-gradient(circle at 50% 0%, rgba(124,58,237,0.12), transparent 70%);
+            background: radial-gradient(circle at var(--mx,50%) var(--my,0%), rgba(124,58,237,0.15), transparent 60%);
             opacity: 0; transition: opacity 0.4s;
+            pointer-events: none;
         }
         [data-theme="light"] .feature-card::after {
-            background: radial-gradient(circle at 50% 0%, rgba(109,40,217,0.07), transparent 70%);
+            background: radial-gradient(circle at var(--mx,50%) var(--my,0%), rgba(109,40,217,0.09), transparent 60%);
         }
-        .feature-card:hover { transform: translateY(-8px); border-color: var(--card-hover-border, rgba(124,58,237,0.4)); box-shadow: var(--card-hover-shadow, 0 20px 60px rgba(0,0,0,0.3)); }
+        .feature-card:hover { transform: translateY(-8px) perspective(800px) rotateX(2deg); border-color: var(--card-hover-border, rgba(124,58,237,0.4)); box-shadow: var(--card-hover-shadow, 0 20px 60px rgba(0,0,0,0.3)); }
         .feature-card:hover::after { opacity: 1; }
 
         .feature-icon {
@@ -565,8 +573,9 @@
             border-radius: 16px; margin-bottom: 24px;
             display: flex; align-items: center; justify-content: center;
             font-size: 26px; position: relative;
-            transition: var(--theme-transition);
+            transition: var(--theme-transition), transform 0.4s cubic-bezier(0.2,0.9,0.4,1);
         }
+        .feature-card:hover .feature-icon { transform: scale(1.08) rotate(-4deg); }
         .fi-purple { background: rgba(124,58,237,0.2); color: #a78bfa; box-shadow: 0 0 20px rgba(124,58,237,0.3); }
         .fi-cyan   { background: rgba(0,230,255,0.15); color: #00e6ff; box-shadow: 0 0 20px rgba(0,230,255,0.2); }
         .fi-pink   { background: rgba(255,107,157,0.15); color: #ff6b9d; box-shadow: 0 0 20px rgba(255,107,157,0.2); }
@@ -596,7 +605,8 @@
         }
         [data-theme="light"] .tool-card { backdrop-filter: blur(12px); }
         .tool-card:hover { transform: translateY(-6px); border-color: var(--card-hover-border, rgba(0,230,255,0.3)); box-shadow: var(--card-hover-shadow, 0 20px 50px rgba(0,0,0,0.3)); }
-        .tool-icon { font-size: 32px; margin-bottom: 16px; display: block; }
+        .tool-icon { font-size: 32px; margin-bottom: 16px; display: block; transition: transform 0.4s cubic-bezier(0.2,0.9,0.4,1); }
+        .tool-card:hover .tool-icon { transform: scale(1.15) rotate(6deg); }
         .tool-card h4 { font-family: 'Syne', sans-serif; font-size: 17px; font-weight: 700; color: var(--hero-text, white); margin-bottom: 10px; transition: color 0.5s; }
         .tool-card p  { font-size: 13px; color: var(--section-sub, rgba(255,255,255,0.55)); line-height: 1.65; margin-bottom: 16px; transition: color 0.5s; }
         .tool-link {
@@ -850,6 +860,48 @@
             font-size: 12px; color: #6ee7b7;
         }
 
+        /* ===== OTP FIELD + RESEND TIMER ===== */
+        .otp-row { display:flex; gap:10px; }
+        .otp-row input { flex:1; letter-spacing: 3px; font-weight: 600; text-align: center; }
+        .otp-send-btn {
+            width: auto; padding: 0 18px; white-space: nowrap;
+            flex-shrink: 0; display: flex; align-items: center; justify-content: center; gap: 6px;
+            min-width: 118px;
+        }
+        .otp-send-btn.is-timing {
+            background: var(--card-bg, rgba(255,255,255,0.06));
+            border: 1px solid var(--card-border, rgba(255,255,255,0.15));
+            color: var(--section-sub, rgba(255,255,255,0.5));
+            box-shadow: none;
+            cursor: not-allowed;
+        }
+        .otp-timer-ring {
+            width: 16px; height: 16px; flex-shrink: 0;
+            transform: rotate(-90deg);
+        }
+        .otp-timer-ring circle {
+            fill: none; stroke-width: 2.4;
+        }
+        .otp-timer-ring .track { stroke: rgba(255,255,255,0.15); }
+        .otp-timer-ring .prog  { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset 1s linear; }
+        .otp-helper-text {
+            font-size: 11.5px; margin-top: 6px;
+            color: var(--section-sub, rgba(255,255,255,0.4));
+            display: flex; align-items: center; gap: 6px; min-height: 16px;
+        }
+        .otp-helper-text.attempt-warn { color: #f59e0b; }
+        .otp-resend-link {
+            color: var(--accent); font-weight: 600; cursor: pointer; text-decoration: none;
+            background: none; border: none; font-family: 'DM Sans', sans-serif; font-size: 11.5px; padding: 0;
+        }
+        .otp-resend-link:hover { text-decoration: underline; }
+        .otp-badge-verified {
+            display:inline-flex; align-items:center; gap:5px;
+            font-size: 11px; font-weight: 700; color: #10b981;
+            background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3);
+            padding: 3px 9px; border-radius: 20px; margin-left: 8px;
+        }
+
         /* ===== LOADING / EMPTY ===== */
         .loading { text-align: center; padding: 40px; color: var(--section-sub, rgba(255,255,255,0.5)); }
         .spinner {
@@ -882,7 +934,6 @@
         }
         .logout-btn:hover { background: var(--toggle-hover, rgba(255,255,255,0.15)); }
 
-        /* loading spinner inline */
         .loading-spinner {
             display: inline-block; width: 14px; height: 14px;
             border: 2px solid rgba(255,255,255,0.2);
@@ -942,10 +993,29 @@
             background: linear-gradient(135deg, #0a0812 0%, #13112a 100%);
             display: flex; align-items: center; justify-content: center;
             z-index: 10002; transition: opacity 0.8s cubic-bezier(0.2,0.9,0.4,1);
+            overflow: hidden;
         }
-        .entrance-inner { text-align: center; animation: entranceIn 0.9s cubic-bezier(0.2,0.9,0.4,1); }
+        #entranceOverlay::before {
+            content: '';
+            position: absolute; inset: 0;
+            background:
+                radial-gradient(ellipse 60% 50% at 30% 20%, rgba(124,58,237,0.25), transparent 60%),
+                radial-gradient(ellipse 50% 50% at 75% 80%, rgba(0,230,255,0.18), transparent 60%);
+            animation: meshShift 8s ease-in-out infinite alternate;
+        }
+        .entrance-inner { text-align: center; animation: entranceIn 0.9s cubic-bezier(0.2,0.9,0.4,1); position: relative; z-index: 2; }
         @keyframes entranceIn { from{transform:translateY(30px);opacity:0} to{transform:translateY(0);opacity:1} }
-        .entrance-logo { font-size: 6rem; margin-bottom: 1.2rem; animation: logoPulse2 1.5s infinite alternate; filter: drop-shadow(0 0 30px rgba(0,230,255,0.5)); }
+        .entrance-logo-ring {
+            width: 130px; height: 130px; margin: 0 auto 1.4rem;
+            position: relative;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .entrance-logo-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+        .entrance-logo-ring .rocket-core {
+            font-size: 3.2rem; color: #fff;
+            filter: drop-shadow(0 0 20px rgba(0,230,255,0.7));
+            animation: logoPulse2 1.5s infinite alternate;
+        }
         @keyframes logoPulse2 { 0%{filter:drop-shadow(0 0 10px rgba(0,230,255,0.3))} 100%{filter:drop-shadow(0 0 40px rgba(0,230,255,0.8))} }
         .entrance-title {
             font-family: 'Syne', sans-serif;
@@ -954,7 +1024,18 @@
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
             background-clip: text; margin-bottom: 0.5rem;
         }
-        .entrance-sub { font-size: 1.1rem; color: rgba(255,255,255,0.6); font-weight: 400; }
+        .entrance-sub { font-size: 1.1rem; color: rgba(255,255,255,0.6); font-weight: 400; letter-spacing: 0.3px; }
+        .entrance-loadbar {
+            width: 220px; height: 3px; margin: 28px auto 0;
+            background: rgba(255,255,255,0.08); border-radius: 99px; overflow: hidden;
+        }
+        .entrance-loadbar-fill {
+            height: 100%; width: 0%;
+            background: linear-gradient(90deg, #7c3aed, #00e6ff, #ff6b9d);
+            animation: entranceLoad 1.4s cubic-bezier(0.4,0,0.2,1) forwards;
+            border-radius: 99px;
+        }
+        @keyframes entranceLoad { from{width:0%} to{width:100%} }
 
         /* ===== THEME RIPPLE EFFECT ===== */
         .theme-ripple {
@@ -969,6 +1050,24 @@
             to { transform: scale(1); opacity: 0; }
         }
 
+        /* ===== SCROLL-REVEAL BASE (JS toggles .in-view) ===== */
+        .reveal-up {
+            opacity: 0; transform: translateY(28px);
+            transition: opacity 0.7s cubic-bezier(0.2,0.9,0.4,1), transform 0.7s cubic-bezier(0.2,0.9,0.4,1);
+        }
+        .reveal-up.in-view { opacity: 1; transform: translateY(0); }
+
+        /* ===== REDUCED MOTION ===== */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+                scroll-behavior: auto !important;
+            }
+            #webgl-bg { display: none !important; }
+        }
+
         /* ===== RESPONSIVE ===== */
         @media (max-width: 900px) {
             .hero { grid-template-columns: 1fr; text-align: center; gap: 40px; }
@@ -977,7 +1076,7 @@
             .hero-btns { justify-content: center; }
             .hero-stats { justify-content: center; }
             .hero-animation { height: 320px; }
-            .animated-logo { width: 220px; height: 220px; }
+            #hero-canvas-wrap { width: 260px; height: 260px; }
             .fc1,.fc2,.fc3,.fc4 { display: none; }
             .section-title { font-size: 30px; }
         }
@@ -991,7 +1090,6 @@
 
         /* ===== MOBILE RESPONSIVE — ADDED ===== */
 
-        /* 480px and below — small phones */
         @media (max-width: 480px) {
             .theme-toggle { top: 16px; right: 16px; width: 38px; height: 38px; }
             .theme-toggle i { font-size: 15px; }
@@ -1009,10 +1107,10 @@
             .stat { padding: 12px 16px; }
             .stat-number { font-size: 22px; }
             .stat-label { font-size: 11px; }
-            .hero-animation { height: 240px; }
-            .animated-logo { width: 170px; height: 170px; }
-            .logo-center-wrap { width: 82px; height: 82px; border-radius: 20px; }
-            .logo-center-wrap img { width: 52px; }
+            .hero-animation { height: 220px; }
+            #hero-canvas-wrap { width: 190px; height: 190px; }
+            .logo-center-wrap { width: 66px; height: 66px; border-radius: 18px; }
+            .logo-center-wrap i { font-size: 28px; }
             .orb1 { width: 160px; height: 160px; }
             .orb2 { width: 120px; height: 120px; }
             .orb3 { width: 90px; height: 90px; }
@@ -1049,6 +1147,7 @@
             .form-group input { padding: 11px 14px; font-size: 13px; }
             .auth-btn { padding: 12px; font-size: 14px; }
             .close-modal { font-size: 22px; top: 14px; right: 16px; }
+            .otp-send-btn { min-width: 96px; font-size: 12px; padding: 0 12px; }
             .maint-body { padding: 10px 12px; gap: 8px; }
             .maint-headline { font-size: 0.8rem; }
             .maint-sub { font-size: 0.72rem; }
@@ -1057,10 +1156,11 @@
             .footer { padding: 24px 16px; font-size: 12px; }
             .entrance-title { font-size: 2rem; }
             .entrance-sub { font-size: 0.9rem; }
+            .entrance-logo-ring { width: 100px; height: 100px; }
+            .entrance-logo-ring .rocket-core { font-size: 2.4rem; }
             .container { padding: 12px; }
         }
 
-        /* 481px – 768px — large phones / small tablets */
         @media (min-width: 481px) and (max-width: 768px) {
             .theme-toggle { top: 18px; right: 18px; }
             .header { padding: 12px 18px; border-radius: 16px; margin-bottom: 40px; }
@@ -1070,10 +1170,8 @@
             .hero-btns { justify-content: center; flex-wrap: wrap; gap: 12px; }
             .hero-stats { justify-content: center; }
             .stat { padding: 14px 20px; }
-            .hero-animation { height: 280px; }
-            .animated-logo { width: 200px; height: 200px; }
-            .logo-center-wrap { width: 94px; height: 94px; }
-            .logo-center-wrap img { width: 60px; }
+            .hero-animation { height: 260px; }
+            #hero-canvas-wrap { width: 220px; height: 220px; }
             .fc1,.fc2,.fc3,.fc4 { display: none; }
             .features-grid { grid-template-columns: 1fr 1fr; gap: 18px; }
             .feature-card { padding: 24px; }
@@ -1084,21 +1182,19 @@
             .cta h2 { font-size: 30px; }
         }
 
-        /* 769px – 900px — tablets */
         @media (min-width: 769px) and (max-width: 900px) {
             .hero { grid-template-columns: 1fr; gap: 40px; text-align: center; }
             .hero-content h1 { font-size: 38px; }
             .hero-btns { justify-content: center; }
             .hero-stats { justify-content: center; }
             .hero-animation { height: 300px; }
-            .animated-logo { width: 210px; height: 210px; }
+            #hero-canvas-wrap { width: 240px; height: 240px; }
             .fc1,.fc2,.fc3,.fc4 { display: none; }
             .features-grid { grid-template-columns: 1fr 1fr; }
             .tools-grid { grid-template-columns: 1fr 1fr; }
             .top-users-grid { grid-template-columns: repeat(3, 1fr); }
         }
 
-        /* Touch device improvements */
         @media (hover: none) and (pointer: coarse) {
             .btn-primary-hero, .btn-secondary-hero, .cta-btn, .auth-btn { min-height: 48px; }
             .feature-card:hover, .tool-card:hover, .top-user-card:hover { transform: none; }
@@ -1108,21 +1204,19 @@
             .tool-link { padding: 4px 0; }
         }
 
-        /* Safe-area insets for iOS notch / home bar */
         @supports (padding: env(safe-area-inset-bottom)) {
             .footer { padding-bottom: calc(24px + env(safe-area-inset-bottom)); }
             .auth-container { padding-bottom: calc(28px + env(safe-area-inset-bottom)); }
             #maintenanceWarning { padding-top: env(safe-area-inset-top); }
         }
 
-        /* Landscape phone — constrain hero height */
         @media (max-width: 900px) and (orientation: landscape) and (max-height: 500px) {
             .hero { margin-bottom: 40px; }
             .hero-animation { height: 200px; }
             .hero-content h1 { font-size: 28px; }
             .hero-content p { margin-bottom: 16px; }
             .hero-btns { margin-bottom: 20px; }
-            .animated-logo { width: 150px; height: 150px; }
+            #hero-canvas-wrap { width: 160px; height: 160px; }
         }
     </style>
 </head>
@@ -1163,16 +1257,37 @@
     <!-- ENTRANCE OVERLAY -->
     <div id="entranceOverlay">
         <div class="entrance-inner">
-            <div class="entrance-logo">
-                <img src="logo half.png" alt="Sarveik  Logo" style="width:110px;">
+            <div class="entrance-logo-ring">
+                <svg viewBox="0 0 130 130">
+                    <defs>
+                        <linearGradient id="entranceRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#7c3aed"/>
+                            <stop offset="50%" stop-color="#00e6ff"/>
+                            <stop offset="100%" stop-color="#ff6b9d"/>
+                        </linearGradient>
+                    </defs>
+                    <circle cx="65" cy="65" r="58" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="2"/>
+                    <circle cx="65" cy="65" r="58" fill="none" stroke="url(#entranceRingGrad)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="120 300">
+                        <animateTransform attributeName="transform" type="rotate" from="0 65 65" to="360 65 65" dur="2.6s" repeatCount="indefinite"/>
+                    </circle>
+                    <circle cx="65" cy="65" r="44" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1.5"/>
+                    <circle cx="65" cy="65" r="44" fill="none" stroke="#00e6ff" stroke-width="1.5" stroke-linecap="round" stroke-dasharray="60 220" opacity="0.7">
+                        <animateTransform attributeName="transform" type="rotate" from="360 65 65" to="0 65 65" dur="1.8s" repeatCount="indefinite"/>
+                    </circle>
+                </svg>
+                <i class="fas fa-rocket rocket-core"></i>
             </div>
-            <div class="entrance-title">Welcome to Sarveik </div>
+            <div class="entrance-title">Welcome to Sarveik</div>
             <div class="entrance-sub">Your AI‑Powered Hub for Tools &amp; Innovation</div>
+            <div class="entrance-loadbar"><div class="entrance-loadbar-fill"></div></div>
         </div>
     </div>
 
     <!-- THEME TOGGLE -->
     <div class="theme-toggle" onclick="toggleTheme(event)"><i class="fas fa-moon"></i></div>
+
+    <!-- 3D WEBGL BACKGROUND -->
+    <div id="webgl-bg"><canvas id="webgl-bg-canvas"></canvas></div>
 
     <!-- ANIMATED BACKGROUND -->
     <div class="animated-bg">
@@ -1180,6 +1295,7 @@
         <div class="bg-grid"></div>
         <div class="bg-noise"></div>
     </div>
+    <div class="scan-sweep"></div>
     <div class="particles" id="particles"></div>
 
     <!-- MAIN CONTENT -->
@@ -1189,7 +1305,7 @@
         <div class="header">
             <div class="logo">
                 <div class="logo-icon"><i class="fas fa-rocket"></i></div>
-                <h1>Sarveik </h1>
+                <h1>Sarveik</h1>
             </div>
             <div id="authHeaderBtn"></div>
         </div>
@@ -1209,22 +1325,18 @@
                     </button>
                 </div>
                 <div class="hero-stats">
-                    <div class="stat"><div class="stat-number">10K+</div><div class="stat-label">Active Users</div></div>
-                    <div class="stat"><div class="stat-number">500+</div><div class="stat-label">Tools</div></div>
-                    <div class="stat"><div class="stat-number">99.9%</div><div class="stat-label">Uptime</div></div>
+                    <div class="stat"><div class="stat-number" data-count="10000" data-suffix="+">0</div><div class="stat-label">Active Users</div></div>
+                    <div class="stat"><div class="stat-number" data-count="500" data-suffix="+">0</div><div class="stat-label">Tools</div></div>
+                    <div class="stat"><div class="stat-number" data-count="99.9" data-suffix="%" data-decimal="1">0</div><div class="stat-label">Uptime</div></div>
                 </div>
             </div>
             <div class="hero-animation">
                 <div class="hero-orb orb1"></div>
                 <div class="hero-orb orb2"></div>
                 <div class="hero-orb orb3"></div>
-                <div class="animated-logo">
-                    <div class="logo-ring ring1"></div>
-                    <div class="logo-ring ring2"></div>
-                    <div class="logo-ring ring3"></div>
-                    <div class="logo-center-wrap">
-                        <img src="logo half.png" alt="Sarveik  Logo">
-                    </div>
+                <div class="hero-3d-stage">
+                    <div id="hero-canvas-wrap"></div>
+                    <div class="logo-center-wrap"><i class="fas fa-rocket"></i></div>
                 </div>
                 <div class="float-card fc1"><i class="fas fa-bolt" style="color:#fbbf24;"></i> 500+ AI Tools</div>
                 <div class="float-card fc2"><i class="fas fa-users" style="color:#00e6ff;"></i> 10K+ Users</div>
@@ -1235,38 +1347,38 @@
 
         <!-- FEATURES -->
         <div class="features">
-            <div class="section-header">
-                <div class="section-tag">Why Sarveik </div>
+            <div class="section-header reveal-up">
+                <div class="section-tag">Why Sarveik</div>
                 <div class="section-title">Everything You Need to <span class="accent">Succeed</span></div>
                 <div class="section-sub">Powerful features built for modern teams and professionals</div>
             </div>
             <div class="features-grid">
-                <div class="feature-card">
+                <div class="feature-card reveal-up">
                     <div class="feature-icon fi-cyan"><i class="fas fa-users"></i></div>
                     <h3>Team Collaboration</h3>
                     <p>Real-time messaging, file sharing, and collaborative tools to keep your team connected and productive.</p>
                 </div>
-                <div class="feature-card">
+                <div class="feature-card reveal-up">
                     <div class="feature-icon fi-purple"><i class="fas fa-robot"></i></div>
                     <h3>AI-Powered Tools</h3>
                     <p>Leverage cutting-edge AI tools for content generation, data analysis, and workflow automation.</p>
                 </div>
-                <div class="feature-card">
+                <div class="feature-card reveal-up">
                     <div class="feature-icon fi-pink"><i class="fas fa-shield-alt"></i></div>
                     <h3>Enterprise Security</h3>
                     <p>Bank-level encryption, two-factor authentication, and advanced access controls to protect your data.</p>
                 </div>
-                <div class="feature-card">
+                <div class="feature-card reveal-up">
                     <div class="feature-icon fi-green"><i class="fas fa-chart-line"></i></div>
                     <h3>Analytics Dashboard</h3>
                     <p>Comprehensive analytics and insights to track performance, engagement, and growth metrics.</p>
                 </div>
-                <div class="feature-card">
+                <div class="feature-card reveal-up">
                     <div class="feature-icon fi-blue"><i class="fas fa-cloud-upload-alt"></i></div>
                     <h3>Cloud Integration</h3>
                     <p>Seamless integration with major cloud providers and third-party services you already use.</p>
                 </div>
-                <div class="feature-card">
+                <div class="feature-card reveal-up">
                     <div class="feature-icon fi-amber"><i class="fas fa-headset"></i></div>
                     <h3>24/7 Support</h3>
                     <p>Round-the-clock customer support and dedicated account managers for enterprise clients.</p>
@@ -1275,39 +1387,39 @@
         </div>
 
         <!-- CTA -->
-        <div class="cta">
+        <div class="cta reveal-up">
             <h2>Ready to Transform Your Workflow?</h2>
-            <p>Join thousands of professionals already using Sarveik  to supercharge their productivity.</p>
+            <p>Join thousands of professionals already using Sarveik to supercharge their productivity.</p>
             <button class="cta-btn" onclick="openAuthModal()"><i class="fas fa-rocket"></i> Start Your Journey Today</button>
         </div>
 
         <!-- TOOLS -->
         <div class="tools">
-            <div class="section-header">
+            <div class="section-header reveal-up">
                 <div class="section-tag">Popular Tools</div>
                 <div class="section-title">Built for <span class="accent">Power Users</span></div>
-                <div class="section-sub">Discover the most-used tools on Sarveik </div>
+                <div class="section-sub">Discover the most-used tools on Sarveik</div>
             </div>
             <div class="tools-grid" id="tools-grid">
-                <div class="tool-card">
+                <div class="tool-card reveal-up">
                     <span class="tool-icon">🧠</span>
                     <h4>AI Writer Pro</h4>
                     <p>Generate high-quality content with advanced AI algorithms. Perfect for blogs, articles, and marketing copy.</p>
                     <a href="#" class="tool-link">Learn More <i class="fas fa-arrow-right"></i></a>
                 </div>
-                <div class="tool-card">
+                <div class="tool-card reveal-up">
                     <span class="tool-icon">📊</span>
                     <h4>Data Analyzer</h4>
                     <p>Transform raw data into actionable insights with our powerful analytics engine.</p>
                     <a href="#" class="tool-link">Learn More <i class="fas fa-arrow-right"></i></a>
                 </div>
-                <div class="tool-card">
+                <div class="tool-card reveal-up">
                     <span class="tool-icon">🎥</span>
                     <h4>Meeting Hub</h4>
                     <p>HD video conferencing with screen sharing, recording, and real-time transcription.</p>
                     <a href="#" class="tool-link">Learn More <i class="fas fa-arrow-right"></i></a>
                 </div>
-                <div class="tool-card">
+                <div class="tool-card reveal-up">
                     <span class="tool-icon">📋</span>
                     <h4>Project Manager</h4>
                     <p>Agile project management with Kanban boards, sprints, and detailed reporting.</p>
@@ -1318,10 +1430,10 @@
 
         <!-- TOP USERS -->
         <div class="top-users">
-            <div class="section-header">
+            <div class="section-header reveal-up">
                 <div class="section-tag">Leaderboard</div>
                 <div class="section-title">🏆 Top <span class="accent">5 Players</span> by Level</div>
-                <div class="section-sub">The highest-ranked members on Sarveik </div>
+                <div class="section-sub">The highest-ranked members on Sarveik</div>
             </div>
             <div id="topUsersContainer" class="top-users-grid">
                 <div class="loading"><div class="spinner"></div> Loading top players...</div>
@@ -1330,7 +1442,7 @@
 
         <!-- FOOTER -->
         <div class="footer">
-            <p>&copy; 2024 Sarveik . All rights reserved. &nbsp;|&nbsp;
+            <p>&copy; 2024 Sarveik. All rights reserved. &nbsp;|&nbsp;
                <a href="privacy.html">Privacy Policy</a> &nbsp;|&nbsp;
                <a href="terms.html">Terms of Service</a>
             </p>
@@ -1347,7 +1459,7 @@
                         <i class="fas fa-rocket" style="font-size:18px;"></i>
                     </div>
                 </div>
-                <h2>Welcome to Sarveik </h2>
+                <h2>Welcome to Sarveik</h2>
                 <p>Sign in to access your workspace</p>
             </div>
             <div class="auth-tabs">
@@ -1384,7 +1496,7 @@
                     <div id="username-validation" class="validation-message"></div>
                 </div>
                 <div class="form-group">
-                    <input type="email" id="signup-email" placeholder="Email" autocomplete="email">
+                    <input type="email" id="signup-email" placeholder="Email" autocomplete="email" oninput="onSignupEmailChange()">
                 </div>
                 <div class="form-group">
                     <div class="password-wrapper">
@@ -1403,10 +1515,13 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <div style="display:flex;gap:10px;">
-                        <input type="text" id="signup-otp" placeholder="Enter OTP" style="flex:1;">
-                        <button class="auth-btn" style="width:auto;padding:12px 20px;" onclick="sendOTP()" id="send-otp-btn">Send OTP</button>
+                    <div class="otp-row">
+                        <input type="text" id="signup-otp" placeholder="Enter OTP" inputmode="numeric" maxlength="6">
+                        <button class="auth-btn otp-send-btn" onclick="sendOTP()" id="send-otp-btn">
+                            <span id="send-otp-btn-label">Send OTP</span>
+                        </button>
                     </div>
+                    <div class="otp-helper-text" id="otp-helper-text"></div>
                 </div>
 
                 <!-- REFERRAL CODE FIELD -->
@@ -1439,7 +1554,13 @@
                 </div>
                 <div id="forgot-step2" style="display:none;">
                     <div class="form-group">
-                        <input type="text" id="reset-otp" placeholder="Enter OTP received via email">
+                        <div class="otp-row">
+                            <input type="text" id="reset-otp" placeholder="Enter OTP received via email" inputmode="numeric" maxlength="6">
+                            <button class="auth-btn otp-send-btn" onclick="resendResetOtp()" id="resend-reset-otp-btn">
+                                <span id="resend-reset-otp-btn-label">Resend</span>
+                            </button>
+                        </div>
+                        <div class="otp-helper-text" id="reset-otp-helper-text"></div>
                     </div>
                     <div class="form-group">
                         <div class="password-wrapper">
@@ -1486,7 +1607,6 @@
             const icon = document.querySelector('.theme-toggle i');
             const isDark = html.getAttribute('data-theme') === 'dark';
 
-            /* ripple */
             if(event){
                 const ripple = document.createElement('div');
                 const size = Math.max(window.innerWidth, window.innerHeight) * 2.5;
@@ -1504,19 +1624,19 @@
             if(isDark){
                 html.setAttribute('data-theme','light');
                 icon.classList.replace('fa-sun','fa-moon');
-                /* switch to sun icon for dark mode */
                 icon.className = 'fas fa-sun';
                 localStorage.setItem('nova_theme','light');
                 updateParticleColors(false);
+                if(window.__sarveikScene) window.__sarveikScene.setTheme('light');
             } else {
                 html.setAttribute('data-theme','dark');
                 icon.className = 'fas fa-moon';
                 localStorage.setItem('nova_theme','dark');
                 updateParticleColors(true);
+                if(window.__sarveikScene) window.__sarveikScene.setTheme('dark');
             }
         }
 
-        /* update particle colours for light/dark */
         function updateParticleColors(isDark){
             const particles = document.querySelectorAll('.particle');
             const darkColors  = ['rgba(124,58,237,0.6)','rgba(0,230,255,0.5)','rgba(255,107,157,0.4)','rgba(167,139,250,0.5)'];
@@ -1549,7 +1669,209 @@
         function openAuthModal(){ document.getElementById('authModal').style.display='block'; document.body.style.overflow='hidden'; switchAuthTab('login'); const remembered=localStorage.getItem('nova_remember'); if(remembered){ const {username}=JSON.parse(remembered); if(username) document.getElementById('login-username').value=username; document.getElementById('rememberCheckbox').checked=true; } }
         function closeAuthModal(){ document.getElementById('authModal').style.display='none'; document.body.style.overflow='auto'; clearMessage(); }
         window.onclick=function(e){ if(e.target===document.getElementById('authModal')) closeAuthModal(); };
-        async function sendOTP(){ const email=document.getElementById('signup-email').value; const btn=document.getElementById('send-otp-btn'); if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showMessage('Valid email required'); btn.disabled=true; btn.innerHTML='Sending... <span class="loading-spinner"></span>'; try{ await apiCall('/send-otp',{method:'POST',body:JSON.stringify({email})}); showMessage('OTP sent!',false); }catch(e){ showMessage(e.message); }finally{ btn.disabled=false; btn.innerHTML='Send OTP'; } }
+
+        /* ================================================================
+           OTP RESEND TIMER SYSTEM
+           - Circular countdown ring rendered inline as SVG
+           - Separate cooldown timers for signup-OTP and reset-password-OTP
+           - Escalating cooldown after repeated resends (30s → 60s → 120s cap)
+           - Persists across modal close/reopen via sessionStorage so a user
+             can't dodge the cooldown by closing and reopening the modal
+           ================================================================ */
+        const OTP_COOLDOWN_STEPS = [30, 60, 90, 120]; // seconds, caps at last value
+        const OTP_TIMER_STORE_KEY = 'sarveik_otp_timers';
+
+        function loadOtpTimerStore(){
+            try { return JSON.parse(sessionStorage.getItem(OTP_TIMER_STORE_KEY) || '{}'); }
+            catch(e){ return {}; }
+        }
+        function saveOtpTimerStore(store){
+            try { sessionStorage.setItem(OTP_TIMER_STORE_KEY, JSON.stringify(store)); } catch(e){}
+        }
+
+        function buildRingSVG(){
+            const r = 7;
+            const c = 2 * Math.PI * r;
+            return `<svg class="otp-timer-ring" viewBox="0 0 16 16">
+                <circle class="track" cx="8" cy="8" r="${r}"/>
+                <circle class="prog" cx="8" cy="8" r="${r}" stroke-dasharray="${c.toFixed(2)}" stroke-dashoffset="0"/>
+            </svg>`;
+        }
+
+        function makeOtpTimerController(config){
+            const {
+                storeKey,          // key inside OTP_TIMER_STORE_KEY store, e.g. 'signup' / 'reset'
+                btnId,              // button element id
+                btnLabelId,         // inner label span id
+                helperId,           // helper text container id
+                onFire,             // async function() -> should send/resend the OTP; return true on success
+                actionLabel = 'Send OTP',
+                resendLabel = 'Resend'
+            } = config;
+
+            let intervalHandle = null;
+
+            function getState(){
+                const store = loadOtpTimerStore();
+                return store[storeKey] || { resendCount: 0, cooldownUntil: 0 };
+            }
+            function setState(state){
+                const store = loadOtpTimerStore();
+                store[storeKey] = state;
+                saveOtpTimerStore(store);
+            }
+
+            function cooldownDurationFor(count){
+                const idx = Math.min(count, OTP_COOLDOWN_STEPS.length - 1);
+                return OTP_COOLDOWN_STEPS[idx];
+            }
+
+            function renderIdle(hasSentBefore){
+                const btn = document.getElementById(btnId);
+                const label = document.getElementById(btnLabelId);
+                const helper = document.getElementById(helperId);
+                if(!btn) return;
+                btn.disabled = false;
+                btn.classList.remove('is-timing');
+                label.innerHTML = hasSentBefore ? resendLabel : actionLabel;
+                if(helper){
+                    helper.classList.remove('attempt-warn');
+                    helper.innerHTML = hasSentBefore
+                        ? '<i class="fas fa-check-circle" style="color:#10b981;"></i> Code delivered — didn&rsquo;t get it? You can resend now.'
+                        : '';
+                }
+            }
+
+            function renderTicking(remainingSeconds, totalSeconds){
+                const btn = document.getElementById(btnId);
+                const label = document.getElementById(btnLabelId);
+                const helper = document.getElementById(helperId);
+                if(!btn) return;
+                btn.disabled = true;
+                btn.classList.add('is-timing');
+                const r = 7, c = 2*Math.PI*r;
+                const progressFrac = Math.max(0, remainingSeconds / totalSeconds);
+                label.innerHTML = `${buildRingSVG()}<span>${remainingSeconds}s</span>`;
+                const ring = btn.querySelector('.prog');
+                if(ring){ ring.style.strokeDashoffset = (c * (1 - progressFrac)).toFixed(2); }
+                if(helper){
+                    if(remainingSeconds <= 10){
+                        helper.classList.add('attempt-warn');
+                        helper.innerHTML = `<i class="fas fa-hourglass-half"></i> Almost there — resend unlocks in ${remainingSeconds}s`;
+                    } else {
+                        helper.classList.remove('attempt-warn');
+                        helper.innerHTML = `<i class="fas fa-clock"></i> You can request a new code in <strong>${remainingSeconds}s</strong>`;
+                    }
+                }
+            }
+
+            function tick(){
+                const state = getState();
+                const remainingMs = state.cooldownUntil - Date.now();
+                if(remainingMs <= 0){
+                    stop();
+                    renderIdle(state.resendCount > 0);
+                    return;
+                }
+                const totalSeconds = cooldownDurationFor(Math.max(0, state.resendCount - 1));
+                const remainingSeconds = Math.ceil(remainingMs / 1000);
+                renderTicking(remainingSeconds, totalSeconds);
+            }
+
+            function stop(){
+                if(intervalHandle){ clearInterval(intervalHandle); intervalHandle = null; }
+            }
+
+            function start(){
+                stop();
+                tick();
+                intervalHandle = setInterval(tick, 1000);
+            }
+
+            async function trigger(){
+                const state = getState();
+                const now = Date.now();
+                if(state.cooldownUntil > now){ return; } // still cooling down, ignore
+                const btn = document.getElementById(btnId);
+                const label = document.getElementById(btnLabelId);
+                if(btn){ btn.disabled = true; label.innerHTML = 'Sending... <span class="loading-spinner"></span>'; }
+                let success = false;
+                try {
+                    success = await onFire();
+                } catch(e) {
+                    success = false;
+                }
+                const newCount = state.resendCount + 1;
+                const duration = cooldownDurationFor(newCount - 1);
+                setState({ resendCount: newCount, cooldownUntil: Date.now() + duration*1000 });
+                start();
+            }
+
+            function init(){
+                const state = getState();
+                if(state.cooldownUntil > Date.now()){
+                    start();
+                } else {
+                    renderIdle(state.resendCount > 0);
+                }
+            }
+
+            function reset(){
+                setState({ resendCount: 0, cooldownUntil: 0 });
+                stop();
+                renderIdle(false);
+            }
+
+            return { init, trigger, reset };
+        }
+
+        const signupOtpTimer = makeOtpTimerController({
+            storeKey: 'signup',
+            btnId: 'send-otp-btn',
+            btnLabelId: 'send-otp-btn-label',
+            helperId: 'otp-helper-text',
+            actionLabel: 'Send OTP',
+            resendLabel: 'Resend OTP',
+            onFire: async () => {
+                const email = document.getElementById('signup-email').value;
+                if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+                    showMessage('Valid email required');
+                    return false;
+                }
+                try {
+                    await apiCall('/send-otp',{method:'POST',body:JSON.stringify({email})});
+                    showMessage('OTP sent!',false);
+                    return true;
+                } catch(e){
+                    showMessage(e.message);
+                    return false;
+                }
+            }
+        });
+
+        const resetOtpTimer = makeOtpTimerController({
+            storeKey: 'reset',
+            btnId: 'resend-reset-otp-btn',
+            btnLabelId: 'resend-reset-otp-btn-label',
+            helperId: 'reset-otp-helper-text',
+            actionLabel: 'Resend',
+            resendLabel: 'Resend',
+            onFire: async () => {
+                if(!resetEmailGlobal){ return false; }
+                try {
+                    await apiCall('/api/forgot-password',{method:'POST',body:JSON.stringify({email:resetEmailGlobal})});
+                    showMessage('New OTP sent!',false);
+                    return true;
+                } catch(e){
+                    showMessage(e.message);
+                    return false;
+                }
+            }
+        });
+
+        function sendOTP(){ signupOtpTimer.trigger(); }
+        function resendResetOtp(){ resetOtpTimer.trigger(); }
+        function onSignupEmailChange(){ /* no-op hook retained for future per-email cooldown keying */ }
 
         /* ── REFERRAL VALIDATION ── */
         let referralValidTimer = null;
@@ -1621,6 +1943,7 @@
                     ['signup-username','signup-email','signup-password','signup-confirm-password','signup-otp','signup-referral'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
                     document.getElementById('referral-validation').innerHTML='';
                     document.getElementById('referral-bonus-notice').style.display='none';
+                    signupOtpTimer.reset();
                 },2000);
             }catch(err){
                 let msg=err.message;
@@ -1630,8 +1953,8 @@
         }
 
         async function handleLogin(){ const id=document.getElementById('login-username').value; const pwd=document.getElementById('login-password').value; const remember=document.getElementById('rememberCheckbox').checked; const btn=document.getElementById('loginBtn'); if(!id||!pwd) return showMessage('Enter credentials'); btn.disabled=true; btn.innerHTML='Logging in... <span class="loading-spinner"></span>'; try{ await apiCall('/login',{method:'POST',body:JSON.stringify({username:id,password:pwd})}); const profile=await apiCall('/profile'); if(remember){ localStorage.setItem('nova_remember',JSON.stringify({username:id,role:profile.role})); } else localStorage.removeItem('nova_remember'); localStorage.setItem('nova_auth',JSON.stringify({username:profile.username,role:profile.role,timestamp:Date.now()})); if(profile.role==='admin') window.location.href='/admin-dashboard.html'; else if(profile.role==='moderator') window.location.href='/moderator-dashboard.html'; else window.location.href='/main.html'; }catch(err){ showMessage(err.message); btn.disabled=false; btn.innerHTML='Login'; } }
-        async function requestResetOtp(){ const email=document.getElementById('forgot-email').value; const btn=document.getElementById('request-otp-btn'); if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showMessage('Valid email required'); btn.disabled=true; btn.innerHTML='Sending...'; try{ await apiCall('/api/forgot-password',{method:'POST',body:JSON.stringify({email})}); resetEmailGlobal=email; showMessage('OTP sent!',false); document.getElementById('forgot-step1').style.display='none'; document.getElementById('forgot-step2').style.display='block'; }catch(e){ showMessage(e.message); }finally{ btn.disabled=false; btn.innerHTML='Send Reset OTP'; } }
-        async function resetPassword(){ const otp=document.getElementById('reset-otp').value; const newPwd=document.getElementById('new-password').value; const confirmPwd=document.getElementById('confirm-password').value; const btn=document.getElementById('reset-password-btn'); if(!otp||!newPwd||!confirmPwd) return showMessage('Fill all fields'); if(newPwd!==confirmPwd) return showMessage('Passwords mismatch'); if(newPwd.length<8) return showMessage('Min 8 chars'); btn.disabled=true; btn.innerHTML='Resetting...'; try{ await apiCall('/api/reset-password',{method:'POST',body:JSON.stringify({email:resetEmailGlobal,otp,newPassword:newPwd})}); showMessage('Password reset! Please login.',false); setTimeout(()=>{ switchAuthTab('login'); },2000); }catch(e){ showMessage(e.message); }finally{ btn.disabled=false; btn.innerHTML='Reset Password'; } }
+        async function requestResetOtp(){ const email=document.getElementById('forgot-email').value; const btn=document.getElementById('request-otp-btn'); if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showMessage('Valid email required'); btn.disabled=true; btn.innerHTML='Sending...'; try{ await apiCall('/api/forgot-password',{method:'POST',body:JSON.stringify({email})}); resetEmailGlobal=email; showMessage('OTP sent!',false); document.getElementById('forgot-step1').style.display='none'; document.getElementById('forgot-step2').style.display='block'; resetOtpTimer.reset(); const store=loadOtpTimerStore(); store.reset={resendCount:1,cooldownUntil:Date.now()+30000}; saveOtpTimerStore(store); resetOtpTimer.init(); }catch(e){ showMessage(e.message); }finally{ btn.disabled=false; btn.innerHTML='Send Reset OTP'; } }
+        async function resetPassword(){ const otp=document.getElementById('reset-otp').value; const newPwd=document.getElementById('new-password').value; const confirmPwd=document.getElementById('confirm-password').value; const btn=document.getElementById('reset-password-btn'); if(!otp||!newPwd||!confirmPwd) return showMessage('Fill all fields'); if(newPwd!==confirmPwd) return showMessage('Passwords mismatch'); if(newPwd.length<8) return showMessage('Min 8 chars'); btn.disabled=true; btn.innerHTML='Resetting...'; try{ await apiCall('/api/reset-password',{method:'POST',body:JSON.stringify({email:resetEmailGlobal,otp,newPassword:newPwd})}); showMessage('Password reset! Please login.',false); resetOtpTimer.reset(); setTimeout(()=>{ switchAuthTab('login'); },2000); }catch(e){ showMessage(e.message); }finally{ btn.disabled=false; btn.innerHTML='Reset Password'; } }
         async function checkSessionAndRedirect(){ const stored=localStorage.getItem('nova_auth'); if(stored){ try{ await apiCall('/profile'); return true; }catch(e){ localStorage.removeItem('nova_auth'); return false; } } return false; }
         function updateHeaderUI(){ const authBtnDiv=document.getElementById('authHeaderBtn'); const stored=localStorage.getItem('nova_auth'); if(stored){ const data=JSON.parse(stored); authBtnDiv.innerHTML=`<div class="user-greeting"><span>👋 ${data.username}</span><button class="logout-btn" onclick="logoutUser()"><i class="fas fa-sign-out-alt"></i> Logout</button></div>`; } else { authBtnDiv.innerHTML=`<button class="btn-primary-hero" style="padding:10px 22px;font-size:14px;" onclick="openAuthModal()"><i class="fas fa-sign-in-alt"></i> Get Started</button>`; } }
         async function logoutUser(){ try{ await apiCall('/logout',{method:'POST'}); }catch(e){} localStorage.removeItem('nova_auth'); localStorage.removeItem('nova_remember'); window.location.reload(); }
@@ -1665,16 +1988,52 @@
         }
         function escapeHtml(str){ if(!str) return ''; return str.replace(/[&<>]/g,function(m){ if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m; }); }
 
-        /* scroll reveal */
+        /* scroll reveal (feature/tool cards use .reveal-up already applied via class in markup) */
         document.querySelectorAll('.feature-card,.tool-card').forEach((el,i)=>{
-            el.style.opacity='0'; el.style.transform='translateY(28px)'; el.style.transition='all 0.6s cubic-bezier(0.2,0.9,0.4,1)';
             el.style.transitionDelay=(i%3)*0.08+'s';
-            new IntersectionObserver((entries,obs)=>{ entries.forEach(entry=>{ if(entry.isIntersecting){ entry.target.style.opacity='1'; entry.target.style.transform='translateY(0)'; obs.unobserve(entry.target); } }); },{threshold:0.1}).observe(el);
         });
+        const revealObserver = new IntersectionObserver((entries,obs)=>{
+            entries.forEach(entry=>{
+                if(entry.isIntersecting){ entry.target.classList.add('in-view'); obs.unobserve(entry.target); }
+            });
+        },{threshold:0.12});
+        document.querySelectorAll('.reveal-up').forEach(el=>revealObserver.observe(el));
+
+        /* subtle 3D tilt highlight following pointer on feature cards */
+        document.querySelectorAll('.feature-card').forEach(card=>{
+            card.addEventListener('mousemove', e=>{
+                const rect = card.getBoundingClientRect();
+                const mx = ((e.clientX - rect.left) / rect.width) * 100;
+                const my = ((e.clientY - rect.top) / rect.height) * 100;
+                card.style.setProperty('--mx', mx + '%');
+                card.style.setProperty('--my', my + '%');
+            });
+        });
+
+        /* animated counters for hero stats */
+        function animateCounters(){
+            document.querySelectorAll('.stat-number[data-count]').forEach(el=>{
+                const target = parseFloat(el.getAttribute('data-count'));
+                const suffix = el.getAttribute('data-suffix') || '';
+                const decimals = parseInt(el.getAttribute('data-decimal') || '0', 10);
+                const duration = 1600;
+                const start = performance.now();
+                function frame(now){
+                    const progress = Math.min(1, (now - start) / duration);
+                    const eased = 1 - Math.pow(1 - progress, 3);
+                    const value = target * eased;
+                    el.textContent = (decimals > 0 ? value.toFixed(decimals) : Math.floor(value).toLocaleString()) + suffix;
+                    if(progress < 1) requestAnimationFrame(frame);
+                    else el.textContent = (decimals > 0 ? target.toFixed(decimals) : target.toLocaleString()) + suffix;
+                }
+                requestAnimationFrame(frame);
+            });
+        }
 
         window.addEventListener('load',()=>{
             const entrance=document.getElementById('entranceOverlay');
             if(entrance) setTimeout(()=>{ entrance.style.opacity='0'; setTimeout(()=>entrance.remove(),800); },1500);
+            animateCounters();
         });
 
         /* ── MAINTENANCE MODE ── */
@@ -1688,6 +2047,259 @@
         window.addEventListener('storage',e=>{ if(e.key===MAINT_KEY||e.key===MAINT_META_KEY) checkMaintenance(); });
         function startPoll(){ if(_maintPollTimer) clearInterval(_maintPollTimer); _maintPollTimer=setInterval(checkMaintenance,POLL_INTERVAL); }
         window.addEventListener('resize',()=>{ const banner=document.getElementById('maintenanceWarning'); const spacer=document.getElementById('maintSpacer'); if(banner.classList.contains('visible')){ spacer.style.height=banner.offsetHeight+'px'; } });
+
+        /* ================================================================
+           3D SCENE — futuristic hero object + ambient WebGL starfield
+           Built defensively: if Three.js fails to load (blocked CDN, etc.)
+           the whole hero degrades gracefully to the CSS ring version.
+           ================================================================ */
+        function initSarveik3D(){
+            if(typeof THREE === 'undefined'){
+                document.getElementById('hero-canvas-wrap').innerHTML = `
+                    <div class="logo-ring ring1" style="position:absolute;inset:0;border-radius:50%;border:1px solid rgba(124,58,237,0.4);border-top-color:#7c3aed;animation:ringRotate 10s linear infinite;"></div>
+                    <div class="logo-ring ring2" style="position:absolute;inset:14%;border-radius:50%;border:1px solid rgba(0,230,255,0.3);border-right-color:#00e6ff;animation:ringRotate 7s linear infinite reverse;"></div>
+                `;
+                return;
+            }
+
+            const isDarkInitial = document.documentElement.getAttribute('data-theme') !== 'light';
+
+            /* ---------- Hero centerpiece: icosahedral wireframe core ---------- */
+            const wrap = document.getElementById('hero-canvas-wrap');
+            const heroW = wrap.clientWidth || 340, heroH = wrap.clientHeight || 340;
+
+            const heroScene = new THREE.Scene();
+            const heroCamera = new THREE.PerspectiveCamera(45, heroW/heroH, 0.1, 100);
+            heroCamera.position.set(0, 0, 6.2);
+
+            const heroRenderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            heroRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            heroRenderer.setSize(heroW, heroH);
+            heroRenderer.setClearColor(0x000000, 0);
+            wrap.appendChild(heroRenderer.domElement);
+
+            const coreGroup = new THREE.Group();
+            heroScene.add(coreGroup);
+
+            function colorSetFor(dark){
+                return dark
+                    ? { a: 0x7c3aed, b: 0x00e6ff, c: 0xff6b9d, core: 0xa78bfa }
+                    : { a: 0x6d28d9, b: 0x0891b2, c: 0xdb2777, core: 0x6d28d9 };
+            }
+            let palette = colorSetFor(isDarkInitial);
+
+            /* inner solid-ish icosahedron (low-poly, faceted, "gem" feel) */
+            const gemGeo = new THREE.IcosahedronGeometry(1.15, 0);
+            const gemMat = new THREE.MeshBasicMaterial({
+                color: palette.core, wireframe: true, transparent: true, opacity: 0.9
+            });
+            const gemMesh = new THREE.Mesh(gemGeo, gemMat);
+            coreGroup.add(gemMesh);
+
+            /* faint filled faces beneath the wireframe for depth */
+            const gemFillMat = new THREE.MeshBasicMaterial({
+                color: palette.a, transparent: true, opacity: 0.06, side: THREE.DoubleSide
+            });
+            const gemFillMesh = new THREE.Mesh(gemGeo.clone(), gemFillMat);
+            gemFillMesh.scale.setScalar(0.995);
+            coreGroup.add(gemFillMesh);
+
+            /* three orbiting rings, each on a different rotation axis */
+            const ringDefs = [
+                { radius: 1.9, tube: 0.012, color: palette.a, tilt: [0.3, 0, 0], speed: 0.006 },
+                { radius: 2.25, tube: 0.010, color: palette.b, tilt: [1.1, 0.4, 0], speed: -0.0045 },
+                { radius: 2.55, tube: 0.008, color: palette.c, tilt: [0.6, 1.3, 0.2], speed: 0.0035 }
+            ];
+            const ringMeshes = ringDefs.map(def=>{
+                const geo = new THREE.TorusGeometry(def.radius, def.tube, 8, 96);
+                const mat = new THREE.MeshBasicMaterial({ color: def.color, transparent: true, opacity: 0.55 });
+                const mesh = new THREE.Mesh(geo, mat);
+                mesh.rotation.set(def.tilt[0], def.tilt[1], def.tilt[2]);
+                mesh.userData.speed = def.speed;
+                coreGroup.add(mesh);
+                return mesh;
+            });
+
+            /* small orbiting node points along one ring, like satellites */
+            const nodeGroup = new THREE.Group();
+            const nodeCount = 6;
+            const nodeGeo = new THREE.SphereGeometry(0.05, 12, 12);
+            const nodeMat = new THREE.MeshBasicMaterial({ color: palette.b });
+            const nodes = [];
+            for(let i=0;i<nodeCount;i++){
+                const node = new THREE.Mesh(nodeGeo, nodeMat.clone());
+                const angle = (i / nodeCount) * Math.PI * 2;
+                node.userData.angle = angle;
+                node.userData.speed = 0.008 + (i % 3) * 0.002;
+                node.userData.radius = 2.25;
+                nodeGroup.add(node);
+                nodes.push(node);
+            }
+            coreGroup.add(nodeGroup);
+
+            /* ambient point sparkles around the core (small starfield sphere) */
+            const sparkleCount = 90;
+            const sparklePositions = new Float32Array(sparkleCount * 3);
+            for(let i=0;i<sparkleCount;i++){
+                const r = 3.4 + Math.random()*1.6;
+                const theta = Math.random()*Math.PI*2;
+                const phi = Math.acos((Math.random()*2)-1);
+                sparklePositions[i*3]   = r * Math.sin(phi) * Math.cos(theta);
+                sparklePositions[i*3+1] = r * Math.sin(phi) * Math.sin(theta);
+                sparklePositions[i*3+2] = r * Math.cos(phi);
+            }
+            const sparkleGeo = new THREE.BufferGeometry();
+            sparkleGeo.setAttribute('position', new THREE.BufferAttribute(sparklePositions, 3));
+            const sparkleMat = new THREE.PointsMaterial({ color: palette.core, size: 0.035, transparent: true, opacity: 0.75 });
+            const sparklePoints = new THREE.Points(sparkleGeo, sparkleMat);
+            heroScene.add(sparklePoints);
+
+            /* pointer-driven parallax */
+            let targetRotX = 0, targetRotY = 0;
+            let pointerActive = false;
+            function onPointerMove(clientX, clientY){
+                const rect = wrap.getBoundingClientRect();
+                const nx = ((clientX - rect.left) / rect.width) * 2 - 1;
+                const ny = ((clientY - rect.top) / rect.height) * 2 - 1;
+                targetRotY = nx * 0.55;
+                targetRotX = ny * 0.35;
+            }
+            wrap.addEventListener('mousemove', e=>{ pointerActive = true; onPointerMove(e.clientX, e.clientY); });
+            wrap.addEventListener('mouseleave', ()=>{ pointerActive = false; });
+            wrap.addEventListener('touchmove', e=>{
+                if(e.touches && e.touches[0]){ pointerActive = true; onPointerMove(e.touches[0].clientX, e.touches[0].clientY); }
+            }, { passive: true });
+
+            let heroClock = new THREE.Clock();
+            let heroRAF = null;
+            function animateHero(){
+                heroRAF = requestAnimationFrame(animateHero);
+                const dt = heroClock.getDelta();
+                const elapsed = heroClock.elapsedTime;
+
+                gemMesh.rotation.y += dt * 0.35;
+                gemMesh.rotation.x += dt * 0.18;
+                gemFillMesh.rotation.copy(gemMesh.rotation);
+                gemMesh.position.y = Math.sin(elapsed * 0.9) * 0.08;
+                gemFillMesh.position.y = gemMesh.position.y;
+
+                ringMeshes.forEach(mesh=>{
+                    mesh.rotation.z += mesh.userData.speed;
+                });
+
+                nodes.forEach(node=>{
+                    node.userData.angle += node.userData.speed;
+                    const a = node.userData.angle;
+                    const r = node.userData.radius;
+                    node.position.set(Math.cos(a) * r, Math.sin(a * 0.6) * 0.4, Math.sin(a) * r);
+                });
+
+                sparklePoints.rotation.y += dt * 0.02;
+                sparklePoints.rotation.x += dt * 0.008;
+
+                /* ease camera-facing group rotation toward pointer target, drift back to idle spin when idle */
+                const idleY = elapsed * 0.06;
+                const desiredY = pointerActive ? targetRotY : idleY;
+                const desiredX = pointerActive ? targetRotX : Math.sin(elapsed*0.4)*0.08;
+                coreGroup.rotation.y += (desiredY - coreGroup.rotation.y) * 0.04;
+                coreGroup.rotation.x += (desiredX - coreGroup.rotation.x) * 0.04;
+
+                heroRenderer.render(heroScene, heroCamera);
+            }
+            animateHero();
+
+            function resizeHero(){
+                const w = wrap.clientWidth || heroW, h = wrap.clientHeight || heroH;
+                heroCamera.aspect = w/h;
+                heroCamera.updateProjectionMatrix();
+                heroRenderer.setSize(w, h);
+            }
+            window.addEventListener('resize', resizeHero);
+
+            /* ---------- Ambient full-page starfield (very subtle, low opacity) ---------- */
+            const bgCanvas = document.getElementById('webgl-bg-canvas');
+            const bgScene = new THREE.Scene();
+            const bgCamera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+            bgCamera.position.z = 50;
+
+            const bgRenderer = new THREE.WebGLRenderer({ canvas: bgCanvas, antialias: false, alpha: true });
+            bgRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.6));
+            bgRenderer.setSize(window.innerWidth, window.innerHeight);
+            bgRenderer.setClearColor(0x000000, 0);
+
+            const starCount = window.innerWidth < 640 ? 200 : 420;
+            const starGeo = new THREE.BufferGeometry();
+            const starPos = new Float32Array(starCount * 3);
+            const starSpeed = new Float32Array(starCount);
+            for(let i=0;i<starCount;i++){
+                starPos[i*3]   = (Math.random()-0.5) * 140;
+                starPos[i*3+1] = (Math.random()-0.5) * 140;
+                starPos[i*3+2] = (Math.random()) * -100;
+                starSpeed[i] = 0.02 + Math.random()*0.05;
+            }
+            starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+            const starMat = new THREE.PointsMaterial({
+                color: isDarkInitial ? 0xa78bfa : 0x6d28d9,
+                size: 0.6, transparent: true, opacity: isDarkInitial ? 0.55 : 0.3
+            });
+            const starField = new THREE.Points(starGeo, starMat);
+            bgScene.add(starField);
+
+            let bgRAF = null;
+            function animateBg(){
+                bgRAF = requestAnimationFrame(animateBg);
+                const positions = starGeo.attributes.position.array;
+                for(let i=0;i<starCount;i++){
+                    positions[i*3+2] += starSpeed[i];
+                    if(positions[i*3+2] > 10){ positions[i*3+2] = -100; }
+                }
+                starGeo.attributes.position.needsUpdate = true;
+                starField.rotation.y += 0.00025;
+                bgRenderer.render(bgScene, bgCamera);
+            }
+            animateBg();
+
+            function resizeBg(){
+                bgCamera.aspect = window.innerWidth/window.innerHeight;
+                bgCamera.updateProjectionMatrix();
+                bgRenderer.setSize(window.innerWidth, window.innerHeight);
+            }
+            window.addEventListener('resize', resizeBg);
+
+            requestAnimationFrame(()=>{ document.getElementById('webgl-bg').classList.add('ready'); });
+
+            /* expose theme switch hook */
+            window.__sarveikScene = {
+                setTheme(mode){
+                    const dark = mode === 'dark';
+                    palette = colorSetFor(dark);
+                    gemMat.color.setHex(palette.core);
+                    gemFillMat.color.setHex(palette.a);
+                    sparkleMat.color.setHex(palette.core);
+                    ringMeshes[0].material.color.setHex(palette.a);
+                    ringMeshes[1].material.color.setHex(palette.b);
+                    ringMeshes[2].material.color.setHex(palette.c);
+                    nodes.forEach(n=>n.material.color.setHex(palette.b));
+                    starMat.color.setHex(dark ? 0xa78bfa : 0x6d28d9);
+                    starMat.opacity = dark ? 0.55 : 0.3;
+                }
+            };
+
+            /* pause rendering when tab is hidden (perf) */
+            document.addEventListener('visibilitychange', ()=>{
+                if(document.hidden){
+                    if(heroRAF) cancelAnimationFrame(heroRAF);
+                    if(bgRAF) cancelAnimationFrame(bgRAF);
+                    heroRAF = null; bgRAF = null;
+                } else {
+                    if(!heroRAF) animateHero();
+                    if(!bgRAF) animateBg();
+                }
+            });
+        }
+
+        /* respect reduced motion: skip heavy 3D entirely */
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
         /* ── DOMContentLoaded ── */
         document.addEventListener('DOMContentLoaded', async () => {
@@ -1713,6 +2325,14 @@
                 else window.location.href='/main.html';
             }
             loadTopUsers();
+
+            if(!prefersReducedMotion){
+                initSarveik3D();
+            }
+
+            /* init OTP resend timers (restores mid-cooldown state if modal reopened) */
+            signupOtpTimer.init();
+            resetOtpTimer.init();
 
             /* Auto-fill referral code from URL */
             (function autoFillReferral(){
