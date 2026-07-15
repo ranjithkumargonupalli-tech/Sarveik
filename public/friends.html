@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Sarveik Network – Friends & Groups</title>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         :root {
@@ -24,8 +24,10 @@
             --text-secondary: #7a90a8;
             --radius-card: 20px;
             --radius-btn: 50px;
-            --font-main: 'Outfit', sans-serif;
-            --font-mono: 'Space Mono', monospace;
+            --font-main: 'Space Grotesk', sans-serif;
+            --font-mono: 'Orbitron', sans-serif;
+            --shadow-glow: 0 0 40px rgba(0,229,255,0.05);
+            --transition: all 0.4s cubic-bezier(0.34, 1.3, 0.64, 1);
         }
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
@@ -36,6 +38,18 @@
             min-height: 100vh;
             overflow-x: hidden;
         }
+
+        /* ===== 3D BACKGROUND ===== */
+        #three-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 0;
+            pointer-events: none;
+        }
+        #three-canvas canvas { display: block; width: 100% !important; height: 100% !important; }
 
         body::before {
             content: '';
@@ -63,6 +77,12 @@
 
         body > * { position: relative; z-index: 1; }
 
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: var(--bg-deep); }
+        ::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.3); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--cyan); }
+
         /* ========== NAVBAR ========== */
         .navbar {
             background: rgba(3,10,22,0.97);
@@ -78,9 +98,12 @@
             z-index: 1100;
             border-bottom: 1px solid var(--border);
             box-shadow: 0 1px 0 rgba(0,229,255,0.06), 0 8px 32px rgba(0,0,0,0.4);
+            transform-style: preserve-3d;
+            perspective: 800px;
         }
         .nav-brand {
-            font-size: 1.25rem;
+            font-family: var(--font-mono);
+            font-size: 1.1rem;
             font-weight: 800;
             display: flex;
             align-items: center;
@@ -94,7 +117,6 @@
         }
         .nav-brand i { font-size: 1rem; }
         
-        /* Desktop Navigation */
         .nav-links {
             display: flex;
             list-style: none;
@@ -106,7 +128,7 @@
             text-decoration: none;
             padding: 0.45rem 0.9rem;
             border-radius: var(--radius-btn);
-            transition: all 0.22s ease;
+            transition: var(--transition);
             display: flex;
             align-items: center;
             gap: 0.4rem;
@@ -115,7 +137,7 @@
             white-space: nowrap;
             border: 1px solid transparent;
         }
-        .nav-links a:hover { background: var(--cyan-dim); color: var(--cyan); border-color: var(--border); }
+        .nav-links a:hover { background: var(--cyan-dim); color: var(--cyan); border-color: var(--border); transform: translateY(-2px); }
         .nav-links a.active {
             background: linear-gradient(135deg, rgba(0,229,255,0.18), rgba(0,180,200,0.08));
             color: var(--cyan);
@@ -123,7 +145,6 @@
             box-shadow: 0 0 16px rgba(0,229,255,0.12);
         }
         
-        /* Profile Section in Navbar */
         .nav-profile {
             display: flex;
             align-items: center;
@@ -131,7 +152,7 @@
             cursor: pointer;
             padding: 0.3rem 0.6rem;
             border-radius: var(--radius-btn);
-            transition: all 0.22s ease;
+            transition: var(--transition);
             background: rgba(0,229,255,0.05);
             border: 1px solid rgba(0,229,255,0.15);
             margin-left: 0.5rem;
@@ -141,6 +162,7 @@
         .nav-profile:hover {
             background: rgba(0,229,255,0.12);
             border-color: rgba(0,229,255,0.3);
+            transform: scale(1.03);
         }
         .nav-profile-avatar {
             width: 32px;
@@ -149,7 +171,9 @@
             object-fit: cover;
             border: 2px solid var(--cyan);
             background: var(--bg-deep);
+            transition: var(--transition);
         }
+        .nav-profile:hover .nav-profile-avatar { border-color: #fff; }
         .nav-profile-name {
             font-size: 0.85rem;
             font-weight: 600;
@@ -162,13 +186,10 @@
         .nav-profile-icon {
             color: var(--cyan);
             font-size: 0.75rem;
-            transition: transform 0.2s ease;
+            transition: transform 0.3s ease;
         }
-        .nav-profile.active .nav-profile-icon {
-            transform: rotate(180deg);
-        }
+        .nav-profile.active .nav-profile-icon { transform: rotate(180deg); }
 
-        /* Profile Dropdown Menu */
         .profile-dropdown {
             position: absolute;
             top: calc(100% + 8px);
@@ -181,15 +202,16 @@
             min-width: 240px;
             opacity: 0;
             visibility: hidden;
-            transform: translateY(-10px);
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(-10px) rotateX(5deg);
+            transition: all 0.3s cubic-bezier(0.34, 1.3, 0.64, 1);
             z-index: 1150;
             box-shadow: 0 20px 40px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,229,255,0.1);
+            transform-style: preserve-3d;
         }
         .profile-dropdown.show {
             opacity: 1;
             visibility: visible;
-            transform: translateY(0);
+            transform: translateY(0) rotateX(0);
         }
         .profile-dropdown-header {
             padding: 1rem 1rem 0.75rem;
@@ -205,21 +227,10 @@
             object-fit: cover;
             border: 2px solid var(--cyan);
         }
-        .profile-dropdown-info {
-            flex: 1;
-        }
-        .profile-dropdown-name {
-            font-weight: 700;
-            font-size: 0.9rem;
-            color: #e2eaf5;
-        }
-        .profile-dropdown-email {
-            font-size: 0.7rem;
-            color: var(--text-muted);
-        }
-        .profile-dropdown-items {
-            padding: 0.5rem 0;
-        }
+        .profile-dropdown-info { flex: 1; }
+        .profile-dropdown-name { font-weight: 700; font-size: 0.9rem; color: #e2eaf5; }
+        .profile-dropdown-email { font-size: 0.7rem; color: var(--text-muted); }
+        .profile-dropdown-items { padding: 0.5rem 0; }
         .profile-dropdown-item {
             display: flex;
             align-items: center;
@@ -232,36 +243,21 @@
             font-family: var(--font-main);
             font-size: 0.85rem;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: var(--transition);
             text-align: left;
             -webkit-tap-highlight-color: transparent;
         }
         .profile-dropdown-item:hover {
             background: rgba(0,229,255,0.08);
             color: var(--cyan);
+            transform: translateX(4px);
         }
-        .profile-dropdown-item i {
-            width: 20px;
-            color: var(--cyan);
-            font-size: 0.9rem;
-        }
-        .profile-dropdown-item.danger {
-            color: #fca5a5;
-        }
-        .profile-dropdown-item.danger:hover {
-            background: rgba(239,68,68,0.1);
-            color: #fca5a5;
-        }
-        .profile-dropdown-item.danger i {
-            color: var(--rose);
-        }
-        .profile-dropdown-divider {
-            height: 1px;
-            background: var(--border);
-            margin: 0.3rem 0;
-        }
+        .profile-dropdown-item i { width: 20px; color: var(--cyan); font-size: 0.9rem; }
+        .profile-dropdown-item.danger { color: #fca5a5; }
+        .profile-dropdown-item.danger:hover { background: rgba(239,68,68,0.1); color: #fca5a5; }
+        .profile-dropdown-item.danger i { color: var(--rose); }
+        .profile-dropdown-divider { height: 1px; background: var(--border); margin: 0.3rem 0; }
 
-        /* Badge */
         .badge {
             background: var(--rose);
             color: white;
@@ -270,9 +266,10 @@
             font-size: 0.6rem;
             font-weight: 700;
             line-height: 1.5;
+            animation: badgePulse 2s ease infinite;
         }
+        @keyframes badgePulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
 
-        /* Hamburger Button */
         .hamburger {
             display: none;
             flex-direction: column;
@@ -293,14 +290,13 @@
             height: 2px;
             background: #e2eaf5;
             border-radius: 2px;
-            transition: transform 0.3s ease, opacity 0.3s ease;
+            transition: all 0.3s ease;
             display: block;
         }
         .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
         .hamburger.active span:nth-child(2) { opacity: 0; transform: scaleX(0); }
         .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
 
-        /* Mobile Drawer */
         .nav-overlay {
             display: none;
             position: fixed;
@@ -312,16 +308,13 @@
             opacity: 0;
             transition: opacity 0.3s ease;
         }
-        .nav-overlay.active {
-            display: block;
-            opacity: 1;
-        }
+        .nav-overlay.active { display: block; opacity: 1; }
 
         @media (max-width: 768px) {
             .hamburger { display: flex; }
             .nav-links {
                 position: fixed;
-                top: 0; right: 0; bottom: 20;
+                top: 0; right: 0; bottom: 0;
                 width: min(290px, 85vw);
                 background: rgba(4,12,28,0.99);
                 backdrop-filter: blur(32px);
@@ -355,21 +348,15 @@
             }
         }
 
-        @media (min-width: 769px) {
-            .nav-profile {
-                position: relative;
-            }
-        }
-
-        /* ========== REST OF EXISTING STYLES (PRESERVED) ========== */
+        /* ========== MAIN CONTAINER ========== */
         .friends-container {
             max-width: 1240px;
             margin: 0 auto;
             padding: 1.5rem 1rem 5rem;
+            animation: fadeIn 0.5s ease;
         }
-        @media (max-width: 480px) {
-            .friends-container { padding: 1rem 0.75rem 5rem; }
-        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @media (max-width: 480px) { .friends-container { padding: 1rem 0.75rem 5rem; } }
 
         .page-header { margin-bottom: 1.5rem; }
         .page-header-inner {
@@ -380,6 +367,7 @@
             gap: 0.75rem;
         }
         .page-title {
+            font-family: var(--font-mono);
             font-size: clamp(1.5rem, 5vw, 2rem);
             font-weight: 800;
             letter-spacing: -0.04em;
@@ -388,18 +376,18 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
             line-height: 1.1;
+            text-shadow: 0 0 30px rgba(0,229,255,0.1);
         }
         .page-subtitle { color: var(--text-secondary); font-size: 0.84rem; margin-top: 0.3rem; }
 
+        /* ===== STATS GRID ===== */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
             gap: 0.65rem;
             margin-bottom: 1.25rem;
         }
-        @media (max-width: 360px) {
-            .stats-grid { grid-template-columns: 1fr; gap: 0.5rem; }
-        }
+        @media (max-width: 360px) { .stats-grid { grid-template-columns: 1fr; gap: 0.5rem; } }
         .stat-card {
             background: var(--bg-card);
             backdrop-filter: blur(20px);
@@ -407,9 +395,11 @@
             padding: 1rem 0.5rem;
             text-align: center;
             border: 1px solid var(--border);
-            transition: all 0.28s ease;
+            transition: var(--transition);
             position: relative;
             overflow: hidden;
+            transform-style: preserve-3d;
+            perspective: 800px;
         }
         .stat-card::before {
             content: '';
@@ -418,7 +408,18 @@
             width: 60%; height: 1px;
             background: linear-gradient(90deg, transparent, var(--cyan), transparent);
         }
-        .stat-card:hover { transform: translateY(-3px); box-shadow: 0 16px 40px rgba(0,0,0,0.4), 0 0 0 1px var(--border-hover); }
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(0,229,255,0.03), transparent);
+            pointer-events: none;
+            border-radius: var(--radius-card);
+        }
+        .stat-card:hover {
+            transform: translateY(-4px) rotateX(3deg);
+            box-shadow: 0 16px 40px rgba(0,0,0,0.4), 0 0 0 1px var(--border-hover);
+        }
         .stat-icon {
             width: 34px; height: 34px; border-radius: 10px;
             background: var(--cyan-dim);
@@ -426,40 +427,35 @@
             margin: 0 auto 0.5rem;
             font-size: 0.8rem; color: var(--cyan);
             border: 1px solid rgba(0,229,255,0.2);
+            transition: var(--transition);
         }
+        .stat-card:hover .stat-icon { transform: scale(1.1) rotate(5deg); }
         .stat-number {
+            font-family: var(--font-mono);
             font-size: clamp(1.2rem, 4vw, 1.9rem);
             font-weight: 800; color: var(--cyan); line-height: 1;
-            margin-bottom: 0.28rem; font-family: var(--font-mono); letter-spacing: -0.04em;
+            margin-bottom: 0.28rem;
+            letter-spacing: -0.04em;
         }
         .stat-label { color: var(--text-secondary); font-size: clamp(0.55rem, 1.8vw, 0.72rem); font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; }
 
-        h2 {
-            display: flex; align-items: center; gap: 0.5rem;
-            margin: 2rem 0 0.85rem;
-            font-size: 0.9rem; font-weight: 700; color: #e2eaf5;
-            text-transform: uppercase; letter-spacing: 0.08em;
-        }
-        h2 i {
-            color: var(--cyan); font-size: 0.82rem;
-            width: 26px; height: 26px;
-            background: var(--cyan-dim); border-radius: 7px;
-            display: flex; align-items: center; justify-content: center;
-            border: 1px solid rgba(0,229,255,0.2); flex-shrink: 0;
-        }
-        h2::after {
-            content: ''; flex: 1; height: 1px;
-            background: linear-gradient(90deg, rgba(0,229,255,0.15), transparent);
-            margin-left: 0.5rem;
-        }
-
+        /* ===== HEALTH CARD ===== */
         .health-card {
             background: var(--bg-card);
             border-radius: var(--radius-card);
             border: 1px solid var(--border);
             padding: 1.25rem;
             margin-bottom: 1.25rem;
-            position: relative; overflow: hidden;
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+            transform-style: preserve-3d;
+            perspective: 800px;
+        }
+        .health-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+            border-color: rgba(0,229,255,0.2);
         }
         .health-card::before {
             content: '';
@@ -482,8 +478,8 @@
         .health-score-number {
             position: absolute; inset: 0;
             display: flex; align-items: center; justify-content: center;
-            font-size: 0.95rem; font-weight: 800; color: var(--cyan);
             font-family: var(--font-mono);
+            font-size: 0.95rem; font-weight: 800; color: var(--cyan);
         }
         .health-tips { list-style: none; display: grid; gap: 0.25rem; }
         .health-tip {
@@ -495,14 +491,18 @@
         .health-tip.done { color: #6ee7b7; background: rgba(16,185,129,0.06); }
         .health-tip.done i { color: var(--emerald); }
 
+        /* ===== PINNED ===== */
         .pinned-section {
             background: linear-gradient(135deg, rgba(0,229,255,0.06), rgba(0,150,170,0.02));
             border: 1px solid rgba(0,229,255,0.18);
             border-radius: var(--radius-card);
             padding: 1rem 1.1rem;
             margin-bottom: 1.25rem;
+            transition: var(--transition);
         }
+        .pinned-section:hover { border-color: rgba(0,229,255,0.3); }
         .pinned-label {
+            font-family: var(--font-mono);
             font-size: 0.65rem; font-weight: 700; color: var(--cyan);
             text-transform: uppercase; letter-spacing: 0.12em;
             margin-bottom: 0.7rem; display: flex; align-items: center; gap: 0.4rem;
@@ -510,7 +510,8 @@
         .pinned-avatars {
             display: flex; gap: 0.5rem; overflow-x: auto; flex-wrap: nowrap;
             padding-bottom: 4px;
-            scrollbar-width: thin; scrollbar-color: rgba(0,229,255,0.2) transparent;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0,229,255,0.2) transparent;
             -webkit-overflow-scrolling: touch;
         }
         .pinned-chip {
@@ -520,11 +521,17 @@
             padding: 0.3rem 0.85rem 0.3rem 0.32rem;
             font-size: 0.74rem; cursor: pointer;
             border: 1px solid rgba(0,229,255,0.18);
-            transition: all 0.2s; flex-shrink: 0; white-space: nowrap; font-weight: 500;
+            transition: var(--transition);
+            flex-shrink: 0; white-space: nowrap; font-weight: 500;
         }
-        .pinned-chip:hover { background: rgba(0,229,255,0.16); transform: translateY(-2px); }
+        .pinned-chip:hover {
+            background: rgba(0,229,255,0.16);
+            transform: translateY(-3px) scale(1.05);
+            border-color: var(--cyan);
+        }
         .pinned-chip img { width: 22px; height: 22px; border-radius: 50%; object-fit: cover; }
 
+        /* ===== SEARCH & ADD ===== */
         .search-section, .add-friend {
             display: flex; gap: 0.65rem; margin-bottom: 1.25rem;
         }
@@ -536,12 +543,13 @@
             background: rgba(255,255,255,0.04);
             color: #e2eaf5; font-size: 0.875rem;
             font-family: var(--font-main);
-            transition: border-color 0.2s, box-shadow 0.2s;
+            transition: var(--transition);
         }
         .search-section input:focus, .add-friend input:focus {
             outline: none;
             border-color: rgba(0,229,255,0.45);
-            box-shadow: 0 0 0 3px rgba(0,229,255,0.07);
+            box-shadow: 0 0 0 4px rgba(0,229,255,0.07);
+            transform: scale(1.01);
         }
         .search-section input::placeholder, .add-friend input::placeholder { color: var(--text-muted); }
         @media (max-width: 520px) {
@@ -549,45 +557,75 @@
             .search-section .btn, .add-friend .btn { width: 100%; justify-content: center; }
         }
 
+        /* ===== BUTTONS ===== */
         .btn {
             padding: 0.72rem 1.25rem;
             border: none; border-radius: var(--radius-btn);
             font-weight: 600; cursor: pointer;
-            transition: all 0.22s ease;
+            transition: var(--transition);
             display: inline-flex; align-items: center; justify-content: center;
             gap: 0.4rem; white-space: nowrap;
             font-family: var(--font-main); font-size: 0.875rem;
             text-decoration: none; flex-shrink: 0; letter-spacing: 0.01em;
             -webkit-tap-highlight-color: transparent;
+            transform-style: preserve-3d;
         }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none !important; }
         .btn-primary {
             background: linear-gradient(135deg, var(--cyan), #0099cc);
             color: #001a24;
             box-shadow: 0 4px 16px rgba(0,229,255,0.2);
         }
-        .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(0,229,255,0.35); }
-        .btn-success { background: linear-gradient(135deg, var(--emerald), #059669); color: #fff; box-shadow: 0 4px 14px rgba(16,185,129,0.2); }
-        .btn-success:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(16,185,129,0.35); }
-        .btn-danger { background: rgba(239,68,68,0.1); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
-        .btn-danger:hover:not(:disabled) { background: rgba(239,68,68,0.18); }
-        .btn-outline { background: transparent; border: 1px solid rgba(100,140,180,0.28); color: #94a3b8; }
-        .btn-outline:hover:not(:disabled) { background: rgba(255,255,255,0.05); border-color: rgba(148,163,184,0.5); color: #e2eaf5; }
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 8px 28px rgba(0,229,255,0.35);
+        }
+        .btn-success {
+            background: linear-gradient(135deg, var(--emerald), #059669);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(16,185,129,0.2);
+        }
+        .btn-success:hover:not(:disabled) {
+            transform: translateY(-3px) scale(1.03);
+            box-shadow: 0 8px 24px rgba(16,185,129,0.35);
+        }
+        .btn-danger {
+            background: rgba(239,68,68,0.1);
+            color: #fca5a5;
+            border: 1px solid rgba(239,68,68,0.3);
+        }
+        .btn-danger:hover:not(:disabled) {
+            background: rgba(239,68,68,0.18);
+            transform: scale(1.05);
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid rgba(100,140,180,0.28);
+            color: #94a3b8;
+        }
+        .btn-outline:hover:not(:disabled) {
+            background: rgba(255,255,255,0.05);
+            border-color: rgba(148,163,184,0.5);
+            color: #e2eaf5;
+            transform: translateY(-2px);
+        }
         .btn-small { padding: 0.42rem 0.85rem; font-size: 0.73rem; border-radius: 50px; }
         .btn-icon { padding: 0.42rem 0.55rem; font-size: 0.75rem; min-width: 32px; min-height: 32px; }
-
         @media (max-width: 480px) {
             .btn-small { padding: 0.48rem 0.8rem; font-size: 0.72rem; }
             .btn-icon { min-width: 34px; min-height: 34px; }
         }
 
+        /* ===== FILTERS ===== */
         .filters-section {
             background: var(--bg-card);
             border-radius: var(--radius-card);
             padding: 1.1rem;
             margin-bottom: 1.25rem;
             border: 1px solid var(--border);
+            transition: var(--transition);
         }
+        .filters-section:hover { border-color: rgba(0,229,255,0.15); }
         .filters-section h3 { display: flex; align-items: center; gap: 0.45rem; font-size: 0.85rem; font-weight: 600; }
         .filters-section h3 i { color: var(--cyan); }
         .filters-top-row {
@@ -603,9 +641,13 @@
             background: rgba(255,255,255,0.04);
             color: #e2eaf5; flex: 1; min-width: 120px;
             font-family: var(--font-main); font-size: 0.82rem;
-            transition: border-color 0.2s;
+            transition: var(--transition);
         }
-        .filter-input:focus, .filter-select:focus { outline: none; border-color: rgba(0,229,255,0.4); }
+        .filter-input:focus, .filter-select:focus {
+            outline: none;
+            border-color: rgba(0,229,255,0.4);
+            transform: scale(1.01);
+        }
         .filter-input::placeholder { color: var(--text-muted); }
         .filter-select option { background: #0a1828; }
         @media (max-width: 520px) {
@@ -614,6 +656,7 @@
             .filters-actions { width: 100%; justify-content: flex-end; }
         }
 
+        /* ===== CONTROLS ===== */
         .controls-row {
             display: flex; justify-content: space-between; align-items: center;
             flex-wrap: wrap; gap: 0.65rem; margin-bottom: 0.85rem;
@@ -624,23 +667,35 @@
             padding: 0.34rem 0.8rem; border-radius: var(--radius-btn);
             border: 1px solid rgba(100,140,180,0.2);
             background: transparent; color: var(--text-muted);
-            font-size: 0.7rem; cursor: pointer; transition: all 0.2s;
+            font-size: 0.7rem; cursor: pointer; transition: var(--transition);
             font-family: var(--font-main); white-space: nowrap; font-weight: 500;
         }
-        .sort-btn.active, .sort-btn:hover { background: var(--cyan-dim); color: var(--cyan); border-color: rgba(0,229,255,0.3); }
+        .sort-btn.active, .sort-btn:hover {
+            background: var(--cyan-dim);
+            color: var(--cyan);
+            border-color: rgba(0,229,255,0.3);
+            transform: scale(1.05);
+        }
         .view-toggle { display: flex; gap: 0.28rem; }
         .view-toggle-btn {
             padding: 0.36rem 0.7rem; border-radius: 10px;
             border: 1px solid rgba(100,140,180,0.2);
             background: transparent; color: var(--text-muted);
-            cursor: pointer; transition: all 0.2s; font-family: var(--font-main);
+            cursor: pointer; transition: var(--transition);
+            font-family: var(--font-main);
         }
-        .view-toggle-btn.active { background: var(--cyan-dim); color: var(--cyan); border-color: rgba(0,229,255,0.3); }
+        .view-toggle-btn.active {
+            background: var(--cyan-dim);
+            color: var(--cyan);
+            border-color: rgba(0,229,255,0.3);
+            transform: scale(1.05);
+        }
         @media (max-width: 380px) {
             .sort-bar span { display: none; }
             .sort-btn { padding: 0.32rem 0.65rem; font-size: 0.65rem; }
         }
 
+        /* ===== FRIEND GRID ===== */
         .friend-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(min(320px, 100%), 1fr));
@@ -655,8 +710,8 @@
             -webkit-backdrop-filter: blur(20px);
             border-radius: var(--radius-card);
             border: 1px solid var(--border);
-            transition: all 0.26s ease;
-            animation: fadeInUp 0.4s ease forwards;
+            transition: var(--transition);
+            animation: cardIn 0.5s cubic-bezier(0.34, 1.3, 0.64, 1) both;
             opacity: 0;
             display: flex;
             flex-direction: row;
@@ -667,7 +722,22 @@
             overflow: hidden;
             position: relative;
             box-sizing: border-box;
+            transform-style: preserve-3d;
+            perspective: 800px;
         }
+        @keyframes cardIn {
+            from { opacity: 0; transform: translateY(20px) rotateX(5deg) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) rotateX(0) scale(1); }
+        }
+        .friend-card:nth-child(1) { animation-delay: 0.02s; }
+        .friend-card:nth-child(2) { animation-delay: 0.06s; }
+        .friend-card:nth-child(3) { animation-delay: 0.10s; }
+        .friend-card:nth-child(4) { animation-delay: 0.14s; }
+        .friend-card:nth-child(5) { animation-delay: 0.18s; }
+        .friend-card:nth-child(6) { animation-delay: 0.22s; }
+        .friend-card:nth-child(7) { animation-delay: 0.26s; }
+        .friend-card:nth-child(8) { animation-delay: 0.30s; }
+
         .friend-card::after {
             content: '';
             position: absolute; top: 0; left: 0; right: 0; height: 1px;
@@ -675,15 +745,10 @@
             pointer-events: none;
         }
         .friend-card:hover, .search-result-card:hover, .group-card:hover {
-            transform: translateY(-2px);
+            transform: translateY(-4px) rotateX(2deg);
             box-shadow: 0 12px 40px rgba(0,0,0,0.4), 0 0 0 1px var(--border-hover);
             background: var(--bg-card-hover);
         }
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
         @media (max-width: 520px) {
             .friend-card, .search-result-card, .request-card, .group-card {
                 padding: 0.75rem 0.8rem;
@@ -708,15 +773,14 @@
             border: 2px solid rgba(0,229,255,0.25);
             flex: 0 0 44px;
             box-shadow: 0 0 0 3px rgba(0,229,255,0.06);
+            transition: var(--transition);
         }
-        @media (max-width: 380px) {
-            .friend-avatar { width: 38px; height: 38px; flex: 0 0 38px; }
+        .friend-card:hover .friend-avatar {
+            transform: scale(1.05) rotate(-3deg);
+            border-color: var(--cyan);
         }
-        .friend-text {
-            flex: 1 1 0;
-            min-width: 0;
-            overflow: hidden;
-        }
+        @media (max-width: 380px) { .friend-avatar { width: 38px; height: 38px; flex: 0 0 38px; } }
+        .friend-text { flex: 1 1 0; min-width: 0; overflow: hidden; }
         .friend-name {
             display: flex;
             flex-direction: row;
@@ -735,13 +799,12 @@
             flex: 1 1 auto;
             min-width: 0;
         }
-        @media (max-width: 380px) {
-            .friend-name-text { font-size: 0.83rem; }
-        }
+        @media (max-width: 380px) { .friend-name-text { font-size: 0.83rem; } }
         .friend-name .pro-badge,
         .friend-name .verified-badge,
         .friend-name .friend-status,
         .friend-name .unread-badge { flex-shrink: 0; }
+
         .friend-username {
             color: var(--text-muted);
             margin-top: 2px;
@@ -770,45 +833,30 @@
             flex-shrink: 0;
         }
 
-        .card-actions .note-btn,
-        .card-actions .view-profile-btn,
-        .card-actions .unfriend-btn { display: inline-flex; }
-        .card-actions .more-btn { display: none; }
-
-        @media (max-width: 520px) {
-            .card-actions .note-btn { display: none; }
-            .card-actions .view-profile-btn { display: none; }
-            .card-actions .unfriend-btn { display: none; }
-            .card-actions .more-btn { display: inline-flex; }
-        }
-
-        @media (max-width: 360px) {
-            .card-actions .chat-btn .chat-label { display: none; }
-            .card-actions .star-btn { display: none; }
-        }
-
         .friend-status {
             display: inline-flex; width: 8px; height: 8px;
             border-radius: 50%; background: #1e3048; flex-shrink: 0;
+            transition: var(--transition);
         }
-        .friend-status.online { background: var(--emerald); box-shadow: 0 0 6px var(--emerald); }
-        .friend-status.away { background: var(--amber); box-shadow: 0 0 6px var(--amber); animation: pulse 2s infinite; }
-        .friend-status.busy { background: var(--rose); box-shadow: 0 0 6px var(--rose); animation: pulse 2s infinite; }
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.5} }
+        .friend-status.online { background: var(--emerald); box-shadow: 0 0 8px var(--emerald); }
+        .friend-status.away { background: var(--amber); box-shadow: 0 0 8px var(--amber); animation: pulseStatus 2s infinite; }
+        .friend-status.busy { background: var(--rose); box-shadow: 0 0 8px var(--rose); animation: pulseStatus 2s infinite; }
+        @keyframes pulseStatus { 0%,100%{opacity:1} 50%{opacity:0.5} }
 
         .unread-badge {
             background: var(--rose); color: white; border-radius: 20px;
             padding: 1px 6px; font-size: 0.6rem; font-weight: 700; flex-shrink: 0;
+            animation: badgePulse 2s ease infinite;
         }
         .star-btn {
             background: transparent; border: none; cursor: pointer;
             color: var(--text-muted); font-size: 0.88rem;
-            transition: color 0.2s, transform 0.2s; padding: 4px; flex-shrink: 0;
+            transition: var(--transition); padding: 4px; flex-shrink: 0;
             min-width: 28px; min-height: 28px;
             display: flex; align-items: center; justify-content: center;
         }
-        .star-btn.starred { color: var(--amber); }
-        .star-btn:hover { transform: scale(1.3); }
+        .star-btn.starred { color: var(--amber); text-shadow: 0 0 20px rgba(245,158,11,0.3); }
+        .star-btn:hover { transform: scale(1.4) rotate(15deg); }
         .pro-badge {
             background: linear-gradient(135deg, var(--amber), #d97706);
             color: white; padding: 1px 6px; border-radius: 6px;
@@ -823,27 +871,27 @@
         .request-card { border-left: 3px solid rgba(0,229,255,0.5); background: rgba(0,229,255,0.03); margin-bottom: 0.65rem; }
         .group-card { border-left: 3px solid rgba(249,115,22,0.5); background: rgba(249,115,22,0.03); }
 
+        /* ===== TRENDING ===== */
         #trendingSection {
             background: var(--bg-card);
             border-radius: var(--radius-card);
             padding: 1.1rem;
             border: 1px solid var(--border);
             margin-bottom: 1.5rem;
+            transition: var(--transition);
         }
-        .trending-list {
-            max-height: 300px; overflow-y: auto;
-            scrollbar-width: thin; scrollbar-color: rgba(0,229,255,0.2) transparent;
-            -webkit-overflow-scrolling: touch;
-        }
+        #trendingSection:hover { border-color: rgba(0,229,255,0.15); }
+        .trending-list { max-height: 300px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(0,229,255,0.2) transparent; -webkit-overflow-scrolling: touch; }
         .trending-item {
             display: flex; align-items: center; gap: 0.6rem;
             padding: 0.65rem 0.6rem; border-radius: 12px;
-            transition: all 0.22s ease; margin-bottom: 0.2rem;
+            transition: var(--transition);
+            margin-bottom: 0.2rem;
             min-width: 0;
             overflow: hidden;
             cursor: pointer;
         }
-        .trending-item:hover { background: rgba(0,229,255,0.07); }
+        .trending-item:hover { background: rgba(0,229,255,0.07); transform: translateX(4px); }
         .trending-item > img { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; flex-shrink: 0; border: 2px solid rgba(0,229,255,0.15); }
         .trending-item > .t-info { flex: 1; min-width: 0; overflow: hidden; }
         .trending-item > .t-info > div:first-child { font-weight: 600; font-size: 0.83rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -865,55 +913,77 @@
             .trending-rank { width: 24px; height: 24px; font-size: 0.65rem; }
         }
 
+        /* ===== SUGGESTIONS ===== */
         .suggestion-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(min(160px, calc(50% - 0.5rem)), 1fr));
             gap: 0.85rem; margin-bottom: 1.5rem;
         }
-        @media (max-width: 360px) {
-            .suggestion-grid { grid-template-columns: 1fr 1fr; gap: 0.6rem; }
-        }
+        @media (max-width: 360px) { .suggestion-grid { grid-template-columns: 1fr 1fr; gap: 0.6rem; } }
         .suggestion-card {
             background: var(--bg-card);
             border-radius: var(--radius-card);
             border: 1px solid var(--border);
             padding: 1rem 0.75rem;
             text-align: center;
-            transition: all 0.26s ease;
-            animation: fadeInUp 0.5s ease forwards; opacity: 0;
-            position: relative; overflow: hidden;
+            transition: var(--transition);
+            animation: cardIn 0.5s cubic-bezier(0.34, 1.3, 0.64, 1) both;
+            opacity: 0;
+            position: relative;
+            overflow: hidden;
+            transform-style: preserve-3d;
+            perspective: 800px;
         }
+        .suggestion-card:nth-child(1) { animation-delay: 0.02s; }
+        .suggestion-card:nth-child(2) { animation-delay: 0.06s; }
+        .suggestion-card:nth-child(3) { animation-delay: 0.10s; }
+        .suggestion-card:nth-child(4) { animation-delay: 0.14s; }
+        .suggestion-card:nth-child(5) { animation-delay: 0.18s; }
+        .suggestion-card:nth-child(6) { animation-delay: 0.22s; }
         .suggestion-card::before {
             content: '';
             position: absolute; top: 0; left: 0; right: 0; height: 3px;
             background: linear-gradient(90deg, transparent, var(--cyan), transparent);
             opacity: 0; transition: opacity 0.3s;
         }
-        .suggestion-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,0.4), 0 0 0 1px var(--border-hover); }
+        .suggestion-card:hover {
+            transform: translateY(-6px) rotateX(3deg);
+            box-shadow: 0 16px 40px rgba(0,0,0,0.4), 0 0 0 1px var(--border-hover);
+        }
         .suggestion-card:hover::before { opacity: 1; }
         .suggestion-avatar {
             width: 50px; height: 50px; border-radius: 50%; object-fit: cover;
             border: 2px solid rgba(0,229,255,0.25);
             margin: 0 auto 0.55rem; display: block;
             box-shadow: 0 0 0 3px rgba(0,229,255,0.06);
+            transition: var(--transition);
+        }
+        .suggestion-card:hover .suggestion-avatar {
+            transform: scale(1.08) rotate(-5deg);
+            border-color: var(--cyan);
         }
         .suggestion-name { font-weight: 700; font-size: 0.8rem; margin-bottom: 2px; word-break: break-word; }
         .suggestion-role { color: var(--text-muted); font-size: 0.65rem; margin-bottom: 0.4rem; word-break: break-word; }
         .suggestion-mutual { font-size: 0.62rem; color: var(--cyan); margin-bottom: 0.6rem; display: flex; align-items: center; justify-content: center; gap: 0.28rem; flex-wrap: wrap; }
         .suggest-connect-btn { font-size: 0.72rem !important; width: 100%; }
 
+        /* ===== ACTIVITY ===== */
         .activity-feed {
             background: var(--bg-card);
             border-radius: var(--radius-card);
             border: 1px solid var(--border);
             overflow: hidden; margin-bottom: 1.5rem;
+            transition: var(--transition);
         }
+        .activity-feed:hover { border-color: rgba(0,229,255,0.15); }
         .activity-item {
             display: flex; align-items: center; gap: 0.75rem;
             padding: 0.8rem 1rem;
             border-bottom: 1px solid rgba(100,140,180,0.06);
             transition: background 0.2s;
-            animation: fadeInUp 0.38s ease forwards; opacity: 0; min-width: 0;
+            animation: cardIn 0.3s cubic-bezier(0.34, 1.3, 0.64, 1) both;
+            opacity: 0;
+            min-width: 0;
         }
         .activity-item:last-child { border-bottom: none; }
         .activity-item:hover { background: rgba(0,229,255,0.04); }
@@ -921,7 +991,9 @@
             width: 34px; height: 34px; border-radius: 10px;
             display: flex; align-items: center; justify-content: center;
             font-size: 0.8rem; flex-shrink: 0;
+            transition: var(--transition);
         }
+        .activity-item:hover .activity-icon { transform: scale(1.1) rotate(5deg); }
         .activity-icon.connect { background: rgba(16,185,129,0.12); color: var(--emerald); }
         .activity-icon.message { background: rgba(0,229,255,0.12); color: var(--cyan); }
         .activity-icon.group { background: rgba(249,115,22,0.12); color: var(--orange); }
@@ -931,6 +1003,7 @@
         .activity-time { font-size: 0.68rem; color: var(--text-muted); white-space: nowrap; flex-shrink: 0; font-family: var(--font-mono); }
         @media (max-width: 380px) { .activity-time { display: none; } }
 
+        /* ===== LOADING & EMPTY ===== */
         .loading, .no-results {
             display: flex; align-items: center; justify-content: center;
             padding: 2rem 1rem; color: var(--text-muted);
@@ -940,40 +1013,49 @@
         .loading i { animation: spin 1s linear infinite; font-size: 1.1rem; color: var(--cyan); }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
+        /* ===== SKELETON ===== */
         .skeleton-card {
             background: rgba(10,20,40,0.7); border-radius: var(--radius-card); padding: 1rem;
             display: flex; align-items: center; gap: 0.75rem; min-height: 76px;
-            animation: skeleton-pulse 1.5s infinite; border: 1px solid rgba(100,140,180,0.06);
+            animation: skeletonPulse 1.5s infinite; border: 1px solid rgba(100,140,180,0.06);
         }
         .skeleton-avatar { width: 44px; height: 44px; border-radius: 50%; background: rgba(255,255,255,0.06); flex-shrink: 0; }
         .skeleton-text { flex: 1; display: flex; flex-direction: column; gap: 8px; }
         .skeleton-line { height: 11px; background: rgba(255,255,255,0.06); border-radius: 6px; }
         .skeleton-line:last-child { width: 58%; }
-        @keyframes skeleton-pulse { 0%,100%{opacity:0.35} 50%{opacity:0.7} }
+        @keyframes skeletonPulse { 0%,100%{opacity:0.35} 50%{opacity:0.7} }
 
+        /* ===== EXPORT ===== */
         .export-btn {
             background: rgba(255,255,255,0.04); border: 1px solid rgba(100,140,180,0.2);
             border-radius: var(--radius-btn); color: var(--text-secondary);
             padding: 0.38rem 0.85rem; font-size: 0.7rem; cursor: pointer;
             display: inline-flex; align-items: center; gap: 0.32rem;
-            transition: all 0.2s; font-family: var(--font-main); white-space: nowrap;
+            transition: var(--transition); font-family: var(--font-main); white-space: nowrap;
         }
-        .export-btn:hover { color: var(--cyan); border-color: rgba(0,229,255,0.3); }
+        .export-btn:hover { color: var(--cyan); border-color: rgba(0,229,255,0.3); transform: translateY(-2px); }
 
+        /* ===== TOAST ===== */
         .toast {
             position: fixed; top: 72px; right: 0.85rem;
             color: white; padding: 0.8rem 1.1rem;
             border-radius: 14px; box-shadow: 0 16px 40px rgba(0,0,0,0.4);
             z-index: 3000;
             transform: translateX(calc(100% + 1.5rem));
-            transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+            transition: transform 0.4s cubic-bezier(0.34, 1.3, 0.64, 1);
             font-size: 0.82rem; font-weight: 600;
             max-width: calc(100vw - 1.7rem);
             display: flex; align-items: center; gap: 0.48rem;
             border: 1px solid rgba(255,255,255,0.1);
+            animation: toastIn 0.4s ease;
         }
         .toast.show { transform: translateX(0); }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(120%) rotateY(20deg) scale(0.8); }
+            to { opacity: 1; transform: translateX(0) rotateY(0) scale(1); }
+        }
 
+        /* ===== MODAL ===== */
         .modal {
             display: none;
             position: fixed;
@@ -991,7 +1073,12 @@
             padding: 1.5rem; border: 1px solid var(--border);
             border-radius: 22px; width: 100%; max-width: 500px; color: #e2eaf5;
             box-shadow: 0 32px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(0,229,255,0.06);
-            animation: modalIn 0.28s ease;
+            animation: modalIn 0.4s cubic-bezier(0.34, 1.3, 0.64, 1);
+            transform-style: preserve-3d;
+        }
+        @keyframes modalIn {
+            from { opacity: 0; transform: translateY(-30px) rotateX(10deg) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) rotateX(0) scale(1); }
         }
         @media (max-width: 520px) {
             .modal { padding: 0.5rem; }
@@ -1002,23 +1089,31 @@
                 max-width: 100%;
             }
         }
-        @keyframes modalIn { from { opacity: 0; transform: translateY(-16px) scale(0.97); } to { opacity: 1; transform: none; } }
         .close-modal {
             color: var(--text-muted); float: right; font-size: 1.4rem;
-            font-weight: 700; cursor: pointer; line-height: 1; transition: color 0.2s;
+            font-weight: 700; cursor: pointer; line-height: 1; transition: var(--transition);
             padding: 4px;
         }
-        .close-modal:hover { color: #e2eaf5; }
+        .close-modal:hover { color: #e2eaf5; transform: rotate(90deg) scale(1.1); }
+
         .profile-header { text-align: center; margin-bottom: 1rem; }
-        .profile-name { font-size: 1.4rem; font-weight: 800; background: linear-gradient(135deg, #fff 30%, var(--cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .profile-name {
+            font-family: var(--font-mono);
+            font-size: 1.4rem; font-weight: 800;
+            background: linear-gradient(135deg, #fff 30%, var(--cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
         .profile-bio { background: rgba(255,255,255,0.04); padding: 0.8rem 0.9rem; border-radius: 12px; margin: 0.65rem 0; font-size: 0.8rem; line-height: 1.65; border: 1px solid rgba(100,140,180,0.1); }
         .profile-detail { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.5rem; font-size: 0.8rem; }
         .profile-detail i { width: 16px; color: var(--cyan); flex-shrink: 0; }
         .profile-social { display: flex; gap: 0.85rem; margin-top: 0.75rem; justify-content: center; flex-wrap: wrap; }
-        .profile-social a { color: var(--cyan); font-size: 1.3rem; transition: transform 0.2s; }
-        .profile-social a:hover { transform: translateY(-3px); }
+        .profile-social a { color: var(--cyan); font-size: 1.3rem; transition: var(--transition); }
+        .profile-social a:hover { transform: translateY(-4px) scale(1.2); }
         .friend-actions { display: flex; gap: 0.6rem; justify-content: center; margin-top: 1rem; flex-wrap: wrap; }
         .badge-container { display: flex; justify-content: center; gap: 0.35rem; margin-top: 0.4rem; flex-wrap: wrap; }
+
         .group-info-preview { background: rgba(0,229,255,0.04); border-radius: 12px; padding: 0.8rem; margin-bottom: 0.8rem; border: 1px solid rgba(0,229,255,0.1); }
         .group-member-list {
             max-height: 185px; overflow-y: auto; margin: 0.65rem 0;
@@ -1030,10 +1125,10 @@
             display: flex; align-items: center; gap: 0.55rem;
             padding: 0.6rem 0.85rem;
             border-bottom: 1px solid rgba(100,140,180,0.07);
-            cursor: pointer; transition: background 0.2s;
+            cursor: pointer; transition: var(--transition);
         }
         .member-item:last-child { border-bottom: none; }
-        .member-item:hover { background: rgba(0,229,255,0.07); }
+        .member-item:hover { background: rgba(0,229,255,0.07); transform: translateX(4px); }
         .member-item.selected { background: rgba(0,229,255,0.12); border-left: 2px solid var(--cyan); }
         .member-avatar {
             width: 28px; height: 28px; border-radius: 50%;
@@ -1044,16 +1139,17 @@
         .member-name { flex: 1; font-size: 0.8rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .selected-members { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.65rem; padding-top: 0.65rem; border-top: 1px solid rgba(100,140,180,0.1); min-height: 34px; }
         .selected-member-tag { background: rgba(0,229,255,0.12); padding: 0.22rem 0.6rem; border-radius: var(--radius-btn); font-size: 0.7rem; display: inline-flex; align-items: center; gap: 0.38rem; border: 1px solid rgba(0,229,255,0.2); }
-        .selected-member-tag i { cursor: pointer; font-size: 0.6rem; transition: transform 0.15s; }
-        .selected-member-tag i:hover { transform: scale(1.3); color: var(--rose); }
+        .selected-member-tag i { cursor: pointer; font-size: 0.6rem; transition: var(--transition); }
+        .selected-member-tag i:hover { transform: scale(1.4); color: var(--rose); }
+
         #noteModal textarea {
             width: 100%; min-height: 90px;
             background: rgba(255,255,255,0.04); border: 1px solid rgba(100,140,180,0.2);
             border-radius: 11px; color: #e2eaf5; padding: 0.65rem 0.85rem;
             font-family: var(--font-main); font-size: 0.82rem;
-            resize: vertical; margin-top: 0.6rem; transition: border-color 0.2s;
+            resize: vertical; margin-top: 0.6rem; transition: var(--transition);
         }
-        #noteModal textarea:focus { outline: none; border-color: rgba(0,229,255,0.42); }
+        #noteModal textarea:focus { outline: none; border-color: rgba(0,229,255,0.42); transform: scale(1.01); }
         #noteModal textarea::placeholder { color: var(--text-muted); }
         #groupName {
             width: 100%; margin-top: 7px;
@@ -1061,7 +1157,7 @@
             background: rgba(255,255,255,0.05); border: 1px solid rgba(100,140,180,0.22);
             color: #e2eaf5; font-size: 0.86rem; font-family: var(--font-main);
         }
-        #groupName:focus { outline: none; border-color: rgba(0,229,255,0.42); }
+        #groupName:focus { outline: none; border-color: rgba(0,229,255,0.42); transform: scale(1.01); }
         #groupName::placeholder { color: var(--text-muted); }
 
         hr {
@@ -1070,6 +1166,7 @@
             margin: 2rem 0;
         }
 
+        /* ===== BACK TO TOP ===== */
         #backToTop {
             position: fixed; bottom: 1.25rem; right: 1.25rem;
             background: linear-gradient(135deg, var(--cyan), #0099cc);
@@ -1077,52 +1174,36 @@
             width: 42px; height: 42px; font-size: 0.9rem;
             cursor: pointer; display: none; align-items: center; justify-content: center;
             z-index: 990; box-shadow: 0 4px 20px rgba(0,229,255,0.35);
-            transition: all 0.28s ease;
+            transition: var(--transition);
+            transform-style: preserve-3d;
         }
-        #backToTop:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(0,229,255,0.5); }
+        #backToTop:hover { transform: translateY(-4px) scale(1.1) rotateY(10deg); box-shadow: 0 8px 30px rgba(0,229,255,0.5); }
         #backToTop.visible { display: flex; }
         @media (max-width: 480px) { #backToTop { bottom: 0.85rem; right: 0.85rem; width: 40px; height: 40px; } }
 
+        /* ===== DISCLAIMER ===== */
         .disclaimer {
             margin-top: 2.5rem; padding: 1rem;
             background: rgba(0,0,0,0.15); border-radius: 12px;
             text-align: center; font-size: 0.7rem; color: var(--text-muted); line-height: 1.7;
         }
-        .disclaimer a { color: var(--text-secondary); text-decoration: underline; }
+        .disclaimer a { color: var(--text-secondary); text-decoration: underline; transition: var(--transition); }
+        .disclaimer a:hover { color: var(--cyan); }
 
+        /* ===== OTHER ===== */
         .progress-wrap { background: rgba(255,255,255,0.07); border-radius: 20px; height: 5px; margin-top: 0.3rem; overflow: hidden; }
         .progress-fill { height: 100%; border-radius: 20px; background: linear-gradient(90deg, var(--cyan), var(--emerald)); transition: width 1s ease; }
-
         .mutual-pill {
             display: inline-flex; align-items: center; gap: 0.28rem;
             background: rgba(0,229,255,0.08); border: 1px solid rgba(0,229,255,0.18);
             border-radius: var(--radius-btn); padding: 2px 9px; font-size: 0.62rem; color: var(--cyan); margin-top: 3px;
         }
-
-        .section-divider {
-            display: flex; align-items: center; gap: 0.65rem; margin: 0.5rem 0 1.1rem;
-        }
+        .section-divider { display: flex; align-items: center; gap: 0.65rem; margin: 0.5rem 0 1.1rem; }
         .section-divider span { font-size: 0.68rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.1em; white-space: nowrap; }
         .section-divider::before, .section-divider::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(100,140,180,0.15)); }
         .section-divider::after { background: linear-gradient(270deg, transparent, rgba(100,140,180,0.15)); }
 
-        .btn-more {
-            padding: 0.42rem 0.55rem;
-            font-size: 0.75rem;
-            min-width: 32px; min-height: 32px;
-            background: transparent;
-            border: 1px solid rgba(100,140,180,0.28);
-            color: #94a3b8;
-            border-radius: 50px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: var(--font-main);
-            display: none;
-            align-items: center;
-            justify-content: center;
-        }
-        .btn-more:hover { background: rgba(255,255,255,0.05); color: #e2eaf5; }
-
+        /* ===== CONTEXT MENU ===== */
         .ctx-menu {
             position: fixed;
             z-index: 3100;
@@ -1134,1248 +1215,1197 @@
             padding: 0.45rem;
             min-width: 170px;
             box-shadow: 0 16px 48px rgba(0,0,0,0.6);
-            animation: fadeInUp 0.18s ease;
+            animation: modalIn 0.18s ease;
+            transform-style: preserve-3d;
         }
         .ctx-menu-item {
             display: flex; align-items: center; gap: 0.55rem;
             padding: 0.7rem 0.9rem; border-radius: 10px;
             font-size: 0.82rem; cursor: pointer; color: #e2eaf5;
-            transition: background 0.15s; font-family: var(--font-main);
+            transition: var(--transition); font-family: var(--font-main);
             border: none; background: transparent; width: 100%; text-align: left;
             -webkit-tap-highlight-color: transparent;
             min-height: 44px;
         }
-        .ctx-menu-item:hover { background: rgba(0,229,255,0.1); color: var(--cyan); }
+        .ctx-menu-item:hover { background: rgba(0,229,255,0.1); color: var(--cyan); transform: translateX(4px); }
         .ctx-menu-item i { width: 14px; color: var(--cyan); font-size: 0.8rem; flex-shrink: 0; }
         .ctx-menu-item.danger { color: #fca5a5; }
         .ctx-menu-item.danger:hover { background: rgba(239,68,68,0.1); color: #fca5a5; }
         .ctx-menu-item.danger i { color: var(--rose); }
-        .ctx-backdrop {
-            position: fixed; inset: 0;
-            z-index: 3050;
+        .ctx-backdrop { position: fixed; inset: 0; z-index: 3050; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 480px) {
+            .stats-grid { grid-template-columns: 1fr; }
+            .page-header-inner { flex-direction: column; align-items: flex-start; }
+            .suggestion-grid { grid-template-columns: 1fr 1fr; }
+            .card-actions .btn-icon { min-width: 30px; min-height: 30px; }
+            .card-actions .chat-btn .chat-label { display: none; }
+            .card-actions .view-profile-btn { display: none; }
+            .card-actions .note-btn { display: none; }
+            .card-actions .unfriend-btn { display: none; }
+        }
+        @media (max-width: 768px) {
+            #three-canvas { display: none; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+            #three-canvas { display: none; }
         }
     </style>
 </head>
 <body>
-    <div class="nav-overlay" id="navOverlay"></div>
 
-    <nav class="navbar">
-        <div class="nav-brand">
-            <i class="fas fa-shield-alt"></i> Sarveik
+<!-- ===== 3D CANVAS ===== -->
+<div id="three-canvas"></div>
+
+<div class="nav-overlay" id="navOverlay"></div>
+
+<!-- ===== NAVBAR ===== -->
+<nav class="navbar">
+    <div class="nav-brand"><i class="fas fa-shield-alt"></i> Sarveik</div>
+    
+    <ul class="nav-links" id="navLinks">
+        <li><a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a></li>
+        <li><a href="profile.html"><i class="fas fa-user"></i> Profile</a></li>
+        <li><a href="main.html"><i class="fas fa-rocket"></i> Tools</a></li>
+        <li><a href="friends.html" class="active">
+            <i class="fas fa-users"></i> Network
+            <span id="totalBadge" class="badge" style="display:none;"></span>
+        </a></li>
+    </ul>
+    
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <div class="nav-profile" id="navProfileBtn">
+            <img src="https://via.placeholder.com/32" alt="Profile" class="nav-profile-avatar" id="navProfileAvatar" onerror="this.src='https://via.placeholder.com/32?text=U'">
+            <span class="nav-profile-name" id="navProfileName">Loading...</span>
+            <i class="fas fa-chevron-down nav-profile-icon"></i>
         </div>
-        
-        <!-- Desktop Navigation Links -->
-        <ul class="nav-links" id="navLinks">
-            <li><a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a></li>
-            <li><a href="profile.html"><i class="fas fa-user"></i> Profile</a></li>
-            <li><a href="main.html"><i class="fas fa-rocket"></i> Tools</a></li>
-            <li><a href="friends.html" class="active">
-                <i class="fas fa-users"></i> Network
-                <span id="totalBadge" class="badge" style="display:none;"></span>
-            </a></li>
+        <button class="hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false">
+            <span></span><span></span><span></span>
+        </button>
+    </div>
+    
+    <div class="profile-dropdown" id="profileDropdown">
+        <div class="profile-dropdown-header">
+            <img src="https://via.placeholder.com/44" alt="Profile" class="profile-dropdown-avatar" id="dropdownAvatar" onerror="this.src='https://via.placeholder.com/44?text=U'">
+            <div class="profile-dropdown-info">
+                <div class="profile-dropdown-name" id="dropdownName">Loading...</div>
+                <div class="profile-dropdown-email" id="dropdownEmail">user@example.com</div>
+            </div>
+        </div>
+        <div class="profile-dropdown-items">
+            <button class="profile-dropdown-item" id="profileMenuItem"><i class="fas fa-user-circle"></i> My Profile</button>
+            <button class="profile-dropdown-item" id="dashboardMenuItem"><i class="fas fa-tachometer-alt"></i> Dashboard</button>
+            <button class="profile-dropdown-item" id="savedMenuItem"><i class="fas fa-heart"></i> Saved Items</button>
+            <button class="profile-dropdown-item" id="notificationsMenuItem"><i class="fas fa-bell"></i> Notifications</button>
+            <button class="profile-dropdown-item" id="settingsMenuItem"><i class="fas fa-cog"></i> Settings</button>
+            <button class="profile-dropdown-item" id="helpMenuItem"><i class="fas fa-question-circle"></i> Help</button>
+            <div class="profile-dropdown-divider"></div>
+            <button class="profile-dropdown-item danger" id="logoutMenuItem"><i class="fas fa-sign-out-alt"></i> Logout</button>
+        </div>
+    </div>
+</nav>
+
+<!-- ===== MAIN CONTENT ===== -->
+<div class="friends-container">
+
+    <div class="page-header">
+        <div class="page-header-inner">
+            <div>
+                <div class="page-title">Your Network</div>
+                <div class="page-subtitle">Manage connections, groups, and professional relationships</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-grid" id="statsGrid">
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-users"></i></div>
+            <div class="stat-number" id="totalConnections">0</div>
+            <div class="stat-label">Connections</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-circle" style="color:var(--emerald);font-size:0.55rem;"></i></div>
+            <div class="stat-number" id="onlineCount">0</div>
+            <div class="stat-label">Online Now</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon"><i class="fas fa-clock"></i></div>
+            <div class="stat-number" id="requestsCount">0</div>
+            <div class="stat-label">Pending</div>
+        </div>
+    </div>
+
+    <div class="health-card" id="healthCard">
+        <div class="health-header">
+            <div>
+                <h3 style="font-weight:700;margin-bottom:0.22rem;font-size:0.92rem;display:flex;align-items:center;gap:0.45rem;">
+                    <i class="fas fa-heartbeat" style="color:var(--cyan);"></i> Network Health
+                </h3>
+                <p style="color:var(--text-secondary);font-size:0.74rem;">Steps to grow your professional network</p>
+            </div>
+            <div class="health-score-ring">
+                <svg width="72" height="72" viewBox="0 0 80 80">
+                    <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(100,140,180,0.1)" stroke-width="6"/>
+                    <circle id="healthRingFill" cx="40" cy="40" r="34" fill="none" stroke="url(#healthGrad)" stroke-width="6"
+                        stroke-dasharray="213.6" stroke-dashoffset="213.6" stroke-linecap="round"
+                        style="transition:stroke-dashoffset 1.3s ease;"/>
+                    <defs>
+                        <linearGradient id="healthGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stop-color="#00e5ff"/>
+                            <stop offset="100%" stop-color="#10b981"/>
+                        </linearGradient>
+                    </defs>
+                </svg>
+                <div class="health-score-number" id="healthScoreNum">—</div>
+            </div>
+        </div>
+        <ul class="health-tips" id="healthTips">
+            <li class="health-tip"><i class="fas fa-circle-notch fa-spin"></i> Calculating…</li>
         </ul>
+    </div>
+
+    <div class="pinned-section" id="pinnedSection" style="display:none;">
+        <div class="pinned-label"><i class="fas fa-star"></i> Favourite Connections</div>
+        <div class="pinned-avatars" id="pinnedAvatars"></div>
+    </div>
+
+    <h2 style="display:flex;align-items:center;gap:0.5rem;margin:2rem 0 0.85rem;font-family:var(--font-mono);font-size:0.9rem;font-weight:700;color:#e2eaf5;text-transform:uppercase;letter-spacing:0.08em;">
+        <i class="fas fa-search" style="color:var(--cyan);width:26px;height:26px;background:var(--cyan-dim);border-radius:7px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(0,229,255,0.2);flex-shrink:0;"></i>
+        Find Professionals
+    </h2>
+    <div class="search-section">
+        <input type="text" id="searchUser" placeholder="Search by username or name…" minlength="2" autocomplete="off">
+        <button id="searchBtn" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
+    </div>
+    <div id="searchResults"></div>
+    <hr>
+
+    <h2 style="display:flex;align-items:center;gap:0.5rem;margin:2rem 0 0.85rem;font-family:var(--font-mono);font-size:0.9rem;font-weight:700;color:#e2eaf5;text-transform:uppercase;letter-spacing:0.08em;">
+        <i class="fas fa-user-plus" style="color:var(--cyan);width:26px;height:26px;background:var(--cyan-dim);border-radius:7px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(0,229,255,0.2);flex-shrink:0;"></i>
+        Add Connection
+    </h2>
+    <div class="add-friend">
+        <input type="text" id="friendUsername" placeholder="Enter exact username" autocomplete="off" autocapitalize="none">
+        <button id="addFriendBtn" class="btn btn-primary"><i class="fas fa-user-plus"></i> Send Request</button>
+    </div>
+
+    <h2 style="display:flex;align-items:center;gap:0.5rem;margin:2rem 0 0.85rem;font-family:var(--font-mono);font-size:0.9rem;font-weight:700;color:#e2eaf5;text-transform:uppercase;letter-spacing:0.08em;">
+        <i class="fas fa-fire" style="color:var(--cyan);width:26px;height:26px;background:var(--cyan-dim);border-radius:7px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(0,229,255,0.2);flex-shrink:0;"></i>
+        Trending Professionals
+    </h2>
+    <div id="trendingSection"><div class="loading"><i class="fas fa-spinner"></i> Loading trending…</div></div>
+
+    <h2 style="display:flex;align-items:center;gap:0.5rem;margin:2rem 0 0.85rem;font-family:var(--font-mono);font-size:0.9rem;font-weight:700;color:#e2eaf5;text-transform:uppercase;letter-spacing:0.08em;">
+        <i class="fas fa-user-astronaut" style="color:var(--cyan);width:26px;height:26px;background:var(--cyan-dim);border-radius:7px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(0,229,255,0.2);flex-shrink:0;"></i>
+        People You May Know
+    </h2>
+    <div class="suggestion-grid" id="suggestionsGrid">
+        <div class="no-results" style="grid-column:1/-1;">Loading suggestions…</div>
+    </div>
+
+    <div class="filters-section">
+        <div class="filters-top-row">
+            <h3><i class="fas fa-filter"></i> Filters &amp; Search</h3>
+            <div class="filters-actions">
+                <button class="export-btn" id="exportBtn"><i class="fas fa-download"></i> Export</button>
+                <button id="refreshBtn" class="btn btn-outline btn-small"><i class="fas fa-sync-alt"></i> Refresh</button>
+            </div>
+        </div>
+        <div class="filters-row">
+            <select id="statusFilter" class="filter-select">
+                <option value="">All Status</option>
+                <option value="online">Online</option>
+                <option value="away">Away</option>
+                <option value="busy">Busy</option>
+                <option value="offline">Offline</option>
+            </select>
+            <input type="text" id="quickSearch" class="filter-input" placeholder="Quick search…">
+            <button id="clearFilters" class="btn btn-outline btn-small">Clear</button>
+        </div>
+    </div>
+
+    <div class="controls-row">
+        <div class="sort-bar">
+            <span>Sort by</span>
+            <button class="sort-btn active" data-sort="name">Name</button>
+            <button class="sort-btn" data-sort="status">Status</button>
+            <button class="sort-btn" data-sort="starred">Starred</button>
+        </div>
+        <div class="view-toggle">
+            <button class="view-toggle-btn active" data-view="grid" title="Grid view"><i class="fas fa-th-large"></i></button>
+            <button class="view-toggle-btn" data-view="list" title="List view"><i class="fas fa-list"></i></button>
+        </div>
+    </div>
+
+    <h2 style="display:flex;align-items:center;gap:0.5rem;margin:2rem 0 0.85rem;font-family:var(--font-mono);font-size:0.9rem;font-weight:700;color:#e2eaf5;text-transform:uppercase;letter-spacing:0.08em;">
+        <i class="fas fa-user-friends" style="color:var(--cyan);width:26px;height:26px;background:var(--cyan-dim);border-radius:7px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(0,229,255,0.2);flex-shrink:0;"></i>
+        Your Network
+    </h2>
+    <div id="friendsList" class="friend-grid"></div>
+
+    <h2 style="display:flex;align-items:center;gap:0.5rem;margin:2rem 0 0.85rem;font-family:var(--font-mono);font-size:0.9rem;font-weight:700;color:#e2eaf5;text-transform:uppercase;letter-spacing:0.08em;">
+        <i class="fas fa-clock" style="color:var(--cyan);width:26px;height:26px;background:var(--cyan-dim);border-radius:7px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(0,229,255,0.2);flex-shrink:0;"></i>
+        Pending Requests
+    </h2>
+    <div id="requestsList"></div>
+
+    <h2 style="display:flex;align-items:center;gap:0.5rem;margin:2rem 0 0.85rem;font-family:var(--font-mono);font-size:0.9rem;font-weight:700;color:#e2eaf5;text-transform:uppercase;letter-spacing:0.08em;">
+        <i class="fas fa-users-viewfinder" style="color:var(--cyan);width:26px;height:26px;background:var(--cyan-dim);border-radius:7px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(0,229,255,0.2);flex-shrink:0;"></i>
+        My Groups
+    </h2>
+    <div id="groupsList" class="friend-grid"></div>
+    <div style="margin:1rem 0;">
+        <button id="createGroupBtn" class="btn btn-primary"><i class="fas fa-plus"></i> Create New Group</button>
+    </div>
+
+    <h2 style="display:flex;align-items:center;gap:0.5rem;margin:2rem 0 0.85rem;font-family:var(--font-mono);font-size:0.9rem;font-weight:700;color:#e2eaf5;text-transform:uppercase;letter-spacing:0.08em;">
+        <i class="fas fa-bolt" style="color:var(--cyan);width:26px;height:26px;background:var(--cyan-dim);border-radius:7px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(0,229,255,0.2);flex-shrink:0;"></i>
+        Recent Activity
+    </h2>
+    <div class="activity-feed" id="activityFeed">
+        <div class="loading"><i class="fas fa-spinner"></i> Loading activity…</div>
+    </div>
+</div>
+
+<div class="disclaimer">
+    <p><strong>Disclaimer:</strong> Sarveik is a directory of third‑party tools. We do not host any content. All trademarks, logos, and brand names are the property of their respective owners. If you believe any link infringes your rights, please <a href="dmca.html">contact us</a> for removal.</p>
+</div>
+
+<button id="backToTop" title="Back to top"><i class="fas fa-arrow-up"></i></button>
+
+<!-- ===== MODALS ===== -->
+<div id="profileModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <div id="modalProfileContent">Loading...</div>
+    </div>
+</div>
+
+<div id="createGroupModal" class="modal">
+    <div class="modal-content" style="max-width:540px;">
+        <span class="close-modal" id="closeGroupModal">&times;</span>
+        <h3 style="margin-bottom:0.8rem;font-size:0.95rem;display:flex;align-items:center;gap:0.42rem;font-family:var(--font-mono);">
+            <i class="fas fa-layer-group" style="color:var(--cyan);"></i> Create New Group
+        </h3>
+        <div class="group-info-preview">
+            <div style="font-size:0.73rem;opacity:0.6;margin-bottom:5px;">Group name</div>
+            <input type="text" id="groupName" placeholder="Enter group name">
+        </div>
+        <label style="font-size:0.8rem;font-weight:600;display:flex;align-items:center;gap:0.38rem;">
+            <i class="fas fa-user-friends" style="color:var(--cyan);"></i> Select members
+        </label>
+        <div class="group-member-list" id="memberListContainer">
+            <div class="loading" style="padding:1rem;"><i class="fas fa-spinner fa-spin"></i> Loading friends...</div>
+        </div>
+        <div id="selectedMembersContainer" class="selected-members">
+            <span style="font-size:0.68rem;opacity:0.55;">No members selected yet</span>
+        </div>
+        <button id="confirmCreateGroup" class="btn btn-primary" style="width:100%;margin-top:1rem;justify-content:center;">
+            <i class="fas fa-check-circle"></i> Create Group
+        </button>
+    </div>
+</div>
+
+<div id="noteModal" class="modal">
+    <div class="modal-content" style="max-width:420px;">
+        <span class="close-modal" id="closeNoteModal">&times;</span>
+        <h3 style="margin-bottom:0.4rem;font-size:0.95rem;display:flex;align-items:center;gap:0.42rem;font-family:var(--font-mono);">
+            <i class="fas fa-sticky-note" style="color:var(--cyan);"></i> Private Note
+        </h3>
+        <p style="color:var(--text-secondary);font-size:0.74rem;" id="noteForUser">For @username</p>
+        <textarea id="noteTextarea" placeholder="Add a private note about this connection…"></textarea>
+        <button class="btn btn-primary" id="saveNoteBtn" style="margin-top:0.8rem;width:100%;justify-content:center;">
+            <i class="fas fa-save"></i> Save Note
+        </button>
+    </div>
+</div>
+
+<div id="ctxMenu" class="ctx-menu" style="display:none;"></div>
+<div id="ctxBackdrop" class="ctx-backdrop" style="display:none;"></div>
+
+<!-- ===== SCRIPTS ===== -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script>
+// ===== 3D BACKGROUND =====
+(function init3DBackground() {
+    const container = document.getElementById('three-canvas');
+    if (!container) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || window.innerWidth < 768) {
+        container.style.display = 'none';
+        return;
+    }
+
+    const scene = new THREE.Scene();
+    scene.background = null;
+    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 35;
+
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    const count = 150;
+    const geo = new THREE.BufferGeometry();
+    const pos = new Float32Array(count * 3);
+    const colors = new Float32Array(count * 3);
+    const sizes = new Float32Array(count);
+    const palette = [new THREE.Color(0x00e5ff), new THREE.Color(0x10b981), new THREE.Color(0xf59e0b), new THREE.Color(0xef4444), new THREE.Color(0x8b5cf6)];
+
+    for (let i = 0; i < count; i++) {
+        pos[i * 3] = (Math.random() - 0.5) * 70;
+        pos[i * 3 + 1] = (Math.random() - 0.5) * 50;
+        pos[i * 3 + 2] = (Math.random() - 0.5) * 50 - 10;
+        const c = palette[Math.floor(Math.random() * palette.length)];
+        colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b;
+        sizes[i] = Math.random() * 0.3 + 0.1;
+    }
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+    geo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+
+    const mat = new THREE.PointsMaterial({ size: 0.4, vertexColors: true, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true });
+    const particles = new THREE.Points(geo, mat);
+    scene.add(particles);
+
+    let mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
+    document.addEventListener('mousemove', e => { mouseX = (e.clientX / window.innerWidth) * 2 - 1; mouseY = -(e.clientY / window.innerHeight) * 2 + 1; });
+    document.addEventListener('touchmove', e => { if (e.touches.length) { mouseX = (e.touches[0].clientX / window.innerWidth) * 2 - 1; mouseY = -(e.touches[0].clientY / window.innerHeight) * 2 + 1; } }, { passive: true });
+
+    function animate() {
+        requestAnimationFrame(animate);
+        targetX += (mouseX - targetX) * 0.04;
+        targetY += (mouseY - targetY) * 0.04;
+
+        particles.rotation.y += 0.0005;
+        particles.rotation.x = targetY * 0.03;
+        particles.rotation.z = targetX * 0.02;
+
+        camera.position.x += (targetX * 2 - camera.position.x) * 0.005;
+        camera.position.y += (targetY * 1.5 - camera.position.y) * 0.005;
+        camera.lookAt(0, 0, 0);
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
+    window.addEventListener('beforeunload', () => renderer.dispose());
+})();
+
+// ===== CSRF =====
+let csrfToken = null;
+async function fetchCsrfToken() {
+    try {
+        const res = await fetch('/api/csrf-token', { credentials: 'include' });
+        if (res.ok) { const data = await res.json(); csrfToken = data.csrfToken; }
+    } catch (err) { console.error('CSRF token fetch failed:', err); }
+}
+async function getCsrfHeader() {
+    if (!csrfToken) await fetchCsrfToken();
+    return { 'X-CSRF-Token': csrfToken };
+}
+async function apiCall(url, options = {}) {
+    if (options.body && typeof options.body === 'object') {
+        options.body = JSON.stringify(options.body);
+        options.headers = { ...options.headers, 'Content-Type': 'application/json' };
+    }
+    if (options.body && typeof options.body === 'string' && !options.headers?.['Content-Type']) {
+        options.headers = { ...options.headers, 'Content-Type': 'application/json' };
+    }
+    if (options.method && options.method !== 'GET') {
+        const csrfHeader = await getCsrfHeader();
+        options.headers = { ...options.headers, ...csrfHeader };
+    }
+    const res = await fetch(url, { ...options, credentials: 'include' });
+    if (!res.ok) { let errorMsg = await res.text(); throw new Error(errorMsg || `Request failed with status ${res.status}`); }
+    const contentType = res.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) return res.json();
+    return res.text();
+}
+
+// ===== GLOBALS =====
+const socket = io({ withCredentials: true });
+let currentUserId = null;
+let onlineStatus = new Map();
+let unreadCounts = new Map();
+let friendsData = [];
+let requestsData = [];
+let trendingData = [];
+let groupsData = [];
+let filters = { status: '', search: '' };
+let allFriendsForModal = [];
+let starredFriends = new Set(JSON.parse(localStorage.getItem('nova_starred') || '[]'));
+let friendNotes = JSON.parse(localStorage.getItem('nova_notes') || '{}');
+let currentSort = 'name';
+let currentView = 'grid';
+let noteTargetId = null;
+let activityLog = JSON.parse(localStorage.getItem('nova_activity') || '[]');
+let currentUserProfile = null;
+
+// ===== UTILITIES =====
+function escapeHtml(str) { if (!str) return ''; const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
+
+function showToast(message, type = 'success') {
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    const colors = { error: '#ef4444', info: '#3b82f6', success: '#10b981', warning: '#f59e0b' };
+    const icons = { error: 'fa-circle-xmark', info: 'fa-circle-info', success: 'fa-circle-check', warning: 'fa-triangle-exclamation' };
+    toast.style.background = colors[type] || colors.success;
+    toast.innerHTML = `<i class="fas ${icons[type] || icons.success}"></i> ${escapeHtml(message)}`;
+    document.body.appendChild(toast);
+    requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.add('show')));
+    setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 350); }, 4000);
+}
+
+function showSkeleton(container, count = 3) {
+    container.innerHTML = Array(count).fill(`
+        <div class="skeleton-card">
+            <div class="skeleton-avatar"></div>
+            <div class="skeleton-text">
+                <div class="skeleton-line"></div>
+                <div class="skeleton-line"></div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function timeAgo(ts) {
+    const diff = Date.now() - ts;
+    if (diff < 60000) return 'just now';
+    if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
+    if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
+    return Math.floor(diff / 86400000) + 'd ago';
+}
+
+function pushActivity(icon, iconClass, text) {
+    activityLog.unshift({ icon, iconClass: iconClass || 'default', text, ts: Date.now() });
+    if (activityLog.length > 20) activityLog.pop();
+    localStorage.setItem('nova_activity', JSON.stringify(activityLog));
+    renderActivityFeed();
+}
+
+// ===== STATS =====
+async function loadStats() {
+    try {
+        const stats = await apiCall('/api/network/stats');
+        document.getElementById('totalConnections').textContent = stats.total || 0;
+        document.getElementById('onlineCount').textContent = stats.online || 0;
+        document.getElementById('requestsCount').textContent = stats.requests || 0;
+        updateHealthScore(stats);
+    } catch (err) { console.error('Stats error:', err); }
+}
+
+async function getCurrentUserId() {
+    try { const user = await apiCall('/profile'); currentUserId = user.id; return user; } catch (err) { console.error('Error getting user ID:', err); return null; }
+}
+
+async function loadCurrentUserProfile() {
+    try {
+        const user = await apiCall('/profile');
+        currentUserProfile = user;
+        const avatarEl = document.getElementById('navProfileAvatar');
+        const nameEl = document.getElementById('navProfileName');
+        const dropdownAvatar = document.getElementById('dropdownAvatar');
+        const dropdownName = document.getElementById('dropdownName');
+        const dropdownEmail = document.getElementById('dropdownEmail');
         
-        <!-- Right side: Profile Menu + Hamburger -->
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
-            <div class="nav-profile" id="navProfileBtn">
-                <img src="https://via.placeholder.com/32" alt="Profile" class="nav-profile-avatar" id="navProfileAvatar" onerror="this.src='https://via.placeholder.com/32?text=U'">
-                <span class="nav-profile-name" id="navProfileName">Loading...</span>
-                <i class="fas fa-chevron-down nav-profile-icon"></i>
-            </div>
-            <button class="hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false">
-                <span></span><span></span><span></span>
-            </button>
-        </div>
-        
-        <!-- Profile Dropdown Menu -->
-        <div class="profile-dropdown" id="profileDropdown">
-            <div class="profile-dropdown-header">
-                <img src="https://via.placeholder.com/44" alt="Profile" class="profile-dropdown-avatar" id="dropdownAvatar" onerror="this.src='https://via.placeholder.com/44?text=U'">
-                <div class="profile-dropdown-info">
-                    <div class="profile-dropdown-name" id="dropdownName">Loading...</div>
-                    <div class="profile-dropdown-email" id="dropdownEmail">user@example.com</div>
-                </div>
-            </div>
-            <div class="profile-dropdown-items">
-                <button class="profile-dropdown-item" id="profileMenuItem">
-                    <i class="fas fa-user-circle"></i> My Profile
-                </button>
-                <button class="profile-dropdown-item" id="dashboardMenuItem">
-                    <i class="fas fa-tachometer-alt"></i> Dashboard
-                </button>
-                <button class="profile-dropdown-item" id="savedMenuItem">
-                    <i class="fas fa-heart"></i> Saved Items
-                </button>
-                <button class="profile-dropdown-item" id="notificationsMenuItem">
-                    <i class="fas fa-bell"></i> Notifications
-                </button>
-                <button class="profile-dropdown-item" id="settingsMenuItem">
-                    <i class="fas fa-cog"></i> Settings
-                </button>
-                <button class="profile-dropdown-item" id="helpMenuItem">
-                    <i class="fas fa-question-circle"></i> Help & Support
-                </button>
-                <div class="profile-dropdown-divider"></div>
-                <button class="profile-dropdown-item danger" id="logoutMenuItem">
-                    <i class="fas fa-sign-out-alt"></i> Logout
-                </button>
-            </div>
-        </div>
-    </nav>
+        if (avatarEl) avatarEl.src = user.avatar_url || 'https://via.placeholder.com/32?text=U';
+        if (dropdownAvatar) dropdownAvatar.src = user.avatar_url || 'https://via.placeholder.com/44?text=U';
+        if (nameEl) nameEl.textContent = user.display_name || user.username || 'User';
+        if (dropdownName) dropdownName.textContent = user.display_name || user.username || 'User';
+        if (dropdownEmail) dropdownEmail.textContent = user.email || 'user@example.com';
+        return user;
+    } catch (err) { console.error('Error loading profile:', err); return null; }
+}
 
-    <div class="friends-container">
+async function updateUnreadBadge() {
+    try {
+        const data = await apiCall('/api/unread');
+        const totalUnread = data.unread.reduce((sum, f) => sum + f.count, 0);
+        const total = totalUnread + (data.pendingRequests || 0);
+        const badgeSpan = document.getElementById('totalBadge');
+        if (total > 0) { badgeSpan.textContent = total > 99 ? '99+' : total; badgeSpan.style.display = 'inline-block'; }
+        else { badgeSpan.style.display = 'none'; }
+        unreadCounts.clear();
+        data.unread.forEach(f => unreadCounts.set(f.friend_id, f.count));
+        if (friendsData.length) renderFriends(friendsData);
+    } catch (err) { console.error('Error updating unread badge:', err); }
+}
 
-        <!-- PAGE HEADER -->
-        <div class="page-header">
-            <div class="page-header-inner">
-                <div>
-                    <div class="page-title">Your Network</div>
-                    <div class="page-subtitle">Manage connections, groups, and professional relationships</div>
-                </div>
-            </div>
-        </div>
+// ===== HEALTH SCORE =====
+function updateHealthScore(stats) {
+    const total = stats.total || 0, online = stats.online || 0, pending = stats.requests || 0;
+    const hasGroups = groupsData.length > 0, hasStarred = starredFriends.size > 0;
+    const tips = [
+        { done: total >= 5, text: 'Have at least 5 connections' },
+        { done: online > 0, text: 'Someone in your network is online' },
+        { done: pending === 0, text: 'No pending requests waiting' },
+        { done: hasGroups, text: 'Member of at least one group' },
+        { done: hasStarred, text: 'Starred a favourite connection' },
+    ];
+    const score = Math.round((tips.filter(t => t.done).length / tips.length) * 100);
+    document.getElementById('healthScoreNum').textContent = score + '%';
+    const circumference = 2 * Math.PI * 34;
+    const ring = document.getElementById('healthRingFill');
+    ring.setAttribute('stroke-dasharray', circumference);
+    ring.style.strokeDashoffset = circumference - (score / 100) * circumference;
+    document.getElementById('healthTips').innerHTML = tips.map(t => `
+        <li class="health-tip ${t.done ? 'done' : ''}">
+            <i class="fas ${t.done ? 'fa-check-circle' : 'fa-circle-dot'}"></i>${t.text}
+        </li>
+    `).join('');
+}
 
-        <!-- STATS -->
-        <div class="stats-grid" id="statsGrid">
-            <div class="stat-card">
-                <div class="stat-icon"><i class="fas fa-users"></i></div>
-                <div class="stat-number" id="totalConnections">0</div>
-                <div class="stat-label">Connections</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon"><i class="fas fa-circle" style="color:var(--emerald);font-size:0.55rem;"></i></div>
-                <div class="stat-number" id="onlineCount">0</div>
-                <div class="stat-label">Online Now</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon"><i class="fas fa-clock"></i></div>
-                <div class="stat-number" id="requestsCount">0</div>
-                <div class="stat-label">Pending</div>
-            </div>
-        </div>
+// ===== FRIENDS =====
+async function loadFriends() {
+    const container = document.getElementById('friendsList');
+    showSkeleton(container);
+    try {
+        const params = new URLSearchParams();
+        if (filters.status) params.append('status', filters.status);
+        if (filters.search) params.append('search', filters.search);
+        friendsData = await apiCall(`/api/friends?${params.toString()}`);
+        for (const f of friendsData) { if (!onlineStatus.has(f.id)) onlineStatus.set(f.id, f.status || 'offline'); }
+        renderFriends(friendsData);
+        renderPinned();
+        renderSuggestions();
+    } catch (err) {
+        console.error(err);
+        container.innerHTML = '<div class="no-results"><i class="fas fa-wifi"></i>Error loading network. Please try again.</div>';
+    }
+}
 
-        <!-- HEALTH -->
-        <div class="health-card" id="healthCard">
-            <div class="health-header">
-                <div>
-                    <h3 style="font-weight:700;margin-bottom:0.22rem;font-size:0.92rem;display:flex;align-items:center;gap:0.45rem;">
-                        <i class="fas fa-heartbeat" style="color:var(--cyan);"></i> Network Health
-                    </h3>
-                    <p style="color:var(--text-secondary);font-size:0.74rem;">Steps to grow your professional network</p>
-                </div>
-                <div class="health-score-ring">
-                    <svg width="72" height="72" viewBox="0 0 80 80">
-                        <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(100,140,180,0.1)" stroke-width="6"/>
-                        <circle id="healthRingFill" cx="40" cy="40" r="34" fill="none" stroke="url(#healthGrad)" stroke-width="6"
-                            stroke-dasharray="213.6" stroke-dashoffset="213.6" stroke-linecap="round"
-                            style="transition:stroke-dashoffset 1.3s ease;"/>
-                        <defs>
-                            <linearGradient id="healthGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                                <stop offset="0%" stop-color="#00e5ff"/>
-                                <stop offset="100%" stop-color="#10b981"/>
-                            </linearGradient>
-                        </defs>
-                    </svg>
-                    <div class="health-score-number" id="healthScoreNum">—</div>
-                </div>
-            </div>
-            <ul class="health-tips" id="healthTips">
-                <li class="health-tip"><i class="fas fa-circle-notch fa-spin"></i> Calculating…</li>
-            </ul>
-        </div>
+function getFriendStatusClass(friend) {
+    let status = onlineStatus.get(friend.id);
+    if (!status) status = friend.status || 'offline';
+    return ['online', 'away', 'busy'].includes(status) ? status : '';
+}
 
-        <!-- PINNED -->
-        <div class="pinned-section" id="pinnedSection" style="display:none;">
-            <div class="pinned-label"><i class="fas fa-star"></i> Favourite Connections</div>
-            <div class="pinned-avatars" id="pinnedAvatars"></div>
-        </div>
+function sortedFriends(friends) {
+    const arr = [...friends];
+    if (currentSort === 'starred') {
+        arr.sort((a, b) => (starredFriends.has(String(a.id)) ? 0 : 1) - (starredFriends.has(String(b.id)) ? 0 : 1));
+    } else if (currentSort === 'status') {
+        const order = { online: 0, away: 1, busy: 2, offline: 3 };
+        arr.sort((a, b) => (order[onlineStatus.get(a.id) || 'offline'] ?? 3) - (order[onlineStatus.get(b.id) || 'offline'] ?? 3));
+    } else {
+        arr.sort((a, b) => (a.display_name || a.username).localeCompare(b.display_name || b.username));
+    }
+    return arr;
+}
 
-        <!-- SEARCH -->
-        <h2><i class="fas fa-search"></i> Find Professionals</h2>
-        <div class="search-section">
-            <input type="text" id="searchUser" placeholder="Search by username or name…" minlength="2" autocomplete="off">
-            <button id="searchBtn" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
-        </div>
-        <div id="searchResults"></div>
-        <hr>
-
-        <!-- ADD FRIEND -->
-        <h2><i class="fas fa-user-plus"></i> Add Connection</h2>
-        <div class="add-friend">
-            <input type="text" id="friendUsername" placeholder="Enter exact username" autocomplete="off" autocapitalize="none">
-            <button id="addFriendBtn" class="btn btn-primary"><i class="fas fa-user-plus"></i> Send Request</button>
-        </div>
-
-        <!-- TRENDING -->
-        <h2><i class="fas fa-fire"></i> Trending Professionals</h2>
-        <div id="trendingSection">
-            <div class="loading"><i class="fas fa-spinner"></i> Loading trending…</div>
-        </div>
-
-        <!-- SUGGESTIONS -->
-        <h2><i class="fas fa-user-astronaut"></i> People You May Know</h2>
-        <div class="suggestion-grid" id="suggestionsGrid">
-            <div class="no-results" style="grid-column:1/-1;">Loading suggestions…</div>
-        </div>
-
-        <!-- FILTERS -->
-        <div class="filters-section">
-            <div class="filters-top-row">
-                <h3><i class="fas fa-filter"></i> Filters &amp; Search</h3>
-                <div class="filters-actions">
-                    <button class="export-btn" id="exportBtn"><i class="fas fa-download"></i> Export</button>
-                    <button id="refreshBtn" class="btn btn-outline btn-small"><i class="fas fa-sync-alt"></i> Refresh</button>
-                </div>
-            </div>
-            <div class="filters-row">
-                <select id="statusFilter" class="filter-select">
-                    <option value="">All Status</option>
-                    <option value="online">Online</option>
-                    <option value="away">Away</option>
-                    <option value="busy">Busy</option>
-                    <option value="offline">Offline</option>
-                </select>
-                <input type="text" id="quickSearch" class="filter-input" placeholder="Quick search…">
-                <button id="clearFilters" class="btn btn-outline btn-small">Clear</button>
-            </div>
-        </div>
-
-        <!-- SORT + VIEW -->
-        <div class="controls-row">
-            <div class="sort-bar">
-                <span>Sort by</span>
-                <button class="sort-btn active" data-sort="name">Name</button>
-                <button class="sort-btn" data-sort="status">Status</button>
-                <button class="sort-btn" data-sort="starred">Starred</button>
-            </div>
-            <div class="view-toggle">
-                <button class="view-toggle-btn active" data-view="grid" title="Grid view"><i class="fas fa-th-large"></i></button>
-                <button class="view-toggle-btn" data-view="list" title="List view"><i class="fas fa-list"></i></button>
-            </div>
-        </div>
-
-        <!-- FRIENDS -->
-        <h2><i class="fas fa-user-friends"></i> Your Network</h2>
-        <div id="friendsList" class="friend-grid"></div>
-
-        <!-- REQUESTS -->
-        <h2 style="margin-top:2rem;"><i class="fas fa-clock"></i> Pending Requests</h2>
-        <div id="requestsList"></div>
-
-        <!-- GROUPS -->
-        <h2><i class="fas fa-users-viewfinder"></i> My Groups</h2>
-        <div id="groupsList" class="friend-grid"></div>
-        <div style="margin:1rem 0;">
-            <button id="createGroupBtn" class="btn btn-primary"><i class="fas fa-plus"></i> Create New Group</button>
-        </div>
-
-        <!-- ACTIVITY -->
-        <h2><i class="fas fa-bolt"></i> Recent Activity</h2>
-        <div class="activity-feed" id="activityFeed">
-            <div class="loading"><i class="fas fa-spinner"></i> Loading activity…</div>
-        </div>
-    </div>
-
-    <div class="disclaimer">
-        <p><strong>Disclaimer:</strong> Sarveik is a directory of third‑party tools. We do not host any content. All trademarks, logos, and brand names are the property of their respective owners. If you believe any link infringes your rights, please <a href="dmca.html">contact us</a> for removal.</p>
-    </div>
-
-    <button id="backToTop" title="Back to top"><i class="fas fa-arrow-up"></i></button>
-
-    <!-- PROFILE MODAL -->
-    <div id="profileModal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <div id="modalProfileContent">Loading...</div>
-        </div>
-    </div>
-
-    <!-- CREATE GROUP MODAL -->
-    <div id="createGroupModal" class="modal">
-        <div class="modal-content" style="max-width:540px;">
-            <span class="close-modal" id="closeGroupModal">&times;</span>
-            <h3 style="margin-bottom:0.8rem;font-size:0.95rem;display:flex;align-items:center;gap:0.42rem;">
-                <i class="fas fa-layer-group" style="color:var(--cyan);"></i> Create New Group
-            </h3>
-            <div class="group-info-preview">
-                <div style="font-size:0.73rem;opacity:0.6;margin-bottom:5px;">Group name</div>
-                <input type="text" id="groupName" placeholder="Enter group name">
-            </div>
-            <label style="font-size:0.8rem;font-weight:600;display:flex;align-items:center;gap:0.38rem;">
-                <i class="fas fa-user-friends" style="color:var(--cyan);"></i> Select members
-            </label>
-            <div class="group-member-list" id="memberListContainer">
-                <div class="loading" style="padding:1rem;"><i class="fas fa-spinner fa-spin"></i> Loading friends...</div>
-            </div>
-            <div id="selectedMembersContainer" class="selected-members">
-                <span style="font-size:0.68rem;opacity:0.55;">No members selected yet</span>
-            </div>
-            <button id="confirmCreateGroup" class="btn btn-primary" style="width:100%;margin-top:1rem;justify-content:center;">
-                <i class="fas fa-check-circle"></i> Create Group
-            </button>
-        </div>
-    </div>
-
-    <!-- NOTE MODAL -->
-    <div id="noteModal" class="modal">
-        <div class="modal-content" style="max-width:420px;">
-            <span class="close-modal" id="closeNoteModal">&times;</span>
-            <h3 style="margin-bottom:0.4rem;font-size:0.95rem;display:flex;align-items:center;gap:0.42rem;">
-                <i class="fas fa-sticky-note" style="color:var(--cyan);"></i> Private Note
-            </h3>
-            <p style="color:var(--text-secondary);font-size:0.74rem;" id="noteForUser">For @username</p>
-            <textarea id="noteTextarea" placeholder="Add a private note about this connection…"></textarea>
-            <button class="btn btn-primary" id="saveNoteBtn" style="margin-top:0.8rem;width:100%;justify-content:center;">
-                <i class="fas fa-save"></i> Save Note
-            </button>
-        </div>
-    </div>
-
-    <!-- Context Menu -->
-    <div id="ctxMenu" class="ctx-menu" style="display:none;"></div>
-    <div id="ctxBackdrop" class="ctx-backdrop" style="display:none;"></div>
-
-    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-    <script>
-        // ========== CSRF ==========
-        let csrfToken = null;
-        async function fetchCsrfToken() {
-            try {
-                const res = await fetch('/api/csrf-token', { credentials: 'include' });
-                if (res.ok) { const data = await res.json(); csrfToken = data.csrfToken; }
-            } catch (err) { console.error('CSRF token fetch failed:', err); }
-        }
-        async function getCsrfHeader() {
-            if (!csrfToken) await fetchCsrfToken();
-            return { 'X-CSRF-Token': csrfToken };
-        }
-        async function apiCall(url, options = {}) {
-            if (options.body && typeof options.body === 'object') {
-                options.body = JSON.stringify(options.body);
-                options.headers = { ...options.headers, 'Content-Type': 'application/json' };
-            }
-            if (options.body && typeof options.body === 'string' && !options.headers?.['Content-Type']) {
-                options.headers = { ...options.headers, 'Content-Type': 'application/json' };
-            }
-            if (options.method && options.method !== 'GET') {
-                const csrfHeader = await getCsrfHeader();
-                options.headers = { ...options.headers, ...csrfHeader };
-            }
-            const res = await fetch(url, { ...options, credentials: 'include' });
-            if (!res.ok) { let errorMsg = await res.text(); throw new Error(errorMsg || `Request failed with status ${res.status}`); }
-            const contentType = res.headers.get('content-type');
-            if (contentType && contentType.includes('application/json')) return res.json();
-            return res.text();
-        }
-
-        // ========== Globals ==========
-        const socket = io({ withCredentials: true });
-        let currentUserId = null;
-        let onlineStatus = new Map();
-        let unreadCounts = new Map();
-        let friendsData = [];
-        let requestsData = [];
-        let trendingData = [];
-        let groupsData = [];
-        let filters = { status: '', search: '' };
-        let allFriendsForModal = [];
-        let starredFriends = new Set(JSON.parse(localStorage.getItem('nova_starred') || '[]'));
-        let friendNotes = JSON.parse(localStorage.getItem('nova_notes') || '{}');
-        let currentSort = 'name';
-        let currentView = 'grid';
-        let noteTargetId = null;
-        let activityLog = JSON.parse(localStorage.getItem('nova_activity') || '[]');
-
-        // ========== Profile Data ==========
-        let currentUserProfile = null;
-
-        // ========== Context Menu ==========
-        const ctxMenu = document.getElementById('ctxMenu');
-        const ctxBackdrop = document.getElementById('ctxBackdrop');
-
-        function showCtxMenu(items, anchorEl) {
-            ctxMenu.innerHTML = items.map(item => `
-                <button class="ctx-menu-item ${item.danger ? 'danger' : ''}" data-action="${item.action}">
-                    <i class="fas ${item.icon}"></i> ${item.label}
-                </button>`).join('');
-            ctxMenu.style.display = 'block';
-            ctxBackdrop.style.display = 'block';
-
-            const rect = anchorEl.getBoundingClientRect();
-            const menuW = 180;
-            const menuH = items.length * 46 + 16;
-            const vw = window.innerWidth;
-            const vh = window.innerHeight;
-
-            let top = rect.bottom + 8;
-            let left = rect.right - menuW;
-
-            if (top + menuH > vh - 16) top = rect.top - menuH - 8;
-            if (left < 8) left = 8;
-            if (left + menuW > vw - 8) left = vw - menuW - 8;
-            if (top < 70) top = 70;
-
-            ctxMenu.style.top = top + 'px';
-            ctxMenu.style.left = left + 'px';
-
-            ctxMenu.querySelectorAll('.ctx-menu-item').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const action = btn.dataset.action;
-                    hideCtxMenu();
-                    const handler = ctxMenu._handlers?.[action];
-                    if (handler) handler();
-                });
-            });
-        }
-
-        function hideCtxMenu() {
-            ctxMenu.style.display = 'none';
-            ctxBackdrop.style.display = 'none';
-        }
-        ctxBackdrop.addEventListener('click', hideCtxMenu);
-
-        // ========== Utilities ==========
-        function escapeHtml(str) {
-            if (!str) return '';
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
-        }
-        function showToast(message, type = 'success') {
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            const colors = { error: '#ef4444', info: '#3b82f6', success: '#10b981', warning: '#f59e0b' };
-            const icons = { error: 'fa-circle-xmark', info: 'fa-circle-info', success: 'fa-circle-check', warning: 'fa-triangle-exclamation' };
-            toast.style.background = colors[type] || colors.success;
-            toast.innerHTML = `<i class="fas ${icons[type] || icons.success}"></i> ${escapeHtml(message)}`;
-            document.body.appendChild(toast);
-            requestAnimationFrame(() => requestAnimationFrame(() => toast.classList.add('show')));
-            setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 350); }, 4000);
-        }
-        function showSkeleton(container, count = 3) {
-            container.innerHTML = Array(count).fill(`
-                <div class="skeleton-card">
-                    <div class="skeleton-avatar"></div>
-                    <div class="skeleton-text">
-                        <div class="skeleton-line"></div>
-                        <div class="skeleton-line"></div>
+function renderFriends(friends) {
+    const container = document.getElementById('friendsList');
+    container.className = 'friend-grid' + (currentView === 'list' ? ' list-view' : '');
+    const sorted = sortedFriends(friends);
+    if (sorted.length === 0) {
+        container.innerHTML = '<div class="no-results"><i class="fas fa-users-slash"></i>No connections yet. Add some professionals!</div>';
+        return;
+    }
+    container.innerHTML = sorted.map((f, i) => {
+        const unread = unreadCounts.get(f.id) || 0;
+        const unreadHtml = unread > 0 ? `<span class="unread-badge">${unread}</span>` : '';
+        const statusClass = getFriendStatusClass(f);
+        const isStarred = starredFriends.has(String(f.id));
+        const note = friendNotes[f.id] ? `<span class="friend-tag"><i class="fas fa-sticky-note"></i> Note</span>` : '';
+        return `
+            <div class="friend-card" data-friend-id="${f.id}" style="animation-delay:${i * 0.04}s;">
+                <div class="friend-info">
+                    <img src="${escapeHtml(f.avatar_url || 'https://via.placeholder.com/44?text=U')}" class="friend-avatar" alt="Avatar" onerror="this.src='https://via.placeholder.com/44?text=U'">
+                    <div class="friend-text">
+                        <div class="friend-name">
+                            <span class="friend-name-text">${escapeHtml(f.display_name || f.username)}</span>
+                            ${f.is_pro ? '<span class="pro-badge">PRO</span>' : ''}
+                            ${f.is_verified ? '<span class="verified-badge"><i class="fas fa-check"></i></span>' : ''}
+                            <span class="friend-status ${statusClass}"></span>
+                            ${unreadHtml}
+                        </div>
+                        <div class="friend-username">@${escapeHtml(f.username)} · ${escapeHtml(f.profession || 'Professional')}</div>
+                        <div class="friend-tags">${note}</div>
                     </div>
-                </div>`).join('');
-        }
-        function timeAgo(ts) {
-            const diff = Date.now() - ts;
-            if (diff < 60000) return 'just now';
-            if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
-            if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
-            return Math.floor(diff / 86400000) + 'd ago';
-        }
-        function pushActivity(icon, iconClass, text) {
-            activityLog.unshift({ icon, iconClass: iconClass || 'default', text, ts: Date.now() });
-            if (activityLog.length > 20) activityLog.pop();
-            localStorage.setItem('nova_activity', JSON.stringify(activityLog));
-            renderActivityFeed();
-        }
+                </div>
+                <div class="card-actions">
+                    <button class="star-btn ${isStarred ? 'starred' : ''}" data-id="${f.id}" title="${isStarred ? 'Unstar' : 'Star'}"><i class="fas fa-star"></i></button>
+                    <button class="btn btn-small btn-primary chat-btn" data-id="${f.id}" title="Chat"><i class="fas fa-comments"></i> <span class="chat-label">Chat</span></button>
+                    <button class="btn btn-small btn-outline btn-icon view-profile-btn" data-id="${f.id}" title="View Profile"><i class="fas fa-user-circle"></i></button>
+                    <button class="btn btn-small btn-outline btn-icon note-btn" data-id="${f.id}" title="Add Note"><i class="fas fa-sticky-note"></i></button>
+                    <button class="btn btn-small btn-danger btn-icon unfriend-btn" data-id="${f.id}" title="Remove"><i class="fas fa-user-minus"></i></button>
+                </div>
+            </div>
+        `;
+    }).join('');
+    attachFriendEvents();
+}
 
-        // ========== Stats ==========
-        async function loadStats() {
-            try {
-                const stats = await apiCall('/api/network/stats');
-                document.getElementById('totalConnections').textContent = stats.total || 0;
-                document.getElementById('onlineCount').textContent = stats.online || 0;
-                document.getElementById('requestsCount').textContent = stats.requests || 0;
-                updateHealthScore(stats);
-            } catch (err) { console.error('Stats error:', err); }
-        }
-        async function getCurrentUserId() {
-            try { const user = await apiCall('/profile'); currentUserId = user.id; return user; } catch (err) { console.error('Error getting user ID:', err); return null; }
-        }
-        async function loadCurrentUserProfile() {
-            try {
-                const user = await apiCall('/profile');
-                currentUserProfile = user;
-                const avatarEl = document.getElementById('navProfileAvatar');
-                const nameEl = document.getElementById('navProfileName');
-                const dropdownAvatar = document.getElementById('dropdownAvatar');
-                const dropdownName = document.getElementById('dropdownName');
-                const dropdownEmail = document.getElementById('dropdownEmail');
-                
-                if (avatarEl) avatarEl.src = user.avatar_url || 'https://via.placeholder.com/32?text=U';
-                if (dropdownAvatar) dropdownAvatar.src = user.avatar_url || 'https://via.placeholder.com/44?text=U';
-                if (nameEl) nameEl.textContent = user.display_name || user.username || 'User';
-                if (dropdownName) dropdownName.textContent = user.display_name || user.username || 'User';
-                if (dropdownEmail) dropdownEmail.textContent = user.email || 'user@example.com';
-                return user;
-            } catch (err) { console.error('Error loading profile:', err); return null; }
-        }
-        async function updateUnreadBadge() {
-            try {
-                const data = await apiCall('/api/unread');
-                const totalUnread = data.unread.reduce((sum, f) => sum + f.count, 0);
-                const total = totalUnread + (data.pendingRequests || 0);
-                const badgeSpan = document.getElementById('totalBadge');
-                if (total > 0) { badgeSpan.textContent = total > 99 ? '99+' : total; badgeSpan.style.display = 'inline-block'; }
-                else { badgeSpan.style.display = 'none'; }
-                unreadCounts.clear();
-                data.unread.forEach(f => unreadCounts.set(f.friend_id, f.count));
-                if (friendsData.length) renderFriends(friendsData);
-            } catch (err) { console.error('Error updating unread badge:', err); }
-        }
+function attachFriendEvents() {
+    document.querySelectorAll('.chat-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const friendId = btn.dataset.id;
+            await apiCall(`/api/messages/read/${friendId}`, { method: 'POST' });
+            if (unreadCounts.has(parseInt(friendId))) { unreadCounts.set(parseInt(friendId), 0); renderFriends(friendsData); updateUnreadBadge(); }
+            window.location.href = `chat.html?friend=${friendId}`;
+        });
+    });
+    document.querySelectorAll('.view-profile-btn').forEach(btn => btn.addEventListener('click', () => showFriendProfile(btn.dataset.id)));
+    document.querySelectorAll('.unfriend-btn').forEach(btn => btn.addEventListener('click', () => unfriend(btn.dataset.id)));
+    document.querySelectorAll('.star-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = String(btn.dataset.id);
+            if (starredFriends.has(id)) { starredFriends.delete(id); btn.classList.remove('starred'); showToast('Removed from favourites', 'info'); }
+            else { starredFriends.add(id); btn.classList.add('starred'); showToast('Added to favourites ⭐', 'success'); pushActivity('fa-star', 'message', 'You starred a connection'); }
+            localStorage.setItem('nova_starred', JSON.stringify([...starredFriends]));
+            renderPinned();
+            updateHealthScore({ total: friendsData.length, online: 0, requests: requestsData.length });
+        });
+    });
+    document.querySelectorAll('.note-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            noteTargetId = btn.dataset.id;
+            const friend = friendsData.find(f => String(f.id) === String(noteTargetId));
+            document.getElementById('noteForUser').textContent = '@' + (friend?.username || 'user');
+            document.getElementById('noteTextarea').value = friendNotes[noteTargetId] || '';
+            document.getElementById('noteModal').style.display = 'block';
+        });
+    });
+}
 
-        // ========== Health Score ==========
-        function updateHealthScore(stats) {
-            const total = stats.total || 0, online = stats.online || 0, pending = stats.requests || 0;
-            const hasGroups = groupsData.length > 0, hasStarred = starredFriends.size > 0;
-            const tips = [
-                { done: total >= 5, text: 'Have at least 5 connections' },
-                { done: online > 0, text: 'Someone in your network is online' },
-                { done: pending === 0, text: 'No pending requests waiting' },
-                { done: hasGroups, text: 'Member of at least one group' },
-                { done: hasStarred, text: 'Starred a favourite connection' },
-            ];
-            const score = Math.round((tips.filter(t => t.done).length / tips.length) * 100);
-            document.getElementById('healthScoreNum').textContent = score + '%';
-            const circumference = 2 * Math.PI * 34;
-            const ring = document.getElementById('healthRingFill');
-            ring.setAttribute('stroke-dasharray', circumference);
-            ring.style.strokeDashoffset = circumference - (score / 100) * circumference;
-            document.getElementById('healthTips').innerHTML = tips.map(t => `
-                <li class="health-tip ${t.done ? 'done' : ''}">
-                    <i class="fas ${t.done ? 'fa-check-circle' : 'fa-circle-dot'}"></i>${t.text}
-                </li>`).join('');
-        }
+async function unfriend(friendId) {
+    if (!confirm('Remove this connection?')) return;
+    try {
+        await apiCall(`/api/friends/${friendId}`, { method: 'DELETE' });
+        showToast('Connection removed.', 'success');
+        pushActivity('fa-user-minus', 'request', 'You removed a connection');
+        friendsData = friendsData.filter(f => f.id != friendId);
+        starredFriends.delete(String(friendId));
+        localStorage.setItem('nova_starred', JSON.stringify([...starredFriends]));
+        renderFriends(friendsData); renderPinned(); updateUnreadBadge(); loadStats();
+    } catch (err) { showToast(err.message || 'Failed to remove', 'error'); }
+}
 
-        // ========== Friends ==========
-        async function loadFriends() {
-            const container = document.getElementById('friendsList');
-            showSkeleton(container);
-            try {
-                const params = new URLSearchParams();
-                if (filters.status) params.append('status', filters.status);
-                if (filters.search) params.append('search', filters.search);
-                friendsData = await apiCall(`/api/friends?${params.toString()}`);
-                for (const f of friendsData) { if (!onlineStatus.has(f.id)) onlineStatus.set(f.id, f.status || 'offline'); }
-                renderFriends(friendsData);
-                renderPinned();
-                renderSuggestions();
-            } catch (err) {
-                console.error(err);
-                container.innerHTML = '<div class="no-results"><i class="fas fa-wifi"></i>Error loading network. Please try again.</div>';
-            }
-        }
-        function getFriendStatusClass(friend) {
-            let status = onlineStatus.get(friend.id);
-            if (!status) status = friend.status || 'offline';
-            return ['online', 'away', 'busy'].includes(status) ? status : '';
-        }
-        function sortedFriends(friends) {
-            const arr = [...friends];
-            if (currentSort === 'starred') {
-                arr.sort((a, b) => (starredFriends.has(String(a.id)) ? 0 : 1) - (starredFriends.has(String(b.id)) ? 0 : 1));
-            } else if (currentSort === 'status') {
-                const order = { online: 0, away: 1, busy: 2, offline: 3 };
-                arr.sort((a, b) => (order[onlineStatus.get(a.id) || 'offline'] ?? 3) - (order[onlineStatus.get(b.id) || 'offline'] ?? 3));
-            } else {
-                arr.sort((a, b) => (a.display_name || a.username).localeCompare(b.display_name || b.username));
-            }
-            return arr;
-        }
-        function renderFriends(friends) {
-            const container = document.getElementById('friendsList');
-            container.className = 'friend-grid' + (currentView === 'list' ? ' list-view' : '');
-            const sorted = sortedFriends(friends);
-            if (sorted.length === 0) {
-                container.innerHTML = '<div class="no-results"><i class="fas fa-users-slash"></i>No connections yet. Add some professionals!</div>';
-                return;
-            }
-            container.innerHTML = sorted.map((f, i) => {
-                const unread = unreadCounts.get(f.id) || 0;
-                const unreadHtml = unread > 0 ? `<span class="unread-badge">${unread}</span>` : '';
-                const statusClass = getFriendStatusClass(f);
-                const isStarred = starredFriends.has(String(f.id));
-                const note = friendNotes[f.id] ? `<span class="friend-tag"><i class="fas fa-sticky-note"></i> Note</span>` : '';
-                return `
-                    <div class="friend-card" data-friend-id="${f.id}" style="animation-delay:${i * 0.04}s;">
-                        <div class="friend-info">
-                            <img src="${escapeHtml(f.avatar_url || 'https://via.placeholder.com/44?text=U')}" class="friend-avatar" alt="Avatar" onerror="this.src='https://via.placeholder.com/44?text=U'">
-                            <div class="friend-text">
-                                <div class="friend-name">
-                                    <span class="friend-name-text">${escapeHtml(f.display_name || f.username)}</span>
-                                    ${f.is_pro ? '<span class="pro-badge">PRO</span>' : ''}
-                                    ${f.is_verified ? '<span class="verified-badge"><i class="fas fa-check"></i></span>' : ''}
-                                    <span class="friend-status ${statusClass}"></span>
-                                    ${unreadHtml}
-                                </div>
-                                <div class="friend-username">@${escapeHtml(f.username)} · ${escapeHtml(f.profession || 'Professional')}</div>
-                                <div class="friend-tags">${note}</div>
-                            </div>
-                        </div>
-                        <div class="card-actions">
-                            <button class="star-btn ${isStarred ? 'starred' : ''}" data-id="${f.id}" title="${isStarred ? 'Unstar' : 'Star'}"><i class="fas fa-star"></i></button>
-                            <button class="btn btn-small btn-primary chat-btn" data-id="${f.id}" title="Chat"><i class="fas fa-comments"></i> <span class="chat-label">Chat</span></button>
-                            <button class="btn btn-small btn-outline btn-icon view-profile-btn" data-id="${f.id}" data-username="${escapeHtml(f.username)}" title="View Profile"><i class="fas fa-user-circle"></i></button>
-                            <button class="btn btn-small btn-outline btn-icon note-btn" data-id="${f.id}" data-username="${escapeHtml(f.username)}" title="Add Note"><i class="fas fa-sticky-note"></i></button>
-                            <button class="btn btn-small btn-danger btn-icon unfriend-btn" data-id="${f.id}" title="Remove"><i class="fas fa-user-minus"></i></button>
-                            <button class="btn-more more-btn" data-id="${f.id}" data-username="${escapeHtml(f.username)}" title="More options"><i class="fas fa-ellipsis-v"></i></button>
-                        </div>
-                    </div>`;
-            }).join('');
-            attachFriendEvents();
-        }
-        function attachFriendEvents() {
-            document.querySelectorAll('.chat-btn').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    const friendId = btn.dataset.id;
-                    await apiCall(`/api/messages/read/${friendId}`, { method: 'POST' });
-                    if (unreadCounts.has(parseInt(friendId))) { unreadCounts.set(parseInt(friendId), 0); renderFriends(friendsData); updateUnreadBadge(); }
-                    window.location.href = `chat.html?friend=${friendId}`;
-                });
-            });
-            document.querySelectorAll('.view-profile-btn').forEach(btn => btn.addEventListener('click', () => showFriendProfile(btn.dataset.id, btn.dataset.username)));
-            document.querySelectorAll('.unfriend-btn').forEach(btn => btn.addEventListener('click', () => unfriend(btn.dataset.id)));
-            document.querySelectorAll('.star-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const id = String(btn.dataset.id);
-                    if (starredFriends.has(id)) { starredFriends.delete(id); btn.classList.remove('starred'); showToast('Removed from favourites', 'info'); }
-                    else { starredFriends.add(id); btn.classList.add('starred'); showToast('Added to favourites ⭐', 'success'); pushActivity('fa-star', 'message', 'You starred a connection'); }
-                    localStorage.setItem('nova_starred', JSON.stringify([...starredFriends]));
-                    renderPinned();
-                    updateHealthScore({ total: friendsData.length, online: 0, requests: requestsData.length });
-                });
-            });
-            document.querySelectorAll('.note-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    noteTargetId = btn.dataset.id;
-                    document.getElementById('noteForUser').textContent = '@' + btn.dataset.username;
-                    document.getElementById('noteTextarea').value = friendNotes[noteTargetId] || '';
-                    document.getElementById('noteModal').style.display = 'block';
-                });
-            });
-            document.querySelectorAll('.more-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const id = btn.dataset.id, username = btn.dataset.username;
-                    const isStarred = starredFriends.has(String(id));
-                    const actions = {
-                        profile: () => showFriendProfile(id, username),
-                        note: () => {
-                            noteTargetId = id;
-                            document.getElementById('noteForUser').textContent = '@' + username;
-                            document.getElementById('noteTextarea').value = friendNotes[id] || '';
-                            document.getElementById('noteModal').style.display = 'block';
-                        },
-                        star: () => {
-                            const starBtn = document.querySelector(`.star-btn[data-id="${id}"]`);
-                            if (starBtn) starBtn.click();
-                        },
-                        unfriend: () => unfriend(id)
-                    };
-                    ctxMenu._handlers = actions;
-                    showCtxMenu([
-                        { action: 'profile', icon: 'fa-user-circle', label: 'View Profile' },
-                        { action: 'note', icon: 'fa-sticky-note', label: 'Add Note' },
-                        { action: 'star', icon: 'fa-star', label: isStarred ? 'Unstar' : 'Star' },
-                        { action: 'unfriend', icon: 'fa-user-minus', label: 'Remove', danger: true }
-                    ], btn);
-                });
-            });
-        }
-        async function unfriend(friendId) {
-            if (!confirm('Remove this connection?')) return;
-            const friendCard = document.querySelector(`.friend-card[data-friend-id="${friendId}"]`);
-            const unfriendBtn = friendCard?.querySelector('.unfriend-btn');
-            const original = unfriendBtn ? unfriendBtn.innerHTML : '';
-            if (unfriendBtn) { unfriendBtn.disabled = true; unfriendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>'; }
-            try {
-                await apiCall(`/api/friends/${friendId}`, { method: 'DELETE' });
-                showToast('Connection removed.', 'success');
-                pushActivity('fa-user-minus', 'request', 'You removed a connection');
-                friendsData = friendsData.filter(f => f.id != friendId);
-                starredFriends.delete(String(friendId));
-                localStorage.setItem('nova_starred', JSON.stringify([...starredFriends]));
-                renderFriends(friendsData); renderPinned(); updateUnreadBadge(); loadStats();
-            } catch (err) {
-                showToast(err.message || 'Failed to remove', 'error');
-                if (unfriendBtn) { unfriendBtn.disabled = false; unfriendBtn.innerHTML = original; }
-            }
-        }
-        function renderPinned() {
-            const section = document.getElementById('pinnedSection');
-            const container = document.getElementById('pinnedAvatars');
-            const pinned = friendsData.filter(f => starredFriends.has(String(f.id)));
-            if (pinned.length === 0) { section.style.display = 'none'; return; }
-            section.style.display = 'block';
-            container.innerHTML = pinned.map(f => `
-                <div class="pinned-chip" onclick="window.location.href='chat.html?friend=${f.id}'">
-                    <img src="${escapeHtml(f.avatar_url || 'https://via.placeholder.com/22?text=U')}" onerror="this.src='https://via.placeholder.com/22?text=U'" alt="">
-                    ${escapeHtml(f.display_name || f.username)}
-                </div>`).join('');
-        }
-        function renderSuggestions() {
-            const container = document.getElementById('suggestionsGrid');
-            const pool = trendingData.filter(t => !friendsData.some(f => f.id === t.id) && t.id !== currentUserId);
-            if (pool.length === 0) { container.innerHTML = '<div class="no-results" style="grid-column:1/-1;"><i class="fas fa-user-slash"></i>No suggestions right now.</div>'; return; }
-            container.innerHTML = pool.slice(0, 6).map((u, i) => `
-                <div class="suggestion-card" style="animation-delay:${i * 0.07}s;">
-                    <img src="${escapeHtml(u.avatar_url || 'https://via.placeholder.com/52?text=U')}" class="suggestion-avatar" onerror="this.src='https://via.placeholder.com/52?text=U'" alt="">
-                    <div class="suggestion-name">${escapeHtml(u.display_name || u.username)}</div>
-                    <div class="suggestion-role">${escapeHtml(u.profession || 'Professional')}</div>
-                    <div class="suggestion-mutual"><i class="fas fa-user-friends"></i> Suggested for you</div>
-                    <button class="btn btn-small btn-primary suggest-connect-btn" data-username="${escapeHtml(u.username)}"><i class="fas fa-user-plus"></i> Connect</button>
-                </div>`).join('');
-            document.querySelectorAll('.suggest-connect-btn').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    const uname = btn.dataset.username; const original = btn.innerHTML;
-                    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                    try {
-                        await apiCall('/api/friends/request', { method: 'POST', body: JSON.stringify({ friendUsername: uname }) });
-                        btn.innerHTML = '<i class="fas fa-check"></i> Sent';
-                        showToast('Request sent!', 'success');
-                        pushActivity('fa-user-plus', 'connect', `You sent a request to @${uname}`);
-                    } catch (err) { showToast(err.message || 'Failed', 'error'); btn.innerHTML = original; btn.disabled = false; }
-                });
-            });
-        }
-        function renderActivityFeed() {
-            const container = document.getElementById('activityFeed');
-            if (activityLog.length === 0) { container.innerHTML = '<div class="no-results"><i class="fas fa-bolt-lightning"></i>No recent activity yet.</div>'; return; }
-            container.innerHTML = activityLog.slice(0, 10).map((a, i) => `
-                <div class="activity-item" style="animation-delay:${i * 0.05}s;">
-                    <div class="activity-icon ${a.iconClass || 'default'}"><i class="fas ${a.icon}"></i></div>
-                    <div class="activity-text">${escapeHtml(a.text)}</div>
-                    <div class="activity-time">${timeAgo(a.ts)}</div>
-                </div>`).join('');
-        }
+function renderPinned() {
+    const section = document.getElementById('pinnedSection');
+    const container = document.getElementById('pinnedAvatars');
+    const pinned = friendsData.filter(f => starredFriends.has(String(f.id)));
+    if (pinned.length === 0) { section.style.display = 'none'; return; }
+    section.style.display = 'block';
+    container.innerHTML = pinned.map(f => `
+        <div class="pinned-chip" onclick="window.location.href='chat.html?friend=${f.id}'">
+            <img src="${escapeHtml(f.avatar_url || 'https://via.placeholder.com/22?text=U')}" onerror="this.src='https://via.placeholder.com/22?text=U'" alt="">
+            ${escapeHtml(f.display_name || f.username)}
+        </div>
+    `).join('');
+}
 
-        // ========== Requests ==========
-        async function loadRequests() {
-            const container = document.getElementById('requestsList');
-            showSkeleton(container, 2);
+function renderSuggestions() {
+    const container = document.getElementById('suggestionsGrid');
+    const pool = trendingData.filter(t => !friendsData.some(f => f.id === t.id) && t.id !== currentUserId);
+    if (pool.length === 0) { container.innerHTML = '<div class="no-results" style="grid-column:1/-1;"><i class="fas fa-user-slash"></i>No suggestions right now.</div>'; return; }
+    container.innerHTML = pool.slice(0, 6).map((u, i) => `
+        <div class="suggestion-card" style="animation-delay:${i * 0.07}s;">
+            <img src="${escapeHtml(u.avatar_url || 'https://via.placeholder.com/52?text=U')}" class="suggestion-avatar" onerror="this.src='https://via.placeholder.com/52?text=U'" alt="">
+            <div class="suggestion-name">${escapeHtml(u.display_name || u.username)}</div>
+            <div class="suggestion-role">${escapeHtml(u.profession || 'Professional')}</div>
+            <div class="suggestion-mutual"><i class="fas fa-user-friends"></i> Suggested for you</div>
+            <button class="btn btn-small btn-primary suggest-connect-btn" data-username="${escapeHtml(u.username)}"><i class="fas fa-user-plus"></i> Connect</button>
+        </div>
+    `).join('');
+    document.querySelectorAll('.suggest-connect-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const uname = btn.dataset.username; const original = btn.innerHTML;
+            btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
             try {
-                requestsData = await apiCall('/api/friends/requests');
-                if (requestsData.length === 0) { container.innerHTML = '<div class="no-results"><i class="fas fa-inbox"></i>No pending requests.</div>'; return; }
-                container.innerHTML = requestsData.map(r => `
-                    <div class="friend-card request-card">
-                        <div class="friend-info">
-                            <img src="${escapeHtml(r.avatar_url || 'https://via.placeholder.com/44?text=U')}" class="friend-avatar" alt="Avatar" onerror="this.src='https://via.placeholder.com/44?text=U'">
-                            <div class="friend-text">
-                                <div class="friend-name">
-                                    <span class="friend-name-text">${escapeHtml(r.display_name || r.username)}</span>
-                                    ${r.is_pro ? '<span class="pro-badge">PRO</span>' : ''}
-                                </div>
-                                <div class="friend-username">@${escapeHtml(r.username)} · ${escapeHtml(r.profession || 'Professional')}</div>
-                            </div>
-                        </div>
-                        <div class="card-actions">
-                            <button class="btn btn-small btn-success accept-btn" data-id="${r.id}"><i class="fas fa-check"></i> <span class="chat-label">Accept</span></button>
-                            <button class="btn btn-small btn-outline btn-icon decline-btn" data-id="${r.id}" title="Decline"><i class="fas fa-times"></i></button>
-                        </div>
-                    </div>`).join('');
-                document.querySelectorAll('.accept-btn').forEach(btn => {
-                    btn.addEventListener('click', async () => {
-                        const requestId = btn.dataset.id; const btnText = btn.innerHTML;
-                        btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                        try {
-                            await apiCall(`/api/friends/accept/${requestId}`, { method: 'PUT' });
-                            showToast('Request accepted!', 'success');
-                            pushActivity('fa-user-check', 'connect', 'You accepted a connection request');
-                            await Promise.all([loadRequests(), loadFriends()]);
-                            updateUnreadBadge(); loadStats();
-                        } catch (err) { showToast(err.message || 'Failed to accept', 'error'); btn.disabled = false; btn.innerHTML = btnText; }
-                    });
-                });
-                document.querySelectorAll('.decline-btn').forEach(btn => {
-                    btn.addEventListener('click', async () => {
-                        const requestId = btn.dataset.id; const btnText = btn.innerHTML;
-                        btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                        try {
-                            await apiCall(`/api/friends/decline/${requestId}`, { method: 'PUT' });
-                            showToast('Request declined.', 'info');
-                            pushActivity('fa-user-times', 'request', 'You declined a connection request');
-                            loadRequests(); updateUnreadBadge(); loadStats();
-                        } catch (err) { showToast(err.message || 'Failed to decline', 'error'); btn.disabled = false; btn.innerHTML = btnText; }
-                    });
-                });
-            } catch (err) { console.error(err); container.innerHTML = '<div class="no-results"><i class="fas fa-triangle-exclamation"></i>Error loading requests.</div>'; }
-        }
-
-        // ========== Add Friend ==========
-        document.getElementById('addFriendBtn').addEventListener('click', async () => {
-            const username = document.getElementById('friendUsername').value.trim();
-            if (!username) { showToast('Please enter a username', 'error'); return; }
-            const btn = document.getElementById('addFriendBtn');
-            const original = btn.innerHTML;
-            btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
-            try {
-                await apiCall('/api/friends/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ friendUsername: username }) });
-                document.getElementById('friendUsername').value = '';
+                await apiCall('/api/friends/request', { method: 'POST', body: JSON.stringify({ friendUsername: uname }) });
+                btn.innerHTML = '<i class="fas fa-check"></i> Sent';
                 showToast('Request sent!', 'success');
-                pushActivity('fa-user-plus', 'connect', `You sent a request to @${username}`);
-                updateUnreadBadge();
-            } catch (err) { showToast(err.message || 'Failed to send request', 'error'); }
-            finally { btn.disabled = false; btn.innerHTML = original; }
+                pushActivity('fa-user-plus', 'connect', `You sent a request to @${uname}`);
+            } catch (err) { showToast(err.message || 'Failed', 'error'); btn.innerHTML = original; btn.disabled = false; }
         });
+    });
+}
 
-        // ========== Search ==========
-        let searchTimeout;
-        async function searchUsers() {
-            const query = document.getElementById('searchUser').value.trim();
-            const container = document.getElementById('searchResults');
-            if (query.length < 2) { container.innerHTML = ''; return; }
-            container.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i> Searching...</div>';
-            try {
-                const users = await apiCall(`/api/users/search?q=${encodeURIComponent(query)}`);
-                if (users.length === 0) { container.innerHTML = '<div class="no-results"><i class="fas fa-user-slash"></i>No professionals found.</div>'; return; }
-                container.innerHTML = users.map(user => `
-                    <div class="search-result-card" style="margin-bottom:0.65rem;">
-                        <div class="friend-info">
-                            <img src="${escapeHtml(user.avatar_url || 'https://via.placeholder.com/44?text=U')}" class="friend-avatar" alt="Avatar" onerror="this.src='https://via.placeholder.com/44?text=U'">
-                            <div class="friend-text">
-                                <div class="friend-name">
-                                    <span class="friend-name-text">${escapeHtml(user.display_name || user.username)}</span>
-                                    ${user.is_pro ? '<span class="pro-badge">PRO</span>' : ''}
-                                </div>
-                                <div class="friend-username">@${escapeHtml(user.username)} · ${escapeHtml(user.profession || 'Professional')}</div>
-                            </div>
+function renderActivityFeed() {
+    const container = document.getElementById('activityFeed');
+    if (activityLog.length === 0) { container.innerHTML = '<div class="no-results"><i class="fas fa-bolt-lightning"></i>No recent activity yet.</div>'; return; }
+    container.innerHTML = activityLog.slice(0, 10).map((a, i) => `
+        <div class="activity-item" style="animation-delay:${i * 0.05}s;">
+            <div class="activity-icon ${a.iconClass || 'default'}"><i class="fas ${a.icon}"></i></div>
+            <div class="activity-text">${escapeHtml(a.text)}</div>
+            <div class="activity-time">${timeAgo(a.ts)}</div>
+        </div>
+    `).join('');
+}
+
+// ===== REQUESTS =====
+async function loadRequests() {
+    const container = document.getElementById('requestsList');
+    showSkeleton(container, 2);
+    try {
+        requestsData = await apiCall('/api/friends/requests');
+        if (requestsData.length === 0) { container.innerHTML = '<div class="no-results"><i class="fas fa-inbox"></i>No pending requests.</div>'; return; }
+        container.innerHTML = requestsData.map(r => `
+            <div class="friend-card request-card">
+                <div class="friend-info">
+                    <img src="${escapeHtml(r.avatar_url || 'https://via.placeholder.com/44?text=U')}" class="friend-avatar" alt="Avatar" onerror="this.src='https://via.placeholder.com/44?text=U'">
+                    <div class="friend-text">
+                        <div class="friend-name">
+                            <span class="friend-name-text">${escapeHtml(r.display_name || r.username)}</span>
+                            ${r.is_pro ? '<span class="pro-badge">PRO</span>' : ''}
                         </div>
-                        <div class="card-actions">
-                            <button class="btn btn-small btn-primary send-request-btn" data-username="${escapeHtml(user.username)}"><i class="fas fa-user-plus"></i> <span class="chat-label">Connect</span></button>
-                        </div>
-                    </div>`).join('');
-                document.querySelectorAll('.send-request-btn').forEach(btn => {
-                    btn.addEventListener('click', async () => {
-                        const username = btn.dataset.username; const original = btn.innerHTML;
-                        btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-                        try {
-                            await apiCall('/api/friends/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ friendUsername: username }) });
-                            btn.innerHTML = '<i class="fas fa-check"></i>';
-                            showToast(`Request sent to ${username}!`, 'success');
-                            pushActivity('fa-user-plus', 'connect', `You sent a request to @${username}`);
-                            updateUnreadBadge();
-                        } catch (err) { showToast(err.message || 'Failed to send request', 'error'); btn.innerHTML = original; btn.disabled = false; }
-                    });
-                });
-            } catch (err) { console.error(err); container.innerHTML = '<div class="no-results"><i class="fas fa-triangle-exclamation"></i>Error searching professionals.</div>'; }
-        }
-        document.getElementById('searchBtn').addEventListener('click', searchUsers);
-        document.getElementById('searchUser').addEventListener('input', () => { clearTimeout(searchTimeout); searchTimeout = setTimeout(searchUsers, 350); });
-
-        // ========== Filters ==========
-        document.getElementById('statusFilter').addEventListener('change', (e) => { filters.status = e.target.value; loadFriends(); });
-        document.getElementById('quickSearch').addEventListener('input', () => { filters.search = document.getElementById('quickSearch').value; loadFriends(); });
-        document.getElementById('clearFilters').addEventListener('click', () => {
-            filters = { status: '', search: '' };
-            document.getElementById('statusFilter').value = '';
-            document.getElementById('quickSearch').value = '';
-            loadFriends();
-        });
-        document.getElementById('refreshBtn').addEventListener('click', async () => {
-            showToast('Refreshing...', 'info');
-            await Promise.all([loadFriends(), loadRequests(), loadStats(), loadTrending(), loadGroups()]);
-            await updateUnreadBadge();
-            showToast('Refreshed!', 'success');
-        });
-
-        // ========== Sort & View ==========
-        document.querySelectorAll('.sort-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active'); currentSort = btn.dataset.sort; renderFriends(friendsData);
-            });
-        });
-        document.querySelectorAll('.view-toggle-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.view-toggle-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active'); currentView = btn.dataset.view; renderFriends(friendsData);
-            });
-        });
-
-        // ========== Export ==========
-        document.getElementById('exportBtn').addEventListener('click', () => {
-            if (!friendsData.length) { showToast('No connections to export', 'info'); return; }
-            const rows = [['Name', 'Username', 'Profession', 'Status']];
-            friendsData.forEach(f => rows.push([f.display_name || f.username, '@' + f.username, f.profession || 'Professional', onlineStatus.get(f.id) || f.status || 'offline']));
-            const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
-            const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-            const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'sarveik_network.csv'; a.click();
-            showToast('Network exported!', 'success');
-        });
-
-        // ========== Note Modal ==========
-        document.getElementById('closeNoteModal').addEventListener('click', () => document.getElementById('noteModal').style.display = 'none');
-        document.getElementById('saveNoteBtn').addEventListener('click', () => {
-            const txt = document.getElementById('noteTextarea').value.trim();
-            if (noteTargetId) {
-                if (txt) friendNotes[noteTargetId] = txt; else delete friendNotes[noteTargetId];
-                localStorage.setItem('nova_notes', JSON.stringify(friendNotes));
-                document.getElementById('noteModal').style.display = 'none';
-                showToast('Note saved!', 'success');
-                renderFriends(friendsData);
-            }
-        });
-
-        // ========== Trending ==========
-        async function loadTrending() {
-            const container = document.getElementById('trendingSection');
-            try {
-                trendingData = await apiCall('/api/trending/professionals');
-                container.innerHTML = `<div class="trending-list">${trendingData.slice(0, 5).map((user, index) => `
-                    <div class="trending-item">
-                        <div class="trending-rank trending-rank-${index + 1}">${index + 1}</div>
-                        <img src="${escapeHtml(user.avatar_url)}" onerror="this.src='https://via.placeholder.com/36?text=U'" alt="">
-                        <div class="t-info">
-                            <div>${escapeHtml(user.display_name)}</div>
-                            <div>${escapeHtml(user.profession)}</div>
-                        </div>
-                        <button class="btn btn-small btn-primary connect-trending" data-username="${escapeHtml(user.username)}">Connect</button>
-                    </div>`).join('')}</div>`;
-                document.querySelectorAll('.connect-trending').forEach(btn => {
-                    btn.addEventListener('click', async () => {
-                        const username = btn.dataset.username;
-                        btn.disabled = true; btn.innerHTML = '<i class="fas fa-check"></i>';
-                        try {
-                            await apiCall('/api/friends/request', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ friendUsername: username }) });
-                            showToast('Request sent!', 'success');
-                            pushActivity('fa-user-plus', 'connect', `You connected with @${username}`);
-                        } catch (err) { showToast(err.message || 'Failed to send request', 'error'); btn.disabled = false; btn.innerHTML = 'Connect'; }
-                    });
-                });
-                renderSuggestions();
-            } catch (err) { container.innerHTML = '<div class="no-results"><i class="fas fa-fire-flame-curved"></i>No trending professionals</div>'; }
-        }
-
-        // ========== Groups ==========
-        async function loadGroups() {
-            const container = document.getElementById('groupsList');
-            showSkeleton(container);
-            try {
-                const groups = await apiCall('/api/groups');
-                groupsData = groups;
-                if (groupsData.length === 0) { container.innerHTML = '<div class="no-results"><i class="fas fa-users"></i>Not in any groups yet. Create one!</div>'; return; }
-                container.innerHTML = groupsData.map(g => `
-                    <div class="group-card" data-group-id="${g.id}">
-                        <div class="friend-info">
-                            <div class="friend-avatar" style="display:flex;align-items:center;justify-content:center;background:rgba(249,115,22,0.1);border-color:rgba(249,115,22,0.28);flex:0 0 44px;width:44px;height:44px;">
-                                <i class="fas fa-users" style="font-size:1.1rem;color:var(--orange);"></i>
-                            </div>
-                            <div class="friend-text">
-                                <div class="friend-name"><span class="friend-name-text">${escapeHtml(g.name)}</span></div>
-                                <div class="friend-username">${g.member_count} members</div>
-                            </div>
-                        </div>
-                        <div class="card-actions">
-                            <button class="btn btn-small btn-primary open-group-chat" data-id="${g.id}"><i class="fas fa-comments"></i> <span class="chat-label">Open</span></button>
-                            <button class="btn btn-small btn-outline btn-icon leave-group" data-id="${g.id}" title="Leave group"><i class="fas fa-sign-out-alt"></i></button>
-                        </div>
-                    </div>`).join('');
-                document.querySelectorAll('.open-group-chat').forEach(btn => { btn.addEventListener('click', () => window.location.href = `chat.html?group=${btn.dataset.id}`); });
-                document.querySelectorAll('.leave-group').forEach(btn => {
-                    btn.addEventListener('click', async () => {
-                        const groupId = btn.dataset.id;
-                        if (!confirm('Leave this group?')) return;
-                        try {
-                            await apiCall(`/api/groups/${groupId}/leave`, { method: 'POST' });
-                            showToast('Left group', 'info');
-                            pushActivity('fa-sign-out-alt', 'group', 'You left a group');
-                            loadGroups();
-                        } catch (err) { showToast(err.message || 'Failed to leave group', 'error'); }
-                    });
-                });
-            } catch (err) { console.error(err); container.innerHTML = '<div class="no-results"><i class="fas fa-triangle-exclamation"></i>Failed to load groups.</div>'; }
-        }
-
-        // ========== Create Group ==========
-        const createGroupBtn = document.getElementById('createGroupBtn');
-        const createGroupModal = document.getElementById('createGroupModal');
-        const closeGroupModalBtn = document.getElementById('closeGroupModal');
-        const confirmCreateGroupBtn = document.getElementById('confirmCreateGroup');
-        const groupNameInput = document.getElementById('groupName');
-        const memberListContainer = document.getElementById('memberListContainer');
-        const selectedMembersContainer = document.getElementById('selectedMembersContainer');
-        let selectedMembers = [];
-
-        async function loadFriendsForModal() {
-            try {
-                const friends = await apiCall('/api/friends');
-                allFriendsForModal = friends.map(f => ({ id: f.id, username: f.username, avatar: f.avatar_url }));
-                renderMemberList(allFriendsForModal);
-            } catch (err) { memberListContainer.innerHTML = '<div class="no-results">Failed to load friends</div>'; }
-        }
-        function renderMemberList(friends) {
-            if (friends.length === 0) { memberListContainer.innerHTML = '<div class="no-results">No friends available to add</div>'; return; }
-            memberListContainer.innerHTML = friends.map(friend => `
-                <div class="member-item" data-id="${friend.id}" data-username="${escapeHtml(friend.username)}">
-                    <div class="member-avatar">${friend.username.charAt(0).toUpperCase()}</div>
-                    <div class="member-name">${escapeHtml(friend.username)}</div>
-                </div>`).join('');
-            document.querySelectorAll('.member-item').forEach(el => {
-                el.addEventListener('click', () => {
-                    const id = parseInt(el.dataset.id), username = el.dataset.username;
-                    if (!selectedMembers.some(m => m.id === id)) { selectedMembers.push({ id, username }); el.classList.add('selected'); }
-                    else { selectedMembers = selectedMembers.filter(m => m.id !== id); el.classList.remove('selected'); }
-                    updateSelectedMembersUI();
-                });
-            });
-        }
-        function updateSelectedMembersUI() {
-            if (selectedMembers.length === 0) { selectedMembersContainer.innerHTML = '<span style="font-size:0.68rem;opacity:0.55;">No members selected yet</span>'; return; }
-            selectedMembersContainer.innerHTML = selectedMembers.map(m => `
-                <span class="selected-member-tag">${escapeHtml(m.username)}<i class="fas fa-times-circle" data-id="${m.id}"></i></span>`).join('');
-            document.querySelectorAll('.selected-member-tag i').forEach(icon => {
-                icon.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const id = parseInt(icon.dataset.id);
-                    selectedMembers = selectedMembers.filter(m => m.id !== id);
-                    updateSelectedMembersUI();
-                    const memberItem = document.querySelector(`.member-item[data-id="${id}"]`);
-                    if (memberItem) memberItem.classList.remove('selected');
-                });
-            });
-        }
-        createGroupBtn.addEventListener('click', async () => {
-            selectedMembers = []; groupNameInput.value = '';
-            updateSelectedMembersUI();
-            await loadFriendsForModal();
-            createGroupModal.style.display = 'block';
-        });
-        closeGroupModalBtn.onclick = () => createGroupModal.style.display = 'none';
-        window.addEventListener('click', (event) => {
-            if (event.target === createGroupModal) createGroupModal.style.display = 'none';
-            if (event.target === document.getElementById('profileModal')) document.getElementById('profileModal').style.display = 'none';
-            if (event.target === document.getElementById('noteModal')) document.getElementById('noteModal').style.display = 'none';
-        });
-        confirmCreateGroupBtn.addEventListener('click', async () => {
-            const groupName = groupNameInput.value.trim();
-            if (!groupName) { showToast('Please enter a group name', 'error'); return; }
-            const memberIds = selectedMembers.map(m => m.id);
-            confirmCreateGroupBtn.disabled = true; confirmCreateGroupBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
-            try {
-                await apiCall('/api/groups', { method: 'POST', body: JSON.stringify({ name: groupName, members: memberIds }) });
-                showToast('Group created!', 'success');
-                pushActivity('fa-layer-group', 'group', `You created group "${groupName}"`);
-                createGroupModal.style.display = 'none'; loadGroups();
-            } catch (err) { showToast(err.message || 'Failed to create group', 'error'); }
-            finally { confirmCreateGroupBtn.disabled = false; confirmCreateGroupBtn.innerHTML = '<i class="fas fa-check-circle"></i> Create Group'; }
-        });
-
-        // ========== Profile Modal ==========
-        async function showFriendProfile(userId, username) {
-            const modal = document.getElementById('profileModal');
-            const contentDiv = document.getElementById('modalProfileContent');
-            modal.style.display = 'block';
-            contentDiv.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading profile...</div>';
-            try {
-                let friend = friendsData.find(f => String(f.id) == String(userId));
-                if (!friend) { contentDiv.innerHTML = '<div class="no-results">Profile information not available.</div>'; return; }
-                const displayName = friend.display_name || friend.username;
-                const avatar = friend.avatar_url || 'https://via.placeholder.com/80?text=U';
-                const bio = friend.bio || 'No bio available.';
-                const profession = friend.profession || 'Professional';
-                const location = friend.location || 'Not specified';
-                const github = friend.github || null, twitter = friend.twitter || null, linkedin = friend.linkedin || null;
-                let socialHtml = '';
-                if (github || twitter || linkedin) {
-                    socialHtml = `<div class="profile-social">
-                        ${github ? `<a href="${github}" target="_blank" rel="noopener"><i class="fab fa-github"></i></a>` : ''}
-                        ${twitter ? `<a href="${twitter}" target="_blank" rel="noopener"><i class="fab fa-twitter"></i></a>` : ''}
-                        ${linkedin ? `<a href="${linkedin}" target="_blank" rel="noopener"><i class="fab fa-linkedin"></i></a>` : ''}
-                    </div>`;
-                } else { socialHtml = '<div class="profile-social"><span style="font-size:0.74rem;opacity:0.5;">No social links added</span></div>'; }
-                let premiumHtml = '';
-                if (friend.is_pro) premiumHtml += '<span class="pro-badge">PRO Member</span> ';
-                if (friend.is_verified) premiumHtml += '<span class="verified-badge"><i class="fas fa-check"></i> Verified</span> ';
-                const noteVal = friendNotes[userId] || '';
-                contentDiv.innerHTML = `
-                    <div class="profile-header">
-                        <img src="${escapeHtml(avatar)}" style="width:80px;height:80px;border-radius:50%;margin-bottom:0.75rem;border:3px solid rgba(0,229,255,0.35);box-shadow:0 0 0 4px rgba(0,229,255,0.07);" onerror="this.src='https://via.placeholder.com/80?text=U'">
-                        <div class="profile-name">${escapeHtml(displayName)}</div>
-                        <div style="color:var(--text-secondary);font-size:0.76rem;margin-top:3px;font-family:var(--font-mono);">@${escapeHtml(friend.username)}</div>
-                        <div class="badge-container">${premiumHtml}</div>
+                        <div class="friend-username">@${escapeHtml(r.username)} · ${escapeHtml(r.profession || 'Professional')}</div>
                     </div>
-                    <div class="profile-bio"><i class="fas fa-quote-left" style="margin-right:0.38rem;opacity:0.35;color:var(--cyan);"></i>${escapeHtml(bio)}</div>
-                    <div class="profile-detail"><i class="fas fa-briefcase"></i> ${escapeHtml(profession)}</div>
-                    <div class="profile-detail"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(location)}</div>
-                    <div class="profile-detail"><i class="fas fa-calendar-alt"></i> Joined Sarveik Community</div>
-                    ${noteVal ? `<div class="profile-bio" style="border-left:3px solid var(--cyan);"><i class="fas fa-sticky-note" style="margin-right:0.38rem;color:var(--cyan);"></i>${escapeHtml(noteVal)}</div>` : ''}
-                    ${socialHtml}
-                    <div class="friend-actions">
-                        <button class="btn btn-primary chat-modal-btn" data-id="${friend.id}"><i class="fas fa-comment"></i> Message</button>
-                        <button class="btn btn-outline close-modal-btn"><i class="fas fa-times"></i> Close</button>
-                    </div>`;
-                contentDiv.querySelector('.chat-modal-btn')?.addEventListener('click', () => { modal.style.display = 'none'; window.location.href = `chat.html?friend=${friend.id}`; });
-                contentDiv.querySelector('.close-modal-btn')?.addEventListener('click', () => modal.style.display = 'none');
-            } catch (err) { console.error('Profile modal error:', err); contentDiv.innerHTML = '<div class="no-results">Failed to load profile.</div>'; }
-        }
-        const profileModal = document.getElementById('profileModal');
-        const closeProfileModal = document.querySelector('#profileModal .close-modal');
-        if (closeProfileModal) closeProfileModal.onclick = () => profileModal.style.display = 'none';
+                </div>
+                <div class="card-actions">
+                    <button class="btn btn-small btn-success accept-btn" data-id="${r.id}"><i class="fas fa-check"></i> <span class="chat-label">Accept</span></button>
+                    <button class="btn btn-small btn-outline btn-icon decline-btn" data-id="${r.id}" title="Decline"><i class="fas fa-times"></i></button>
+                </div>
+            </div>
+        `).join('');
+        document.querySelectorAll('.accept-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const requestId = btn.dataset.id; const btnText = btn.innerHTML;
+                btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                try {
+                    await apiCall(`/api/friends/accept/${requestId}`, { method: 'PUT' });
+                    showToast('Request accepted!', 'success');
+                    pushActivity('fa-user-check', 'connect', 'You accepted a connection request');
+                    await Promise.all([loadRequests(), loadFriends()]);
+                    updateUnreadBadge(); loadStats();
+                } catch (err) { showToast(err.message || 'Failed to accept', 'error'); btn.disabled = false; btn.innerHTML = btnText; }
+            });
+        });
+        document.querySelectorAll('.decline-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const requestId = btn.dataset.id; const btnText = btn.innerHTML;
+                btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                try {
+                    await apiCall(`/api/friends/decline/${requestId}`, { method: 'PUT' });
+                    showToast('Request declined.', 'info');
+                    pushActivity('fa-user-times', 'request', 'You declined a connection request');
+                    loadRequests(); updateUnreadBadge(); loadStats();
+                } catch (err) { showToast(err.message || 'Failed to decline', 'error'); btn.disabled = false; btn.innerHTML = btnText; }
+            });
+        });
+    } catch (err) { console.error(err); container.innerHTML = '<div class="no-results"><i class="fas fa-triangle-exclamation"></i>Error loading requests.</div>'; }
+}
 
-        // ========== Profile Dropdown Menu ==========
-        const navProfileBtn = document.getElementById('navProfileBtn');
-        const profileDropdown = document.getElementById('profileDropdown');
-        let dropdownOpen = false;
+// ===== ADD FRIEND =====
+document.getElementById('addFriendBtn').addEventListener('click', async () => {
+    const username = document.getElementById('friendUsername').value.trim();
+    if (!username) { showToast('Please enter a username', 'error'); return; }
+    const btn = document.getElementById('addFriendBtn');
+    const original = btn.innerHTML;
+    btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+    try {
+        await apiCall('/api/friends/request', { method: 'POST', body: JSON.stringify({ friendUsername: username }) });
+        document.getElementById('friendUsername').value = '';
+        showToast('Request sent!', 'success');
+        pushActivity('fa-user-plus', 'connect', `You sent a request to @${username}`);
+        updateUnreadBadge();
+    } catch (err) { showToast(err.message || 'Failed to send request', 'error'); }
+    finally { btn.disabled = false; btn.innerHTML = original; }
+});
 
-        function toggleProfileDropdown() {
-            dropdownOpen = !dropdownOpen;
-            if (dropdownOpen) {
-                profileDropdown.classList.add('show');
-                navProfileBtn.classList.add('active');
-            } else {
-                profileDropdown.classList.remove('show');
-                navProfileBtn.classList.remove('active');
-            }
-        }
+// ===== SEARCH =====
+let searchTimeout;
+async function searchUsers() {
+    const query = document.getElementById('searchUser').value.trim();
+    const container = document.getElementById('searchResults');
+    if (query.length < 2) { container.innerHTML = ''; return; }
+    container.innerHTML = '<div class="loading"><i class="fas fa-spinner"></i> Searching...</div>';
+    try {
+        const users = await apiCall(`/api/users/search?q=${encodeURIComponent(query)}`);
+        if (users.length === 0) { container.innerHTML = '<div class="no-results"><i class="fas fa-user-slash"></i>No professionals found.</div>'; return; }
+        container.innerHTML = users.map(user => `
+            <div class="search-result-card" style="margin-bottom:0.65rem;">
+                <div class="friend-info">
+                    <img src="${escapeHtml(user.avatar_url || 'https://via.placeholder.com/44?text=U')}" class="friend-avatar" alt="Avatar" onerror="this.src='https://via.placeholder.com/44?text=U'">
+                    <div class="friend-text">
+                        <div class="friend-name">
+                            <span class="friend-name-text">${escapeHtml(user.display_name || user.username)}</span>
+                            ${user.is_pro ? '<span class="pro-badge">PRO</span>' : ''}
+                        </div>
+                        <div class="friend-username">@${escapeHtml(user.username)} · ${escapeHtml(user.profession || 'Professional')}</div>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn btn-small btn-primary send-request-btn" data-username="${escapeHtml(user.username)}"><i class="fas fa-user-plus"></i> <span class="chat-label">Connect</span></button>
+                </div>
+            </div>
+        `).join('');
+        document.querySelectorAll('.send-request-btn').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const username = btn.dataset.username; const original = btn.innerHTML;
+                btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+                try {
+                    await apiCall('/api/friends/request', { method: 'POST', body: JSON.stringify({ friendUsername: username }) });
+                    btn.innerHTML = '<i class="fas fa-check"></i>';
+                    showToast(`Request sent to ${username}!`, 'success');
+                    pushActivity('fa-user-plus', 'connect', `You sent a request to @${username}`);
+                    updateUnreadBadge();
+                } catch (err) { showToast(err.message || 'Failed to send request', 'error'); btn.innerHTML = original; btn.disabled = false; }
+            });
+        });
+    } catch (err) { console.error(err); container.innerHTML = '<div class="no-results"><i class="fas fa-triangle-exclamation"></i>Error searching professionals.</div>'; }
+}
+document.getElementById('searchBtn').addEventListener('click', searchUsers);
+document.getElementById('searchUser').addEventListener('input', () => { clearTimeout(searchTimeout); searchTimeout = setTimeout(searchUsers, 350); });
 
-        function closeProfileDropdown() {
-            dropdownOpen = false;
-            profileDropdown.classList.remove('show');
-            navProfileBtn.classList.remove('active');
-        }
+// ===== FILTERS =====
+document.getElementById('statusFilter').addEventListener('change', (e) => { filters.status = e.target.value; loadFriends(); });
+document.getElementById('quickSearch').addEventListener('input', () => { filters.search = document.getElementById('quickSearch').value; loadFriends(); });
+document.getElementById('clearFilters').addEventListener('click', () => {
+    filters = { status: '', search: '' };
+    document.getElementById('statusFilter').value = '';
+    document.getElementById('quickSearch').value = '';
+    loadFriends();
+});
+document.getElementById('refreshBtn').addEventListener('click', async () => {
+    showToast('Refreshing...', 'info');
+    await Promise.all([loadFriends(), loadRequests(), loadStats(), loadTrending(), loadGroups()]);
+    await updateUnreadBadge();
+    showToast('Refreshed!', 'success');
+});
 
-        navProfileBtn.addEventListener('click', (e) => {
+// ===== SORT & VIEW =====
+document.querySelectorAll('.sort-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active'); currentSort = btn.dataset.sort; renderFriends(friendsData);
+    });
+});
+document.querySelectorAll('.view-toggle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.view-toggle-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active'); currentView = btn.dataset.view; renderFriends(friendsData);
+    });
+});
+
+// ===== EXPORT =====
+document.getElementById('exportBtn').addEventListener('click', () => {
+    if (!friendsData.length) { showToast('No connections to export', 'info'); return; }
+    const rows = [['Name', 'Username', 'Profession', 'Status']];
+    friendsData.forEach(f => rows.push([f.display_name || f.username, '@' + f.username, f.profession || 'Professional', onlineStatus.get(f.id) || f.status || 'offline']));
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(',')).join('\n');
+    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'sarveik_network.csv'; a.click();
+    showToast('Network exported!', 'success');
+});
+
+// ===== NOTE MODAL =====
+document.getElementById('closeNoteModal').addEventListener('click', () => document.getElementById('noteModal').style.display = 'none');
+document.getElementById('saveNoteBtn').addEventListener('click', () => {
+    const txt = document.getElementById('noteTextarea').value.trim();
+    if (noteTargetId) {
+        if (txt) friendNotes[noteTargetId] = txt; else delete friendNotes[noteTargetId];
+        localStorage.setItem('nova_notes', JSON.stringify(friendNotes));
+        document.getElementById('noteModal').style.display = 'none';
+        showToast('Note saved!', 'success');
+        renderFriends(friendsData);
+    }
+});
+
+// ===== TRENDING =====
+async function loadTrending() {
+    const container = document.getElementById('trendingSection');
+    try {
+        trendingData = await apiCall('/api/trending/professionals');
+        container.innerHTML = `<div class="trending-list">${trendingData.slice(0, 5).map((user, index) => `
+            <div class="trending-item">
+                <div class="trending-rank trending-rank-${index + 1}">${index + 1}</div>
+                <img src="${escapeHtml(user.avatar_url)}" onerror="this.src='https://via.placeholder.com/36?text=U'" alt="">
+                <div class="t-info">
+                    <div>${escapeHtml(user.display_name)}</div>
+                    <div>${escapeHtml(user.profession)}</div>
+                </div>
+                <button class="btn btn-small btn-primary connect-trending" data-username="${escapeHtml(user.username)}">Connect</button>
+            </div>
+        `).join('')}</div>`;
+        document.querySelectorAll('.connect-trending').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const username = btn.dataset.username;
+                btn.disabled = true; btn.innerHTML = '<i class="fas fa-check"></i>';
+                try {
+                    await apiCall('/api/friends/request', { method: 'POST', body: JSON.stringify({ friendUsername: username }) });
+                    showToast('Request sent!', 'success');
+                    pushActivity('fa-user-plus', 'connect', `You connected with @${username}`);
+                } catch (err) { showToast(err.message || 'Failed to send request', 'error'); btn.disabled = false; btn.innerHTML = 'Connect'; }
+            });
+        });
+        renderSuggestions();
+    } catch (err) { container.innerHTML = '<div class="no-results"><i class="fas fa-fire-flame-curved"></i>No trending professionals</div>'; }
+}
+
+// ===== GROUPS =====
+async function loadGroups() {
+    const container = document.getElementById('groupsList');
+    showSkeleton(container);
+    try {
+        const groups = await apiCall('/api/groups');
+        groupsData = groups;
+        if (groupsData.length === 0) { container.innerHTML = '<div class="no-results"><i class="fas fa-users"></i>Not in any groups yet. Create one!</div>'; return; }
+        container.innerHTML = groupsData.map(g => `
+            <div class="group-card" data-group-id="${g.id}">
+                <div class="friend-info">
+                    <div class="friend-avatar" style="display:flex;align-items:center;justify-content:center;background:rgba(249,115,22,0.1);border-color:rgba(249,115,22,0.28);flex:0 0 44px;width:44px;height:44px;">
+                        <i class="fas fa-users" style="font-size:1.1rem;color:var(--orange);"></i>
+                    </div>
+                    <div class="friend-text">
+                        <div class="friend-name"><span class="friend-name-text">${escapeHtml(g.name)}</span></div>
+                        <div class="friend-username">${g.member_count} members</div>
+                    </div>
+                </div>
+                <div class="card-actions">
+                    <button class="btn btn-small btn-primary open-group-chat" data-id="${g.id}"><i class="fas fa-comments"></i> <span class="chat-label">Open</span></button>
+                    <button class="btn btn-small btn-outline btn-icon leave-group" data-id="${g.id}" title="Leave group"><i class="fas fa-sign-out-alt"></i></button>
+                </div>
+            </div>
+        `).join('');
+        document.querySelectorAll('.open-group-chat').forEach(btn => { btn.addEventListener('click', () => window.location.href = `chat.html?group=${btn.dataset.id}`); });
+        document.querySelectorAll('.leave-group').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const groupId = btn.dataset.id;
+                if (!confirm('Leave this group?')) return;
+                try {
+                    await apiCall(`/api/groups/${groupId}/leave`, { method: 'POST' });
+                    showToast('Left group', 'info');
+                    pushActivity('fa-sign-out-alt', 'group', 'You left a group');
+                    loadGroups();
+                } catch (err) { showToast(err.message || 'Failed to leave group', 'error'); }
+            });
+        });
+    } catch (err) { console.error(err); container.innerHTML = '<div class="no-results"><i class="fas fa-triangle-exclamation"></i>Failed to load groups.</div>'; }
+}
+
+// ===== CREATE GROUP =====
+const createGroupBtn = document.getElementById('createGroupBtn');
+const createGroupModal = document.getElementById('createGroupModal');
+const closeGroupModalBtn = document.getElementById('closeGroupModal');
+const confirmCreateGroupBtn = document.getElementById('confirmCreateGroup');
+const groupNameInput = document.getElementById('groupName');
+const memberListContainer = document.getElementById('memberListContainer');
+const selectedMembersContainer = document.getElementById('selectedMembersContainer');
+let selectedMembers = [];
+
+async function loadFriendsForModal() {
+    try {
+        const friends = await apiCall('/api/friends');
+        allFriendsForModal = friends.map(f => ({ id: f.id, username: f.username, avatar: f.avatar_url }));
+        renderMemberList(allFriendsForModal);
+    } catch (err) { memberListContainer.innerHTML = '<div class="no-results">Failed to load friends</div>'; }
+}
+
+function renderMemberList(friends) {
+    if (friends.length === 0) { memberListContainer.innerHTML = '<div class="no-results">No friends available to add</div>'; return; }
+    memberListContainer.innerHTML = friends.map(friend => `
+        <div class="member-item" data-id="${friend.id}" data-username="${escapeHtml(friend.username)}">
+            <div class="member-avatar">${friend.username.charAt(0).toUpperCase()}</div>
+            <div class="member-name">${escapeHtml(friend.username)}</div>
+        </div>
+    `).join('');
+    document.querySelectorAll('.member-item').forEach(el => {
+        el.addEventListener('click', () => {
+            const id = parseInt(el.dataset.id), username = el.dataset.username;
+            if (!selectedMembers.some(m => m.id === id)) { selectedMembers.push({ id, username }); el.classList.add('selected'); }
+            else { selectedMembers = selectedMembers.filter(m => m.id !== id); el.classList.remove('selected'); }
+            updateSelectedMembersUI();
+        });
+    });
+}
+
+function updateSelectedMembersUI() {
+    if (selectedMembers.length === 0) { selectedMembersContainer.innerHTML = '<span style="font-size:0.68rem;opacity:0.55;">No members selected yet</span>'; return; }
+    selectedMembersContainer.innerHTML = selectedMembers.map(m => `
+        <span class="selected-member-tag">${escapeHtml(m.username)}<i class="fas fa-times-circle" data-id="${m.id}"></i></span>
+    `).join('');
+    document.querySelectorAll('.selected-member-tag i').forEach(icon => {
+        icon.addEventListener('click', (e) => {
             e.stopPropagation();
-            toggleProfileDropdown();
+            const id = parseInt(icon.dataset.id);
+            selectedMembers = selectedMembers.filter(m => m.id !== id);
+            updateSelectedMembersUI();
+            const memberItem = document.querySelector(`.member-item[data-id="${id}"]`);
+            if (memberItem) memberItem.classList.remove('selected');
         });
+    });
+}
 
-        document.addEventListener('click', (e) => {
-            if (!navProfileBtn.contains(e.target) && !profileDropdown.contains(e.target)) {
-                closeProfileDropdown();
-            }
-        });
+createGroupBtn.addEventListener('click', async () => {
+    selectedMembers = []; groupNameInput.value = '';
+    updateSelectedMembersUI();
+    await loadFriendsForModal();
+    createGroupModal.style.display = 'block';
+});
+closeGroupModalBtn.onclick = () => createGroupModal.style.display = 'none';
+window.addEventListener('click', (event) => {
+    if (event.target === createGroupModal) createGroupModal.style.display = 'none';
+    if (event.target === document.getElementById('profileModal')) document.getElementById('profileModal').style.display = 'none';
+    if (event.target === document.getElementById('noteModal')) document.getElementById('noteModal').style.display = 'none';
+});
+confirmCreateGroupBtn.addEventListener('click', async () => {
+    const groupName = groupNameInput.value.trim();
+    if (!groupName) { showToast('Please enter a group name', 'error'); return; }
+    const memberIds = selectedMembers.map(m => m.id);
+    confirmCreateGroupBtn.disabled = true; confirmCreateGroupBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Creating...';
+    try {
+        await apiCall('/api/groups', { method: 'POST', body: JSON.stringify({ name: groupName, members: memberIds }) });
+        showToast('Group created!', 'success');
+        pushActivity('fa-layer-group', 'group', `You created group "${groupName}"`);
+        createGroupModal.style.display = 'none'; loadGroups();
+    } catch (err) { showToast(err.message || 'Failed to create group', 'error'); }
+    finally { confirmCreateGroupBtn.disabled = false; confirmCreateGroupBtn.innerHTML = '<i class="fas fa-check-circle"></i> Create Group'; }
+});
 
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape' && dropdownOpen) {
-                closeProfileDropdown();
-            }
-        });
+// ===== PROFILE MODAL =====
+async function showFriendProfile(userId) {
+    const modal = document.getElementById('profileModal');
+    const contentDiv = document.getElementById('modalProfileContent');
+    modal.style.display = 'block';
+    contentDiv.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading profile...</div>';
+    try {
+        let friend = friendsData.find(f => String(f.id) == String(userId));
+        if (!friend) { contentDiv.innerHTML = '<div class="no-results">Profile information not available.</div>'; return; }
+        const displayName = friend.display_name || friend.username;
+        const avatar = friend.avatar_url || 'https://via.placeholder.com/80?text=U';
+        const bio = friend.bio || 'No bio available.';
+        const profession = friend.profession || 'Professional';
+        const location = friend.location || 'Not specified';
+        const github = friend.github || null, twitter = friend.twitter || null, linkedin = friend.linkedin || null;
+        let socialHtml = '';
+        if (github || twitter || linkedin) {
+            socialHtml = `<div class="profile-social">
+                ${github ? `<a href="${github}" target="_blank" rel="noopener"><i class="fab fa-github"></i></a>` : ''}
+                ${twitter ? `<a href="${twitter}" target="_blank" rel="noopener"><i class="fab fa-twitter"></i></a>` : ''}
+                ${linkedin ? `<a href="${linkedin}" target="_blank" rel="noopener"><i class="fab fa-linkedin"></i></a>` : ''}
+            </div>`;
+        } else { socialHtml = '<div class="profile-social"><span style="font-size:0.74rem;opacity:0.5;">No social links added</span></div>'; }
+        let premiumHtml = '';
+        if (friend.is_pro) premiumHtml += '<span class="pro-badge">PRO Member</span> ';
+        if (friend.is_verified) premiumHtml += '<span class="verified-badge"><i class="fas fa-check"></i> Verified</span> ';
+        const noteVal = friendNotes[userId] || '';
+        contentDiv.innerHTML = `
+            <div class="profile-header">
+                <img src="${escapeHtml(avatar)}" style="width:80px;height:80px;border-radius:50%;margin-bottom:0.75rem;border:3px solid rgba(0,229,255,0.35);box-shadow:0 0 0 4px rgba(0,229,255,0.07);" onerror="this.src='https://via.placeholder.com/80?text=U'">
+                <div class="profile-name">${escapeHtml(displayName)}</div>
+                <div style="color:var(--text-secondary);font-size:0.76rem;margin-top:3px;font-family:var(--font-mono);">@${escapeHtml(friend.username)}</div>
+                <div class="badge-container">${premiumHtml}</div>
+            </div>
+            <div class="profile-bio"><i class="fas fa-quote-left" style="margin-right:0.38rem;opacity:0.35;color:var(--cyan);"></i>${escapeHtml(bio)}</div>
+            <div class="profile-detail"><i class="fas fa-briefcase"></i> ${escapeHtml(profession)}</div>
+            <div class="profile-detail"><i class="fas fa-map-marker-alt"></i> ${escapeHtml(location)}</div>
+            <div class="profile-detail"><i class="fas fa-calendar-alt"></i> Joined Sarveik Community</div>
+            ${noteVal ? `<div class="profile-bio" style="border-left:3px solid var(--cyan);"><i class="fas fa-sticky-note" style="margin-right:0.38rem;color:var(--cyan);"></i>${escapeHtml(noteVal)}</div>` : ''}
+            ${socialHtml}
+            <div class="friend-actions">
+                <button class="btn btn-primary chat-modal-btn" data-id="${friend.id}"><i class="fas fa-comment"></i> Message</button>
+                <button class="btn btn-outline close-modal-btn"><i class="fas fa-times"></i> Close</button>
+            </div>
+        `;
+        contentDiv.querySelector('.chat-modal-btn')?.addEventListener('click', () => { modal.style.display = 'none'; window.location.href = `chat.html?friend=${friend.id}`; });
+        contentDiv.querySelector('.close-modal-btn')?.addEventListener('click', () => modal.style.display = 'none');
+    } catch (err) { console.error('Profile modal error:', err); contentDiv.innerHTML = '<div class="no-results">Failed to load profile.</div>'; }
+}
 
-        // Profile Menu Item Actions
-        document.getElementById('profileMenuItem')?.addEventListener('click', () => {
-            closeProfileDropdown();
-            window.location.href = 'profile.html';
-        });
-        document.getElementById('dashboardMenuItem')?.addEventListener('click', () => {
-            closeProfileDropdown();
-            window.location.href = 'dashboard.html';
-        });
-        document.getElementById('savedMenuItem')?.addEventListener('click', () => {
-            closeProfileDropdown();
-            window.location.href = 'profile.html?tab=favorites';
-        });
-        document.getElementById('notificationsMenuItem')?.addEventListener('click', () => {
-            closeProfileDropdown();
-            window.location.href = 'profile.html?tab=notifications';
-        });
-        document.getElementById('settingsMenuItem')?.addEventListener('click', () => {
-            closeProfileDropdown();
-            window.location.href = 'profile.html?tab=settings';
-        });
-        document.getElementById('helpMenuItem')?.addEventListener('click', () => {
-            closeProfileDropdown();
-            window.location.href = 'support.html';
-        });
-        document.getElementById('logoutMenuItem')?.addEventListener('click', async (e) => {
-            e.preventDefault();
-            if (confirm('Are you sure you want to logout?')) {
-                try { await apiCall('/logout', { method: 'POST' }); } catch (err) { }
-                window.location.href = 'index.html';
-            }
-        });
+const profileModal = document.getElementById('profileModal');
+document.querySelector('#profileModal .close-modal')?.addEventListener('click', () => profileModal.style.display = 'none');
 
-        // ========== Socket ==========
-        socket.on('connect', () => console.log('Realtime connected'));
-        socket.on('disconnect', () => { setTimeout(() => { if (!socket.connected) socket.connect(); }, 5000); });
-        socket.on('friend_request_notification', (data) => {
-            showToast(`New request from ${data.fromUsername || data.from}!`, 'info');
-            pushActivity('fa-user-clock', 'request', `New request from @${data.fromUsername || data.from}`);
-            loadRequests(); updateUnreadBadge(); loadStats();
-        });
-        socket.on('private_message', (data) => {
-            if (data.from !== currentUserId) {
-                const friendId = data.from;
-                unreadCounts.set(friendId, (unreadCounts.get(friendId) || 0) + 1);
-                updateUnreadBadge();
-                if (friendsData.length) renderFriends(friendsData);
-                showToast(`New message from ${data.fromUsername || 'a connection'}`, 'info');
-                pushActivity('fa-comment', 'message', `New message from @${data.fromUsername || 'a connection'}`);
-            }
-        });
-        socket.on('user_status', (data) => { onlineStatus.set(data.userId, data.status); if (friendsData.length) renderFriends(friendsData); loadStats(); });
-        socket.on('group_created', () => { loadGroups(); showToast('A new group was created!', 'info'); pushActivity('fa-users', 'group', 'A new group was created'); });
+// ===== PROFILE DROPDOWN =====
+const navProfileBtn = document.getElementById('navProfileBtn');
+const profileDropdown = document.getElementById('profileDropdown');
+let dropdownOpen = false;
 
-        // ========== Back to top ==========
-        const backToTopBtn = document.getElementById('backToTop');
-        window.addEventListener('scroll', () => backToTopBtn.classList.toggle('visible', window.scrollY > 400));
-        backToTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+function toggleProfileDropdown() {
+    dropdownOpen = !dropdownOpen;
+    if (dropdownOpen) { profileDropdown.classList.add('show'); navProfileBtn.classList.add('active'); }
+    else { profileDropdown.classList.remove('show'); navProfileBtn.classList.remove('active'); }
+}
+function closeProfileDropdown() { dropdownOpen = false; profileDropdown.classList.remove('show'); navProfileBtn.classList.remove('active'); }
 
-        // ========== Hamburger Menu - FIXED ==========
-        const hamburger = document.getElementById('hamburger');
-        const navLinks = document.getElementById('navLinks');
-        const navOverlay = document.getElementById('navOverlay');
+navProfileBtn.addEventListener('click', (e) => { e.stopPropagation(); toggleProfileDropdown(); });
+document.addEventListener('click', (e) => { if (!navProfileBtn.contains(e.target) && !profileDropdown.contains(e.target)) closeProfileDropdown(); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && dropdownOpen) closeProfileDropdown(); });
 
-        function openNav() {
-            hamburger.classList.add('active');
-            navLinks.classList.add('active');
-            navOverlay.classList.add('active');
-            hamburger.setAttribute('aria-expanded', 'true');
-            document.body.style.overflow = 'hidden';
-        }
+document.getElementById('profileMenuItem')?.addEventListener('click', () => { closeProfileDropdown(); window.location.href = 'profile.html'; });
+document.getElementById('dashboardMenuItem')?.addEventListener('click', () => { closeProfileDropdown(); window.location.href = 'dashboard.html'; });
+document.getElementById('savedMenuItem')?.addEventListener('click', () => { closeProfileDropdown(); window.location.href = 'profile.html?tab=favorites'; });
+document.getElementById('notificationsMenuItem')?.addEventListener('click', () => { closeProfileDropdown(); window.location.href = 'profile.html?tab=notifications'; });
+document.getElementById('settingsMenuItem')?.addEventListener('click', () => { closeProfileDropdown(); window.location.href = 'profile.html?tab=settings'; });
+document.getElementById('helpMenuItem')?.addEventListener('click', () => { closeProfileDropdown(); window.location.href = 'support.html'; });
+document.getElementById('logoutMenuItem')?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    if (confirm('Are you sure you want to logout?')) {
+        try { await apiCall('/logout', { method: 'POST' }); } catch (err) { }
+        window.location.href = 'index.html';
+    }
+});
 
-        function closeNav() {
-            hamburger.classList.remove('active');
-            navLinks.classList.remove('active');
-            navOverlay.classList.remove('active');
-            hamburger.setAttribute('aria-expanded', 'false');
-            document.body.style.overflow = '';
-            closeProfileDropdown();
-        }
+// ===== SOCKET =====
+socket.on('connect', () => console.log('Realtime connected'));
+socket.on('disconnect', () => { setTimeout(() => { if (!socket.connected) socket.connect(); }, 5000); });
+socket.on('friend_request_notification', (data) => {
+    showToast(`New request from ${data.fromUsername || data.from}!`, 'info');
+    pushActivity('fa-user-clock', 'request', `New request from @${data.fromUsername || data.from}`);
+    loadRequests(); updateUnreadBadge(); loadStats();
+});
+socket.on('private_message', (data) => {
+    if (data.from !== currentUserId) {
+        const friendId = data.from;
+        unreadCounts.set(friendId, (unreadCounts.get(friendId) || 0) + 1);
+        updateUnreadBadge();
+        if (friendsData.length) renderFriends(friendsData);
+        showToast(`New message from ${data.fromUsername || 'a connection'}`, 'info');
+        pushActivity('fa-comment', 'message', `New message from @${data.fromUsername || 'a connection'}`);
+    }
+});
+socket.on('user_status', (data) => { onlineStatus.set(data.userId, data.status); if (friendsData.length) renderFriends(friendsData); loadStats(); });
+socket.on('group_created', () => { loadGroups(); showToast('A new group was created!', 'info'); pushActivity('fa-users', 'group', 'A new group was created'); });
 
-        function toggleNav() {
-            if (navLinks.classList.contains('active')) {
-                closeNav();
-            } else {
-                openNav();
-            }
-        }
+// ===== BACK TO TOP =====
+const backToTopBtn = document.getElementById('backToTop');
+window.addEventListener('scroll', () => backToTopBtn.classList.toggle('visible', window.scrollY > 400));
+backToTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
-        hamburger.addEventListener('click', (e) => {
-            e.stopPropagation();
-            toggleNav();
-        });
+// ===== HAMBURGER =====
+const hamburger = document.getElementById('hamburger');
+const navLinks = document.getElementById('navLinks');
+const navOverlay = document.getElementById('navOverlay');
 
-        hamburger.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                toggleNav();
-            }
-        });
+function openNav() {
+    hamburger.classList.add('active');
+    navLinks.classList.add('active');
+    navOverlay.classList.add('active');
+    hamburger.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+}
 
-        navOverlay.addEventListener('click', closeNav);
+function closeNav() {
+    hamburger.classList.remove('active');
+    navLinks.classList.remove('active');
+    navOverlay.classList.remove('active');
+    hamburger.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+    closeProfileDropdown();
+}
 
-        // Close nav when links are clicked
-        navLinks.querySelectorAll('a').forEach(link => {
-            link.addEventListener('click', closeNav);
-        });
+hamburger.addEventListener('click', (e) => { e.stopPropagation(); if (navLinks.classList.contains('active')) closeNav(); else openNav(); });
+navOverlay.addEventListener('click', closeNav);
+navLinks.querySelectorAll('a').forEach(link => link.addEventListener('click', closeNav));
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeNav(); } });
 
-        // Close nav on Escape key
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                closeNav();
-                hideCtxMenu();
-            }
-        });
+// ===== PERIODIC REFRESH =====
+setInterval(() => { if (currentUserId) { updateUnreadBadge(); loadStats(); } }, 30000);
 
-        // ========== Periodic refresh ==========
-        setInterval(() => { if (currentUserId) { updateUnreadBadge(); loadStats(); } }, 30000);
-
-        // ========== Init ==========
-        (async () => {
-            await fetchCsrfToken();
-            await getCurrentUserId();
-            await loadCurrentUserProfile();
-            await Promise.all([loadFriends(), loadRequests(), loadStats(), loadTrending(), loadGroups()]);
-            await updateUnreadBadge();
-            renderActivityFeed();
-        })();
-    </script>
+// ===== INIT =====
+(async () => {
+    await fetchCsrfToken();
+    await getCurrentUserId();
+    await loadCurrentUserProfile();
+    await Promise.all([loadFriends(), loadRequests(), loadStats(), loadTrending(), loadGroups()]);
+    await updateUnreadBadge();
+    renderActivityFeed();
+})();
+</script>
 </body>
 </html>
