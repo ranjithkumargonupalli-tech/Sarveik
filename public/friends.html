@@ -1928,7 +1928,10 @@ function renderSuggestions() {
 
 function renderActivityFeed() {
     const container = document.getElementById('activityFeed');
-    if (activityLog.length === 0) { container.innerHTML = '<div class="no-results"><i class="fas fa-bolt-lightning"></i>No recent activity yet.</div>'; return; }
+    if (activityLog.length === 0) { 
+        container.innerHTML = '<div class="no-results"><i class="fas fa-bolt-lightning"></i>No recent activity yet.</div>'; 
+        return; 
+    }
     container.innerHTML = activityLog.slice(0, 10).map((a, i) => `
         <div class="activity-item" style="animation-delay:${i * 0.05}s;">
             <div class="activity-icon ${a.iconClass || 'default'}"><i class="fas ${a.icon}"></i></div>
@@ -2404,6 +2407,7 @@ setInterval(() => { if (currentUserId) { updateUnreadBadge(); loadStats(); } }, 
     await loadCurrentUserProfile();
     await Promise.all([loadFriends(), loadRequests(), loadStats(), loadTrending(), loadGroups()]);
     await updateUnreadBadge();
+    // Activity feed is now populated from localStorage, but we need to ensure it's rendered
     renderActivityFeed();
 })();
 </script>
