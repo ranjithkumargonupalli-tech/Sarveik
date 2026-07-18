@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Sarveik Network – Friends & Groups</title>
+    <!-- ===== PRELOAD CRITICAL RESOURCES ===== -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" as="style">
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style">
+    
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
@@ -37,7 +43,10 @@
             color: #e2eaf5;
             min-height: 100vh;
             overflow-x: hidden;
+            opacity: 0;
+            animation: bodyFadeIn 0.15s ease forwards;
         }
+        @keyframes bodyFadeIn { to { opacity: 1; } }
 
         /* ===== 3D BACKGROUND ===== */
         #three-canvas {
@@ -48,8 +57,10 @@
             height: 100vh;
             z-index: 0;
             pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.5s ease;
         }
-        #three-canvas canvas { display: block; width: 100% !important; height: 100% !important; }
+        #three-canvas.loaded { opacity: 1; }
 
         body::before {
             content: '';
@@ -77,7 +88,6 @@
 
         body > * { position: relative; z-index: 1; }
 
-        /* ===== SCROLLBAR ===== */
         ::-webkit-scrollbar { width: 5px; height: 5px; }
         ::-webkit-scrollbar-track { background: var(--bg-deep); }
         ::-webkit-scrollbar-thumb { background: rgba(0,229,255,0.3); border-radius: 3px; }
@@ -767,7 +777,8 @@
             overflow: hidden;
         }
         .friend-avatar {
-            width: 44px; height: 44px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             object-fit: cover;
             border: 2px solid rgba(0,229,255,0.25);
@@ -1526,11 +1537,33 @@
 <div id="ctxBackdrop" class="ctx-backdrop" style="display:none;"></div>
 
 <!-- ===== SCRIPTS ===== -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
 <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script>
-// ===== 3D BACKGROUND =====
-(function init3DBackground() {
+// ===== HYPER-OPTIMIZED CACHE HELPER =====
+const Cache = {
+    get(key, ttl = 60000) {
+        try {
+            const item = localStorage.getItem('nova_' + key);
+            if (!item) return null;
+            const { data, timestamp } = JSON.parse(item);
+            if (Date.now() - timestamp > ttl) {
+                localStorage.removeItem('nova_' + key);
+                return null;
+            }
+            return data;
+        } catch { return null; }
+    },
+    set(key, data) {
+        try {
+            localStorage.setItem('nova_' + key, JSON.stringify({ data, timestamp: Date.now() }));
+        } catch {}
+    }
+};
+
+// ===== 3D BACKGROUND (Lazy Loaded) =====
+(function init3DBackgroundLazy() {
     const container = document.getElementById('three-canvas');
     if (!container) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches || window.innerWidth < 768) {
@@ -1538,61 +1571,83 @@
         return;
     }
 
-    const scene = new THREE.Scene();
-    scene.background = null;
-    const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 35;
+    const load3D = () => {
+        if (typeof THREE === 'undefined') {
+            setTimeout(load3D, 500);
+            return;
+        }
 
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    container.appendChild(renderer.domElement);
+        const scene = new THREE.Scene();
+        scene.background = null;
+        const camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 35;
 
-    const count = 150;
-    const geo = new THREE.BufferGeometry();
-    const pos = new Float32Array(count * 3);
-    const colors = new Float32Array(count * 3);
-    const sizes = new Float32Array(count);
-    const palette = [new THREE.Color(0x00e5ff), new THREE.Color(0x10b981), new THREE.Color(0xf59e0b), new THREE.Color(0xef4444), new THREE.Color(0x8b5cf6)];
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+        container.appendChild(renderer.domElement);
+        container.classList.add('loaded');
 
-    for (let i = 0; i < count; i++) {
-        pos[i * 3] = (Math.random() - 0.5) * 70;
-        pos[i * 3 + 1] = (Math.random() - 0.5) * 50;
-        pos[i * 3 + 2] = (Math.random() - 0.5) * 50 - 10;
-        const c = palette[Math.floor(Math.random() * palette.length)];
-        colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b;
-        sizes[i] = Math.random() * 0.3 + 0.1;
+        const count = 80;
+        const geo = new THREE.BufferGeometry();
+        const pos = new Float32Array(count * 3);
+        const colors = new Float32Array(count * 3);
+        const palette = [new THREE.Color(0x00e5ff), new THREE.Color(0x10b981), new THREE.Color(0xf59e0b), new THREE.Color(0xef4444), new THREE.Color(0x8b5cf6)];
+
+        for (let i = 0; i < count; i++) {
+            pos[i * 3] = (Math.random() - 0.5) * 70;
+            pos[i * 3 + 1] = (Math.random() - 0.5) * 50;
+            pos[i * 3 + 2] = (Math.random() - 0.5) * 50 - 10;
+            const c = palette[Math.floor(Math.random() * palette.length)];
+            colors[i * 3] = c.r; colors[i * 3 + 1] = c.g; colors[i * 3 + 2] = c.b;
+        }
+        geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+        geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        const mat = new THREE.PointsMaterial({
+            size: 0.3,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.3,
+            blending: THREE.AdditiveBlending,
+            depthWrite: false,
+            sizeAttenuation: true
+        });
+        const particles = new THREE.Points(geo, mat);
+        scene.add(particles);
+
+        let mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
+        document.addEventListener('mousemove', e => {
+            mouseX = (e.clientX / window.innerWidth) * 2 - 1;
+            mouseY = -(e.clientY / window.innerHeight) * 2 + 1;
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+            targetX += (mouseX - targetX) * 0.04;
+            targetY += (mouseY - targetY) * 0.04;
+            particles.rotation.y += 0.0005;
+            particles.rotation.x = targetY * 0.02;
+            particles.rotation.z = targetX * 0.02;
+            camera.position.x += (targetX * 2 - camera.position.x) * 0.005;
+            camera.position.y += (targetY * 1.5 - camera.position.y) * 0.005;
+            camera.lookAt(0, 0, 0);
+            renderer.render(scene, camera);
+        }
+        animate();
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    };
+
+    if ('requestIdleCallback' in window) {
+        requestIdleCallback(load3D, { timeout: 3000 });
+    } else {
+        setTimeout(load3D, 500);
     }
-    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
-    geo.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
-
-    const mat = new THREE.PointsMaterial({ size: 0.4, vertexColors: true, transparent: true, opacity: 0.5, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true });
-    const particles = new THREE.Points(geo, mat);
-    scene.add(particles);
-
-    let mouseX = 0, mouseY = 0, targetX = 0, targetY = 0;
-    document.addEventListener('mousemove', e => { mouseX = (e.clientX / window.innerWidth) * 2 - 1; mouseY = -(e.clientY / window.innerHeight) * 2 + 1; });
-    document.addEventListener('touchmove', e => { if (e.touches.length) { mouseX = (e.touches[0].clientX / window.innerWidth) * 2 - 1; mouseY = -(e.touches[0].clientY / window.innerHeight) * 2 + 1; } }, { passive: true });
-
-    function animate() {
-        requestAnimationFrame(animate);
-        targetX += (mouseX - targetX) * 0.04;
-        targetY += (mouseY - targetY) * 0.04;
-
-        particles.rotation.y += 0.0005;
-        particles.rotation.x = targetY * 0.03;
-        particles.rotation.z = targetX * 0.02;
-
-        camera.position.x += (targetX * 2 - camera.position.x) * 0.005;
-        camera.position.y += (targetY * 1.5 - camera.position.y) * 0.005;
-        camera.lookAt(0, 0, 0);
-        renderer.render(scene, camera);
-    }
-    animate();
-
-    window.addEventListener('resize', () => { camera.aspect = window.innerWidth / window.innerHeight; camera.updateProjectionMatrix(); renderer.setSize(window.innerWidth, window.innerHeight); });
-    window.addEventListener('beforeunload', () => renderer.dispose());
 })();
 
 // ===== CSRF =====
@@ -1610,9 +1665,6 @@ async function getCsrfHeader() {
 async function apiCall(url, options = {}) {
     if (options.body && typeof options.body === 'object') {
         options.body = JSON.stringify(options.body);
-        options.headers = { ...options.headers, 'Content-Type': 'application/json' };
-    }
-    if (options.body && typeof options.body === 'string' && !options.headers?.['Content-Type']) {
         options.headers = { ...options.headers, 'Content-Type': 'application/json' };
     }
     if (options.method && options.method !== 'GET') {
@@ -1644,11 +1696,13 @@ let currentView = 'grid';
 let noteTargetId = null;
 let activityLog = JSON.parse(localStorage.getItem('nova_activity') || '[]');
 let currentUserProfile = null;
+let profileCache = new Map();
 
 // ===== UTILITIES =====
 function escapeHtml(str) { if (!str) return ''; const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
 
 function showToast(message, type = 'success') {
+    document.querySelectorAll('.toast').forEach(t => t.remove());
     const toast = document.createElement('div');
     toast.className = 'toast';
     const colors = { error: '#ef4444', info: '#3b82f6', success: '#10b981', warning: '#f59e0b' };
@@ -1685,6 +1739,44 @@ function pushActivity(icon, iconClass, text) {
     if (activityLog.length > 20) activityLog.pop();
     localStorage.setItem('nova_activity', JSON.stringify(activityLog));
     renderActivityFeed();
+}
+
+// ===== ENHANCED PROFILE FETCH WITH CACHE =====
+async function fetchUserProfile(userId) {
+    if (profileCache.has(userId)) {
+        const cached = profileCache.get(userId);
+        if (Date.now() - cached.timestamp < 60000) {
+            return cached.data;
+        }
+    }
+    try {
+        const res = await fetch(`/api/user/profile/${userId}`, { credentials: 'include' });
+        if (res.ok) {
+            const data = await res.json();
+            profileCache.set(userId, { data, timestamp: Date.now() });
+            return data;
+        }
+    } catch (e) {}
+    return null;
+}
+
+async function fetchUserProfileBatch(userIds) {
+    const uncached = userIds.filter(id => {
+        const cached = profileCache.get(id);
+        return !cached || Date.now() - cached.timestamp > 60000;
+    });
+    if (uncached.length === 0) {
+        return userIds.map(id => profileCache.get(id).data);
+    }
+    try {
+        const res = await fetch(`/api/users/profiles?ids=${uncached.join(',')}`, { credentials: 'include' });
+        if (res.ok) {
+            const data = await res.json();
+            data.forEach(p => profileCache.set(p.id, { data: p, timestamp: Date.now() }));
+            return userIds.map(id => profileCache.get(id).data);
+        }
+    } catch (e) {}
+    return userIds.map(id => profileCache.get(id)?.data || null);
 }
 
 // ===== STATS =====
@@ -1769,6 +1861,13 @@ async function loadFriends() {
         if (filters.search) params.append('search', filters.search);
         friendsData = await apiCall(`/api/friends?${params.toString()}`);
         for (const f of friendsData) { if (!onlineStatus.has(f.id)) onlineStatus.set(f.id, f.status || 'offline'); }
+        
+        // Prefetch profiles for all friends in batch
+        const userIds = friendsData.map(f => f.id).filter(id => id !== currentUserId);
+        if (userIds.length > 0) {
+            await fetchUserProfileBatch(userIds);
+        }
+        
         renderFriends(friendsData);
         renderPinned();
         renderSuggestions();
@@ -1811,19 +1910,26 @@ function renderFriends(friends) {
         const statusClass = getFriendStatusClass(f);
         const isStarred = starredFriends.has(String(f.id));
         const note = friendNotes[f.id] ? `<span class="friend-tag"><i class="fas fa-sticky-note"></i> Note</span>` : '';
+        
+        // Get cached profile data for display name and avatar if available
+        const cachedProfile = profileCache.get(f.id);
+        const displayName = cachedProfile?.display_name || f.display_name || f.username;
+        const avatarUrl = cachedProfile?.avatar_url || f.avatar_url;
+        const profession = cachedProfile?.profession || f.profession || 'Professional';
+        
         return `
             <div class="friend-card" data-friend-id="${f.id}" style="animation-delay:${i * 0.04}s;">
                 <div class="friend-info">
-                    <img src="${escapeHtml(f.avatar_url || 'https://via.placeholder.com/44?text=U')}" class="friend-avatar" alt="Avatar" onerror="this.src='https://via.placeholder.com/44?text=U'">
+                    <img src="${escapeHtml(avatarUrl || 'https://via.placeholder.com/44?text=U')}" class="friend-avatar" alt="Avatar" onerror="this.src='https://via.placeholder.com/44?text=U'">
                     <div class="friend-text">
                         <div class="friend-name">
-                            <span class="friend-name-text">${escapeHtml(f.display_name || f.username)}</span>
+                            <span class="friend-name-text">${escapeHtml(displayName)}</span>
                             ${f.is_pro ? '<span class="pro-badge">PRO</span>' : ''}
                             ${f.is_verified ? '<span class="verified-badge"><i class="fas fa-check"></i></span>' : ''}
                             <span class="friend-status ${statusClass}"></span>
                             ${unreadHtml}
                         </div>
-                        <div class="friend-username">@${escapeHtml(f.username)} · ${escapeHtml(f.profession || 'Professional')}</div>
+                        <div class="friend-username">@${escapeHtml(f.username)} · ${escapeHtml(profession)}</div>
                         <div class="friend-tags">${note}</div>
                     </div>
                 </div>
@@ -1891,27 +1997,38 @@ function renderPinned() {
     const pinned = friendsData.filter(f => starredFriends.has(String(f.id)));
     if (pinned.length === 0) { section.style.display = 'none'; return; }
     section.style.display = 'block';
-    container.innerHTML = pinned.map(f => `
-        <div class="pinned-chip" onclick="window.location.href='chat.html?friend=${f.id}'">
-            <img src="${escapeHtml(f.avatar_url || 'https://via.placeholder.com/22?text=U')}" onerror="this.src='https://via.placeholder.com/22?text=U'" alt="">
-            ${escapeHtml(f.display_name || f.username)}
-        </div>
-    `).join('');
+    container.innerHTML = pinned.map(f => {
+        const cachedProfile = profileCache.get(f.id);
+        const displayName = cachedProfile?.display_name || f.display_name || f.username;
+        const avatarUrl = cachedProfile?.avatar_url || f.avatar_url;
+        return `
+            <div class="pinned-chip" onclick="window.location.href='chat.html?friend=${f.id}'">
+                <img src="${escapeHtml(avatarUrl || 'https://via.placeholder.com/22?text=U')}" onerror="this.src='https://via.placeholder.com/22?text=U'" alt="">
+                ${escapeHtml(displayName)}
+            </div>
+        `;
+    }).join('');
 }
 
 function renderSuggestions() {
     const container = document.getElementById('suggestionsGrid');
     const pool = trendingData.filter(t => !friendsData.some(f => f.id === t.id) && t.id !== currentUserId);
     if (pool.length === 0) { container.innerHTML = '<div class="no-results" style="grid-column:1/-1;"><i class="fas fa-user-slash"></i>No suggestions right now.</div>'; return; }
-    container.innerHTML = pool.slice(0, 6).map((u, i) => `
-        <div class="suggestion-card" style="animation-delay:${i * 0.07}s;">
-            <img src="${escapeHtml(u.avatar_url || 'https://via.placeholder.com/52?text=U')}" class="suggestion-avatar" onerror="this.src='https://via.placeholder.com/52?text=U'" alt="">
-            <div class="suggestion-name">${escapeHtml(u.display_name || u.username)}</div>
-            <div class="suggestion-role">${escapeHtml(u.profession || 'Professional')}</div>
-            <div class="suggestion-mutual"><i class="fas fa-user-friends"></i> Suggested for you</div>
-            <button class="btn btn-small btn-primary suggest-connect-btn" data-username="${escapeHtml(u.username)}"><i class="fas fa-user-plus"></i> Connect</button>
-        </div>
-    `).join('');
+    container.innerHTML = pool.slice(0, 6).map((u, i) => {
+        const cachedProfile = profileCache.get(u.id);
+        const displayName = cachedProfile?.display_name || u.display_name || u.username;
+        const avatarUrl = cachedProfile?.avatar_url || u.avatar_url;
+        const profession = cachedProfile?.profession || u.profession || 'Professional';
+        return `
+            <div class="suggestion-card" style="animation-delay:${i * 0.07}s;">
+                <img src="${escapeHtml(avatarUrl || 'https://via.placeholder.com/52?text=U')}" class="suggestion-avatar" onerror="this.src='https://via.placeholder.com/52?text=U'" alt="">
+                <div class="suggestion-name">${escapeHtml(displayName)}</div>
+                <div class="suggestion-role">${escapeHtml(profession)}</div>
+                <div class="suggestion-mutual"><i class="fas fa-user-friends"></i> Suggested for you</div>
+                <button class="btn btn-small btn-primary suggest-connect-btn" data-username="${escapeHtml(u.username)}"><i class="fas fa-user-plus"></i> Connect</button>
+            </div>
+        `;
+    }).join('');
     document.querySelectorAll('.suggest-connect-btn').forEach(btn => {
         btn.addEventListener('click', async () => {
             const uname = btn.dataset.username; const original = btn.innerHTML;
@@ -1948,24 +2065,30 @@ async function loadRequests() {
     try {
         requestsData = await apiCall('/api/friends/requests');
         if (requestsData.length === 0) { container.innerHTML = '<div class="no-results"><i class="fas fa-inbox"></i>No pending requests.</div>'; return; }
-        container.innerHTML = requestsData.map(r => `
-            <div class="friend-card request-card">
-                <div class="friend-info">
-                    <img src="${escapeHtml(r.avatar_url || 'https://via.placeholder.com/44?text=U')}" class="friend-avatar" alt="Avatar" onerror="this.src='https://via.placeholder.com/44?text=U'">
-                    <div class="friend-text">
-                        <div class="friend-name">
-                            <span class="friend-name-text">${escapeHtml(r.display_name || r.username)}</span>
-                            ${r.is_pro ? '<span class="pro-badge">PRO</span>' : ''}
+        container.innerHTML = requestsData.map(r => {
+            const cachedProfile = profileCache.get(r.id);
+            const displayName = cachedProfile?.display_name || r.display_name || r.username;
+            const avatarUrl = cachedProfile?.avatar_url || r.avatar_url;
+            const profession = cachedProfile?.profession || r.profession || 'Professional';
+            return `
+                <div class="friend-card request-card">
+                    <div class="friend-info">
+                        <img src="${escapeHtml(avatarUrl || 'https://via.placeholder.com/44?text=U')}" class="friend-avatar" alt="Avatar" onerror="this.src='https://via.placeholder.com/44?text=U'">
+                        <div class="friend-text">
+                            <div class="friend-name">
+                                <span class="friend-name-text">${escapeHtml(displayName)}</span>
+                                ${r.is_pro ? '<span class="pro-badge">PRO</span>' : ''}
+                            </div>
+                            <div class="friend-username">@${escapeHtml(r.username)} · ${escapeHtml(profession)}</div>
                         </div>
-                        <div class="friend-username">@${escapeHtml(r.username)} · ${escapeHtml(r.profession || 'Professional')}</div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-small btn-success accept-btn" data-id="${r.id}"><i class="fas fa-check"></i> <span class="chat-label">Accept</span></button>
+                        <button class="btn btn-small btn-outline btn-icon decline-btn" data-id="${r.id}" title="Decline"><i class="fas fa-times"></i></button>
                     </div>
                 </div>
-                <div class="card-actions">
-                    <button class="btn btn-small btn-success accept-btn" data-id="${r.id}"><i class="fas fa-check"></i> <span class="chat-label">Accept</span></button>
-                    <button class="btn btn-small btn-outline btn-icon decline-btn" data-id="${r.id}" title="Decline"><i class="fas fa-times"></i></button>
-                </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
         document.querySelectorAll('.accept-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const requestId = btn.dataset.id; const btnText = btn.innerHTML;
@@ -2021,23 +2144,29 @@ async function searchUsers() {
     try {
         const users = await apiCall(`/api/users/search?q=${encodeURIComponent(query)}`);
         if (users.length === 0) { container.innerHTML = '<div class="no-results"><i class="fas fa-user-slash"></i>No professionals found.</div>'; return; }
-        container.innerHTML = users.map(user => `
-            <div class="search-result-card" style="margin-bottom:0.65rem;">
-                <div class="friend-info">
-                    <img src="${escapeHtml(user.avatar_url || 'https://via.placeholder.com/44?text=U')}" class="friend-avatar" alt="Avatar" onerror="this.src='https://via.placeholder.com/44?text=U'">
-                    <div class="friend-text">
-                        <div class="friend-name">
-                            <span class="friend-name-text">${escapeHtml(user.display_name || user.username)}</span>
-                            ${user.is_pro ? '<span class="pro-badge">PRO</span>' : ''}
+        container.innerHTML = users.map(user => {
+            const cachedProfile = profileCache.get(user.id);
+            const displayName = cachedProfile?.display_name || user.display_name || user.username;
+            const avatarUrl = cachedProfile?.avatar_url || user.avatar_url;
+            const profession = cachedProfile?.profession || user.profession || 'Professional';
+            return `
+                <div class="search-result-card" style="margin-bottom:0.65rem;">
+                    <div class="friend-info">
+                        <img src="${escapeHtml(avatarUrl || 'https://via.placeholder.com/44?text=U')}" class="friend-avatar" alt="Avatar" onerror="this.src='https://via.placeholder.com/44?text=U'">
+                        <div class="friend-text">
+                            <div class="friend-name">
+                                <span class="friend-name-text">${escapeHtml(displayName)}</span>
+                                ${user.is_pro ? '<span class="pro-badge">PRO</span>' : ''}
+                            </div>
+                            <div class="friend-username">@${escapeHtml(user.username)} · ${escapeHtml(profession)}</div>
                         </div>
-                        <div class="friend-username">@${escapeHtml(user.username)} · ${escapeHtml(user.profession || 'Professional')}</div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-small btn-primary send-request-btn" data-username="${escapeHtml(user.username)}"><i class="fas fa-user-plus"></i> <span class="chat-label">Connect</span></button>
                     </div>
                 </div>
-                <div class="card-actions">
-                    <button class="btn btn-small btn-primary send-request-btn" data-username="${escapeHtml(user.username)}"><i class="fas fa-user-plus"></i> <span class="chat-label">Connect</span></button>
-                </div>
-            </div>
-        `).join('');
+            `;
+        }).join('');
         document.querySelectorAll('.send-request-btn').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const username = btn.dataset.username; const original = btn.innerHTML;
@@ -2115,17 +2244,28 @@ async function loadTrending() {
     const container = document.getElementById('trendingSection');
     try {
         trendingData = await apiCall('/api/trending/professionals');
-        container.innerHTML = `<div class="trending-list">${trendingData.slice(0, 5).map((user, index) => `
-            <div class="trending-item">
-                <div class="trending-rank trending-rank-${index + 1}">${index + 1}</div>
-                <img src="${escapeHtml(user.avatar_url)}" onerror="this.src='https://via.placeholder.com/36?text=U'" alt="">
-                <div class="t-info">
-                    <div>${escapeHtml(user.display_name)}</div>
-                    <div>${escapeHtml(user.profession)}</div>
+        // Prefetch trending profiles
+        const userIds = trendingData.map(u => u.id).filter(id => id !== currentUserId);
+        if (userIds.length > 0) {
+            await fetchUserProfileBatch(userIds);
+        }
+        container.innerHTML = `<div class="trending-list">${trendingData.slice(0, 5).map((user, index) => {
+            const cachedProfile = profileCache.get(user.id);
+            const displayName = cachedProfile?.display_name || user.display_name || user.username;
+            const avatarUrl = cachedProfile?.avatar_url || user.avatar_url;
+            const profession = cachedProfile?.profession || user.profession || 'Professional';
+            return `
+                <div class="trending-item">
+                    <div class="trending-rank trending-rank-${index + 1}">${index + 1}</div>
+                    <img src="${escapeHtml(avatarUrl || 'https://via.placeholder.com/36?text=U')}" onerror="this.src='https://via.placeholder.com/36?text=U'" alt="">
+                    <div class="t-info">
+                        <div>${escapeHtml(displayName)}</div>
+                        <div>${escapeHtml(profession)}</div>
+                    </div>
+                    <button class="btn btn-small btn-primary connect-trending" data-username="${escapeHtml(user.username)}">Connect</button>
                 </div>
-                <button class="btn btn-small btn-primary connect-trending" data-username="${escapeHtml(user.username)}">Connect</button>
-            </div>
-        `).join('')}</div>`;
+            `;
+        }).join('')}</div>`;
         document.querySelectorAll('.connect-trending').forEach(btn => {
             btn.addEventListener('click', async () => {
                 const username = btn.dataset.username;
@@ -2195,7 +2335,15 @@ let selectedMembers = [];
 async function loadFriendsForModal() {
     try {
         const friends = await apiCall('/api/friends');
-        allFriendsForModal = friends.map(f => ({ id: f.id, username: f.username, avatar: f.avatar_url }));
+        allFriendsForModal = friends.map(f => {
+            const cachedProfile = profileCache.get(f.id);
+            return {
+                id: f.id,
+                username: f.username,
+                displayName: cachedProfile?.display_name || f.display_name || f.username,
+                avatar: cachedProfile?.avatar_url || f.avatar_url
+            };
+        });
         renderMemberList(allFriendsForModal);
     } catch (err) { memberListContainer.innerHTML = '<div class="no-results">Failed to load friends</div>'; }
 }
@@ -2205,7 +2353,7 @@ function renderMemberList(friends) {
     memberListContainer.innerHTML = friends.map(friend => `
         <div class="member-item" data-id="${friend.id}" data-username="${escapeHtml(friend.username)}">
             <div class="member-avatar">${friend.username.charAt(0).toUpperCase()}</div>
-            <div class="member-name">${escapeHtml(friend.username)}</div>
+            <div class="member-name">${escapeHtml(friend.displayName)}</div>
         </div>
     `).join('');
     document.querySelectorAll('.member-item').forEach(el => {
@@ -2269,13 +2417,29 @@ async function showFriendProfile(userId) {
     contentDiv.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading profile...</div>';
     try {
         let friend = friendsData.find(f => String(f.id) == String(userId));
-        if (!friend) { contentDiv.innerHTML = '<div class="no-results">Profile information not available.</div>'; return; }
-        const displayName = friend.display_name || friend.username;
-        const avatar = friend.avatar_url || 'https://via.placeholder.com/80?text=U';
-        const bio = friend.bio || 'No bio available.';
-        const profession = friend.profession || 'Professional';
-        const location = friend.location || 'Not specified';
-        const github = friend.github || null, twitter = friend.twitter || null, linkedin = friend.linkedin || null;
+        // Try to get cached profile
+        let profileData = profileCache.get(userId)?.data || null;
+        if (!profileData) {
+            profileData = await fetchUserProfile(userId);
+        }
+        
+        if (!friend && !profileData) {
+            contentDiv.innerHTML = '<div class="no-results">Profile information not available.</div>';
+            return;
+        }
+        
+        const displayName = profileData?.display_name || friend?.display_name || friend?.username || 'User';
+        const avatar = profileData?.avatar_url || friend?.avatar_url || 'https://via.placeholder.com/80?text=U';
+        const bio = profileData?.bio || friend?.bio || 'No bio available.';
+        const profession = profileData?.profession || friend?.profession || 'Professional';
+        const location = profileData?.location || friend?.location || 'Not specified';
+        const github = profileData?.github || friend?.github || null;
+        const twitter = profileData?.twitter || friend?.twitter || null;
+        const linkedin = profileData?.linkedin || friend?.linkedin || null;
+        const isPro = profileData?.is_pro || friend?.is_pro || false;
+        const isVerified = profileData?.is_verified || friend?.is_verified || false;
+        const username = friend?.username || profileData?.username || 'user';
+        
         let socialHtml = '';
         if (github || twitter || linkedin) {
             socialHtml = `<div class="profile-social">
@@ -2284,15 +2448,17 @@ async function showFriendProfile(userId) {
                 ${linkedin ? `<a href="${linkedin}" target="_blank" rel="noopener"><i class="fab fa-linkedin"></i></a>` : ''}
             </div>`;
         } else { socialHtml = '<div class="profile-social"><span style="font-size:0.74rem;opacity:0.5;">No social links added</span></div>'; }
+        
         let premiumHtml = '';
-        if (friend.is_pro) premiumHtml += '<span class="pro-badge">PRO Member</span> ';
-        if (friend.is_verified) premiumHtml += '<span class="verified-badge"><i class="fas fa-check"></i> Verified</span> ';
+        if (isPro) premiumHtml += '<span class="pro-badge">PRO Member</span> ';
+        if (isVerified) premiumHtml += '<span class="verified-badge"><i class="fas fa-check"></i> Verified</span> ';
+        
         const noteVal = friendNotes[userId] || '';
         contentDiv.innerHTML = `
             <div class="profile-header">
                 <img src="${escapeHtml(avatar)}" style="width:80px;height:80px;border-radius:50%;margin-bottom:0.75rem;border:3px solid rgba(0,229,255,0.35);box-shadow:0 0 0 4px rgba(0,229,255,0.07);" onerror="this.src='https://via.placeholder.com/80?text=U'">
                 <div class="profile-name">${escapeHtml(displayName)}</div>
-                <div style="color:var(--text-secondary);font-size:0.76rem;margin-top:3px;font-family:var(--font-mono);">@${escapeHtml(friend.username)}</div>
+                <div style="color:var(--text-secondary);font-size:0.76rem;margin-top:3px;font-family:var(--font-mono);">@${escapeHtml(username)}</div>
                 <div class="badge-container">${premiumHtml}</div>
             </div>
             <div class="profile-bio"><i class="fas fa-quote-left" style="margin-right:0.38rem;opacity:0.35;color:var(--cyan);"></i>${escapeHtml(bio)}</div>
@@ -2302,11 +2468,11 @@ async function showFriendProfile(userId) {
             ${noteVal ? `<div class="profile-bio" style="border-left:3px solid var(--cyan);"><i class="fas fa-sticky-note" style="margin-right:0.38rem;color:var(--cyan);"></i>${escapeHtml(noteVal)}</div>` : ''}
             ${socialHtml}
             <div class="friend-actions">
-                <button class="btn btn-primary chat-modal-btn" data-id="${friend.id}"><i class="fas fa-comment"></i> Message</button>
+                <button class="btn btn-primary chat-modal-btn" data-id="${friend?.id || userId}"><i class="fas fa-comment"></i> Message</button>
                 <button class="btn btn-outline close-modal-btn"><i class="fas fa-times"></i> Close</button>
             </div>
         `;
-        contentDiv.querySelector('.chat-modal-btn')?.addEventListener('click', () => { modal.style.display = 'none'; window.location.href = `chat.html?friend=${friend.id}`; });
+        contentDiv.querySelector('.chat-modal-btn')?.addEventListener('click', () => { modal.style.display = 'none'; window.location.href = `chat.html?friend=${friend?.id || userId}`; });
         contentDiv.querySelector('.close-modal-btn')?.addEventListener('click', () => modal.style.display = 'none');
     } catch (err) { console.error('Profile modal error:', err); contentDiv.innerHTML = '<div class="no-results">Failed to load profile.</div>'; }
 }
@@ -2407,7 +2573,6 @@ setInterval(() => { if (currentUserId) { updateUnreadBadge(); loadStats(); } }, 
     await loadCurrentUserProfile();
     await Promise.all([loadFriends(), loadRequests(), loadStats(), loadTrending(), loadGroups()]);
     await updateUnreadBadge();
-    // Activity feed is now populated from localStorage, but we need to ensure it's rendered
     renderActivityFeed();
 })();
 </script>
