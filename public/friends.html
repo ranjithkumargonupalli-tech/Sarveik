@@ -1252,62 +1252,6 @@
             * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
             #three-canvas { display: none; }
         }
-
-        /* ===== ENHANCED MULTI-DEVICE RESPONSIVE LAYER ===== */
-        /* Small phones */
-        @media (max-width: 359px) {
-            .page-title { font-size: 1.35rem; }
-            .health-header { flex-wrap: wrap; }
-            .health-score-ring { width: 58px; height: 58px; }
-            .health-score-ring svg { width: 58px; height: 58px; }
-        }
-        /* Large phones / small tablets, portrait */
-        @media (min-width: 481px) and (max-width: 767px) {
-            .stats-grid { grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
-            .suggestion-grid { grid-template-columns: repeat(3, 1fr); }
-        }
-        /* Tablets & small laptops */
-        @media (min-width: 601px) and (max-width: 1024px) {
-            .friends-container { padding: 1.75rem 1.5rem 5rem; }
-            .friend-grid { grid-template-columns: repeat(2, minmax(280px, 1fr)); }
-            .friend-grid.list-view { grid-template-columns: 1fr; }
-            .suggestion-grid { grid-template-columns: repeat(4, 1fr); }
-            .navbar { padding: 0 1.5rem; }
-        }
-        /* Laptops & desktops */
-        @media (min-width: 1025px) {
-            .friends-container { max-width: 1280px; padding: 2rem 1.75rem 5rem; }
-            .friend-grid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
-            .suggestion-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
-            .navbar { padding: 0 2.25rem; }
-            .search-section input, .add-friend input { font-size: 0.9rem; }
-        }
-        /* Wide desktops */
-        @media (min-width: 1440px) {
-            .friends-container { max-width: 1480px; }
-            .friend-grid { grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); }
-            .stats-grid { gap: 1rem; }
-        }
-        /* Ultra-wide */
-        @media (min-width: 1920px) {
-            .friends-container { max-width: 1700px; }
-        }
-        /* Touch devices: avoid sticky hover ghosting, use tap feedback instead */
-        @media (hover: none) and (pointer: coarse) {
-            .friend-card:hover, .search-result-card:hover, .group-card:hover,
-            .suggestion-card:hover, .stat-card:hover, .health-card:hover,
-            .trending-item:hover, .pinned-chip:hover, .filters-section:hover,
-            .activity-feed:hover, #trendingSection:hover {
-                transform: none;
-                box-shadow: none;
-            }
-            .btn:active, .friend-card:active, .suggestion-card:active,
-            .stat-card:active { transform: scale(0.97); }
-        }
-        /* Short-height laptop screens: keep modal usable without excess scroll */
-        @media (max-height: 700px) and (min-width: 768px) {
-            .modal-content { margin-top: 1.5vh; max-height: 96vh; overflow-y: auto; }
-        }
     </style>
 </head>
 <body>
@@ -1700,7 +1644,6 @@ let currentView = 'grid';
 let noteTargetId = null;
 let activityLog = JSON.parse(localStorage.getItem('nova_activity') || '[]');
 let currentUserProfile = null;
-let lastNetworkStats = { total: 0, online: 0, requests: 0 };
 
 // ===== UTILITIES =====
 function escapeHtml(str) { if (!str) return ''; const d = document.createElement('div'); d.textContent = str; return d.innerHTML; }
@@ -1751,22 +1694,8 @@ async function loadStats() {
         document.getElementById('totalConnections').textContent = stats.total || 0;
         document.getElementById('onlineCount').textContent = stats.online || 0;
         document.getElementById('requestsCount').textContent = stats.requests || 0;
-        lastNetworkStats = stats;
         updateHealthScore(stats);
-    } catch (err) {
-        console.error('Stats error:', err);
-        // Fall back to locally known counts so the UI never gets stuck loading
-        const fallbackStats = {
-            total: friendsData.length,
-            online: [...onlineStatus.values()].filter(s => s === 'online').length,
-            requests: requestsData.length
-        };
-        document.getElementById('totalConnections').textContent = fallbackStats.total;
-        document.getElementById('onlineCount').textContent = fallbackStats.online;
-        document.getElementById('requestsCount').textContent = fallbackStats.requests;
-        lastNetworkStats = fallbackStats;
-        updateHealthScore(fallbackStats);
-    }
+    } catch (err) { console.error('Stats error:', err); }
 }
 
 async function getCurrentUserId() {
@@ -1776,7 +1705,6 @@ async function getCurrentUserId() {
 async function loadCurrentUserProfile() {
     try {
         const user = await apiCall('/profile');
-        currentUserId = user.id;
         currentUserProfile = user;
         const avatarEl = document.getElementById('navProfileAvatar');
         const nameEl = document.getElementById('navProfileName');
@@ -1790,14 +1718,7 @@ async function loadCurrentUserProfile() {
         if (dropdownName) dropdownName.textContent = user.display_name || user.username || 'User';
         if (dropdownEmail) dropdownEmail.textContent = user.email || 'user@example.com';
         return user;
-    } catch (err) {
-        console.error('Error loading profile:', err);
-        const nameEl = document.getElementById('navProfileName');
-        const dropdownName = document.getElementById('dropdownName');
-        if (nameEl) nameEl.textContent = 'User';
-        if (dropdownName) dropdownName.textContent = 'User';
-        return null;
-    }
+    } catch (err) { console.error('Error loading profile:', err); return null; }
 }
 
 async function updateUnreadBadge() {
@@ -1849,13 +1770,11 @@ async function loadFriends() {
         friendsData = await apiCall(`/api/friends?${params.toString()}`);
         for (const f of friendsData) { if (!onlineStatus.has(f.id)) onlineStatus.set(f.id, f.status || 'offline'); }
         renderFriends(friendsData);
+        renderPinned();
+        renderSuggestions();
     } catch (err) {
         console.error(err);
         container.innerHTML = '<div class="no-results"><i class="fas fa-wifi"></i>Error loading network. Please try again.</div>';
-    } finally {
-        // Always resolve pinned/suggestions loading state, even if the friends fetch failed
-        renderPinned();
-        renderSuggestions();
     }
 }
 
@@ -2148,9 +2067,8 @@ document.getElementById('clearFilters').addEventListener('click', () => {
 });
 document.getElementById('refreshBtn').addEventListener('click', async () => {
     showToast('Refreshing...', 'info');
-    await Promise.allSettled([loadFriends(), loadRequests(), loadStats(), loadTrending(), loadGroups()]);
+    await Promise.all([loadFriends(), loadRequests(), loadStats(), loadTrending(), loadGroups()]);
     await updateUnreadBadge();
-    updateHealthScore(lastNetworkStats);
     showToast('Refreshed!', 'success');
 });
 
@@ -2220,12 +2138,7 @@ async function loadTrending() {
             });
         });
         renderSuggestions();
-    } catch (err) {
-        container.innerHTML = '<div class="no-results"><i class="fas fa-fire-flame-curved"></i>No trending professionals</div>';
-    } finally {
-        // Ensure suggestions never stay stuck on "Loading suggestions…" even if trending failed
-        renderSuggestions();
-    }
+    } catch (err) { container.innerHTML = '<div class="no-results"><i class="fas fa-fire-flame-curved"></i>No trending professionals</div>'; }
 }
 
 // ===== GROUPS =====
@@ -2266,13 +2179,7 @@ async function loadGroups() {
                 } catch (err) { showToast(err.message || 'Failed to leave group', 'error'); }
             });
         });
-    } catch (err) {
-        console.error(err);
-        container.innerHTML = '<div class="no-results"><i class="fas fa-triangle-exclamation"></i>Failed to load groups.</div>';
-    } finally {
-        // Health score depends on groupsData - recompute once groups have settled (success or failure)
-        updateHealthScore(lastNetworkStats);
-    }
+    } catch (err) { console.error(err); container.innerHTML = '<div class="no-results"><i class="fas fa-triangle-exclamation"></i>Failed to load groups.</div>'; }
 }
 
 // ===== CREATE GROUP =====
@@ -2495,19 +2402,13 @@ setInterval(() => { if (currentUserId) { updateUnreadBadge(); loadStats(); } }, 
 
 // ===== INIT =====
 (async () => {
-    try {
-        await fetchCsrfToken();
-        await loadCurrentUserProfile();
-        await Promise.allSettled([loadFriends(), loadRequests(), loadStats(), loadTrending(), loadGroups()]);
-        await updateUnreadBadge();
-        // Recompute the health score now that friends, groups and starred data have all settled
-        updateHealthScore(lastNetworkStats);
-    } catch (err) {
-        console.error('Initialization error:', err);
-    } finally {
-        // Guarantee the activity feed always leaves its "Loading activity…" state
-        renderActivityFeed();
-    }
+    await fetchCsrfToken();
+    await getCurrentUserId();
+    await loadCurrentUserProfile();
+    await Promise.all([loadFriends(), loadRequests(), loadStats(), loadTrending(), loadGroups()]);
+    await updateUnreadBadge();
+    // Activity feed is now populated from localStorage, but we need to ensure it's rendered
+    renderActivityFeed();
 })();
 </script>
 </body>
