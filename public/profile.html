@@ -4,13 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Profile | Sarveik</title>
-    <!-- ===== PRELOAD CRITICAL RESOURCES ===== -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" as="style">
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style">
-    
-    <!-- ===== CRITICAL CSS (inlined for instant render) ===== -->
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <style>
         :root {
             --primary: linear-gradient(135deg, #00d4ff, #7c3aed);
@@ -1215,6 +1211,57 @@
         .disclaimer a { color: #00d4ff; text-decoration: none; }
         .disclaimer a:hover { text-decoration: underline; }
 
+        /* ===== AVATAR UPLOAD STATUS ===== */
+        .upload-progress {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        .upload-progress.active { display: flex; }
+        .upload-progress .spinner {
+            width: 50px;
+            height: 50px;
+        }
+        .upload-progress p {
+            font-size: 1.1rem;
+            color: white;
+        }
+
+        /* ===== AVATAR HISTORY ===== */
+        .avatar-history {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 0.5rem;
+        }
+        .avatar-history-item {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: var(--transition);
+            object-fit: cover;
+        }
+        .avatar-history-item:hover {
+            border-color: #00d4ff;
+            transform: scale(1.1);
+        }
+        .avatar-history-item.active {
+            border-color: #00d4ff;
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.3);
+        }
+
         @media (max-width: 768px) {
             .profile-container { padding: 1rem; margin: 1rem; }
             .avatar-section { flex-direction: column; text-align: center; gap: 1.5rem; }
@@ -1238,19 +1285,17 @@
             #three-canvas { display: none; }
         }
     </style>
-    
-    <!-- ===== NON-CRITICAL CSS (loaded async) ===== -->
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" media="print" onload="this.media='all'">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" media="print" onload="this.media='all'">
-    <noscript>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;800;900&family=Space+Grotesk:wght@300;400;500;600;700&display=swap">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    </noscript>
 </head>
 <body>
 
     <!-- ===== 3D THREE.JS CANVAS ===== -->
     <div id="three-canvas"></div>
+
+    <!-- ===== UPLOAD PROGRESS OVERLAY ===== -->
+    <div class="upload-progress" id="uploadProgress">
+        <div class="spinner"></div>
+        <p>Uploading avatar...</p>
+    </div>
 
     <!-- ===== NAVBAR ===== -->
     <nav class="navbar">
@@ -1313,6 +1358,8 @@
                         <p class="username">@<span id="usernameSpan">user</span></p>
                         <div id="statusBadge" class="status-badge status-online">🟢 Online</div>
                         <div id="premiumBadgesContainer" style="margin-top: 8px;"></div>
+                        <!-- Avatar History -->
+                        <div class="avatar-history" id="avatarHistory"></div>
                     </div>
                 </div>
             </div>
@@ -1737,6 +1784,8 @@
                 this.socket = null;
                 this.statsForBadges = {};
                 this.initialized = false;
+                this.avatarHistory = [];
+                this.avatarHistoryLoaded = false;
                 this.init();
             }
 
@@ -1755,6 +1804,7 @@
                         this.loadAdminRewards();
                         this.loadUserLevelAndXP();
                         this.loadAvatarGallery();
+                        this.loadAvatarHistory();
                     }, { timeout: 2000 });
                 } else {
                     setTimeout(() => {
@@ -1763,6 +1813,7 @@
                         this.loadAdminRewards();
                         this.loadUserLevelAndXP();
                         this.loadAvatarGallery();
+                        this.loadAvatarHistory();
                     }, 100);
                 }
                 
@@ -1907,6 +1958,53 @@
                     container.html(html);
                 } catch {
                     container.html('<div class="empty-state">Failed to load rewards</div>');
+                }
+            }
+
+            // ========== AVATAR HISTORY (Uploaded avatars from database) ==========
+            async loadAvatarHistory() {
+                try {
+                    const res = await fetch('/api/user/avatar-history', { credentials: 'include' });
+                    if (!res.ok) throw new Error();
+                    const data = await res.json();
+                    this.avatarHistory = data.avatars || [];
+                    this.avatarHistoryLoaded = true;
+                    this.renderAvatarHistory();
+                } catch {
+                    this.avatarHistory = [];
+                    this.avatarHistoryLoaded = true;
+                }
+            }
+
+            renderAvatarHistory() {
+                const container = $('#avatarHistory');
+                if (!this.avatarHistory.length) {
+                    container.html('<span style="font-size:0.7rem;color:rgba(255,255,255,0.4);">No avatar history</span>');
+                    return;
+                }
+                container.html(this.avatarHistory.map(av => `
+                    <img src="${av.url}" alt="Avatar" class="avatar-history-item ${av.is_active ? 'active' : ''}" 
+                         onclick="novaProfile.switchAvatar('${av.url}')" title="${new Date(av.created_at).toLocaleDateString()}">
+                `).join(''));
+            }
+
+            async switchAvatar(url) {
+                try {
+                    const res = await fetch('/api/user/switch-avatar', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url }),
+                        credentials: 'include'
+                    });
+                    if (res.ok) {
+                        $('#avatarPreview').attr('src', url + '?t=' + Date.now());
+                        this.showToast('Avatar switched!', 'success');
+                        await this.loadAvatarHistory();
+                        // Update cached profile
+                        Cache.set('profile_data', { ...Cache.get('profile_data'), avatar_url: url });
+                    }
+                } catch {
+                    this.showToast('Failed to switch avatar', 'error');
                 }
             }
 
@@ -2847,6 +2945,47 @@
                 await this.loadAvatarGallery();
             }
 
+            // ========== AVATAR UPLOAD HANDLER ==========
+            async handleAvatarUpload(file) {
+                if (!file?.type.startsWith('image/')) { 
+                    this.showToast('Select a valid image', 'error'); 
+                    return; 
+                }
+                if (file.size > 2 * 1024 * 1024) { 
+                    this.showToast('File too large (max 2MB)', 'error'); 
+                    return; 
+                }
+
+                // Show upload progress
+                $('#uploadProgress').addClass('active');
+
+                const formData = new FormData();
+                formData.append('avatar', file);
+
+                try {
+                    const res = await fetch('/profile/avatar', {
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'include'
+                    });
+
+                    if (res.ok) {
+                        await this.loadProfileData();
+                        this.currentAvatarStyle = 'uploaded';
+                        localStorage.removeItem('nova_avatar_gallery');
+                        this.showToast('Avatar uploaded successfully!', 'success');
+                        await this.loadAvatarGallery();
+                        await this.loadAvatarHistory();
+                    } else {
+                        throw new Error();
+                    }
+                } catch {
+                    this.showToast('Failed to upload avatar', 'error');
+                } finally {
+                    $('#uploadProgress').removeClass('active');
+                }
+            }
+
             // ========== REFERRALS ==========
             async loadReferralData() {
                 try {
@@ -3070,30 +3209,6 @@
                 $('#twitter').val(this.userData.twitter || '');
                 $('#linkedin').val(this.userData.linkedin || '');
                 this.showToast('Form reset to saved values', 'info');
-            }
-
-            async handleAvatarUpload(file) {
-                if (!file?.type.startsWith('image/')) { this.showToast('Select a valid image', 'error'); return; }
-                if (file.size > 2 * 1024 * 1024) { this.showToast('File too large (max 2MB)', 'error'); return; }
-                const formData = new FormData();
-                formData.append('avatar', file);
-                try {
-                    $('body').addClass('loading');
-                    const res = await fetch('/profile/avatar', { method: 'POST', body: formData, credentials: 'include' });
-                    if (res.ok) {
-                        await this.loadProfileData();
-                        this.currentAvatarStyle = 'uploaded';
-                        localStorage.removeItem('nova_avatar_gallery');
-                        this.showToast('Avatar updated!', 'success');
-                        await this.loadAvatarGallery();
-                    } else {
-                        throw new Error();
-                    }
-                } catch {
-                    this.showToast('Failed to upload avatar', 'error');
-                } finally {
-                    $('body').removeClass('loading');
-                }
             }
 
             async handleProfileUpdate(e) {

@@ -213,7 +213,7 @@ app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use('/api/phonepe-webhook', express.raw({ type: 'application/json' }));
 app.use(express.static('public'));
 
-// ==================== SESSION MIDDLEWARE (PostgreSQL store) ====================
+// ==================== SESSION MIDDLEWARE ====================
 const sessionMiddleware = session({
     store: new pgSession({
         pool: pool,
@@ -281,7 +281,6 @@ const otpVerificationLimiter = rateLimit({
 // ==================== SETUP MONETIZATION TABLES ====================
 async function setupMonetizationTables() {
     try {
-        // Sponsored listings table
         await pool.query(`
             CREATE TABLE IF NOT EXISTS sponsored_listings (
                 id SERIAL PRIMARY KEY,
@@ -299,7 +298,6 @@ async function setupMonetizationTables() {
             )
         `);
         
-        // Sponsored packages table
         await pool.query(`
             CREATE TABLE IF NOT EXISTS sponsored_packages (
                 id SERIAL PRIMARY KEY,
@@ -311,7 +309,6 @@ async function setupMonetizationTables() {
             )
         `);
         
-        // Insert default packages if not exist
         const pkgCheck = await pool.query('SELECT COUNT(*) FROM sponsored_packages');
         if (parseInt(pkgCheck.rows[0].count) === 0) {
             await pool.query(`
@@ -322,7 +319,6 @@ async function setupMonetizationTables() {
             `);
         }
         
-        // Affiliate links table
         await pool.query(`
             CREATE TABLE IF NOT EXISTS affiliate_links (
                 id SERIAL PRIMARY KEY,
@@ -340,7 +336,6 @@ async function setupMonetizationTables() {
             )
         `);
         
-        // Affiliate clicks tracking
         await pool.query(`
             CREATE TABLE IF NOT EXISTS affiliate_clicks (
                 id SERIAL PRIMARY KEY,
@@ -354,7 +349,6 @@ async function setupMonetizationTables() {
             )
         `);
         
-        // Affiliate conversions (sales)
         await pool.query(`
             CREATE TABLE IF NOT EXISTS affiliate_conversions (
                 id SERIAL PRIMARY KEY,
@@ -372,7 +366,6 @@ async function setupMonetizationTables() {
             )
         `);
         
-        // Business settings for affiliate
         await pool.query(`
             CREATE TABLE IF NOT EXISTS business_affiliate_settings (
                 business_id INT REFERENCES businesses(id) PRIMARY KEY,
@@ -729,7 +722,6 @@ passport.deserializeUser(async (id, done) => {
     }
 });
 
-// Enhanced Google Strategy with proper credits initialization and admin notifications
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -783,13 +775,8 @@ passport.use(new GoogleStrategy({
           );
           user = insertResult.rows[0];
           
-          // Initialize credits for new Google user (same as email/password signup)
           await initializeUserCredits(user.id);
-          
-          // Send welcome email (same as email/password signup)
           sendWelcomeEmail(email, username).catch(err => console.error('Welcome email failed:', err.message));
-          
-          // Send admin notification email for new Google signup (same as email/password registration)
           sendAdminAlert({ 
             subject: 'New User Registration (Google Sign-In)', 
             message: `New user ${username} (${email}) registered via Google Sign-In.` 
@@ -1055,9 +1042,9 @@ async function awardCreditsForToolApproval(userId, toolName) {
     }
 }
 
-// ==================== BUSINESS CREDIT HELPER (15 CREDITS FOR BUSINESS APPROVAL) ====================
+// ==================== BUSINESS CREDIT HELPER ====================
 async function awardCreditsForBusinessApproval(userId, businessName) {
-    const approvalBonus = 15; // Changed from 50 to 15 credits
+    const approvalBonus = 15;
     await ensureUserCredits(userId);
     await pool.query(
         `UPDATE user_credits 
@@ -2136,6 +2123,414 @@ app.post('/profile/avatar', isAuthenticated, upload.single('avatar'), async (req
     }
 });
 
+// ==================== AVATAR GALLERY ENDPOINTS ====================
+
+// Get all available avatars for a user
+app.get('/api/avatars/gallery', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        
+        // Get user's level and premium status
+        const userResult = await pool.query(
+            'SELECT level, premium_until FROM users WHERE id = $1',
+            [userId]
+        );
+        
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        const userLevel = userResult.rows[0].level || 1;
+        const isPremium = userResult.rows[0].premium_until && new Date(userResult.rows[0].premium_until) > new Date();
+        
+        // Get user's owned avatars
+        const ownedResult = await pool.query(
+            'SELECT avatar_id, is_active FROM user_avatars WHERE user_id = $1',
+            [userId]
+        );
+        
+        const ownedAvatars = ownedResult.rows.reduce((acc, row) => {
+            acc[row.avatar_id] = row.is_active;
+            return acc;
+        }, {});
+        
+        // Define all available avatars
+        const avatars = {
+            male: [
+                // Iron Tier
+                { id: 'm_iron1', name: 'Iron Recruit', icon: '⚔️', gender: 'male', tier: 'Iron', bg: '#9ca3af', minLevel: 1, premiumRequired: false },
+                { id: 'm_iron2', name: 'Iron Shield', icon: '🛡️', gender: 'male', tier: 'Iron', bg: '#7f8c8d', minLevel: 3, premiumRequired: false },
+                { id: 'm_iron3', name: 'Iron Guard', icon: '🪖', gender: 'male', tier: 'Iron', bg: '#7f8c8d', minLevel: 5, premiumRequired: false },
+                { id: 'm_iron4', name: 'Iron Warden', icon: '🗡️', gender: 'male', tier: 'Iron', bg: '#6b7280', minLevel: 8, premiumRequired: false },
+                // Bronze Tier
+                { id: 'm_brnz1', name: 'Bronze Scout', icon: '🦅', gender: 'male', tier: 'Bronze', bg: '#cd7f32', minLevel: 10, premiumRequired: false },
+                { id: 'm_brnz2', name: 'Bronze Knight', icon: '🏹', gender: 'male', tier: 'Bronze', bg: '#b8860b', minLevel: 12, premiumRequired: false },
+                { id: 'm_brnz3', name: 'Bronze Ranger', icon: '⚡', gender: 'male', tier: 'Bronze', bg: '#b8860b', minLevel: 15, premiumRequired: false },
+                { id: 'm_brnz4', name: 'Bronze Champion', icon: '🦁', gender: 'male', tier: 'Bronze', bg: '#a0522d', minLevel: 18, premiumRequired: false },
+                // Silver Tier
+                { id: 'm_silv1', name: 'Silver Sentinel', icon: '🌟', gender: 'male', tier: 'Silver', bg: '#60a5fa', minLevel: 20, premiumRequired: false },
+                { id: 'm_silv2', name: 'Silver Blade', icon: '💎', gender: 'male', tier: 'Silver', bg: '#3b82f6', minLevel: 22, premiumRequired: false },
+                { id: 'm_silv3', name: 'Silver Hawk', icon: '🔷', gender: 'male', tier: 'Silver', bg: '#2563eb', minLevel: 25, premiumRequired: false },
+                { id: 'm_silv4', name: 'Silver Paladin', icon: '🦋', gender: 'male', tier: 'Silver', bg: '#1d4ed8', minLevel: 28, premiumRequired: false },
+                // Gold Tier
+                { id: 'm_gold1', name: 'Gold Warrior', icon: '🌠', gender: 'male', tier: 'Gold', bg: '#f59e0b', minLevel: 30, premiumRequired: false },
+                { id: 'm_gold2', name: 'Gold Berserker', icon: '🔥', gender: 'male', tier: 'Gold', bg: '#d97706', minLevel: 33, premiumRequired: true },
+                { id: 'm_gold3', name: 'Gold Titan', icon: '⚜️', gender: 'male', tier: 'Gold', bg: '#b45309', minLevel: 36, premiumRequired: true },
+                { id: 'm_gold4', name: 'Gold Overlord', icon: '🦊', gender: 'male', tier: 'Gold', bg: '#92400e', minLevel: 39, premiumRequired: true },
+                // Platinum Tier
+                { id: 'm_plat1', name: 'Platinum Ace', icon: '🌊', gender: 'male', tier: 'Platinum', bg: '#06b6d4', minLevel: 40, premiumRequired: true },
+                { id: 'm_plat2', name: 'Platinum Specter', icon: '🦜', gender: 'male', tier: 'Platinum', bg: '#0891b2', minLevel: 43, premiumRequired: true },
+                { id: 'm_plat3', name: 'Platinum Phantom', icon: '🌀', gender: 'male', tier: 'Platinum', bg: '#0e7490', minLevel: 46, premiumRequired: true },
+                { id: 'm_plat4', name: 'Platinum Sovereign', icon: '❄️', gender: 'male', tier: 'Platinum', bg: '#155e75', minLevel: 49, premiumRequired: true },
+                // Diamond Tier
+                { id: 'm_diam1', name: 'Diamond Mage', icon: '💜', gender: 'male', tier: 'Diamond', bg: '#8b5cf6', minLevel: 50, premiumRequired: true },
+                { id: 'm_diam2', name: 'Diamond Rogue', icon: '🔮', gender: 'male', tier: 'Diamond', bg: '#7c3aed', minLevel: 53, premiumRequired: true },
+                { id: 'm_diam3', name: 'Diamond Rift', icon: '🌌', gender: 'male', tier: 'Diamond', bg: '#6d28d9', minLevel: 56, premiumRequired: true },
+                { id: 'm_diam4', name: 'Diamond Warlord', icon: '✨', gender: 'male', tier: 'Diamond', bg: '#5b21b6', minLevel: 59, premiumRequired: true },
+                // Master Tier
+                { id: 'm_mast1', name: 'Master Invoker', icon: '🐉', gender: 'male', tier: 'Master', bg: '#f97316', minLevel: 60, premiumRequired: true },
+                { id: 'm_mast2', name: 'Master Pyromancer', icon: '🌋', gender: 'male', tier: 'Master', bg: '#ea580c', minLevel: 63, premiumRequired: true },
+                { id: 'm_mast3', name: 'Master Warchief', icon: '🦎', gender: 'male', tier: 'Master', bg: '#dc2626', minLevel: 66, premiumRequired: true },
+                { id: 'm_mast4', name: 'Master Reaper', icon: '☠️', gender: 'male', tier: 'Master', bg: '#b91c1c', minLevel: 69, premiumRequired: true },
+                // Grandmaster Tier
+                { id: 'm_gm1', name: 'Grandmaster Sage', icon: '🌸', gender: 'male', tier: 'Grandmaster', bg: '#ec4899', minLevel: 70, premiumRequired: true },
+                { id: 'm_gm2', name: 'Grandmaster Oracle', icon: '🦄', gender: 'male', tier: 'Grandmaster', bg: '#db2777', minLevel: 73, premiumRequired: true },
+                { id: 'm_gm3', name: 'Grandmaster Eclipse', icon: '🌙', gender: 'male', tier: 'Grandmaster', bg: '#be185d', minLevel: 76, premiumRequired: true },
+                { id: 'm_gm4', name: 'GM Vanguard', icon: '👁️', gender: 'male', tier: 'Grandmaster', bg: '#9d174d', minLevel: 79, premiumRequired: true },
+                // Challenger Tier
+                { id: 'm_chal1', name: 'Challenger Nexus', icon: '⭐', gender: 'male', tier: 'Challenger', bg: '#fbbf24', minLevel: 80, premiumRequired: true },
+                { id: 'm_chal2', name: 'Challenger Sarveik', icon: '🌞', gender: 'male', tier: 'Challenger', bg: '#f59e0b', minLevel: 83, premiumRequired: true },
+                { id: 'm_chal3', name: 'Challenger Storm', icon: '🌪️', gender: 'male', tier: 'Challenger', bg: '#d97706', minLevel: 86, premiumRequired: true },
+                { id: 'm_chal4', name: 'Challenger Apex', icon: '💥', gender: 'male', tier: 'Challenger', bg: '#b45309', minLevel: 89, premiumRequired: true },
+                // Legendary Tier
+                { id: 'm_leg1', name: 'Legendary Titan', icon: '👑', gender: 'male', tier: 'Legendary', bg: 'linear-gradient(135deg,#f59e0b,#ef4444)', minLevel: 90, premiumRequired: true },
+                { id: 'm_leg2', name: 'Legendary Phoenix', icon: '🦅', gender: 'male', tier: 'Legendary', bg: 'linear-gradient(135deg,#ec4899,#8b5cf6)', minLevel: 93, premiumRequired: true },
+                { id: 'm_leg3', name: 'Legendary Eternal', icon: '🔱', gender: 'male', tier: 'Legendary', bg: 'linear-gradient(135deg,#06b6d4,#7c3aed)', minLevel: 95, premiumRequired: true },
+                { id: 'm_leg4', name: 'Legendary God-King', icon: '⚡', gender: 'male', tier: 'Legendary', bg: 'linear-gradient(135deg,#fbbf24,#f97316,#ef4444)', minLevel: 98, premiumRequired: true },
+                { id: 'm_leg5', name: 'Sarveik Absolute', icon: '🌟', gender: 'male', tier: 'Legendary', bg: 'linear-gradient(135deg,#fbbf24,#8b5cf6,#06b6d4)', minLevel: 100, premiumRequired: true }
+            ],
+            female: [
+                // Iron Tier
+                { id: 'f_iron1', name: 'Iron Apprentice', icon: '🗡️', gender: 'female', tier: 'Iron', bg: '#9ca3af', minLevel: 1, premiumRequired: false },
+                { id: 'f_iron2', name: 'Iron Archer', icon: '🏹', gender: 'female', tier: 'Iron', bg: '#7f8c8d', minLevel: 3, premiumRequired: false },
+                { id: 'f_iron3', name: 'Iron Huntress', icon: '🦊', gender: 'female', tier: 'Iron', bg: '#7f8c8d', minLevel: 5, premiumRequired: false },
+                { id: 'f_iron4', name: 'Iron Warden', icon: '🌿', gender: 'female', tier: 'Iron', bg: '#6b7280', minLevel: 8, premiumRequired: false },
+                // Bronze Tier
+                { id: 'f_brnz1', name: 'Bronze Ranger', icon: '🌲', gender: 'female', tier: 'Bronze', bg: '#cd7f32', minLevel: 10, premiumRequired: false },
+                { id: 'f_brnz2', name: 'Bronze Valkyrie', icon: '🦋', gender: 'female', tier: 'Bronze', bg: '#b8860b', minLevel: 12, premiumRequired: false },
+                { id: 'f_brnz3', name: 'Bronze Shaman', icon: '🌺', gender: 'female', tier: 'Bronze', bg: '#b8860b', minLevel: 15, premiumRequired: false },
+                { id: 'f_brnz4', name: 'Bronze Champion', icon: '🐺', gender: 'female', tier: 'Bronze', bg: '#a0522d', minLevel: 18, premiumRequired: false },
+                // Silver Tier
+                { id: 'f_silv1', name: 'Silver Sentinel', icon: '🌸', gender: 'female', tier: 'Silver', bg: '#60a5fa', minLevel: 20, premiumRequired: false },
+                { id: 'f_silv2', name: 'Silver Sorceress', icon: '💠', gender: 'female', tier: 'Silver', bg: '#3b82f6', minLevel: 22, premiumRequired: false },
+                { id: 'f_silv3', name: 'Silver Rogue', icon: '🌊', gender: 'female', tier: 'Silver', bg: '#2563eb', minLevel: 25, premiumRequired: false },
+                { id: 'f_silv4', name: 'Silver Paladin', icon: '⚜️', gender: 'female', tier: 'Silver', bg: '#1d4ed8', minLevel: 28, premiumRequired: false },
+                // Gold Tier
+                { id: 'f_gold1', name: 'Gold Enchantress', icon: '✨', gender: 'female', tier: 'Gold', bg: '#f59e0b', minLevel: 30, premiumRequired: false },
+                { id: 'f_gold2', name: 'Gold Templar', icon: '🌞', gender: 'female', tier: 'Gold', bg: '#d97706', minLevel: 33, premiumRequired: true },
+                { id: 'f_gold3', name: 'Gold Titan', icon: '🦁', gender: 'female', tier: 'Gold', bg: '#b45309', minLevel: 36, premiumRequired: true },
+                { id: 'f_gold4', name: 'Gold Overlord', icon: '🔱', gender: 'female', tier: 'Gold', bg: '#92400e', minLevel: 39, premiumRequired: true },
+                // Platinum Tier
+                { id: 'f_plat1', name: 'Platinum Mage', icon: '💎', gender: 'female', tier: 'Platinum', bg: '#06b6d4', minLevel: 40, premiumRequired: true },
+                { id: 'f_plat2', name: 'Platinum Specter', icon: '🌀', gender: 'female', tier: 'Platinum', bg: '#0891b2', minLevel: 43, premiumRequired: true },
+                { id: 'f_plat3', name: 'Platinum Oracle', icon: '🔮', gender: 'female', tier: 'Platinum', bg: '#0e7490', minLevel: 46, premiumRequired: true },
+                { id: 'f_plat4', name: 'Platinum Empress', icon: '👸', gender: 'female', tier: 'Platinum', bg: '#155e75', minLevel: 49, premiumRequired: true },
+                // Diamond Tier
+                { id: 'f_diam1', name: 'Diamond Witch', icon: '💜', gender: 'female', tier: 'Diamond', bg: '#8b5cf6', minLevel: 50, premiumRequired: true },
+                { id: 'f_diam2', name: 'Diamond Phantom', icon: '🌙', gender: 'female', tier: 'Diamond', bg: '#7c3aed', minLevel: 53, premiumRequired: true },
+                { id: 'f_diam3', name: 'Diamond Rift', icon: '🌌', gender: 'female', tier: 'Diamond', bg: '#6d28d9', minLevel: 56, premiumRequired: true },
+                { id: 'f_diam4', name: 'Diamond Goddess', icon: '⭐', gender: 'female', tier: 'Diamond', bg: '#5b21b6', minLevel: 59, premiumRequired: true },
+                // Master Tier
+                { id: 'f_mast1', name: 'Master Invoker', icon: '🐉', gender: 'female', tier: 'Master', bg: '#f97316', minLevel: 60, premiumRequired: true },
+                { id: 'f_mast2', name: 'Master Pyromancer', icon: '🌋', gender: 'female', tier: 'Master', bg: '#ea580c', minLevel: 63, premiumRequired: true },
+                { id: 'f_mast3', name: 'Master Fury', icon: '🦅', gender: 'female', tier: 'Master', bg: '#dc2626', minLevel: 66, premiumRequired: true },
+                { id: 'f_mast4', name: 'Master Reaper', icon: '🌹', gender: 'female', tier: 'Master', bg: '#b91c1c', minLevel: 69, premiumRequired: true },
+                // Grandmaster Tier
+                { id: 'f_gm1', name: 'Grandmaster Sage', icon: '🦄', gender: 'female', tier: 'Grandmaster', bg: '#ec4899', minLevel: 70, premiumRequired: true },
+                { id: 'f_gm2', name: 'Grandmaster Oracle', icon: '🌟', gender: 'female', tier: 'Grandmaster', bg: '#db2777', minLevel: 73, premiumRequired: true },
+                { id: 'f_gm3', name: 'GM Mystic', icon: '🕊️', gender: 'female', tier: 'Grandmaster', bg: '#be185d', minLevel: 76, premiumRequired: true },
+                { id: 'f_gm4', name: 'GM Vanguard', icon: '💫', gender: 'female', tier: 'Grandmaster', bg: '#9d174d', minLevel: 79, premiumRequired: true },
+                // Challenger Tier
+                { id: 'f_chal1', name: 'Challenger Nexus', icon: '☀️', gender: 'female', tier: 'Challenger', bg: '#fbbf24', minLevel: 80, premiumRequired: true },
+                { id: 'f_chal2', name: 'Challenger Sarveik', icon: '🌺', gender: 'female', tier: 'Challenger', bg: '#f59e0b', minLevel: 83, premiumRequired: true },
+                { id: 'f_chal3', name: 'Challenger Storm', icon: '🌪️', gender: 'female', tier: 'Challenger', bg: '#d97706', minLevel: 86, premiumRequired: true },
+                { id: 'f_chal4', name: 'Challenger Apex', icon: '💥', gender: 'female', tier: 'Challenger', bg: '#b45309', minLevel: 89, premiumRequired: true },
+                // Legendary Tier
+                { id: 'f_leg1', name: 'Legendary Empress', icon: '👑', gender: 'female', tier: 'Legendary', bg: 'linear-gradient(135deg,#ec4899,#f59e0b)', minLevel: 90, premiumRequired: true },
+                { id: 'f_leg2', name: 'Legendary Phoenix', icon: '🦜', gender: 'female', tier: 'Legendary', bg: 'linear-gradient(135deg,#8b5cf6,#ec4899)', minLevel: 93, premiumRequired: true },
+                { id: 'f_leg3', name: 'Legendary Eternal', icon: '🌸', gender: 'female', tier: 'Legendary', bg: 'linear-gradient(135deg,#06b6d4,#ec4899)', minLevel: 95, premiumRequired: true },
+                { id: 'f_leg4', name: 'Legendary Goddess', icon: '🌙', gender: 'female', tier: 'Legendary', bg: 'linear-gradient(135deg,#fbbf24,#8b5cf6,#ec4899)', minLevel: 98, premiumRequired: true },
+                { id: 'f_leg5', name: 'Sarveik Absolute', icon: '✨', gender: 'female', tier: 'Legendary', bg: 'linear-gradient(135deg,#fbbf24,#8b5cf6,#06b6d4)', minLevel: 100, premiumRequired: true }
+            ]
+        };
+        
+        // Combine all avatars
+        const allAvatars = [...avatars.male, ...avatars.female];
+        
+        // Check which avatars are unlocked
+        const unlockedAvatars = [];
+        for (const avatar of allAvatars) {
+            const isUnlocked = ownedAvatars[avatar.id] !== undefined;
+            const isActive = ownedAvatars[avatar.id] === true;
+            
+            unlockedAvatars.push({
+                ...avatar,
+                unlocked: isUnlocked,
+                active: isActive,
+                canUnlock: !isUnlocked && userLevel >= avatar.minLevel && (!avatar.premiumRequired || isPremium)
+            });
+        }
+        
+        res.json({
+            avatars: unlockedAvatars,
+            userLevel,
+            isPremium,
+            ownedAvatars: Object.keys(ownedAvatars)
+        });
+        
+    } catch (err) {
+        console.error('Error fetching avatar gallery:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Unlock an avatar
+app.post('/api/avatars/unlock', isAuthenticated, async (req, res) => {
+    const { avatarId } = req.body;
+    
+    if (!avatarId) {
+        return res.status(400).json({ error: 'Avatar ID is required' });
+    }
+    
+    try {
+        const userId = req.session.userId;
+        
+        // Check if already unlocked
+        const existing = await pool.query(
+            'SELECT id FROM user_avatars WHERE user_id = $1 AND avatar_id = $2',
+            [userId, avatarId]
+        );
+        
+        if (existing.rows.length > 0) {
+            return res.status(400).json({ error: 'Avatar already unlocked' });
+        }
+        
+        // Get user level and premium status
+        const userResult = await pool.query(
+            'SELECT level, premium_until FROM users WHERE id = $1',
+            [userId]
+        );
+        
+        if (userResult.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        const userLevel = userResult.rows[0].level || 1;
+        const isPremium = userResult.rows[0].premium_until && new Date(userResult.rows[0].premium_until) > new Date();
+        
+        // Define avatar requirements (simplified check)
+        const avatarRequirements = {
+            // Male avatars
+            'm_iron1': { minLevel: 1, premiumRequired: false },
+            'm_iron2': { minLevel: 3, premiumRequired: false },
+            'm_iron3': { minLevel: 5, premiumRequired: false },
+            'm_iron4': { minLevel: 8, premiumRequired: false },
+            'm_brnz1': { minLevel: 10, premiumRequired: false },
+            'm_brnz2': { minLevel: 12, premiumRequired: false },
+            'm_brnz3': { minLevel: 15, premiumRequired: false },
+            'm_brnz4': { minLevel: 18, premiumRequired: false },
+            'm_silv1': { minLevel: 20, premiumRequired: false },
+            'm_silv2': { minLevel: 22, premiumRequired: false },
+            'm_silv3': { minLevel: 25, premiumRequired: false },
+            'm_silv4': { minLevel: 28, premiumRequired: false },
+            'm_gold1': { minLevel: 30, premiumRequired: false },
+            'm_gold2': { minLevel: 33, premiumRequired: true },
+            'm_gold3': { minLevel: 36, premiumRequired: true },
+            'm_gold4': { minLevel: 39, premiumRequired: true },
+            'm_plat1': { minLevel: 40, premiumRequired: true },
+            'm_plat2': { minLevel: 43, premiumRequired: true },
+            'm_plat3': { minLevel: 46, premiumRequired: true },
+            'm_plat4': { minLevel: 49, premiumRequired: true },
+            'm_diam1': { minLevel: 50, premiumRequired: true },
+            'm_diam2': { minLevel: 53, premiumRequired: true },
+            'm_diam3': { minLevel: 56, premiumRequired: true },
+            'm_diam4': { minLevel: 59, premiumRequired: true },
+            'm_mast1': { minLevel: 60, premiumRequired: true },
+            'm_mast2': { minLevel: 63, premiumRequired: true },
+            'm_mast3': { minLevel: 66, premiumRequired: true },
+            'm_mast4': { minLevel: 69, premiumRequired: true },
+            'm_gm1': { minLevel: 70, premiumRequired: true },
+            'm_gm2': { minLevel: 73, premiumRequired: true },
+            'm_gm3': { minLevel: 76, premiumRequired: true },
+            'm_gm4': { minLevel: 79, premiumRequired: true },
+            'm_chal1': { minLevel: 80, premiumRequired: true },
+            'm_chal2': { minLevel: 83, premiumRequired: true },
+            'm_chal3': { minLevel: 86, premiumRequired: true },
+            'm_chal4': { minLevel: 89, premiumRequired: true },
+            'm_leg1': { minLevel: 90, premiumRequired: true },
+            'm_leg2': { minLevel: 93, premiumRequired: true },
+            'm_leg3': { minLevel: 95, premiumRequired: true },
+            'm_leg4': { minLevel: 98, premiumRequired: true },
+            'm_leg5': { minLevel: 100, premiumRequired: true },
+            // Female avatars (same requirements)
+            'f_iron1': { minLevel: 1, premiumRequired: false },
+            'f_iron2': { minLevel: 3, premiumRequired: false },
+            'f_iron3': { minLevel: 5, premiumRequired: false },
+            'f_iron4': { minLevel: 8, premiumRequired: false },
+            'f_brnz1': { minLevel: 10, premiumRequired: false },
+            'f_brnz2': { minLevel: 12, premiumRequired: false },
+            'f_brnz3': { minLevel: 15, premiumRequired: false },
+            'f_brnz4': { minLevel: 18, premiumRequired: false },
+            'f_silv1': { minLevel: 20, premiumRequired: false },
+            'f_silv2': { minLevel: 22, premiumRequired: false },
+            'f_silv3': { minLevel: 25, premiumRequired: false },
+            'f_silv4': { minLevel: 28, premiumRequired: false },
+            'f_gold1': { minLevel: 30, premiumRequired: false },
+            'f_gold2': { minLevel: 33, premiumRequired: true },
+            'f_gold3': { minLevel: 36, premiumRequired: true },
+            'f_gold4': { minLevel: 39, premiumRequired: true },
+            'f_plat1': { minLevel: 40, premiumRequired: true },
+            'f_plat2': { minLevel: 43, premiumRequired: true },
+            'f_plat3': { minLevel: 46, premiumRequired: true },
+            'f_plat4': { minLevel: 49, premiumRequired: true },
+            'f_diam1': { minLevel: 50, premiumRequired: true },
+            'f_diam2': { minLevel: 53, premiumRequired: true },
+            'f_diam3': { minLevel: 56, premiumRequired: true },
+            'f_diam4': { minLevel: 59, premiumRequired: true },
+            'f_mast1': { minLevel: 60, premiumRequired: true },
+            'f_mast2': { minLevel: 63, premiumRequired: true },
+            'f_mast3': { minLevel: 66, premiumRequired: true },
+            'f_mast4': { minLevel: 69, premiumRequired: true },
+            'f_gm1': { minLevel: 70, premiumRequired: true },
+            'f_gm2': { minLevel: 73, premiumRequired: true },
+            'f_gm3': { minLevel: 76, premiumRequired: true },
+            'f_gm4': { minLevel: 79, premiumRequired: true },
+            'f_chal1': { minLevel: 80, premiumRequired: true },
+            'f_chal2': { minLevel: 83, premiumRequired: true },
+            'f_chal3': { minLevel: 86, premiumRequired: true },
+            'f_chal4': { minLevel: 89, premiumRequired: true },
+            'f_leg1': { minLevel: 90, premiumRequired: true },
+            'f_leg2': { minLevel: 93, premiumRequired: true },
+            'f_leg3': { minLevel: 95, premiumRequired: true },
+            'f_leg4': { minLevel: 98, premiumRequired: true },
+            'f_leg5': { minLevel: 100, premiumRequired: true }
+        };
+        
+        const requirements = avatarRequirements[avatarId];
+        if (!requirements) {
+            return res.status(400).json({ error: 'Invalid avatar ID' });
+        }
+        
+        if (userLevel < requirements.minLevel) {
+            return res.status(400).json({ error: `Level ${requirements.minLevel} required to unlock this avatar` });
+        }
+        
+        if (requirements.premiumRequired && !isPremium) {
+            return res.status(400).json({ error: 'Premium membership required to unlock this avatar' });
+        }
+        
+        // Unlock the avatar
+        await pool.query(
+            `INSERT INTO user_avatars (user_id, avatar_id, unlocked_at)
+             VALUES ($1, $2, NOW())`,
+            [userId, avatarId]
+        );
+        
+        res.json({ success: true, message: 'Avatar unlocked successfully!' });
+        
+    } catch (err) {
+        console.error('Error unlocking avatar:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Set active avatar
+app.post('/api/avatars/select', isAuthenticated, async (req, res) => {
+    const { avatarId } = req.body;
+    
+    try {
+        const userId = req.session.userId;
+        
+        // Check if user owns this avatar
+        const owned = await pool.query(
+            'SELECT id FROM user_avatars WHERE user_id = $1 AND avatar_id = $2',
+            [userId, avatarId]
+        );
+        
+        if (owned.rows.length === 0) {
+            return res.status(400).json({ error: 'You do not own this avatar' });
+        }
+        
+        // Deactivate all avatars for this user
+        await pool.query(
+            'UPDATE user_avatars SET is_active = false WHERE user_id = $1',
+            [userId]
+        );
+        
+        // Activate selected avatar
+        await pool.query(
+            'UPDATE user_avatars SET is_active = true WHERE user_id = $1 AND avatar_id = $2',
+            [userId, avatarId]
+        );
+        
+        // Also update the user's avatar style
+        await pool.query(
+            'UPDATE users SET avatar_style = $1 WHERE id = $2',
+            [avatarId, userId]
+        );
+        
+        res.json({ success: true, message: 'Avatar selected!' });
+        
+    } catch (err) {
+        console.error('Error selecting avatar:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Get user's current avatar
+app.get('/api/avatars/current', isAuthenticated, async (req, res) => {
+    try {
+        const userId = req.session.userId;
+        
+        const result = await pool.query(
+            'SELECT avatar_url, avatar_style FROM users WHERE id = $1',
+            [userId]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        
+        const user = result.rows[0];
+        let currentAvatar = null;
+        
+        // Check if user has an active gallery avatar
+        if (user.avatar_style && user.avatar_style !== 'default' && user.avatar_style !== 'uploaded') {
+            const active = await pool.query(
+                'SELECT avatar_id FROM user_avatars WHERE user_id = $1 AND is_active = true',
+                [userId]
+            );
+            
+            if (active.rows.length > 0) {
+                currentAvatar = {
+                    type: 'gallery',
+                    id: active.rows[0].avatar_id
+                };
+            }
+        }
+        
+        res.json({
+            avatarUrl: user.avatar_url || null,
+            avatarStyle: user.avatar_style || 'default',
+            currentAvatar: currentAvatar
+        });
+        
+    } catch (err) {
+        console.error('Error getting current avatar:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 // ==================== TOOL SUBMISSION & APPROVAL ====================
 app.post('/api/tools/submit', isAuthenticated, async (req, res) => {
     const { name, url, description, category, pageType } = req.body;
@@ -2429,7 +2824,6 @@ app.delete('/api/admin/tools/:id', isAdmin, async (req, res) => {
 
 // ==================== BUSINESS DIRECTORY ENDPOINTS ====================
 
-// Award credits for business approval (15 credits)
 async function awardCreditsForBusinessApproval(userId, businessName) {
     const approvalBonus = 15;
     try {
@@ -2461,7 +2855,6 @@ async function awardCreditsForBusinessApproval(userId, businessName) {
     }
 }
 
-// PUBLIC: Get approved businesses with filters
 app.get('/api/businesses', async (req, res) => {
     const { category, city, search, verifiedOnly, featured, limit = 50, offset = 0 } = req.query;
 
@@ -2540,7 +2933,6 @@ app.get('/api/businesses', async (req, res) => {
     }
 });
 
-// PUBLIC: Get single business by ID
 app.get('/api/businesses/:id', async (req, res) => {
     const businessId = req.params.id;
     
@@ -2572,7 +2964,6 @@ app.get('/api/businesses/:id', async (req, res) => {
     }
 });
 
-// PUBLIC: Get business reviews
 app.get('/api/businesses/:id/reviews', async (req, res) => {
     const businessId = req.params.id;
     const limit = parseInt(req.query.limit) || 20;
@@ -2606,7 +2997,6 @@ app.get('/api/businesses/:id/reviews', async (req, res) => {
     }
 });
 
-// PUBLIC: Get business rating stats
 app.get('/api/businesses/:id/ratings', async (req, res) => {
     const businessId = req.params.id;
     try {
@@ -2625,7 +3015,6 @@ app.get('/api/businesses/:id/ratings', async (req, res) => {
     }
 });
 
-// PUBLIC: Get cities list
 app.get('/api/businesses/cities', async (req, res) => {
     try {
         const result = await pool.query(`
@@ -2640,7 +3029,6 @@ app.get('/api/businesses/cities', async (req, res) => {
     }
 });
 
-// PUBLIC: Get categories list with counts
 app.get('/api/businesses/categories', async (req, res) => {
     try {
         const result = await pool.query(`
@@ -2657,7 +3045,6 @@ app.get('/api/businesses/categories', async (req, res) => {
     }
 });
 
-// AUTHENTICATED: Submit a new business
 app.post('/api/businesses/submit', isAuthenticated, async (req, res) => {
     const {
         name, type, category, description, address, city, state, phone, email,
@@ -2720,7 +3107,6 @@ app.post('/api/businesses/submit', isAuthenticated, async (req, res) => {
     }
 });
 
-// AUTHENTICATED: Add review to business
 app.post('/api/businesses/:id/reviews', isAuthenticated, async (req, res) => {
     const businessId = req.params.id;
     const { rating, comment, title } = req.body;
@@ -2772,7 +3158,6 @@ app.post('/api/businesses/:id/reviews', isAuthenticated, async (req, res) => {
     }
 });
 
-// AUTHENTICATED: Toggle favorite business
 app.post('/api/businesses/:id/favorite', isAuthenticated, async (req, res) => {
     const businessId = req.params.id;
     
@@ -2802,7 +3187,6 @@ app.post('/api/businesses/:id/favorite', isAuthenticated, async (req, res) => {
     }
 });
 
-// AUTHENTICATED: Get user's favorite businesses
 app.get('/api/user/favorites', isAuthenticated, async (req, res) => {
     try {
         const result = await pool.query(`
@@ -2820,7 +3204,6 @@ app.get('/api/user/favorites', isAuthenticated, async (req, res) => {
     }
 });
 
-// ADMIN BUSINESS MANAGEMENT
 app.get('/api/admin/businesses/pending', isAdminOrModerator, async (req, res) => {
     try {
         const result = await pool.query(`
@@ -2853,7 +3236,6 @@ app.get('/api/admin/businesses/approved', isAdminOrModerator, async (req, res) =
     }
 });
 
-// Approve a business - Awards 15 credits to user
 app.put('/api/admin/businesses/:id/approve', isAdmin, async (req, res) => {
     const businessId = req.params.id;
     
@@ -2894,7 +3276,6 @@ app.put('/api/admin/businesses/:id/approve', isAdmin, async (req, res) => {
 
         console.log(`✅ Business ${businessId} (${biz.name}) approved in database`);
 
-        // Award 15 credits to the user who submitted the business
         if (biz.user_id) {
             await awardCreditsForBusinessApproval(biz.user_id, biz.name);
             
@@ -2932,7 +3313,6 @@ app.put('/api/admin/businesses/:id/approve', isAdmin, async (req, res) => {
     }
 });
 
-// Reject a business
 app.delete('/api/admin/businesses/:id/reject', isAdmin, async (req, res) => {
     const businessId = req.params.id;
     const { reason } = req.body;
@@ -2965,7 +3345,6 @@ app.delete('/api/admin/businesses/:id/reject', isAdmin, async (req, res) => {
     }
 });
 
-// Update a business
 app.put('/api/admin/businesses/:id', isAdminOrModerator, async (req, res) => {
     const businessId = req.params.id;
     const {
@@ -2999,7 +3378,6 @@ app.put('/api/admin/businesses/:id', isAdminOrModerator, async (req, res) => {
     }
 });
 
-// Delete a business
 app.delete('/api/admin/businesses/:id', isAdmin, async (req, res) => {
     const businessId = req.params.id;
     try {
@@ -3015,7 +3393,6 @@ app.delete('/api/admin/businesses/:id', isAdmin, async (req, res) => {
     }
 });
 
-// Toggle verified status
 app.put('/api/admin/businesses/:id/toggle-verified', isAdminOrModerator, async (req, res) => {
     const businessId = req.params.id;
     try {
@@ -3032,7 +3409,6 @@ app.put('/api/admin/businesses/:id/toggle-verified', isAdminOrModerator, async (
     }
 });
 
-// Toggle featured status
 app.put('/api/admin/businesses/:id/toggle-featured', isAdminOrModerator, async (req, res) => {
     const businessId = req.params.id;
     try {
@@ -3049,7 +3425,6 @@ app.put('/api/admin/businesses/:id/toggle-featured', isAdminOrModerator, async (
     }
 });
 
-// Get business stats for admin dashboard
 app.get('/api/admin/businesses/stats', isAdminOrModerator, async (req, res) => {
     try {
         const stats = await pool.query(`
@@ -3069,9 +3444,8 @@ app.get('/api/admin/businesses/stats', isAdminOrModerator, async (req, res) => {
     }
 });
 
-// ==================== SPONSORED ADS SYSTEM (METHOD 1) ====================
+// ==================== SPONSORED ADS SYSTEM ====================
 
-// Get sponsored packages
 app.get('/api/sponsored/packages', async (req, res) => {
     try {
         const packages = await pool.query(`
@@ -3088,12 +3462,10 @@ app.get('/api/sponsored/packages', async (req, res) => {
     }
 });
 
-// Business buys sponsored listing
 app.post('/api/business/sponsor', isAuthenticated, async (req, res) => {
     const { businessId, packageType, customMessage } = req.body;
     
     try {
-        // Verify business ownership
         const bizCheck = await pool.query(
             'SELECT id, name, user_id FROM businesses WHERE id = $1 AND user_id = $2',
             [businessId, req.session.userId]
@@ -3103,7 +3475,6 @@ app.post('/api/business/sponsor', isAuthenticated, async (req, res) => {
             return res.status(403).json({ error: 'Not your business' });
         }
         
-        // Get package details
         const packageData = await pool.query(
             'SELECT * FROM sponsored_packages WHERE name = $1',
             [packageType]
@@ -3115,7 +3486,6 @@ app.post('/api/business/sponsor', isAuthenticated, async (req, res) => {
         
         const pkg = packageData.rows[0];
         
-        // Check if business has enough credits
         const credits = await pool.query(
             'SELECT balance FROM user_credits WHERE user_id = $1',
             [req.session.userId]
@@ -3127,32 +3497,27 @@ app.post('/api/business/sponsor', isAuthenticated, async (req, res) => {
             });
         }
         
-        // Deduct credits
         await pool.query(
             'UPDATE user_credits SET balance = balance - $1 WHERE user_id = $2',
             [pkg.price, req.session.userId]
         );
         
-        // Record transaction
         await pool.query(
             `INSERT INTO credit_transactions (user_id, amount, type, description)
              VALUES ($1, $2, 'spend', $3)`,
             [req.session.userId, pkg.price, `Sponsored listing: ${packageType} for ${bizCheck.rows[0].name}`]
         );
         
-        // Calculate dates
         const startDate = new Date();
         const endDate = new Date();
         endDate.setDate(endDate.getDate() + pkg.duration_days);
         
-        // Deactivate existing sponsored listings for this business
         await pool.query(
             `UPDATE sponsored_listings SET is_active = false 
              WHERE business_id = $1 AND is_active = true`,
             [businessId]
         );
         
-        // Create new sponsored listing
         const result = await pool.query(
             `INSERT INTO sponsored_listings (business_id, package_type, start_date, end_date, price_paid, custom_message)
              VALUES ($1, $2, $3, $4, $5, $6)
@@ -3160,7 +3525,6 @@ app.post('/api/business/sponsor', isAuthenticated, async (req, res) => {
             [businessId, packageType, startDate, endDate, pkg.price, customMessage || null]
         );
         
-        // Update business table to mark as featured
         await pool.query(
             `UPDATE businesses SET featured = true, featured_until = $1 WHERE id = $2`,
             [endDate, businessId]
@@ -3179,7 +3543,6 @@ app.post('/api/business/sponsor', isAuthenticated, async (req, res) => {
     }
 });
 
-// Get sponsored businesses for search results
 app.get('/api/sponsored/list', async (req, res) => {
     const { category, city, limit = 3 } = req.query;
     
@@ -3223,7 +3586,6 @@ app.get('/api/sponsored/list', async (req, res) => {
         
         const result = await pool.query(query, params);
         
-        // Update view counts
         for (const row of result.rows) {
             await pool.query(
                 `UPDATE sponsored_listings SET views = views + 1 WHERE id = $1`,
@@ -3239,7 +3601,6 @@ app.get('/api/sponsored/list', async (req, res) => {
     }
 });
 
-// Track sponsored click
 app.post('/api/sponsored/:id/click', async (req, res) => {
     const sponsoredId = req.params.id;
     const userId = req.session?.userId || null;
@@ -3265,7 +3626,6 @@ app.post('/api/sponsored/:id/click', async (req, res) => {
     }
 });
 
-// Get sponsorship stats for business
 app.get('/api/business/sponsor/stats', isAuthenticated, async (req, res) => {
     try {
         const stats = await pool.query(`
@@ -3287,14 +3647,12 @@ app.get('/api/business/sponsor/stats', isAuthenticated, async (req, res) => {
     }
 });
 
-// ==================== AFFILIATE COMMISSION SYSTEM (METHOD 2) ====================
+// ==================== AFFILIATE COMMISSION SYSTEM ====================
 
-// Generate session ID for affiliate tracking
 function generateSessionId() {
     return crypto.randomBytes(32).toString('hex');
 }
 
-// Business creates affiliate link for their product
 app.post('/api/affiliate/create-link', isAuthenticated, async (req, res) => {
     const { productName, productUrl, commissionRate } = req.body;
     
@@ -3303,7 +3661,6 @@ app.post('/api/affiliate/create-link', isAuthenticated, async (req, res) => {
     }
     
     try {
-        // Verify business ownership
         const business = await pool.query(
             'SELECT id, name FROM businesses WHERE user_id = $1',
             [req.session.userId]
@@ -3315,7 +3672,6 @@ app.post('/api/affiliate/create-link', isAuthenticated, async (req, res) => {
         
         const businessId = business.rows[0].id;
         
-        // Create affiliate link
         const result = await pool.query(
             `INSERT INTO affiliate_links (business_id, product_name, product_url, commission_rate)
              VALUES ($1, $2, $3, $4)
@@ -3325,7 +3681,6 @@ app.post('/api/affiliate/create-link', isAuthenticated, async (req, res) => {
         
         const linkId = result.rows[0].id;
         
-        // Generate unique affiliate URL
         const affiliateUrl = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/go/${linkId}`;
         
         res.json({
@@ -3343,7 +3698,6 @@ app.post('/api/affiliate/create-link', isAuthenticated, async (req, res) => {
     }
 });
 
-// Track click on affiliate link (redirect endpoint)
 app.get('/go/:linkId', async (req, res) => {
     const linkId = parseInt(req.params.linkId);
     const userId = req.session?.userId || null;
@@ -3352,7 +3706,6 @@ app.get('/go/:linkId', async (req, res) => {
     const referrer = req.headers['referer'] || null;
     
     try {
-        // Get affiliate link details
         const linkData = await pool.query(
             `SELECT al.*, b.name as business_name, b.id as business_id
              FROM affiliate_links al
@@ -3367,7 +3720,6 @@ app.get('/go/:linkId', async (req, res) => {
         
         const link = linkData.rows[0];
         
-        // Generate or get session ID from cookie
         let sessionId = req.cookies?.affiliate_session;
         if (!sessionId) {
             sessionId = generateSessionId();
@@ -3379,14 +3731,12 @@ app.get('/go/:linkId', async (req, res) => {
             });
         }
         
-        // Store the affiliate source in cookie
         res.cookie(`affiliate_source_${link.business_id}`, linkId, {
             maxAge: (link.tracking_days || 30) * 24 * 60 * 60 * 1000,
             httpOnly: false,
             sameSite: 'lax'
         });
         
-        // Record the click
         const clickResult = await pool.query(
             `INSERT INTO affiliate_clicks (affiliate_link_id, user_id, ip_address, user_agent, referrer, session_id)
              VALUES ($1, $2, $3, $4, $5, $6)
@@ -3394,13 +3744,11 @@ app.get('/go/:linkId', async (req, res) => {
             [linkId, userId, ipAddress, userAgent, referrer, sessionId]
         );
         
-        // Update click count on link
         await pool.query(
             `UPDATE affiliate_links SET click_count = click_count + 1 WHERE id = $1`,
             [linkId]
         );
         
-        // Redirect to actual business product URL with tracking parameter
         const redirectUrl = new URL(link.product_url);
         redirectUrl.searchParams.set('ref', 'sarveik');
         redirectUrl.searchParams.set('affiliate_id', linkId);
@@ -3413,7 +3761,6 @@ app.get('/go/:linkId', async (req, res) => {
     }
 });
 
-// Webhook for businesses to report sales
 app.post('/api/affiliate/conversion-webhook', async (req, res) => {
     const { 
         affiliate_link_id, 
@@ -3424,14 +3771,12 @@ app.post('/api/affiliate/conversion-webhook', async (req, res) => {
         api_key 
     } = req.body;
     
-    // Simple API key validation (businesses should use their own key)
     const validApiKey = process.env.AFFILIATE_API_KEY || 'test_key_123';
     if (api_key !== validApiKey) {
         return res.status(401).json({ error: 'Invalid API key' });
     }
     
     try {
-        // Find the click that led to this sale
         let clickId = null;
         
         if (customer_session_id) {
@@ -3446,7 +3791,6 @@ app.post('/api/affiliate/conversion-webhook', async (req, res) => {
             }
         }
         
-        // Get affiliate link details
         const link = await pool.query(
             `SELECT * FROM affiliate_links WHERE id = $1`,
             [affiliate_link_id]
@@ -3459,7 +3803,6 @@ app.post('/api/affiliate/conversion-webhook', async (req, res) => {
         const commissionRate = link.rows[0].commission_rate;
         const commissionEarned = (sale_amount * commissionRate) / 100;
         
-        // Record conversion
         await pool.query(
             `INSERT INTO affiliate_conversions (
                 affiliate_link_id, click_id, order_id, sale_amount, 
@@ -3469,7 +3812,6 @@ app.post('/api/affiliate/conversion-webhook', async (req, res) => {
             [affiliate_link_id, clickId, order_id, sale_amount, commissionEarned, commissionRate]
         );
         
-        // Update link stats
         await pool.query(
             `UPDATE affiliate_links 
              SET sale_count = sale_count + 1, 
@@ -3491,7 +3833,6 @@ app.post('/api/affiliate/conversion-webhook', async (req, res) => {
     }
 });
 
-// Business approves a conversion
 app.post('/api/affiliate/conversion/:conversionId/approve', isAuthenticated, async (req, res) => {
     const conversionId = req.params.conversionId;
     const { status, notes } = req.body;
@@ -3524,7 +3865,6 @@ app.post('/api/affiliate/conversion/:conversionId/approve', isAuthenticated, asy
     }
 });
 
-// Get affiliate earnings for business
 app.get('/api/affiliate/earnings', isAuthenticated, async (req, res) => {
     try {
         const earnings = await pool.query(`
@@ -3566,7 +3906,6 @@ app.get('/api/affiliate/earnings', isAuthenticated, async (req, res) => {
     }
 });
 
-// Get user's own affiliate stats
 app.get('/api/user/affiliate-earnings', isAuthenticated, async (req, res) => {
     try {
         const stats = await pool.query(`
@@ -3586,7 +3925,6 @@ app.get('/api/user/affiliate-earnings', isAuthenticated, async (req, res) => {
     }
 });
 
-// Get all affiliate links for a business
 app.get('/api/affiliate/links', isAuthenticated, async (req, res) => {
     try {
         const links = await pool.query(`
@@ -4869,6 +5207,8 @@ app.delete('/admin/users/:id', isAdmin, async (req, res) => {
         await pool.query('DELETE FROM business_favorites WHERE user_id = $1', [userId]);
         await pool.query('DELETE FROM business_reviews WHERE user_id = $1', [userId]);
         await pool.query('DELETE FROM businesses WHERE user_id = $1', [userId]);
+        await pool.query('DELETE FROM user_avatars WHERE user_id = $1', [userId]);
+        await pool.query('DELETE FROM avatar_uploads WHERE user_id = $1', [userId]);
         await pool.query('DELETE FROM users WHERE id = $1', [userId]);
 
         res.send('User deleted');
@@ -5016,7 +5356,7 @@ app.get('/profile', isAuthenticated, async (req, res) => {
             `SELECT id, username, email, role, display_name, 
                     bio, phone, github, twitter, linkedin,
                     avatar_url, created_at, updated_at,
-                    email_verified
+                    email_verified, avatar_style
              FROM users WHERE id = $1`,
             [req.session.userId]
         );
@@ -5049,7 +5389,7 @@ app.put('/profile/update', isAuthenticated, async (req, res) => {
         const updated = await pool.query(
             `SELECT id, username, display_name, email, bio, phone,
                     github, twitter, linkedin, email_verified,
-                    two_factor_enabled, created_at, updated_at, avatar_url
+                    two_factor_enabled, created_at, updated_at, avatar_url, avatar_style
              FROM users WHERE id = $1`,
             [req.session.userId]
         );
@@ -5074,6 +5414,13 @@ app.post('/profile/avatar', isAuthenticated, upload.single('avatar'), async (req
             'UPDATE users SET avatar_url = $1 WHERE id = $2',
             [avatarUrl, req.session.userId]
         );
+        
+        // Also update avatar_style to 'uploaded' when user uploads
+        await pool.query(
+            'UPDATE users SET avatar_style = $1 WHERE id = $2',
+            ['uploaded', req.session.userId]
+        );
+        
         res.send('Avatar uploaded successfully');
     } catch (err) {
         console.error(err);
@@ -5147,6 +5494,8 @@ app.delete('/profile/delete', isAuthenticated, async (req, res) => {
             'DELETE FROM business_favorites WHERE user_id = $1',
             'DELETE FROM business_reviews WHERE user_id = $1',
             'DELETE FROM businesses WHERE user_id = $1',
+            'DELETE FROM user_avatars WHERE user_id = $1',
+            'DELETE FROM avatar_uploads WHERE user_id = $1',
             'DELETE FROM users WHERE id = $1'
         ];
 
@@ -5922,6 +6271,7 @@ server.listen(PORT, HOST, () => {
     console.log(`💰 NEW: Sponsored Ads System (Method 1) - Businesses pay to appear at top`);
     console.log(`💰 NEW: Affiliate Commission System (Method 2) - Earn 5-8% on every sale`);
     console.log(`💰 NEW: Users earn 15 CREDITS when their submitted business gets approved`);
+    console.log(`👤 Avatar gallery system active with 100+ themed avatars`);
 });
 
 // ==================== GRACEFUL SHUTDOWN ====================
