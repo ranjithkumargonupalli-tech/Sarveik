@@ -293,73 +293,140 @@
             background: var(--cyan);
         }
 
-        /* ========== MOBILE NAV OVERLAY ========== */
+        /* ========== MOBILE OVERLAY & DRAWER ========== */
+        .mobile-menu-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(6px);
+            z-index: 1001;
+        }
+
+        .mobile-menu-drawer {
+            position: fixed;
+            top: 0;
+            right: -300px;
+            width: 300px;
+            max-width: 80vw;
+            height: 100%;
+            background: rgba(8, 14, 26, 0.98);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border-left: 1px solid rgba(0, 230, 255, 0.15);
+            box-shadow: -8px 0 40px rgba(0, 0, 0, 0.6);
+            z-index: 1002;
+            transition: right 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+            padding: var(--nav-height) 1.2rem 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            overflow-y: auto;
+        }
+        .mobile-menu-drawer.open {
+            right: 0;
+        }
+
+        .mobile-close {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            font-size: 2rem;
+            cursor: pointer;
+            color: var(--text-muted);
+            line-height: 1;
+            transition: color 0.2s ease;
+            background: none;
+            border: none;
+        }
+        .mobile-close:hover {
+            color: var(--cyan);
+        }
+
+        .mobile-nav-links {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            margin-top: 0.5rem;
+        }
+        .mobile-nav-links a {
+            color: var(--text-sub);
+            text-decoration: none;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.25s ease;
+            border: 1px solid transparent;
+        }
+        .mobile-nav-links a:hover,
+        .mobile-nav-links a.active {
+            background: var(--cyan-dim);
+            color: var(--cyan);
+            border-color: rgba(0, 230, 255, 0.2);
+        }
+        .mobile-nav-links a .badge {
+            margin-left: auto;
+        }
+        .mobile-nav-links .mailbox-wrap-mobile {
+            position: relative;
+        }
+
+        .mobile-theme-toggle {
+            margin-top: auto;
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            background: var(--cyan-dim);
+            border: 1px solid rgba(0, 230, 255, 0.15);
+            color: var(--cyan);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            cursor: pointer;
+            font-family: var(--font-body);
+            font-size: 0.85rem;
+            font-weight: 600;
+            transition: all 0.25s ease;
+        }
+        .mobile-theme-toggle:hover {
+            background: rgba(0, 230, 255, 0.25);
+        }
+
         @media (max-width: 768px) {
             .hamburger {
                 display: flex;
             }
-
             .nav-links {
-                position: fixed;
-                top: 0;
-                right: -100%;
-                width: 280px;
-                max-width: 80vw;
-                height: 100vh;
-                padding: var(--nav-height) 1.5rem 2rem;
-                background: rgba(8, 14, 26, 0.98);
-                backdrop-filter: blur(28px);
-                -webkit-backdrop-filter: blur(28px);
-                flex-direction: column;
-                align-items: stretch;
-                justify-content: flex-start;
-                gap: 0.25rem;
-                border-left: 1px solid rgba(0, 230, 255, 0.15);
-                box-shadow: -8px 0 40px rgba(0, 0, 0, 0.6);
-                transition: right 0.35s cubic-bezier(0.22, 1, 0.36, 1);
-                z-index: 1001;
-                overflow-y: auto;
-                list-style: none;
-                margin: 0;
+                display: none;
             }
-            .nav-links.active {
-                right: 0;
+            .navbar {
+                padding: 0 1rem;
             }
+            .nav-brand {
+                font-size: 1rem;
+            }
+            .mobile-menu-overlay {
+                display: block;
+            }
+            .mobile-menu-drawer {
+                display: flex;
+            }
+        }
 
-            /* overlay backdrop */
-            .nav-links::before {
-                content: '';
-                position: fixed;
-                inset: 0;
-                background: rgba(0, 0, 0, 0.5);
-                z-index: -1;
-                opacity: 0;
-                transition: opacity 0.35s ease;
-                pointer-events: none;
-            }
-            .nav-links.active::before {
-                opacity: 1;
-                pointer-events: auto;
-            }
-
-            .nav-links a {
+        @media (max-width: 480px) {
+            .mobile-menu-drawer {
                 width: 100%;
-                padding: 0.75rem 1rem;
-                border-radius: 10px;
-                font-size: 0.95rem;
-                justify-content: flex-start;
-                gap: 0.75rem;
-                border: 1px solid transparent;
+                max-width: 100vw;
+                padding: var(--nav-height) 1rem 2rem;
             }
-            .nav-links a:hover,
-            .nav-links a.active {
-                background: var(--cyan-dim);
-                border-color: rgba(0, 230, 255, 0.2);
-            }
-            .nav-links a .badge {
-                margin-left: auto;
-            }
-
             .mailbox-dropdown {
                 position: fixed;
                 top: calc(var(--nav-height) + 6px);
@@ -370,17 +437,15 @@
             }
         }
 
-        @media (max-width: 480px) {
-            .navbar {
-                padding: 0 1rem;
+        @media (min-width: 769px) {
+            .mobile-menu-overlay {
+                display: none !important;
             }
-            .nav-brand {
-                font-size: 1rem;
+            .mobile-menu-drawer {
+                display: none !important;
             }
-            .nav-links {
-                width: 100%;
-                max-width: 100vw;
-                padding: var(--nav-height) 1rem 2rem;
+            .hamburger {
+                display: none !important;
             }
         }
 
@@ -1311,7 +1376,7 @@
             }
         }
 
-        /* ========== ACTIVITY FEED ========== */
+        /* ========== ACTIVITY FEED (fixed) ========== */
         .activity-feed {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -1822,12 +1887,28 @@
             <li><a href="index.html" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
         </ul>
 
-        <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+        <button class="hamburger" id="hamburgerBtn" aria-label="Toggle menu">
             <span></span>
             <span></span>
             <span></span>
         </button>
     </nav>
+
+    <!-- ========== MOBILE OVERLAY & DRAWER ========== -->
+    <div class="mobile-menu-overlay" id="mobileOverlay"></div>
+    <div class="mobile-menu-drawer" id="mobileDrawer">
+        <button class="mobile-close" id="mobileCloseBtn">&times;</button>
+        <ul class="mobile-nav-links">
+            <li><a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a></li>
+            <li><a href="profile.html"><i class="fas fa-user"></i> Profile</a></li>
+            <li><a href="main.html"><i class="fas fa-rocket"></i> Tools</a></li>
+            <li><a href="friends.html" class="active"><i class="fas fa-users"></i> Network</a></li>
+            <li><a href="#" id="mobileLogoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+        <div class="mobile-theme-toggle" id="mobileThemeToggle">
+            <i class="fas fa-moon"></i> <span>Dark Mode</span>
+        </div>
+    </div>
 
     <!-- ========== MAIN ========== -->
     <div class="friends-container">
@@ -1957,7 +2038,7 @@
             <button id="createGroupBtn" class="btn btn-primary"><i class="fas fa-plus"></i> Create New Group</button>
         </div>
 
-        <!-- ACTIVITY -->
+        <!-- ACTIVITY (fixed) -->
         <h2><i class="fas fa-bolt"></i> Recent Activity</h2>
         <div class="activity-feed" id="activityFeed">
             <div class="loading"><i class="fas fa-spinner"></i> Loading activity…</div>
@@ -3128,35 +3209,48 @@
         backToTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
         // ==========================================================
-        // NAV (hamburger)
+        // NAV (hamburger) – fixed with overlay + drawer
         // ==========================================================
-        const hamburger = document.getElementById('hamburger');
-        const navLinks = document.getElementById('navLinks');
+        const hamburgerBtn = document.getElementById('hamburgerBtn');
+        const mobileOverlay = document.getElementById('mobileOverlay');
+        const mobileDrawer = document.getElementById('mobileDrawer');
+        const mobileCloseBtn = document.getElementById('mobileCloseBtn');
 
-        hamburger.addEventListener('click', (e) => {
+        function openMobileMenu() {
+            hamburgerBtn.classList.add('active');
+            mobileDrawer.classList.add('open');
+            mobileOverlay.style.display = 'block';
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeMobileMenu() {
+            hamburgerBtn.classList.remove('active');
+            mobileDrawer.classList.remove('open');
+            mobileOverlay.style.display = 'none';
+            document.body.style.overflow = '';
+        }
+
+        hamburgerBtn?.addEventListener('click', (e) => {
             e.stopPropagation();
-            hamburger.classList.toggle('active');
-            navLinks.classList.toggle('active');
-            document.body.style.overflow = navLinks.classList.contains('active') ? 'hidden' : '';
+            if (mobileDrawer.classList.contains('open')) {
+                closeMobileMenu();
+            } else {
+                openMobileMenu();
+            }
         });
 
-        // Close menu when a link is clicked
-        document.querySelectorAll('.nav-links a').forEach(a => {
-            a.addEventListener('click', () => {
-                hamburger.classList.remove('active');
-                navLinks.classList.remove('active');
-                document.body.style.overflow = '';
-            });
+        mobileCloseBtn?.addEventListener('click', closeMobileMenu);
+        mobileOverlay?.addEventListener('click', closeMobileMenu);
+
+        // Close mobile menu when a link is clicked
+        document.querySelectorAll('.mobile-nav-links a').forEach(a => {
+            a.addEventListener('click', closeMobileMenu);
         });
 
-        // Close menu when clicking outside
-        document.addEventListener('click', (e) => {
-            if (navLinks.classList.contains('active') &&
-                !navLinks.contains(e.target) &&
-                !hamburger.contains(e.target)) {
-                hamburger.classList.remove('active');
-                navLinks.classList.remove('active');
-                document.body.style.overflow = '';
+        // Close mobile menu on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && mobileDrawer?.classList.contains('open')) {
+                closeMobileMenu();
             }
         });
 
@@ -3164,6 +3258,11 @@
         // LOGOUT
         // ==========================================================
         document.getElementById('logoutBtn').addEventListener('click', async e => {
+            e.preventDefault();
+            if (confirm('Logout?')) { try { await apiCall('/logout', { method: 'POST' }); } catch (e) {}
+                location.href = 'index.html'; }
+        });
+        document.getElementById('mobileLogoutBtn').addEventListener('click', async e => {
             e.preventDefault();
             if (confirm('Logout?')) { try { await apiCall('/logout', { method: 'POST' }); } catch (e) {}
                 location.href = 'index.html'; }
