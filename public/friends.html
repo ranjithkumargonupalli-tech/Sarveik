@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes" />
     <title>Nova Network – Friends & Groups</title>
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     <style>
+        /* ========== ROOT ========== */
         :root {
             --bg-deep: #080e1a;
             --bg-card: rgba(13, 22, 42, 0.82);
@@ -29,6 +30,7 @@
             --shadow-glow: 0 0 24px rgba(0, 230, 255, 0.18);
             --font-display: 'Syne', sans-serif;
             --font-body: 'DM Sans', sans-serif;
+            --nav-height: 68px;
         }
 
         * {
@@ -44,6 +46,7 @@
                 radial-gradient(ellipse 60% 40% at 80% 80%, rgba(0, 230, 255, 0.06) 0%, transparent 50%);
             color: var(--text-primary);
             min-height: 100vh;
+            overflow-x: hidden;
         }
 
         ::-webkit-scrollbar {
@@ -61,50 +64,59 @@
             background: rgba(0, 230, 255, 0.4);
         }
 
+        /* ========== NAVBAR (fixed, clean) ========== */
         .navbar {
-            background: rgba(8, 14, 26, 0.92);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
-            padding: 0.9rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
             position: sticky;
             top: 0;
             z-index: 1000;
+            height: var(--nav-height);
+            background: rgba(8, 14, 26, 0.94);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            padding: 0 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             border-bottom: 1px solid var(--border);
             box-shadow: 0 1px 20px rgba(0, 0, 0, 0.4);
         }
+
         .nav-brand {
             font-family: var(--font-display);
-            font-size: 1.35rem;
+            font-size: 1.25rem;
             font-weight: 800;
             display: flex;
             align-items: center;
             gap: 0.55rem;
             color: var(--cyan);
             letter-spacing: -0.02em;
+            flex-shrink: 0;
         }
         .nav-brand i {
-            font-size: 1.1rem;
+            font-size: 1rem;
         }
+
+        /* ---- desktop nav links ---- */
         .nav-links {
             display: flex;
             list-style: none;
-            gap: 0.25rem;
             align-items: center;
+            gap: 0.15rem;
+            margin: 0;
+            padding: 0;
         }
         .nav-links a {
             color: var(--text-sub);
             text-decoration: none;
-            padding: 0.5rem 1rem;
+            padding: 0.45rem 0.9rem;
             border-radius: var(--radius-pill);
             transition: all 0.25s ease;
             display: flex;
             align-items: center;
-            gap: 0.45rem;
-            font-size: 0.875rem;
+            gap: 0.4rem;
+            font-size: 0.85rem;
             font-weight: 500;
+            white-space: nowrap;
         }
         .nav-links a:hover {
             background: var(--cyan-dim);
@@ -115,57 +127,264 @@
             color: var(--cyan);
             border: 1px solid rgba(0, 230, 255, 0.25);
         }
-        .badge {
+        .nav-links .badge {
             background: var(--red);
             color: #fff;
             border-radius: var(--radius-pill);
             padding: 1px 7px;
-            font-size: 0.68rem;
+            font-size: 0.62rem;
             font-weight: 700;
+            line-height: 1.4;
             display: inline-block;
         }
+
+        .mailbox-wrap {
+            position: relative;
+        }
+        #mailboxIcon {
+            display: inline-block;
+            transform-style: preserve-3d;
+        }
+        @keyframes mailShake3D {
+            0%,
+            100% {
+                transform: rotate3d(0, 1, 0, 0deg);
+            }
+            20% {
+                transform: rotate3d(0, 1, 0, 28deg);
+            }
+            40% {
+                transform: rotate3d(0, 1, 0, -22deg);
+            }
+            60% {
+                transform: rotate3d(0, 1, 0, 14deg);
+            }
+            80% {
+                transform: rotate3d(0, 1, 0, -8deg);
+            }
+        }
+        .mail-shake {
+            animation: mailShake3D 0.7s ease;
+            color: var(--cyan);
+        }
+
+        .mailbox-dropdown {
+            position: absolute;
+            top: calc(100% + 10px);
+            right: 0;
+            width: 320px;
+            max-height: 380px;
+            overflow-y: auto;
+            background: rgba(10, 18, 36, 0.98);
+            border: 1px solid rgba(0, 230, 255, 0.2);
+            border-radius: 16px;
+            box-shadow: 0 24px 50px rgba(0, 0, 0, 0.55);
+            transform: perspective(800px) rotateX(-18deg) translateY(-8px);
+            transform-origin: top right;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: transform 0.3s cubic-bezier(.2, .8, .2, 1), opacity 0.3s ease;
+            z-index: 2500;
+        }
+        .mailbox-dropdown.open {
+            transform: perspective(800px) rotateX(0deg) translateY(0);
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+        .mailbox-dropdown-header {
+            padding: 0.85rem 1rem;
+            font-family: var(--font-display);
+            font-weight: 700;
+            font-size: 0.85rem;
+            border-bottom: 1px solid var(--border);
+            color: var(--text-primary);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .mailbox-clear-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            cursor: pointer;
+            font-family: var(--font-body);
+        }
+        .mailbox-clear-btn:hover {
+            color: var(--cyan);
+        }
+        .mail-empty {
+            padding: 1.5rem 1rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.82rem;
+        }
+        .mail-item {
+            display: flex;
+            gap: 0.7rem;
+            align-items: flex-start;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .mail-item:hover {
+            background: var(--cyan-dim);
+        }
+        .mail-item.unread {
+            background: rgba(0, 230, 255, 0.06);
+        }
+        .mail-item i {
+            color: var(--cyan);
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+        .mail-item-subject {
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: var(--text-primary);
+        }
+        .mail-item-text {
+            font-size: 0.76rem;
+            color: var(--text-sub);
+            margin-top: 0.15rem;
+            line-height: 1.4;
+        }
+        .mail-item-time {
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+        }
+
+        /* ========== HAMBURGER (mobile) ========== */
         .hamburger {
             display: none;
             flex-direction: column;
             cursor: pointer;
             gap: 5px;
+            padding: 8px 4px;
+            background: transparent;
+            border: none;
+            flex-shrink: 0;
+            margin-left: 0.5rem;
+            z-index: 1002;
         }
         .hamburger span {
-            width: 22px;
-            height: 2px;
+            display: block;
+            width: 24px;
+            height: 2.5px;
             background: var(--text-sub);
-            border-radius: 2px;
-            transition: 0.3s;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            transform-origin: center;
+        }
+        .hamburger.active span:nth-child(1) {
+            transform: translateY(7px) rotate(45deg);
+            background: var(--cyan);
+        }
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+            transform: scaleX(0);
+        }
+        .hamburger.active span:nth-child(3) {
+            transform: translateY(-7px) rotate(-45deg);
+            background: var(--cyan);
         }
 
+        /* ========== MOBILE NAV OVERLAY ========== */
         @media (max-width: 768px) {
             .hamburger {
                 display: flex;
             }
+
             .nav-links {
                 position: fixed;
                 top: 0;
                 right: -100%;
+                width: 280px;
+                max-width: 80vw;
                 height: 100vh;
-                width: 260px;
+                padding: var(--nav-height) 1.5rem 2rem;
                 background: rgba(8, 14, 26, 0.98);
-                backdrop-filter: blur(24px);
+                backdrop-filter: blur(28px);
+                -webkit-backdrop-filter: blur(28px);
                 flex-direction: column;
+                align-items: stretch;
                 justify-content: flex-start;
-                padding-top: 5rem;
-                transition: right 0.3s ease;
-                border-left: 1px solid var(--border);
+                gap: 0.25rem;
+                border-left: 1px solid rgba(0, 230, 255, 0.15);
+                box-shadow: -8px 0 40px rgba(0, 0, 0, 0.6);
+                transition: right 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+                z-index: 1001;
+                overflow-y: auto;
+                list-style: none;
+                margin: 0;
             }
             .nav-links.active {
                 right: 0;
             }
+
+            /* overlay backdrop */
+            .nav-links::before {
+                content: '';
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: -1;
+                opacity: 0;
+                transition: opacity 0.35s ease;
+                pointer-events: none;
+            }
+            .nav-links.active::before {
+                opacity: 1;
+                pointer-events: auto;
+            }
+
             .nav-links a {
                 width: 100%;
-                padding: 0.75rem 1.5rem;
-                border-radius: 0;
+                padding: 0.75rem 1rem;
+                border-radius: 10px;
+                font-size: 0.95rem;
+                justify-content: flex-start;
+                gap: 0.75rem;
+                border: 1px solid transparent;
+            }
+            .nav-links a:hover,
+            .nav-links a.active {
+                background: var(--cyan-dim);
+                border-color: rgba(0, 230, 255, 0.2);
+            }
+            .nav-links a .badge {
+                margin-left: auto;
+            }
+
+            .mailbox-dropdown {
+                position: fixed;
+                top: calc(var(--nav-height) + 6px);
+                right: 1rem;
+                left: 1rem;
+                width: auto;
+                max-width: none;
             }
         }
 
+        @media (max-width: 480px) {
+            .navbar {
+                padding: 0 1rem;
+            }
+            .nav-brand {
+                font-size: 1rem;
+            }
+            .nav-links {
+                width: 100%;
+                max-width: 100vw;
+                padding: var(--nav-height) 1rem 2rem;
+            }
+        }
+
+        /* ========== MAIN LAYOUT ========== */
         .friends-container {
             max-width: 1200px;
             margin: 2rem auto;
@@ -203,6 +422,7 @@
             }
         }
 
+        /* ========== STATS ========== */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -267,37 +487,31 @@
             text-transform: uppercase;
         }
 
-        h2 {
-            font-family: var(--font-display);
-            display: flex;
-            align-items: center;
-            gap: 0.6rem;
-            margin: 2rem 0 1rem;
-            font-size: 1.2rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            letter-spacing: -0.01em;
+        @media (max-width: 768px) {
+            .friends-container {
+                padding: 0 1rem;
+            }
+            .stats-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 0.6rem;
+            }
+            .stat-number {
+                font-size: 1.5rem;
+            }
+            .stat-card {
+                padding: 1rem 0.5rem;
+            }
         }
-        h2 i {
-            color: var(--cyan);
-            font-size: 1rem;
-        }
-
-        hr {
-            border: none;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, var(--border-hover), transparent);
-            margin: 2.5rem 0;
-        }
-
-        .glass-card {
-            background: var(--bg-card);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-card);
+        @media (max-width: 480px) {
+            .stat-number {
+                font-size: 1.2rem;
+            }
+            .stat-label {
+                font-size: 0.6rem;
+            }
         }
 
+        /* ========== HEALTH CARD ========== */
         .health-card {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -310,6 +524,8 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 1.25rem;
+            flex-wrap: wrap;
+            gap: 0.75rem;
         }
         .health-card h3 {
             font-family: var(--font-display);
@@ -321,6 +537,7 @@
             position: relative;
             width: 78px;
             height: 78px;
+            flex-shrink: 0;
         }
         .health-score-ring svg {
             transform: rotate(-90deg);
@@ -363,6 +580,7 @@
             color: var(--green);
         }
 
+        /* ========== PINNED ========== */
         .pinned-section {
             background: linear-gradient(135deg, rgba(0, 230, 255, 0.06), rgba(0, 184, 204, 0.03));
             border: 1px solid rgba(0, 230, 255, 0.18);
@@ -411,16 +629,31 @@
             border-radius: 50%;
             object-fit: cover;
         }
+        .pinned-chip .pinned-avatar-placeholder {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--cyan-dim);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.65rem;
+            font-weight: 700;
+            color: var(--cyan);
+        }
 
+        /* ========== SEARCH / ADD ========== */
         .search-section,
         .add-friend {
             display: flex;
             gap: 0.75rem;
             margin-bottom: 1.5rem;
+            flex-wrap: wrap;
         }
         .search-section input,
         .add-friend input {
             flex: 1;
+            min-width: 180px;
             padding: 0.9rem 1.25rem;
             border-radius: var(--radius-pill);
             border: 1px solid var(--border);
@@ -441,6 +674,19 @@
             color: var(--text-muted);
         }
 
+        @media (max-width: 600px) {
+            .search-section,
+            .add-friend {
+                flex-direction: column;
+            }
+            .search-section input,
+            .add-friend input {
+                min-width: auto;
+                width: 100%;
+            }
+        }
+
+        /* ========== BUTTONS ========== */
         .btn {
             padding: 0.7rem 1.3rem;
             border: none;
@@ -506,6 +752,9 @@
             width: 34px;
             height: 34px;
             border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .btn-icon:hover:not(:disabled) {
             background: var(--cyan-dim);
@@ -521,6 +770,7 @@
             font-size: 0.75rem;
         }
 
+        /* ========== FILTERS ========== */
         .filters-section {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -560,6 +810,19 @@
             background: #0d1629;
         }
 
+        @media (max-width: 600px) {
+            .filters-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .filter-input,
+            .filter-select {
+                min-width: auto;
+                width: 100%;
+            }
+        }
+
+        /* ========== SORT + VIEW ========== */
         .sort-bar {
             display: flex;
             align-items: center;
@@ -631,6 +894,29 @@
             border-color: rgba(0, 230, 255, 0.35);
         }
 
+        .toolbar-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-bottom: 0.85rem;
+        }
+
+        @media (max-width: 600px) {
+            .toolbar-row {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .sort-bar {
+                justify-content: center;
+            }
+            .view-toggle {
+                justify-content: center;
+            }
+        }
+
+        /* ========== FRIEND GRID ========== */
         .friend-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -640,6 +926,7 @@
             grid-template-columns: 1fr;
         }
 
+        /* ========== CARDS ========== */
         .friend-card,
         .search-result-card,
         .request-card,
@@ -885,6 +1172,34 @@
             background: rgba(249, 115, 22, 0.04);
         }
 
+        @media (max-width: 768px) {
+
+            .friend-card,
+            .search-result-card,
+            .request-card,
+            .group-card {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 1rem;
+            }
+            .friend-info {
+                width: 100%;
+            }
+            .card-actions {
+                width: 100%;
+                flex-wrap: wrap;
+                justify-content: flex-start;
+                margin-top: 0.5rem;
+                padding-top: 0.65rem;
+                border-top: 1px solid var(--border);
+                gap: 0.4rem;
+            }
+            .friend-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ========== TRENDING ========== */
         #trendingSection {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -939,6 +1254,7 @@
             color: var(--text-muted);
         }
 
+        /* ========== SUGGESTIONS ========== */
         .suggestion-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
@@ -984,7 +1300,18 @@
             margin-bottom: 0.75rem;
         }
 
-        /* --- ACTIVITY FEED (fixed: robust validation) --- */
+        @media (max-width: 600px) {
+            .suggestion-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 400px) {
+            .suggestion-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ========== ACTIVITY FEED ========== */
         .activity-feed {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -1050,6 +1377,7 @@
             white-space: nowrap;
         }
 
+        /* ========== SKELETON ========== */
         .skeleton-card {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -1106,9 +1434,10 @@
             }
         }
 
+        /* ========== TOAST ========== */
         .toast {
             position: fixed;
-            top: 5rem;
+            top: calc(var(--nav-height) + 0.75rem);
             right: 1.25rem;
             background: var(--green);
             color: #fff;
@@ -1125,7 +1454,7 @@
 
         .mail-toast {
             position: fixed;
-            top: 5rem;
+            top: calc(var(--nav-height) + 0.75rem);
             right: 1.25rem;
             background: linear-gradient(135deg, rgba(0, 230, 255, 0.97), rgba(0, 153, 204, 0.97));
             color: #051020;
@@ -1173,125 +1502,7 @@
             opacity: 0;
         }
 
-        .mailbox-wrap {
-            position: relative;
-        }
-        #mailboxIcon {
-            display: inline-block;
-            transform-style: preserve-3d;
-        }
-        @keyframes mailShake3D {
-            0%,
-            100% {
-                transform: rotate3d(0, 1, 0, 0deg);
-            }
-            20% {
-                transform: rotate3d(0, 1, 0, 28deg);
-            }
-            40% {
-                transform: rotate3d(0, 1, 0, -22deg);
-            }
-            60% {
-                transform: rotate3d(0, 1, 0, 14deg);
-            }
-            80% {
-                transform: rotate3d(0, 1, 0, -8deg);
-            }
-        }
-        .mail-shake {
-            animation: mailShake3D 0.7s ease;
-            color: var(--cyan);
-        }
-        .mailbox-dropdown {
-            position: absolute;
-            top: calc(100% + 12px);
-            right: 0;
-            width: 320px;
-            max-height: 380px;
-            overflow-y: auto;
-            background: rgba(10, 18, 36, 0.98);
-            border: 1px solid rgba(0, 230, 255, 0.2);
-            border-radius: 16px;
-            box-shadow: 0 24px 50px rgba(0, 0, 0, 0.55);
-            transform: perspective(800px) rotateX(-18deg) translateY(-8px);
-            transform-origin: top right;
-            opacity: 0;
-            visibility: hidden;
-            pointer-events: none;
-            transition: transform 0.3s cubic-bezier(.2, .8, .2, 1), opacity 0.3s ease;
-            z-index: 2500;
-        }
-        .mailbox-dropdown.open {
-            transform: perspective(800px) rotateX(0deg) translateY(0);
-            opacity: 1;
-            visibility: visible;
-            pointer-events: auto;
-        }
-        .mailbox-dropdown-header {
-            padding: 0.85rem 1rem;
-            font-family: var(--font-display);
-            font-weight: 700;
-            font-size: 0.85rem;
-            border-bottom: 1px solid var(--border);
-            color: var(--text-primary);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .mailbox-clear-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            font-size: 0.7rem;
-            cursor: pointer;
-            font-family: var(--font-body);
-        }
-        .mailbox-clear-btn:hover {
-            color: var(--cyan);
-        }
-        .mail-empty {
-            padding: 1.5rem 1rem;
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 0.82rem;
-        }
-        .mail-item {
-            display: flex;
-            gap: 0.7rem;
-            align-items: flex-start;
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-            cursor: pointer;
-            transition: background 0.2s;
-        }
-        .mail-item:hover {
-            background: var(--cyan-dim);
-        }
-        .mail-item.unread {
-            background: rgba(0, 230, 255, 0.06);
-        }
-        .mail-item i {
-            color: var(--cyan);
-            margin-top: 2px;
-            flex-shrink: 0;
-        }
-        .mail-item-subject {
-            font-weight: 700;
-            font-size: 0.8rem;
-            color: var(--text-primary);
-        }
-        .mail-item-text {
-            font-size: 0.76rem;
-            color: var(--text-sub);
-            margin-top: 0.15rem;
-            line-height: 1.4;
-        }
-        .mail-item-time {
-            font-size: 0.68rem;
-            color: var(--text-muted);
-            margin-top: 0.25rem;
-        }
-
+        /* ========== MODALS ========== */
         .modal {
             display: none;
             position: fixed;
@@ -1402,6 +1613,7 @@
             margin-top: 0.4rem;
         }
 
+        /* group modal */
         .group-info-preview {
             background: rgba(0, 230, 255, 0.04);
             border: 1px solid var(--border);
@@ -1492,6 +1704,7 @@
             color: var(--red);
         }
 
+        /* note modal */
         #noteModal textarea {
             width: 100%;
             min-height: 95px;
@@ -1511,6 +1724,7 @@
             border-color: rgba(0, 230, 255, 0.4);
         }
 
+        /* ========== BACK TO TOP ========== */
         #backToTop {
             position: fixed;
             bottom: 2rem;
@@ -1540,6 +1754,7 @@
             display: flex;
         }
 
+        /* ========== DISCLAIMER ========== */
         .disclaimer {
             margin-top: 3rem;
             padding: 1.25rem;
@@ -1555,109 +1770,34 @@
             text-decoration: underline;
         }
 
-        .error {
-            background: rgba(239, 68, 68, 0.12);
-            border: 1px solid rgba(239, 68, 68, 0.4);
-            color: #fca5a5;
-            padding: 0.9rem 1rem;
-            border-radius: 10px;
-            margin: 0.75rem 0;
-            font-size: 0.875rem;
-        }
-        .success {
-            background: rgba(34, 197, 94, 0.12);
-            border: 1px solid rgba(34, 197, 94, 0.4);
-            color: #86efac;
-            padding: 0.9rem 1rem;
-            border-radius: 10px;
-            margin: 0.75rem 0;
-            font-size: 0.875rem;
-        }
-
-        @media (max-width: 768px) {
-            .friends-container {
-                padding: 0 1rem;
-            }
-            .stats-grid {
-                grid-template-columns: repeat(3, 1fr);
-                gap: 0.75rem;
-            }
-            .stat-number {
-                font-size: 1.6rem;
-            }
-            .friend-grid {
-                grid-template-columns: 1fr;
-            }
-            .search-section,
-            .add-friend {
-                flex-direction: column;
-                gap: 0.6rem;
-            }
-            .filters-row {
-                flex-direction: column;
-            }
-            .filter-input,
-            .filter-select {
-                width: 100%;
-                min-width: auto;
-            }
-
-            .friend-card,
-            .search-result-card,
-            .request-card,
-            .group-card {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            .friend-info {
-                width: 100%;
-            }
-            .card-actions {
-                width: 100%;
-                flex-wrap: wrap;
-                justify-content: flex-start;
-                margin-top: 0.5rem;
-                padding-top: 0.65rem;
-                border-top: 1px solid var(--border);
-            }
-            .suggestion-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
+        /* ========== RESPONSIVE OVERRIDES ========== */
+        @media (max-width: 480px) {
             .modal-content {
                 margin: 4% auto;
-                padding: 1.5rem;
+                padding: 1.25rem;
             }
             .mailbox-dropdown {
-                width: 280px;
-                right: -20px;
+                left: 0.5rem;
+                right: 0.5rem;
+                width: auto;
             }
-        }
-        @media (max-width: 480px) {
-            .stats-grid {
-                grid-template-columns: repeat(3, 1fr);
-                gap: 0.5rem;
+            .mail-toast,
+            .toast {
+                right: 0.75rem;
+                left: 0.75rem;
+                max-width: none;
             }
-            .stat-number {
-                font-size: 1.3rem;
-            }
-            .stat-label {
-                font-size: 0.65rem;
-            }
-            .suggestion-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        .search-result-card {
-            margin-bottom: 0.6rem;
         }
     </style>
 </head>
 <body>
-    <nav class="navbar">
+
+    <!-- ========== NAVBAR ========== -->
+    <nav class="navbar" id="navbar">
         <div class="nav-brand">
             <i class="fas fa-shield-alt"></i> Nova Platform Pro
         </div>
+
         <ul class="nav-links" id="navLinks">
             <li><a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a></li>
             <li><a href="profile.html"><i class="fas fa-user"></i> Profile</a></li>
@@ -1681,11 +1821,15 @@
             </li>
             <li><a href="index.html" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
         </ul>
-        <div class="hamburger" id="hamburger">
-            <span></span><span></span><span></span>
-        </div>
+
+        <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+            <span></span>
+            <span></span>
+            <span></span>
+        </button>
     </nav>
 
+    <!-- ========== MAIN ========== -->
     <div class="friends-container">
 
         <!-- STATS -->
@@ -1704,7 +1848,7 @@
             </div>
         </div>
 
-        <!-- NETWORK HEALTH -->
+        <!-- HEALTH -->
         <div class="health-card" id="healthCard">
             <div class="health-header">
                 <div>
@@ -1726,7 +1870,7 @@
             </ul>
         </div>
 
-        <!-- PINNED FAVOURITES -->
+        <!-- PINNED -->
         <div class="pinned-section" id="pinnedSection" style="display:none;">
             <div class="pinned-label"><i class="fas fa-star"></i> Favourite Connections</div>
             <div class="pinned-avatars" id="pinnedAvatars"></div>
@@ -1735,16 +1879,16 @@
         <!-- SEARCH -->
         <h2><i class="fas fa-search"></i> Find Professionals</h2>
         <div class="search-section">
-            <input type="text" id="searchUser" placeholder="Enter username or name to search…" minlength="2">
+            <input type="text" id="searchUser" placeholder="Enter username or name to search…" minlength="2" />
             <button id="searchBtn" class="btn btn-primary"><i class="fas fa-search"></i> Search</button>
         </div>
         <div id="searchResults"></div>
-        <hr>
+        <hr />
 
         <!-- ADD FRIEND -->
         <h2><i class="fas fa-user-plus"></i> Add Connection</h2>
         <div class="add-friend">
-            <input type="text" id="friendUsername" placeholder="Enter exact username">
+            <input type="text" id="friendUsername" placeholder="Enter exact username" />
             <button id="addFriendBtn" class="btn btn-primary"><i class="fas fa-user-plus"></i> Send Request</button>
         </div>
 
@@ -1754,7 +1898,7 @@
             <div class="loading"><i class="fas fa-spinner"></i> Loading trending…</div>
         </div>
 
-        <!-- PEOPLE YOU MAY KNOW -->
+        <!-- SUGGESTIONS -->
         <h2><i class="fas fa-user-astronaut"></i> People You May Know</h2>
         <div class="suggestion-grid" id="suggestionsGrid">
             <div class="no-results" style="grid-column:1/-1;">Loading suggestions…</div>
@@ -1779,13 +1923,13 @@
                     <option value="busy">Busy</option>
                     <option value="offline">Offline</option>
                 </select>
-                <input type="text" id="quickSearch" class="filter-input" placeholder="Quick search…">
+                <input type="text" id="quickSearch" class="filter-input" placeholder="Quick search…" />
                 <button id="clearFilters" class="btn btn-outline btn-small">Clear</button>
             </div>
         </div>
 
-        <!-- SORT + VIEW TOGGLE -->
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:0.75rem; margin-bottom:0.85rem;">
+        <!-- SORT + VIEW -->
+        <div class="toolbar-row">
             <div class="sort-bar">
                 <span>Sort:</span>
                 <button class="sort-btn active" data-sort="name">Name</button>
@@ -1798,11 +1942,11 @@
             </div>
         </div>
 
-        <!-- YOUR NETWORK -->
+        <!-- NETWORK -->
         <h2><i class="fas fa-user-friends"></i> Your Network</h2>
         <div id="friendsList" class="friend-grid"></div>
 
-        <!-- PENDING REQUESTS -->
+        <!-- REQUESTS -->
         <h2 style="margin-top:2rem;"><i class="fas fa-clock"></i> Pending Requests</h2>
         <div id="requestsList"></div>
 
@@ -1813,20 +1957,22 @@
             <button id="createGroupBtn" class="btn btn-primary"><i class="fas fa-plus"></i> Create New Group</button>
         </div>
 
-        <!-- RECENT ACTIVITY (fixed: robust, no "activity.log function" garbage) -->
+        <!-- ACTIVITY -->
         <h2><i class="fas fa-bolt"></i> Recent Activity</h2>
         <div class="activity-feed" id="activityFeed">
             <div class="loading"><i class="fas fa-spinner"></i> Loading activity…</div>
         </div>
     </div>
 
+    <!-- DISCLAIMER -->
     <div class="disclaimer">
         <p><strong>Disclaimer:</strong> Nova Platform is a directory of third‑party tools. We do not host any content. All trademarks, logos, and brand names are the property of their respective owners. If you believe any link infringes your rights, please <a href="dmca.html">contact us</a> for removal.</p>
     </div>
 
+    <!-- BACK TO TOP -->
     <button id="backToTop" title="Back to top"><i class="fas fa-arrow-up"></i></button>
 
-    <!-- PROFILE MODAL -->
+    <!-- MODALS -->
     <div id="profileModal" class="modal">
         <div class="modal-content">
             <span class="close-modal">&times;</span>
@@ -1834,14 +1980,13 @@
         </div>
     </div>
 
-    <!-- CREATE GROUP MODAL -->
     <div id="createGroupModal" class="modal">
         <div class="modal-content" style="max-width:540px;">
             <span class="close-modal" id="closeGroupModal">&times;</span>
             <h3 style="font-family:var(--font-display); margin-bottom:1rem;"><i class="fas fa-layer-group" style="color:var(--cyan);"></i> Create New Group</h3>
             <div class="group-info-preview">
                 <div style="font-size:0.82rem; color:var(--text-muted);">Group name</div>
-                <input type="text" id="groupName" placeholder="Enter group name">
+                <input type="text" id="groupName" placeholder="Enter group name" />
             </div>
             <label style="font-size:0.87rem; font-weight:600; display:flex; align-items:center; gap:0.4rem;">
                 <i class="fas fa-user-friends" style="color:var(--cyan);"></i> Select members
@@ -1858,7 +2003,6 @@
         </div>
     </div>
 
-    <!-- NOTE MODAL -->
     <div id="noteModal" class="modal">
         <div class="modal-content" style="max-width:420px;">
             <span class="close-modal" id="closeNoteModal">&times;</span>
@@ -1869,6 +2013,7 @@
         </div>
     </div>
 
+    <!-- ========== SCRIPTS ========== -->
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js">
     </script>
     <script>
@@ -1921,7 +2066,7 @@
                         const txt = await res.text();
                         if (txt) msg = txt;
                     }
-                } catch (e) { /* keep default msg */ }
+                } catch (e) { /* keep default */ }
                 throw new Error(msg);
             }
             const ct = res.headers.get('content-type');
@@ -1948,7 +2093,7 @@
         let currentView = 'grid';
         let noteTargetId = null;
 
-        // --- Activity log: robustly initialised, never stores functions ---
+        // ---- activity log (robust) ----
         let activityLog = [];
 
         function loadActivityLog() {
@@ -1957,7 +2102,6 @@
                 try {
                     const parsed = JSON.parse(raw);
                     if (Array.isArray(parsed)) {
-                        // Filter out any item that is not a plain object with the expected shape
                         activityLog = parsed.filter(item =>
                             item && typeof item === 'object' &&
                             typeof item.icon === 'string' &&
@@ -1965,11 +2109,10 @@
                             typeof item.text === 'string' &&
                             typeof item.ts === 'number'
                         );
-                        return;
+                        if (activityLog.length) return;
                     }
                 } catch (_) { /* ignore */ }
             }
-            // Fallback: seed with a welcome entry so the feed isn't empty
             activityLog = [{
                 icon: 'fa-rocket',
                 iconClass: 'connect',
@@ -1981,9 +2124,7 @@
         loadActivityLog();
 
         function saveActivityLog() {
-            try {
-                localStorage.setItem('nova_activity', JSON.stringify(activityLog));
-            } catch (_) { /* ignore */ }
+            try { localStorage.setItem('nova_activity', JSON.stringify(activityLog)); } catch (_) {}
         }
 
         // ==========================================================
@@ -2074,7 +2215,7 @@
                     }
                 });
             } catch (e) {
-                console.warn('[Nova] Email notification endpoint unavailable — server-side email was not sent.', e.message);
+                console.warn('[Nova] Email notification unavailable.', e.message);
             }
         }
 
@@ -2209,7 +2350,7 @@
         }
 
         // ==========================================================
-        // HEALTH SCORE
+        // HEALTH
         // ==========================================================
         function updateHealthScore(stats) {
             const tips = [
@@ -2405,8 +2546,8 @@
             container.innerHTML = pinned.map(f => {
                 const initials = (f.display_name || f.username || '?').charAt(0).toUpperCase();
                 const imgHtml = (f.avatar_url && !f.avatar_url.includes('placeholder')) ?
-                    `<img src="${escapeHtml(f.avatar_url)}" onerror="this.outerHTML='<span style=\\'width:24px;height:24px;border-radius:50%;background:var(--cyan-dim);display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:var(--cyan)\\'>${initials}</span>'" alt="">` :
-                    `<span style="width:24px;height:24px;border-radius:50%;background:var(--cyan-dim);display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:var(--cyan)">${initials}</span>`;
+                    `<img src="${escapeHtml(f.avatar_url)}" onerror="this.outerHTML='<span class=\\'pinned-avatar-placeholder\\'>${initials}</span>'" alt="">` :
+                    `<span class="pinned-avatar-placeholder">${initials}</span>`;
                 return `<div class="pinned-chip" onclick="location.href='chat.html?friend=${f.id}'">${imgHtml}${escapeHtml(f.display_name||f.username)}</div>`;
             }).join('');
         }
@@ -2454,11 +2595,10 @@
         }
 
         // ==========================================================
-        // ACTIVITY FEED (fixed: robust validation, no garbage)
+        // ACTIVITY FEED (fixed)
         // ==========================================================
         function renderActivityFeed() {
             const container = document.getElementById('activityFeed');
-            // Ensure we only render valid items
             const valid = activityLog.filter(item =>
                 item && typeof item === 'object' &&
                 typeof item.icon === 'string' &&
@@ -2467,7 +2607,6 @@
                 typeof item.ts === 'number'
             );
             if (!valid.length) {
-                // Seed with a friendly fallback if everything got wiped
                 const fallback = {
                     icon: 'fa-rocket',
                     iconClass: 'connect',
@@ -2493,7 +2632,7 @@
         }
 
         // ==========================================================
-        // REQUESTS (fixed: shows pending requests correctly)
+        // REQUESTS
         // ==========================================================
         async function loadRequests() {
             const container = document.getElementById('requestsList');
@@ -2677,7 +2816,7 @@
         });
 
         // ==========================================================
-        // VIEW TOGGLE
+        // VIEW
         // ==========================================================
         document.querySelectorAll('.view-toggle-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -2689,7 +2828,7 @@
         });
 
         // ==========================================================
-        // EXPORT CSV
+        // EXPORT
         // ==========================================================
         document.getElementById('exportBtn').addEventListener('click', () => {
             if (!friendsData.length) { showToast('No connections to export', 'info'); return; }
@@ -2708,7 +2847,7 @@
         });
 
         // ==========================================================
-        // NOTE MODAL
+        // NOTE
         // ==========================================================
         document.getElementById('closeNoteModal').addEventListener('click', () => document.getElementById('noteModal').style
             .display = 'none');
@@ -2766,7 +2905,7 @@
                 apply3DTilt('#trendingSection .trending-item');
             } catch (e) {
                 container.innerHTML =
-                    `<div class="no-results">Couldn't load trending professionals: ${escapeHtml(e.message || 'unknown error')}.</div>`;
+                    `<div class="no-results">Couldn't load trending: ${escapeHtml(e.message || 'unknown error')}.</div>`;
             }
         }
 
@@ -2989,19 +3128,46 @@
         backToTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
         // ==========================================================
-        // NAV
+        // NAV (hamburger)
+        // ==========================================================
+        const hamburger = document.getElementById('hamburger');
+        const navLinks = document.getElementById('navLinks');
+
+        hamburger.addEventListener('click', (e) => {
+            e.stopPropagation();
+            hamburger.classList.toggle('active');
+            navLinks.classList.toggle('active');
+            document.body.style.overflow = navLinks.classList.contains('active') ? 'hidden' : '';
+        });
+
+        // Close menu when a link is clicked
+        document.querySelectorAll('.nav-links a').forEach(a => {
+            a.addEventListener('click', () => {
+                hamburger.classList.remove('active');
+                navLinks.classList.remove('active');
+                document.body.style.overflow = '';
+            });
+        });
+
+        // Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (navLinks.classList.contains('active') &&
+                !navLinks.contains(e.target) &&
+                !hamburger.contains(e.target)) {
+                hamburger.classList.remove('active');
+                navLinks.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+        });
+
+        // ==========================================================
+        // LOGOUT
         // ==========================================================
         document.getElementById('logoutBtn').addEventListener('click', async e => {
             e.preventDefault();
             if (confirm('Logout?')) { try { await apiCall('/logout', { method: 'POST' }); } catch (e) {}
                 location.href = 'index.html'; }
         });
-        const hamburger = document.getElementById('hamburger');
-        const navLinks = document.getElementById('navLinks');
-        hamburger.addEventListener('click', () => navLinks.classList.toggle('active'));
-        document.querySelectorAll('.nav-links a').forEach(a => a.addEventListener('click', (e) => {
-            if (a.id !== 'mailboxBtn') navLinks.classList.remove('active');
-        }));
 
         // ==========================================================
         // AUTO REFRESH
