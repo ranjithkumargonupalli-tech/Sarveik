@@ -61,6 +61,9 @@
             background: rgba(0, 230, 255, 0.4);
         }
 
+        /* ============================================================
+               NAVBAR
+               ============================================================ */
         .navbar {
             background: rgba(8, 14, 26, 0.92);
             backdrop-filter: blur(24px);
@@ -88,6 +91,8 @@
         .nav-brand i {
             font-size: 1.1rem;
         }
+
+        /* ---- DESKTOP NAV LINKS ---- */
         .nav-links {
             display: flex;
             list-style: none;
@@ -124,48 +129,232 @@
             font-weight: 700;
             display: inline-block;
         }
+
+        /* ---- HAMBURGER BUTTON (mobile) ---- */
         .hamburger {
             display: none;
             flex-direction: column;
             cursor: pointer;
             gap: 5px;
+            padding: 4px;
+            z-index: 1100;
+            position: relative;
+            background: rgba(0, 230, 255, 0.06);
+            border-radius: 10px;
+            border: 1px solid rgba(0, 230, 255, 0.1);
+            width: 44px;
+            height: 44px;
+            align-items: center;
+            justify-content: center;
+            transition: border-color 0.3s, background 0.3s;
+        }
+        .hamburger:hover {
+            background: rgba(0, 230, 255, 0.12);
+            border-color: rgba(0, 230, 255, 0.25);
         }
         .hamburger span {
-            width: 22px;
-            height: 2px;
+            width: 24px;
+            height: 2.5px;
             background: var(--text-sub);
-            border-radius: 2px;
-            transition: 0.3s;
+            border-radius: 3px;
+            transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform-origin: center;
+        }
+        .hamburger.active span:nth-child(1) {
+            transform: translateY(7.5px) rotate(45deg);
+            background: var(--cyan);
+        }
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+            transform: scaleX(0);
+        }
+        .hamburger.active span:nth-child(3) {
+            transform: translateY(-7.5px) rotate(-45deg);
+            background: var(--cyan);
         }
 
+        /* ---- FULL-SCREEN MOBILE MENU OVERLAY ---- */
+        .nav-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(4, 8, 20, 0.7);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            z-index: 1040;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        .nav-overlay.active {
+            opacity: 1;
+        }
+
+        .mobile-menu {
+            position: fixed;
+            top: 0;
+            right: -100%;
+            width: 100%;
+            max-width: 400px;
+            height: 100vh;
+            background: rgba(8, 14, 26, 0.98);
+            backdrop-filter: blur(32px);
+            -webkit-backdrop-filter: blur(32px);
+            z-index: 1050;
+            padding: 2rem 1.75rem;
+            transition: right 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid rgba(0, 230, 255, 0.15);
+            box-shadow: -8px 0 40px rgba(0, 0, 0, 0.6);
+            overflow-y: auto;
+        }
+        .mobile-menu.open {
+            right: 0;
+        }
+
+        .mobile-menu-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.5rem;
+        }
+        .mobile-menu-brand {
+            font-family: var(--font-display);
+            font-size: 1.4rem;
+            font-weight: 800;
+            color: var(--cyan);
+            display: flex;
+            align-items: center;
+            gap: 0.55rem;
+        }
+        .mobile-menu-close {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+        .mobile-menu-close:hover {
+            background: var(--cyan-dim);
+            color: var(--cyan);
+            border-color: rgba(0, 230, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        .mobile-menu-links {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+            flex: 1;
+            padding: 0.5rem 0;
+        }
+        .mobile-menu-links a {
+            color: var(--text-sub);
+            text-decoration: none;
+            padding: 0.85rem 1.2rem;
+            border-radius: 14px;
+            transition: all 0.25s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            font-size: 1rem;
+            font-weight: 500;
+            border: 1px solid transparent;
+        }
+        .mobile-menu-links a:hover,
+        .mobile-menu-links a.active {
+            background: var(--cyan-dim);
+            color: var(--cyan);
+            border-color: rgba(0, 230, 255, 0.2);
+        }
+        .mobile-menu-links a i {
+            width: 24px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+        .mobile-menu-links a .badge {
+            margin-left: auto;
+        }
+        .mobile-menu-links .mailbox-wrap-mobile {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+        .mobile-menu-links .mailbox-wrap-mobile .mail-item-mobile {
+            padding: 0.85rem 1.2rem;
+            border-radius: 14px;
+            border: 1px solid transparent;
+            transition: all 0.25s ease;
+            cursor: pointer;
+            color: var(--text-sub);
+            display: flex;
+            align-items: center;
+            gap: 0.85rem;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+        .mobile-menu-links .mailbox-wrap-mobile .mail-item-mobile:hover {
+            background: var(--cyan-dim);
+            color: var(--cyan);
+            border-color: rgba(0, 230, 255, 0.2);
+        }
+        .mobile-menu-links .mailbox-wrap-mobile .mail-item-mobile i {
+            width: 24px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+
+        .mobile-menu-footer {
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            margin-top: 0.5rem;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        /* ---- RESPONSIVE: show hamburger, hide desktop nav ---- */
         @media (max-width: 768px) {
             .hamburger {
                 display: flex;
             }
             .nav-links {
-                position: fixed;
-                top: 0;
-                right: -100%;
-                height: 100vh;
-                width: 260px;
-                background: rgba(8, 14, 26, 0.98);
-                backdrop-filter: blur(24px);
-                flex-direction: column;
-                justify-content: flex-start;
-                padding-top: 5rem;
-                transition: right 0.3s ease;
-                border-left: 1px solid var(--border);
+                display: none;
             }
-            .nav-links.active {
-                right: 0;
+            .nav-overlay {
+                display: block;
+                pointer-events: none;
             }
-            .nav-links a {
-                width: 100%;
-                padding: 0.75rem 1.5rem;
-                border-radius: 0;
+            .nav-overlay.active {
+                pointer-events: auto;
+            }
+            .mobile-menu {
+                display: flex;
+            }
+        }
+        @media (min-width: 769px) {
+            .mobile-menu,
+            .nav-overlay {
+                display: none !important;
+            }
+            .hamburger {
+                display: none !important;
             }
         }
 
+        /* ============================================================
+               MAIN CONTENT
+               ============================================================ */
         .friends-container {
             max-width: 1200px;
             margin: 2rem auto;
@@ -984,7 +1173,7 @@
             margin-bottom: 0.75rem;
         }
 
-        /* --- ACTIVITY FEED (fixed: robust validation) --- */
+        /* --- ACTIVITY FEED --- */
         .activity-feed {
             background: var(--bg-card);
             border: 1px solid var(--border);
@@ -1292,6 +1481,9 @@
             margin-top: 0.25rem;
         }
 
+        /* ============================================================
+               MODAL — enhanced friend profile with clear details
+               ============================================================ */
         .modal {
             display: none;
             position: fixed;
@@ -1306,10 +1498,10 @@
             background: rgba(10, 18, 36, 0.98);
             border: 1px solid rgba(0, 230, 255, 0.2);
             border-radius: 22px;
-            margin: 6% auto;
+            margin: 4% auto;
             padding: 2rem;
             width: 90%;
-            max-width: 500px;
+            max-width: 540px;
             color: var(--text-primary);
             box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
             animation: modalIn3D 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -1342,6 +1534,31 @@
             text-align: center;
             margin-bottom: 1rem;
         }
+        .profile-avatar-large {
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid var(--cyan);
+            margin: 0 auto 0.75rem;
+            display: block;
+            background: linear-gradient(135deg, #1a2a4a, #0d1629);
+        }
+        .profile-avatar-placeholder-large {
+            width: 96px;
+            height: 96px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1a3050, #0d1a30);
+            border: 3px solid rgba(0, 230, 255, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-display);
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--cyan);
+            margin: 0 auto 0.75rem;
+        }
         .profile-name {
             font-family: var(--font-display);
             font-size: 1.6rem;
@@ -1351,57 +1568,118 @@
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-        .profile-bio {
+        .profile-username {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 0.1rem;
+        }
+        .profile-badge-row {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .profile-section {
+            margin-top: 1.25rem;
+            padding-top: 1.25rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+        .profile-section-title {
+            font-family: var(--font-display);
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+        }
+        .profile-detail-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.45rem 0;
+            font-size: 0.875rem;
+            color: var(--text-sub);
+            line-height: 1.5;
+        }
+        .profile-detail-row i {
+            width: 18px;
+            color: var(--cyan);
+            text-align: center;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+        .profile-detail-row .label {
+            color: var(--text-muted);
+            font-weight: 500;
+            min-width: 80px;
+            flex-shrink: 0;
+        }
+        .profile-detail-row .value {
+            color: var(--text-primary);
+            word-break: break-word;
+        }
+        .profile-bio-text {
             background: rgba(255, 255, 255, 0.04);
             border: 1px solid var(--border);
             padding: 0.9rem 1rem;
             border-radius: 12px;
-            margin: 1rem 0;
             font-size: 0.88rem;
             line-height: 1.6;
             color: var(--text-sub);
+            margin-top: 0.25rem;
         }
-        .profile-detail {
-            display: flex;
-            align-items: center;
-            gap: 0.65rem;
-            margin-bottom: 0.6rem;
-            font-size: 0.875rem;
-            color: var(--text-sub);
-        }
-        .profile-detail i {
-            width: 18px;
-            color: var(--cyan);
-            text-align: center;
-        }
-        .profile-social {
+        .profile-social-links {
             display: flex;
             gap: 1rem;
-            margin-top: 1rem;
-            justify-content: center;
+            margin-top: 0.75rem;
+            flex-wrap: wrap;
         }
-        .profile-social a {
+        .profile-social-links a {
             color: var(--cyan);
-            font-size: 1.4rem;
-            transition: transform 0.2s;
+            font-size: 1.3rem;
+            transition: transform 0.25s, color 0.25s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.85rem;
+            text-decoration: none;
+            background: rgba(0, 230, 255, 0.08);
+            padding: 0.3rem 0.8rem;
+            border-radius: var(--radius-pill);
+            border: 1px solid rgba(0, 230, 255, 0.1);
         }
-        .profile-social a:hover {
-            transform: translateY(-3px) rotateY(180deg);
+        .profile-social-links a:hover {
+            transform: translateY(-2px) rotateY(180deg);
+            color: #fff;
+            background: var(--cyan-dim);
+            border-color: rgba(0, 230, 255, 0.3);
         }
-        .friend-actions {
+        .profile-actions {
             display: flex;
             gap: 0.75rem;
             justify-content: center;
             margin-top: 1.5rem;
             flex-wrap: wrap;
         }
-        .badge-container {
-            display: flex;
-            justify-content: center;
-            gap: 0.5rem;
-            margin-top: 0.4rem;
+        .profile-mutual {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            background: rgba(0, 230, 255, 0.08);
+            padding: 0.2rem 0.8rem;
+            border-radius: var(--radius-pill);
+            font-size: 0.75rem;
+            color: var(--cyan);
+            border: 1px solid rgba(0, 230, 255, 0.12);
         }
 
+        /* ---- GROUP MODAL ---- */
+        #createGroupModal .modal-content {
+            max-width: 540px;
+        }
         .group-info-preview {
             background: rgba(0, 230, 255, 0.04);
             border: 1px solid var(--border);
@@ -1492,25 +1770,7 @@
             color: var(--red);
         }
 
-        #noteModal textarea {
-            width: 100%;
-            min-height: 95px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            color: var(--text-primary);
-            padding: 0.75rem;
-            font-family: var(--font-body);
-            font-size: 0.88rem;
-            resize: vertical;
-            margin-top: 0.6rem;
-            outline: none;
-            transition: border-color 0.2s;
-        }
-        #noteModal textarea:focus {
-            border-color: rgba(0, 230, 255, 0.4);
-        }
-
+        /* ---- BACK TO TOP ---- */
         #backToTop {
             position: fixed;
             bottom: 2rem;
@@ -1574,6 +1834,9 @@
             font-size: 0.875rem;
         }
 
+        /* ============================================================
+               RESPONSIVE
+               ============================================================ */
         @media (max-width: 768px) {
             .friends-container {
                 padding: 0 1rem;
@@ -1631,6 +1894,12 @@
                 width: 280px;
                 right: -20px;
             }
+
+            /* mobile menu tweaks */
+            .mobile-menu {
+                max-width: 100%;
+                padding: 1.5rem 1.25rem;
+            }
         }
         @media (max-width: 480px) {
             .stats-grid {
@@ -1646,6 +1915,16 @@
             .suggestion-grid {
                 grid-template-columns: 1fr;
             }
+            .mobile-menu {
+                padding: 1.25rem 1rem;
+            }
+            .profile-detail-row .label {
+                min-width: 60px;
+                font-size: 0.8rem;
+            }
+            .profile-name {
+                font-size: 1.3rem;
+            }
         }
 
         .search-result-card {
@@ -1654,10 +1933,16 @@
     </style>
 </head>
 <body>
+
+    <!-- ============================================================
+    NAVBAR
+    ============================================================ -->
     <nav class="navbar">
         <div class="nav-brand">
             <i class="fas fa-shield-alt"></i> Nova Platform Pro
         </div>
+
+        <!-- Desktop nav -->
         <ul class="nav-links" id="navLinks">
             <li><a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a></li>
             <li><a href="profile.html"><i class="fas fa-user"></i> Profile</a></li>
@@ -1681,11 +1966,47 @@
             </li>
             <li><a href="index.html" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
         </ul>
+
+        <!-- Hamburger (mobile) -->
         <div class="hamburger" id="hamburger">
             <span></span><span></span><span></span>
         </div>
     </nav>
 
+    <!-- Overlay (mobile) -->
+    <div class="nav-overlay" id="navOverlay"></div>
+
+    <!-- Full-screen mobile menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <div class="mobile-menu-header">
+            <div class="mobile-menu-brand">
+                <i class="fas fa-shield-alt"></i> Nova
+            </div>
+            <div class="mobile-menu-close" id="mobileMenuClose">
+                <i class="fas fa-times"></i>
+            </div>
+        </div>
+        <div class="mobile-menu-links">
+            <a href="dashboard.html"><i class="fas fa-home"></i> Dashboard</a>
+            <a href="profile.html"><i class="fas fa-user"></i> Profile</a>
+            <a href="main.html"><i class="fas fa-rocket"></i> Tools</a>
+            <a href="friends.html" class="active"><i class="fas fa-users"></i> Network <span id="mobileTotalBadge" class="badge" style="display:none;"></span></a>
+            <div class="mailbox-wrap-mobile">
+                <div class="mail-item-mobile" id="mobileMailBtn">
+                    <i class="fas fa-envelope"></i> Mail
+                    <span id="mobileMailBadge" class="badge" style="display:none;"></span>
+                </div>
+            </div>
+            <a href="index.html" id="mobileLogoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a>
+        </div>
+        <div class="mobile-menu-footer">
+            <p>Nova Platform &bull; v2.0</p>
+        </div>
+    </div>
+
+    <!-- ============================================================
+    MAIN CONTENT
+    ============================================================ -->
     <div class="friends-container">
 
         <!-- STATS -->
@@ -1813,7 +2134,7 @@
             <button id="createGroupBtn" class="btn btn-primary"><i class="fas fa-plus"></i> Create New Group</button>
         </div>
 
-        <!-- RECENT ACTIVITY (fixed: robust, no "activity.log function" garbage) -->
+        <!-- RECENT ACTIVITY -->
         <h2><i class="fas fa-bolt"></i> Recent Activity</h2>
         <div class="activity-feed" id="activityFeed">
             <div class="loading"><i class="fas fa-spinner"></i> Loading activity…</div>
@@ -1826,17 +2147,19 @@
 
     <button id="backToTop" title="Back to top"><i class="fas fa-arrow-up"></i></button>
 
-    <!-- PROFILE MODAL -->
+    <!-- ============================================================
+    PROFILE MODAL (enhanced with clear details)
+    ============================================================ -->
     <div id="profileModal" class="modal">
         <div class="modal-content">
-            <span class="close-modal">&times;</span>
+            <span class="close-modal" id="profileModalClose">&times;</span>
             <div id="modalProfileContent">Loading…</div>
         </div>
     </div>
 
     <!-- CREATE GROUP MODAL -->
     <div id="createGroupModal" class="modal">
-        <div class="modal-content" style="max-width:540px;">
+        <div class="modal-content">
             <span class="close-modal" id="closeGroupModal">&times;</span>
             <h3 style="font-family:var(--font-display); margin-bottom:1rem;"><i class="fas fa-layer-group" style="color:var(--cyan);"></i> Create New Group</h3>
             <div class="group-info-preview">
@@ -1858,17 +2181,9 @@
         </div>
     </div>
 
-    <!-- NOTE MODAL -->
-    <div id="noteModal" class="modal">
-        <div class="modal-content" style="max-width:420px;">
-            <span class="close-modal" id="closeNoteModal">&times;</span>
-            <h3 style="font-family:var(--font-display); margin-bottom:0.4rem;"><i class="fas fa-sticky-note" style="color:var(--cyan);"></i> Private Note</h3>
-            <p style="color:var(--text-muted); font-size:0.8rem;" id="noteForUser">For @username</p>
-            <textarea id="noteTextarea" placeholder="Add a private note about this connection…"></textarea>
-            <button class="btn btn-primary" id="saveNoteBtn" style="margin-top:0.85rem; width:100%;"><i class="fas fa-save"></i> Save Note</button>
-        </div>
-    </div>
-
+    <!-- ============================================================
+    SCRIPTS
+    ============================================================ -->
     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js">
     </script>
     <script>
@@ -1943,12 +2258,10 @@
         let filters = { status: '', search: '' };
         let allFriendsForModal = [];
         let starredFriends = new Set(JSON.parse(localStorage.getItem('nova_starred') || '[]'));
-        let friendNotes = JSON.parse(localStorage.getItem('nova_notes') || '{}');
         let currentSort = 'name';
         let currentView = 'grid';
-        let noteTargetId = null;
 
-        // --- Activity log: robustly initialised, never stores functions ---
+        // --- Activity log ---
         let activityLog = [];
 
         function loadActivityLog() {
@@ -1957,7 +2270,6 @@
                 try {
                     const parsed = JSON.parse(raw);
                     if (Array.isArray(parsed)) {
-                        // Filter out any item that is not a plain object with the expected shape
                         activityLog = parsed.filter(item =>
                             item && typeof item === 'object' &&
                             typeof item.icon === 'string' &&
@@ -1969,7 +2281,6 @@
                     }
                 } catch (_) { /* ignore */ }
             }
-            // Fallback: seed with a welcome entry so the feed isn't empty
             activityLog = [{
                 icon: 'fa-rocket',
                 iconClass: 'connect',
@@ -2038,6 +2349,14 @@
             return `<img class="friend-avatar" src="${escapeHtml(url)}" alt="" onerror="this.outerHTML='<div class=\\'friend-avatar-placeholder\\'>${initials}</div>'">`;
         }
 
+        function avatarLarge(url, name) {
+            const initials = (name || '?').charAt(0).toUpperCase();
+            if (!url || url.includes('via.placeholder.com')) {
+                return `<div class="profile-avatar-placeholder-large">${initials}</div>`;
+            }
+            return `<img class="profile-avatar-large" src="${escapeHtml(url)}" alt="" onerror="this.outerHTML='<div class=\\'profile-avatar-placeholder-large\\'>${initials}</div>'">`;
+        }
+
         // ==========================================================
         // 3D TILT
         // ==========================================================
@@ -2086,8 +2405,17 @@
             const mail = getMail();
             const unread = mail.filter(m => !m.read).length;
             const badge = document.getElementById('mailBadge');
-            if (unread > 0) { badge.textContent = unread > 99 ? '99+' : unread;
-                badge.style.display = 'inline-block'; } else badge.style.display = 'none';
+            const mobileBadge = document.getElementById('mobileMailBadge');
+            if (unread > 0) {
+                const txt = unread > 99 ? '99+' : unread;
+                badge.textContent = txt;
+                badge.style.display = 'inline-block';
+                mobileBadge.textContent = txt;
+                mobileBadge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
+                mobileBadge.style.display = 'none';
+            }
 
             const list = document.getElementById('mailboxList');
             if (!mail.length) { list.innerHTML = '<div class="mail-empty">No mail yet. New friend requests will show up here.</div>'; return; }
@@ -2166,6 +2494,15 @@
             }
         });
 
+        // Mobile mail toggle
+        document.getElementById('mobileMailBtn').addEventListener('click', () => {
+            // close mobile menu, open mailbox dropdown
+            closeMobileMenu();
+            const dd = document.getElementById('mailboxDropdown');
+            dd.classList.toggle('open');
+            renderMailbox();
+        });
+
         // ==========================================================
         // STATS
         // ==========================================================
@@ -2200,8 +2537,17 @@
                 const totalUnread = data.unread.reduce((s, f) => s + f.count, 0);
                 const total = totalUnread + (data.pendingRequests || 0);
                 const badge = document.getElementById('totalBadge');
-                if (total > 0) { badge.textContent = total > 99 ? '99+' : total;
-                    badge.style.display = 'inline-block'; } else badge.style.display = 'none';
+                const mobileBadge = document.getElementById('mobileTotalBadge');
+                if (total > 0) {
+                    const txt = total > 99 ? '99+' : total;
+                    badge.textContent = txt;
+                    badge.style.display = 'inline-block';
+                    mobileBadge.textContent = txt;
+                    mobileBadge.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
+                    mobileBadge.style.display = 'none';
+                }
                 unreadCounts.clear();
                 data.unread.forEach(f => unreadCounts.set(f.friend_id, f.count));
                 if (friendsData.length) renderFriends(friendsData);
@@ -2230,7 +2576,7 @@
         }
 
         // ==========================================================
-        // FRIENDS
+        // FRIENDS (note button removed)
         // ==========================================================
         async function loadFriends() {
             const container = document.getElementById('friendsList');
@@ -2281,8 +2627,6 @@
                 const unread = unreadCounts.get(f.id) || 0;
                 const statusCls = getStatusClass(f);
                 const isStarred = starredFriends.has(String(f.id));
-                const note = friendNotes[f.id] ? `<span class="friend-tag"><i class="fas fa-sticky-note"></i> Note</span>` :
-                    '';
                 const unreadBadge = unread > 0 ? `<span class="unread-badge">${unread}</span>` : '';
                 return `
                 <div class="friend-card" data-friend-id="${f.id}" style="animation-delay:${i*0.04}s;">
@@ -2299,7 +2643,7 @@
                             </div>
                             <div class="friend-username">@${escapeHtml(f.username)} · ${escapeHtml(f.profession||'Professional')}</div>
                             ${unreadBadge}
-                            <div class="friend-tags">${note}</div>
+                            <div class="friend-tags"></div>
                         </div>
                     </div>
                     <div class="card-actions">
@@ -2310,10 +2654,7 @@
                             <i class="fas fa-comments"></i> Chat
                         </button>
                         <button class="btn btn-small btn-outline view-profile-btn" data-id="${f.id}" data-username="${escapeHtml(f.username)}">
-                            <i class="fas fa-user-circle"></i>
-                        </button>
-                        <button class="btn-icon note-btn" data-id="${f.id}" data-username="${escapeHtml(f.username)}" title="Add note">
-                            <i class="fas fa-sticky-note"></i>
+                            <i class="fas fa-user-circle"></i> Profile
                         </button>
                         <button class="btn btn-small btn-danger unfriend-btn" data-id="${f.id}">
                             <i class="fas fa-user-minus"></i>
@@ -2355,14 +2696,6 @@
                     localStorage.setItem('nova_starred', JSON.stringify([...starredFriends]));
                     renderPinned();
                     updateHealthScore({ total: friendsData.length, online: 0, requests: requestsData.length });
-                });
-            });
-            document.querySelectorAll('.note-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    noteTargetId = btn.dataset.id;
-                    document.getElementById('noteForUser').textContent = '@' + btn.dataset.username;
-                    document.getElementById('noteTextarea').value = friendNotes[noteTargetId] || '';
-                    document.getElementById('noteModal').style.display = 'block';
                 });
             });
         }
@@ -2454,11 +2787,10 @@
         }
 
         // ==========================================================
-        // ACTIVITY FEED (fixed: robust validation, no garbage)
+        // ACTIVITY FEED
         // ==========================================================
         function renderActivityFeed() {
             const container = document.getElementById('activityFeed');
-            // Ensure we only render valid items
             const valid = activityLog.filter(item =>
                 item && typeof item === 'object' &&
                 typeof item.icon === 'string' &&
@@ -2467,7 +2799,6 @@
                 typeof item.ts === 'number'
             );
             if (!valid.length) {
-                // Seed with a friendly fallback if everything got wiped
                 const fallback = {
                     icon: 'fa-rocket',
                     iconClass: 'connect',
@@ -2493,7 +2824,7 @@
         }
 
         // ==========================================================
-        // REQUESTS (fixed: shows pending requests correctly)
+        // REQUESTS
         // ==========================================================
         async function loadRequests() {
             const container = document.getElementById('requestsList');
@@ -2708,23 +3039,6 @@
         });
 
         // ==========================================================
-        // NOTE MODAL
-        // ==========================================================
-        document.getElementById('closeNoteModal').addEventListener('click', () => document.getElementById('noteModal').style
-            .display = 'none');
-        document.getElementById('saveNoteBtn').addEventListener('click', () => {
-            const txt = document.getElementById('noteTextarea').value.trim();
-            if (noteTargetId) {
-                if (txt) friendNotes[noteTargetId] = txt;
-                else delete friendNotes[noteTargetId];
-                localStorage.setItem('nova_notes', JSON.stringify(friendNotes));
-                document.getElementById('noteModal').style.display = 'none';
-                showToast('Note saved!');
-                renderFriends(friendsData);
-            }
-        });
-
-        // ==========================================================
         // TRENDING
         // ==========================================================
         async function loadTrending() {
@@ -2902,51 +3216,157 @@
         });
 
         // ==========================================================
-        // PROFILE MODAL
+        // PROFILE MODAL — enhanced with clear, detailed information
         // ==========================================================
         const profileModal = document.getElementById('profileModal');
-        const profileCloseBtn = document.querySelector('#profileModal .close-modal');
+        const profileCloseBtn = document.getElementById('profileModalClose');
         if (profileCloseBtn) profileCloseBtn.onclick = () => profileModal.style.display = 'none';
 
         async function showFriendProfile(userId, username) {
             profileModal.style.display = 'block';
             const content = document.getElementById('modalProfileContent');
             content.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading…</div>';
-            const f = friendsData.find(f => f.id == userId);
-            if (!f) { content.innerHTML = '<div class="no-results">Profile not available.</div>'; return; }
-            const noteVal = friendNotes[userId] || '';
-            const socials = [
-                f.github ? `<a href="${f.github}" target="_blank"><i class="fab fa-github"></i></a>` : '',
-                f.twitter ? `<a href="${f.twitter}" target="_blank"><i class="fab fa-twitter"></i></a>` : '',
-                f.linkedin ? `<a href="${f.linkedin}" target="_blank"><i class="fab fa-linkedin"></i></a>` : '',
-            ].filter(Boolean).join('');
+
+            // Fetch detailed profile data
+            let profileData = null;
+            try {
+                profileData = await apiCall(`/api/users/${userId}`);
+            } catch (e) {
+                // fallback: use data from friendsData
+                const f = friendsData.find(f => f.id == userId);
+                if (f) profileData = f;
+            }
+
+            if (!profileData) {
+                content.innerHTML = '<div class="no-results">Profile not available.</div>';
+                return;
+            }
+
+            // Build social links
+            const socials = [];
+            if (profileData.github) socials.push({ icon: 'fa-github', url: profileData.github, label: 'GitHub' });
+            if (profileData.twitter) socials.push({ icon: 'fa-twitter', url: profileData.twitter, label: 'Twitter' });
+            if (profileData.linkedin) socials.push({ icon: 'fa-linkedin', url: profileData.linkedin, label: 'LinkedIn' });
+            if (profileData.website) socials.push({ icon: 'fa-globe', url: profileData.website, label: 'Website' });
+
+            // Mutual connections count (approximate)
+            const mutualCount = friendsData.filter(f =>
+                f.id !== userId && friendsData.some(f2 => f2.id === f.id)
+            ).length;
+
+            // Groups in common
+            const groupsInCommon = groupsData.filter(g =>
+                g.members && g.members.includes(parseInt(userId))
+            ).length;
+
+            // Join date
+            const joinDate = profileData.created_at ? new Date(profileData.created_at).toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            }) : 'N/A';
+
+            // Last active
+            const lastActive = profileData.last_active ? timeAgo(new Date(profileData.last_active).getTime()) : 'Unknown';
+
+            // Build the modal HTML with clear, organized sections
             content.innerHTML = `
                 <div class="profile-header">
-                    ${avatarOrPlaceholder(f.avatar_url, f.display_name||f.username).replace('friend-avatar','').replace('class="','').replace('" alt=""','" alt="" style="width:90px;height:90px;border-radius:50%;border:3px solid var(--cyan);margin-bottom:0.75rem;"')}
-                    <div class="profile-name">${escapeHtml(f.display_name||f.username)}</div>
-                    <div style="color:var(--text-muted);font-size:0.85rem;">@${escapeHtml(f.username)}</div>
-                    <div class="badge-container" style="margin-top:0.5rem;">
-                        ${f.is_pro?'<span class="pro-badge">PRO</span>':''}
-                        ${f.is_verified?'<span class="verified-badge"><i class="fas fa-check"></i> Verified</span>':''}
+                    ${avatarLarge(profileData.avatar_url, profileData.display_name||profileData.username)}
+                    <div class="profile-name">${escapeHtml(profileData.display_name||profileData.username)}</div>
+                    <div class="profile-username">@${escapeHtml(profileData.username)}</div>
+                    <div class="profile-badge-row">
+                        ${profileData.is_pro?'<span class="pro-badge"><i class="fas fa-crown"></i> PRO</span>':''}
+                        ${profileData.is_verified?'<span class="verified-badge"><i class="fas fa-check-circle"></i> Verified</span>':''}
+                        ${profileData.is_online !== undefined ? `<span class="profile-mutual"><i class="fas fa-circle ${profileData.is_online?'online':''}" style="color:${profileData.is_online?'var(--green)':'var(--text-muted)'};"></i> ${profileData.is_online?'Online':'Offline'}</span>` : ''}
                     </div>
                 </div>
-                <div class="profile-bio"><i class="fas fa-quote-left" style="opacity:0.5;margin-right:0.4rem;"></i>${escapeHtml(f.bio||'No bio available.')}</div>
-                <div class="profile-detail"><i class="fas fa-briefcase"></i>${escapeHtml(f.profession||'Professional')}</div>
-                <div class="profile-detail"><i class="fas fa-map-marker-alt"></i>${escapeHtml(f.location||'Not specified')}</div>
-                ${noteVal?`<div class="profile-bio" style="border-left:3px solid var(--cyan);"><i class="fas fa-sticky-note" style="color:var(--cyan);margin-right:0.4rem;"></i>${escapeHtml(noteVal)}</div>`:''}
-                ${socials?`<div class="profile-social">${socials}</div>`:''}
-                <div class="friend-actions">
-                    <button class="btn btn-primary" onclick="location.href='chat.html?friend=${f.id}'"><i class="fas fa-comment"></i> Message</button>
-                    <button class="btn btn-outline" onclick="document.getElementById('profileModal').style.display='none'"><i class="fas fa-times"></i> Close</button>
-                </div>`;
+
+                ${profileData.bio ? `<div class="profile-bio-text"><i class="fas fa-quote-left" style="opacity:0.4;margin-right:0.4rem;"></i>${escapeHtml(profileData.bio)}</div>` : ''}
+
+                <div class="profile-section">
+                    <div class="profile-section-title"><i class="fas fa-id-card"></i> Professional Details</div>
+                    <div class="profile-detail-row">
+                        <i class="fas fa-briefcase"></i>
+                        <span class="label">Profession</span>
+                        <span class="value">${escapeHtml(profileData.profession||'Not specified')}</span>
+                    </div>
+                    <div class="profile-detail-row">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <span class="label">Location</span>
+                        <span class="value">${escapeHtml(profileData.location||'Not specified')}</span>
+                    </div>
+                    ${profileData.company ? `
+                    <div class="profile-detail-row">
+                        <i class="fas fa-building"></i>
+                        <span class="label">Company</span>
+                        <span class="value">${escapeHtml(profileData.company)}</span>
+                    </div>` : ''}
+                    ${profileData.skills ? `
+                    <div class="profile-detail-row">
+                        <i class="fas fa-tags"></i>
+                        <span class="label">Skills</span>
+                        <span class="value">${escapeHtml(profileData.skills)}</span>
+                    </div>` : ''}
+                </div>
+
+                <div class="profile-section">
+                    <div class="profile-section-title"><i class="fas fa-network-wired"></i> Network</div>
+                    <div class="profile-detail-row">
+                        <i class="fas fa-user-friends"></i>
+                        <span class="label">Connections</span>
+                        <span class="value">${profileData.connection_count ?? friendsData.length}</span>
+                    </div>
+                    <div class="profile-detail-row">
+                        <i class="fas fa-handshake"></i>
+                        <span class="label">Mutual</span>
+                        <span class="value">${mutualCount} connections</span>
+                    </div>
+                    <div class="profile-detail-row">
+                        <i class="fas fa-layer-group"></i>
+                        <span class="label">Groups in common</span>
+                        <span class="value">${groupsInCommon}</span>
+                    </div>
+                </div>
+
+                <div class="profile-section">
+                    <div class="profile-section-title"><i class="fas fa-clock"></i> Activity</div>
+                    <div class="profile-detail-row">
+                        <i class="fas fa-calendar-plus"></i>
+                        <span class="label">Joined</span>
+                        <span class="value">${joinDate}</span>
+                    </div>
+                    <div class="profile-detail-row">
+                        <i class="fas fa-clock"></i>
+                        <span class="label">Last active</span>
+                        <span class="value">${lastActive}</span>
+                    </div>
+                </div>
+
+                ${socials.length ? `
+                <div class="profile-section">
+                    <div class="profile-section-title"><i class="fas fa-share-alt"></i> Social &amp; Web</div>
+                    <div class="profile-social-links">
+                        ${socials.map(s => `<a href="${escapeHtml(s.url)}" target="_blank" rel="noopener"><i class="fab ${s.icon}"></i> ${s.label}</a>`).join('')}
+                    </div>
+                </div>` : ''}
+
+                <div class="profile-actions">
+                    <button class="btn btn-primary" onclick="location.href='chat.html?friend=${profileData.id}'">
+                        <i class="fas fa-comment"></i> Message
+                    </button>
+                    <button class="btn btn-outline" onclick="document.getElementById('profileModal').style.display='none'">
+                        <i class="fas fa-times"></i> Close
+                    </button>
+                </div>
+            `;
         }
 
+        // Close modal on overlay click
         window.addEventListener('click', e => {
             if (e.target === profileModal) profileModal.style.display = 'none';
             if (e.target === document.getElementById('createGroupModal')) document.getElementById('createGroupModal').style
                 .display = 'none';
-            if (e.target === document.getElementById('noteModal')) document.getElementById('noteModal').style.display =
-            'none';
         });
 
         // ==========================================================
@@ -2982,26 +3402,79 @@
             pushActivity('fa-users', 'group', 'A new group was created'); });
 
         // ==========================================================
+        // MOBILE MENU — full-screen enhanced
+        // ==========================================================
+        function openMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const overlay = document.getElementById('navOverlay');
+            const hamburger = document.getElementById('hamburger');
+            menu.classList.add('open');
+            overlay.classList.add('active');
+            hamburger.classList.add('active');
+            document.body.style.overflow = 'hidden';
+            // sync badges
+            const totalBadge = document.getElementById('totalBadge');
+            const mobileTotalBadge = document.getElementById('mobileTotalBadge');
+            if (totalBadge.style.display !== 'none') {
+                mobileTotalBadge.textContent = totalBadge.textContent;
+                mobileTotalBadge.style.display = 'inline-block';
+            } else {
+                mobileTotalBadge.style.display = 'none';
+            }
+            const mailBadge = document.getElementById('mailBadge');
+            const mobileMailBadge = document.getElementById('mobileMailBadge');
+            if (mailBadge.style.display !== 'none') {
+                mobileMailBadge.textContent = mailBadge.textContent;
+                mobileMailBadge.style.display = 'inline-block';
+            } else {
+                mobileMailBadge.style.display = 'none';
+            }
+        }
+
+        function closeMobileMenu() {
+            const menu = document.getElementById('mobileMenu');
+            const overlay = document.getElementById('navOverlay');
+            const hamburger = document.getElementById('hamburger');
+            menu.classList.remove('open');
+            overlay.classList.remove('active');
+            hamburger.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        document.getElementById('hamburger').addEventListener('click', (e) => {
+            e.stopPropagation();
+            const menu = document.getElementById('mobileMenu');
+            if (menu.classList.contains('open')) {
+                closeMobileMenu();
+            } else {
+                openMobileMenu();
+            }
+        });
+
+        document.getElementById('navOverlay').addEventListener('click', closeMobileMenu);
+        document.getElementById('mobileMenuClose').addEventListener('click', closeMobileMenu);
+
+        // Close mobile menu when a link is clicked
+        document.querySelectorAll('.mobile-menu-links a').forEach(link => {
+            link.addEventListener('click', () => {
+                // don't close for mail toggle
+                if (link.id !== 'mobileMailBtn') closeMobileMenu();
+            });
+        });
+
+        // Mobile logout
+        document.getElementById('mobileLogoutBtn').addEventListener('click', async e => {
+            e.preventDefault();
+            if (confirm('Logout?')) { try { await apiCall('/logout', { method: 'POST' }); } catch (e) {}
+                location.href = 'index.html'; }
+        });
+
+        // ==========================================================
         // BACK TO TOP
         // ==========================================================
         const backToTopBtn = document.getElementById('backToTop');
         window.addEventListener('scroll', () => { backToTopBtn.classList.toggle('visible', window.scrollY > 400); });
         backToTopBtn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-
-        // ==========================================================
-        // NAV
-        // ==========================================================
-        document.getElementById('logoutBtn').addEventListener('click', async e => {
-            e.preventDefault();
-            if (confirm('Logout?')) { try { await apiCall('/logout', { method: 'POST' }); } catch (e) {}
-                location.href = 'index.html'; }
-        });
-        const hamburger = document.getElementById('hamburger');
-        const navLinks = document.getElementById('navLinks');
-        hamburger.addEventListener('click', () => navLinks.classList.toggle('active'));
-        document.querySelectorAll('.nav-links a').forEach(a => a.addEventListener('click', (e) => {
-            if (a.id !== 'mailboxBtn') navLinks.classList.remove('active');
-        }));
 
         // ==========================================================
         // AUTO REFRESH
