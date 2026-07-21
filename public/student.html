@@ -60,7 +60,6 @@
       margin: 0 auto 20px;
       width: fit-content;
     }
-    /* Premium banner */
     .premium-banner {
       background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
       border-radius: 20px;
@@ -330,7 +329,6 @@
       position: relative;
     }
     .tool-card .btn:hover { transform: scale(1.05); }
-    /* Share button specific */
     .tool-card .share-btn {
       background: rgba(255,255,255,0.15);
       border: 1px solid rgba(255,255,255,0.3);
@@ -858,7 +856,7 @@
     `).join('');
   }
 
-  // ===================== ENHANCED SUBMIT TOOL (no delay) =====================
+  // ===================== ENHANCED SUBMIT TOOL (instant feedback + background refresh) =====================
   async function submitTool() {
     const name = document.getElementById('newName').value.trim();
     const url = document.getElementById('newUrl').value.trim();
@@ -885,17 +883,22 @@
         body: JSON.stringify({ name, url, description, category, pageType: PAGE_TYPE })
       });
 
+      // Immediate success feedback
       showToast('✅ Tool submitted! Admin will review it shortly.', 'success');
       // Clear form immediately
       document.getElementById('newName').value = '';
       document.getElementById('newUrl').value = '';
       document.getElementById('newDesc').value = '';
 
-      // Refresh tool list without artificial delay
-      await loadAndMergeTools();
+      // Reset button right away so user can submit again
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = originalText;
+
+      // Refresh tools in the background (non‑blocking)
+      // The user will see the updated list when it finishes.
+      loadAndMergeTools().catch(console.warn);
     } catch (error) {
       showToast(error.message || 'Submission failed', 'error');
-    } finally {
       submitBtn.disabled = false;
       submitBtn.innerHTML = originalText;
     }
