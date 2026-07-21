@@ -852,6 +852,21 @@
             align-items: flex-start;
         }
 
+        /* Sending animation */
+        .msg.sending .msg-bubble {
+            opacity: 0.7;
+            animation: pulseSending 1.2s ease-in-out infinite;
+        }
+        @keyframes pulseSending {
+            0%,
+            100% {
+                opacity: 0.7;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
         .msg-bubble {
             padding: 10px 14px;
             border-radius: 16px;
@@ -915,6 +930,7 @@
             max-height: 260px;
             object-fit: cover;
             display: block;
+            background: #000;
         }
         .msg-file .file-icon {
             display: flex;
@@ -975,6 +991,15 @@
         }
         .msg-status .fa-clock {
             color: var(--gold);
+        }
+        .msg-status .fa-spinner {
+            color: var(--accent);
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         /* Message actions (hover) */
@@ -1220,6 +1245,61 @@
             border-color: var(--accent);
         }
 
+        /* ===== LOADING SHIMMER ===== */
+        .shimmer-loader {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 8px 0;
+            width: 100%;
+        }
+        .shimmer-row {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            padding: 8px 12px;
+            background: var(--surface2);
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border2);
+            animation: shimmerPulse 1.5s ease-in-out infinite;
+        }
+        .shimmer-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--border2);
+            flex-shrink: 0;
+        }
+        .shimmer-lines {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .shimmer-line {
+            height: 10px;
+            background: var(--border2);
+            border-radius: 4px;
+        }
+        .shimmer-line.short {
+            width: 40%;
+        }
+        .shimmer-line.medium {
+            width: 70%;
+        }
+        .shimmer-line.long {
+            width: 90%;
+        }
+        @keyframes shimmerPulse {
+            0%,
+            100% {
+                opacity: 0.5;
+            }
+            50% {
+                opacity: 1;
+            }
+        }
+
         /* ===== INPUT AREA ===== */
         .input-area {
             padding: 10px 16px 12px;
@@ -1360,6 +1440,10 @@
             cursor: not-allowed;
             transform: none;
             box-shadow: none;
+        }
+        .send-btn.sending {
+            opacity: 0.7;
+            pointer-events: none;
         }
 
         /* Upload progress */
@@ -1963,6 +2047,7 @@
         const MSG_LIMIT = 30;
         const EXPIRE_HOURS = 24;
         let expireInterval = null;
+        let isSending = false;
 
         // ============================================================
         //  CSRF + API
@@ -2254,6 +2339,35 @@
             document.getElementById('clearBtn').disabled = !currentFriendId;
         }
 
+        // Show shimmer loading
+        function showShimmer() {
+            const c = document.getElementById('messagesArea');
+            const existing = c.querySelector('.shimmer-loader');
+            if (existing) return;
+            const shimmer = document.createElement('div');
+            shimmer.className = 'shimmer-loader';
+            shimmer.id = 'shimmerLoader';
+            for (let i = 0; i < 4; i++) {
+                const row = document.createElement('div');
+                row.className = 'shimmer-row';
+                row.innerHTML = `
+              <div class="shimmer-avatar"></div>
+              <div class="shimmer-lines">
+                <div class="shimmer-line long"></div>
+                <div class="shimmer-line medium"></div>
+              </div>
+            `;
+                shimmer.appendChild(row);
+            }
+            c.appendChild(shimmer);
+            c.scrollTop = c.scrollHeight;
+        }
+
+        function hideShimmer() {
+            const el = document.getElementById('shimmerLoader');
+            if (el) el.remove();
+        }
+
         async function selectFriend(id) {
             if (currentFriendId === id) return;
             if (currentGroupId) { socket.emit('leave_group', currentGroupId);
@@ -2267,7 +2381,9 @@
             if (f) setHeader(f.username, f.online ? 'Online' : 'Offline');
             renderFriends();
             renderGroups();
+            showShimmer();
             await loadMsgs(id, true);
+            hideShimmer();
             markRead(id);
             closeMobile();
             startExpiryChecker();
@@ -2287,7 +2403,9 @@
             renderFriends();
             renderGroups();
             socket.emit('join_group', id);
+            showShimmer();
             await loadGroupMsgs(id, true);
+            hideShimmer();
             closeMobile();
             startExpiryChecker();
         }
@@ -2297,7 +2415,7 @@
         }
 
         // ============================================================
-        //  EXPIRY (24h auto-delete) — background only, no timer display
+        //  EXPIRY (24h auto-delete)
         // ============================================================
         function startExpiryChecker() {
             if (expireInterval) clearInterval(expireInterval);
@@ -2331,9 +2449,10 @@
             const ts = new Date(msg.created_at).getTime();
             const replyHTML = msg.replyTo ? renderReplyIndicator(msg.replyTo) : '';
             const timeStr = timeAgo(msg.created_at);
+            const sendingClass = pending ? 'sending' : '';
 
             return `
-        <div class="msg ${isMe ? 'out' : 'in'}" data-id="${msg.id}" data-timestamp="${ts}" ${pending ? `data-temp="${msg.id}"` : ''}>
+        <div class="msg ${isMe ? 'out' : 'in'} ${sendingClass}" data-id="${msg.id}" data-timestamp="${ts}" ${pending ? `data-temp="${msg.id}"` : ''}>
           ${isMe ? `<div class="msg-actions">
             <button class="msg-act reply" onclick="setReply(${msg.id})" title="Reply"><i class="fas fa-reply"></i></button>
             <button class="msg-act boost" onclick="boostMsg(${msg.id})" title="${boostsLeft > 0 ? 'Free boost' : 'Pay 10 credits'}"><i class="fas fa-star"></i></button>
@@ -2355,7 +2474,7 @@
           </div>
           <div class="msg-meta">
             <span class="msg-time">${timeStr}</span>
-            ${pending ? '<span class="msg-status"><i class="fas fa-clock"></i></span>' :
+            ${pending ? '<span class="msg-status"><i class="fas fa-spinner"></i></span>' :
               isMe ? `<span class="msg-status"><i class="fas fa-check-circle"></i></span>` : ''}
           </div>
           ${renderReactions(msg.id)}
@@ -2639,7 +2758,7 @@
         }
 
         // ============================================================
-        //  FILE HANDLING with image compression
+        //  FILE HANDLING with compression & proper sending
         // ============================================================
         function compressImage(file, maxWidth = 800, quality = 0.7) {
             return new Promise((resolve, reject) => {
@@ -2667,8 +2786,19 @@
             });
         }
 
+        function readFileAsDataURL(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
         async function handleFiles(files) {
             if (!files.length) return;
+            if (!currentFriendId && !currentGroupId) { toast('Select a conversation first', 'error'); return; }
+
             const ta = document.getElementById('msgInput');
             const c = document.getElementById('messagesArea');
             if (c.querySelector('.empty-state')) c.innerHTML = '';
@@ -2687,25 +2817,12 @@
                     const isLarge = file.size > 2 * 1024 * 1024;
 
                     if (isImage && isLarge) {
-                        // Compress large images
                         dataUrl = await compressImage(file, 800, 0.7);
                         label.textContent = `Compressed ${file.name}`;
-                    } else if (isImage) {
-                        // Small image, read directly
-                        dataUrl = await new Promise((resolve, reject) => {
-                            const r = new FileReader();
-                            r.onload = () => resolve(r.result);
-                            r.onerror = reject;
-                            r.readAsDataURL(file);
-                        });
+                    } else if (isImage || isVideo) {
+                        dataUrl = await readFileAsDataURL(file);
                     } else {
-                        // Non-image: read as data URL
-                        dataUrl = await new Promise((resolve, reject) => {
-                            const r = new FileReader();
-                            r.onload = () => resolve(r.result);
-                            r.onerror = reject;
-                            r.readAsDataURL(file);
-                        });
+                        dataUrl = await readFileAsDataURL(file);
                     }
 
                     const tempId = -Date.now() - Math.random() * 1000;
@@ -2724,10 +2841,8 @@
                     c.insertAdjacentHTML('beforeend', msgHTML(msgData));
                     c.scrollTop = c.scrollHeight;
 
-                    // Send via socket
+                    // Send via socket with file data
                     const payload = {
-                        to: currentFriendId,
-                        groupId: currentGroupId,
                         message: file.name,
                         fileData: dataUrl,
                         fileType: file.type,
@@ -2736,15 +2851,16 @@
                         replyTo: replyToId || null,
                         tempId: tempId
                     };
+
                     if (currentGroupId) {
-                        socket.emit('group_message', { groupId: currentGroupId, message: file.name, fileData: dataUrl,
-                            fileType: file.type, fileName: file.name, fileSize: file.size, replyTo: replyToId ||
-                            null, tempId });
+                        socket.emit('group_message', { groupId: currentGroupId, ...payload });
                     } else if (currentFriendId) {
-                        socket.emit('private_message', { to: currentFriendId, message: file.name, fileData: dataUrl,
-                            fileType: file.type, fileName: file.name, fileSize: file.size, replyTo: replyToId ||
-                            null, tempId });
-                    } else { toast('No conversation selected', 'error'); }
+                        socket.emit('private_message', { to: currentFriendId, ...payload });
+                    } else {
+                        toast('No conversation selected', 'error');
+                        progress.classList.remove('visible');
+                        return;
+                    }
 
                     bar.style.width = '100%';
                     setTimeout(() => bar.style.width = '0%', 500);
@@ -2791,12 +2907,15 @@
         });
 
         // ============================================================
-        //  SEND MESSAGE
+        //  SEND MESSAGE with loading animation
         // ============================================================
         function sendMsg() {
+            if (isSending) return;
             const ta = document.getElementById('msgInput');
             const txt = ta.value.trim();
             if (!txt) return;
+            if (!currentFriendId && !currentGroupId) { toast('Select a conversation first', 'error'); return; }
+
             const c = document.getElementById('messagesArea');
             if (c.querySelector('.empty-state')) c.innerHTML = '';
             const tempId = -Date.now() - Math.random() * 1000;
@@ -2812,17 +2931,34 @@
             c.insertAdjacentHTML('beforeend', msgHTML(msgData));
             c.scrollTop = c.scrollHeight;
 
+            isSending = true;
+            const sendBtn = document.getElementById('sendBtn');
+            sendBtn.classList.add('sending');
+            sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+            const payload = {
+                message: txt,
+                replyTo: replyToId || null,
+                tempId: tempId
+            };
+
             if (currentGroupId) {
-                socket.emit('group_message', { groupId: currentGroupId, message: txt, replyTo: replyToId || null,
-                    tempId });
+                socket.emit('group_message', { groupId: currentGroupId, ...payload });
             } else if (currentFriendId) {
-                socket.emit('private_message', { to: currentFriendId, message: txt, replyTo: replyToId || null,
-                    tempId });
-            } else { toast('No conversation selected', 'error'); return; }
+                socket.emit('private_message', { to: currentFriendId, ...payload });
+            }
+
             ta.value = '';
             updateChar();
             replyToId = null;
             document.getElementById('replyPreview').classList.remove('visible');
+
+            // Reset send button after a delay
+            setTimeout(() => {
+                isSending = false;
+                sendBtn.classList.remove('sending');
+                sendBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Send';
+            }, 500);
         }
 
         document.getElementById('sendBtn').addEventListener('click', sendMsg);
@@ -2836,7 +2972,7 @@
                 socket.emit('typing', { to: currentFriendId, isTyping: true });
                 clearTimeout(typingTimeout);
                 typingTimeout = setTimeout(() => socket.emit('typing', { to: currentFriendId, isTyping: false }),
-                1000);
+                    1000);
             }
         });
 
@@ -3086,7 +3222,12 @@
                 };
                 replacement.innerHTML = msgHTML(data);
                 const newEl = replacement.firstElementChild;
-                if (newEl) parent.replaceChild(newEl, el);
+                if (newEl) {
+                    parent.replaceChild(newEl, el);
+                    // Trigger a reflow for animation
+                    newEl.style.animation = 'none';
+                    requestAnimationFrame(() => newEl.style.animation = '');
+                }
             }
         }
 
