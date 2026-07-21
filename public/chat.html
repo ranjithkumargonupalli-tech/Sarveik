@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-    <title>Sarveik Chat Pro – Secure Messaging</title>
+    <title>Sarveik Chat – Instant Messaging</title>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <style>
@@ -154,7 +154,6 @@
             scroll-behavior: smooth;
         }
 
-        /* ===== APP ===== */
         .app {
             display: flex;
             height: 100vh;
@@ -163,7 +162,6 @@
             position: relative;
         }
 
-        /* Ambient glow */
         .app::before,
         .app::after {
             content: '';
@@ -336,7 +334,6 @@
             transform: scale(1.08);
         }
 
-        /* Search */
         .search-wrap {
             padding: 10px 14px;
             border-bottom: 1px solid var(--border);
@@ -373,7 +370,6 @@
             color: var(--text3);
         }
 
-        /* Tabs */
         .tab-bar {
             display: flex;
             padding: 8px 12px 0;
@@ -412,7 +408,6 @@
             display: inline-block;
         }
 
-        /* Lists */
         .list-area {
             flex: 1;
             overflow-y: auto;
@@ -554,7 +549,6 @@
             flex-shrink: 0;
         }
 
-        /* Requests */
         .req-item {
             display: flex;
             align-items: center;
@@ -643,7 +637,6 @@
             min-width: 0;
         }
 
-        /* Chat header */
         .chat-header {
             display: flex;
             align-items: center;
@@ -768,14 +761,14 @@
             animation: none;
         }
 
-        /* Messages area */
+        /* ===== MESSAGES AREA ===== */
         .messages-area {
             flex: 1;
             overflow-y: auto;
             padding: 16px 20px;
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            gap: 4px;
             scroll-behavior: smooth;
         }
         .messages-area::-webkit-scrollbar {
@@ -789,7 +782,6 @@
             border-radius: 4px;
         }
 
-        /* Empty state */
         .empty-state {
             flex: 1;
             display: flex;
@@ -833,30 +825,11 @@
             font-size: 0.8rem;
         }
 
-        /* Date divider */
-        .date-divider {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin: 4px 0 8px;
-            color: var(--text3);
-            font-size: 0.65rem;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-        }
-        .date-divider::before,
-        .date-divider::after {
-            content: '';
-            flex: 1;
-            height: 1px;
-            background: var(--border);
-        }
-
         /* ===== MESSAGES ===== */
         .msg {
             display: flex;
             flex-direction: column;
-            max-width: 78%;
+            max-width: 82%;
             animation: msgIn 0.3s cubic-bezier(.34, 1.56, .64, 1);
             position: relative;
         }
@@ -988,6 +961,7 @@
             font-size: 0.6rem;
             color: var(--text3);
             font-family: var(--mono);
+            font-weight: 500;
         }
         .msg-status {
             font-size: 0.55rem;
@@ -1001,35 +975,6 @@
         }
         .msg-status .fa-clock {
             color: var(--gold);
-        }
-
-        /* Expiry timer */
-        .expiry-timer {
-            font-size: 0.55rem;
-            color: var(--text3);
-            font-family: var(--mono);
-            display: inline-flex;
-            align-items: center;
-            gap: 3px;
-        }
-        .expiry-timer .fa-hourglass-half {
-            color: var(--gold);
-        }
-        .expiry-timer.warning {
-            color: var(--gold);
-        }
-        .expiry-timer.danger {
-            color: var(--red);
-            animation: pulse 1s infinite;
-        }
-        @keyframes pulse {
-            0%,
-            100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.4;
-            }
         }
 
         /* Message actions (hover) */
@@ -1417,7 +1362,7 @@
             box-shadow: none;
         }
 
-        /* File upload progress */
+        /* Upload progress */
         .upload-progress {
             display: none;
             align-items: center;
@@ -1450,7 +1395,7 @@
             white-space: nowrap;
         }
 
-        /* ===== DROP ZONE ===== */
+        /* Drop zone */
         .drop-zone {
             display: none;
             position: absolute;
@@ -1778,7 +1723,6 @@
             }
         }
 
-        /* ===== PINNED BADGE ===== */
         .pinned-badge {
             display: inline-block;
             background: var(--gold);
@@ -1790,7 +1734,6 @@
             margin-right: 4px;
         }
 
-        /* ===== SCROLLBAR GLOBAL ===== */
         ::-webkit-scrollbar {
             width: 4px;
             height: 4px;
@@ -2078,18 +2021,34 @@
             return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         }
 
-        function fmtTime(d) {
-            const now = new Date(),
-                dt = new Date(d);
-            const diff = now - dt;
-            const m = Math.floor(diff / 60000);
-            if (m < 1) return 'just now';
-            if (m < 60) return m + 'm ago';
-            const h = Math.floor(m / 60);
-            if (h < 24) return h + 'h ago';
-            return Math.floor(h / 24) + 'd ago';
+        // ============================================================
+        //  INSTAGRAM-STYLE TIME FORMATTING
+        // ============================================================
+        function timeAgo(date) {
+            const now = Date.now();
+            const ts = new Date(date).getTime();
+            const diff = now - ts;
+            if (diff < 0) return 'Just now';
+            const seconds = Math.floor(diff / 1000);
+            if (seconds < 5) return 'Just now';
+            if (seconds < 60) return seconds + 's';
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) return minutes + 'm';
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) return hours + 'h';
+            const days = Math.floor(hours / 24);
+            if (days < 7) return days + 'd';
+            const weeks = Math.floor(days / 7);
+            if (weeks < 4) return weeks + 'w';
+            const months = Math.floor(days / 30);
+            if (months < 12) return months + 'mo';
+            const years = Math.floor(days / 365);
+            return years + 'y';
         }
 
+        // ============================================================
+        //  SOUND
+        // ============================================================
         function sound() {
             if (!soundOn) return;
             try {
@@ -2311,7 +2270,6 @@
             await loadMsgs(id, true);
             markRead(id);
             closeMobile();
-            // Start expiry checker
             startExpiryChecker();
         }
 
@@ -2339,7 +2297,7 @@
         }
 
         // ============================================================
-        //  EXPIRY (24h auto-delete)
+        //  EXPIRY (24h auto-delete) — background only, no timer display
         // ============================================================
         function startExpiryChecker() {
             if (expireInterval) clearInterval(expireInterval);
@@ -2360,31 +2318,6 @@
             }, 30000);
         }
 
-        function getExpiryTime(createdAt) {
-            const dt = new Date(createdAt);
-            const expireAt = new Date(dt.getTime() + EXPIRE_HOURS * 3600 * 1000);
-            return expireAt;
-        }
-
-        function getTimeLeft(createdAt) {
-            const now = Date.now();
-            const ts = new Date(createdAt).getTime();
-            const expire = ts + EXPIRE_HOURS * 3600 * 1000;
-            const left = expire - now;
-            if (left <= 0) return 'expired';
-            const h = Math.floor(left / 3600000);
-            const m = Math.floor((left % 3600000) / 60000);
-            if (h > 0) return `${h}h ${m}m`;
-            return `${m}m`;
-        }
-
-        function renderExpiry(createdAt) {
-            const left = getTimeLeft(createdAt);
-            if (left === 'expired') return `<span class="expiry-timer danger"><i class="fas fa-hourglass-end"></i> expired</span>`;
-            const cls = left.includes('h') ? 'warning' : '';
-            return `<span class="expiry-timer ${cls}"><i class="fas fa-hourglass-half"></i> ${left}</span>`;
-        }
-
         // ============================================================
         //  MESSAGES
         // ============================================================
@@ -2397,6 +2330,7 @@
             const fileHTML = hasFile ? renderFilePreview(msg) : '';
             const ts = new Date(msg.created_at).getTime();
             const replyHTML = msg.replyTo ? renderReplyIndicator(msg.replyTo) : '';
+            const timeStr = timeAgo(msg.created_at);
 
             return `
         <div class="msg ${isMe ? 'out' : 'in'}" data-id="${msg.id}" data-timestamp="${ts}" ${pending ? `data-temp="${msg.id}"` : ''}>
@@ -2420,9 +2354,8 @@
             ${fileHTML}
           </div>
           <div class="msg-meta">
-            <span class="msg-time">${fmtTime(msg.created_at)}</span>
-            ${renderExpiry(msg.created_at)}
-            ${pending ? '<span class="msg-status"><i class="fas fa-clock"></i> sending…</span>' :
+            <span class="msg-time">${timeStr}</span>
+            ${pending ? '<span class="msg-status"><i class="fas fa-clock"></i></span>' :
               isMe ? `<span class="msg-status"><i class="fas fa-check-circle"></i></span>` : ''}
           </div>
           ${renderReactions(msg.id)}
@@ -2442,7 +2375,7 @@
             const sizeStr = fs > 0 ? (fs / 1024).toFixed(0) + 'KB' : '';
 
             if (ft.startsWith('image/')) {
-                return `<div class="msg-file" onclick="window.open('${fd}','_blank')"><img src="${fd}" alt="${esc(fn)}" loading="lazy" /></div>`;
+                return `<div class="msg-file" onclick="window.open('${fd}','_blank')"><img src="${fd}" alt="${esc(fn)}" loading="lazy" onerror="this.style.display='none'" /></div>`;
             }
             if (ft.startsWith('video/')) {
                 return `<div class="msg-file"><video src="${fd}" controls preload="metadata" style="max-height:200px;"></video></div>`;
@@ -2498,7 +2431,6 @@
                 [...msgs].reverse().forEach(m => c.insertAdjacentHTML('beforeend', msgHTML(m)));
                 if (reset) c.scrollTop = c.scrollHeight;
                 msgOffset += msgs.length;
-                // Load reactions and pins from localStorage
                 loadReactionsFromStorage();
                 loadPinsFromStorage();
             } catch (e) {
@@ -2559,7 +2491,6 @@
                 messageReactions[msgId][emoji].push(currentUserId);
             }
             saveReactions();
-            // Re-render the message
             const el = document.querySelector(`.msg[data-id="${msgId}"]`);
             if (el) {
                 const parent = el.parentNode;
@@ -2595,7 +2526,6 @@
                 toast('Unpinned', 'info'); } else { pinnedMessages.push(msgId);
                 toast('📌 Pinned!', 'success'); }
             savePins();
-            // Re-render
             const el = document.querySelector(`.msg[data-id="${msgId}"]`);
             if (el) {
                 const parent = el.parentNode;
@@ -2709,31 +2639,75 @@
         }
 
         // ============================================================
-        //  FILE HANDLING
+        //  FILE HANDLING with image compression
         // ============================================================
-        function handleFiles(files) {
+        function compressImage(file, maxWidth = 800, quality = 0.7) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        let w = img.width,
+                            h = img.height;
+                        if (w > maxWidth) { h = (maxWidth / w) * h;
+                            w = maxWidth; }
+                        canvas.width = w;
+                        canvas.height = h;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, w, h);
+                        const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                        resolve(dataUrl);
+                    };
+                    img.onerror = reject;
+                    img.src = e.target.result;
+                };
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function handleFiles(files) {
             if (!files.length) return;
             const ta = document.getElementById('msgInput');
             const c = document.getElementById('messagesArea');
             if (c.querySelector('.empty-state')) c.innerHTML = '';
 
-            [...files].forEach(file => {
-                const reader = new FileReader();
+            for (const file of files) {
                 const progress = document.getElementById('uploadProgress');
                 const bar = document.getElementById('uploadBar');
                 const label = document.getElementById('uploadLabel');
                 progress.classList.add('visible');
-                label.textContent = `Uploading ${file.name}…`;
+                label.textContent = `Processing ${file.name}…`;
 
-                reader.onprogress = (e) => {
-                    if (e.total) {
-                        const pct = Math.round((e.loaded / e.total) * 100);
-                        bar.style.width = pct + '%';
+                try {
+                    let dataUrl;
+                    const isImage = file.type.startsWith('image/');
+                    const isVideo = file.type.startsWith('video/');
+                    const isLarge = file.size > 2 * 1024 * 1024;
+
+                    if (isImage && isLarge) {
+                        // Compress large images
+                        dataUrl = await compressImage(file, 800, 0.7);
+                        label.textContent = `Compressed ${file.name}`;
+                    } else if (isImage) {
+                        // Small image, read directly
+                        dataUrl = await new Promise((resolve, reject) => {
+                            const r = new FileReader();
+                            r.onload = () => resolve(r.result);
+                            r.onerror = reject;
+                            r.readAsDataURL(file);
+                        });
+                    } else {
+                        // Non-image: read as data URL
+                        dataUrl = await new Promise((resolve, reject) => {
+                            const r = new FileReader();
+                            r.onload = () => resolve(r.result);
+                            r.onerror = reject;
+                            r.readAsDataURL(file);
+                        });
                     }
-                };
 
-                reader.onload = async (e) => {
-                    const dataUrl = e.target.result;
                     const tempId = -Date.now() - Math.random() * 1000;
                     const msgData = {
                         id: tempId,
@@ -2772,18 +2746,18 @@
                             null, tempId });
                     } else { toast('No conversation selected', 'error'); }
 
+                    bar.style.width = '100%';
+                    setTimeout(() => bar.style.width = '0%', 500);
                     progress.classList.remove('visible');
-                    bar.style.width = '0%';
                     replyToId = null;
                     document.getElementById('replyPreview').classList.remove('visible');
-                };
-                reader.onerror = () => {
-                    toast('Failed to read file', 'error');
+
+                } catch (err) {
+                    toast('Error processing file: ' + err.message, 'error');
                     progress.classList.remove('visible');
                     bar.style.width = '0%';
-                };
-                reader.readAsDataURL(file);
-            });
+                }
+            }
         }
 
         // File input
@@ -2833,7 +2807,7 @@
                 created_at: new Date().toISOString(),
                 is_boosted: false,
                 replyTo: replyToId ? { id: replyToId, content: document.querySelector(`.msg[data-id="${replyToId}"]`)
-                    ?.querySelector('.msg-bubble')?.textContent?.trim() || 'media' } : null
+                        ?.querySelector('.msg-bubble')?.textContent?.trim() || 'media' } : null
             };
             c.insertAdjacentHTML('beforeend', msgHTML(msgData));
             c.scrollTop = c.scrollHeight;
@@ -3182,7 +3156,6 @@
                 gi = p.get('group');
             if (fi && !isNaN(+fi)) selectFriend(+fi);
             else if (gi && !isNaN(+gi)) selectGroup(+gi);
-            // Load stored reactions & pins
             loadReactionsFromStorage();
             loadPinsFromStorage();
         })();
