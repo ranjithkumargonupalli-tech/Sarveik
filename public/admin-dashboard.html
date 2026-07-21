@@ -681,7 +681,7 @@
             }
         }
 
-        /* ===== AUTH PROTECTION OVERLAY ===== */
+        /* ===== AUTH GUARD OVERLAY ===== */
         #authGuard {
             position: fixed;
             top: 0;
@@ -837,11 +837,17 @@
             color: #00d4ff;
             font-size: 1rem;
         }
+        .perm-yes {
+            color: #10b981;
+        }
+        .perm-no {
+            color: #ef4444;
+        }
     </style>
 </head>
 <body>
 
-    <!-- ===== AUTHENTICATION GUARD ===== -->
+    <!-- ===== AUTH GUARD ===== -->
     <div id="authGuard">
         <div class="spinner"></div>
         <p>🔐 Verifying admin access...</p>
@@ -1132,37 +1138,52 @@
         // ============================================================
         // HELPER: Toast notification
         // ============================================================
-        function showToast(msg, type = 'success') {
-            document.querySelectorAll('.toast').forEach(t => t.remove());
-            const t = document.createElement('div');
-            t.className = `toast ${type}`;
+        function showToast(msg, type) {
+            type = type || 'success';
+            document.querySelectorAll('.toast').forEach(function(t) { t.remove(); });
+            var t = document.createElement('div');
+            t.className = 'toast ' + type;
             t.textContent = msg;
             document.body.appendChild(t);
-            setTimeout(() => t.remove(), 4000);
+            setTimeout(function() { t.remove(); }, 4000);
         }
 
         // ============================================================
         // HELPER: API call with built-in auth error handling
         // ============================================================
-        async function apiCall(url, options = {}) {
+        async function apiCall(url, options) {
+            options = options || {};
             try {
-                const fetchOptions = { ...options, credentials: 'include' };
+                var fetchOptions = { credentials: 'include' };
+                for (var key in options) {
+                    if (options.hasOwnProperty(key)) fetchOptions[key] = options[key];
+                }
                 if (options.body && typeof options.body === 'object' && !(options.body instanceof FormData)) {
                     fetchOptions.body = JSON.stringify(options.body);
-                    fetchOptions.headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+                    fetchOptions.headers = { 'Content-Type': 'application/json' };
+                    if (options.headers) {
+                        for (var h in options.headers) {
+                            if (options.headers.hasOwnProperty(h)) fetchOptions.headers[h] = options.headers[h];
+                        }
+                    }
                 } else if (options.body && typeof options.body === 'string') {
-                    fetchOptions.headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+                    fetchOptions.headers = { 'Content-Type': 'application/json' };
+                    if (options.headers) {
+                        for (var h2 in options.headers) {
+                            if (options.headers.hasOwnProperty(h2)) fetchOptions.headers[h2] = options.headers[h2];
+                        }
+                    }
                 }
-                const res = await fetch(url, fetchOptions);
+                var res = await fetch(url, fetchOptions);
                 if (res.status === 401 || res.status === 403) {
                     throw new Error('UNAUTHORIZED');
                 }
                 if (!res.ok) {
-                    let errText;
-                    try { errText = await res.text(); } catch { errText = `HTTP ${res.status}`; }
-                    throw new Error(errText || `HTTP ${res.status}`);
+                    var errText;
+                    try { errText = await res.text(); } catch (e) { errText = 'HTTP ' + res.status; }
+                    throw new Error(errText || 'HTTP ' + res.status);
                 }
-                const ct = res.headers.get('content-type') || '';
+                var ct = res.headers.get('content-type') || '';
                 return ct.includes('application/json') ? res.json() : res.text();
             } catch (e) {
                 if (e.message === 'UNAUTHORIZED') throw new Error('UNAUTHORIZED');
@@ -1172,11 +1193,13 @@
 
         function escapeHtml(s) {
             if (s === null || s === undefined) return '';
-            return String(s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[
-            m]));
+            return String(s).replace(/[&<>"']/g, function(m) {
+                var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+                return map[m];
+            });
         }
 
-        const categoryMap = {
+        var categoryMap = {
             study: { icon: '📚', name: 'Study Tools' },
             ai: { icon: '🤖', name: 'AI Tools' },
             writing: { icon: '✍️', name: 'Writing Tools' },
@@ -1185,1162 +1208,1362 @@
         };
 
         // ============================================================
-        // MAIN ADMIN DASHBOARD CLASS (Optimized + Protected)
+        // MAIN ADMIN DASHBOARD CLASS
         // ============================================================
-        class AdminDashboard {
-            constructor() {
-                this.allUsers = [];
-                this.filteredUsers = [];
-                this.selectedUsers = new Set();
-                this.allTools = [];
-                this.pendingTools = [];
-                this.selectedPending = new Set();
-                this.allFeedback = [];
-                this.allCards = [];
-                this.filteredCards = [];
-                this.notifications = [];
-                this.auditLog = [];
-                this.apiKeys = [];
-                this.userNotes = {};
-                this.currentUser = null;
-                this.authenticated = false;
+        function AdminDashboard() {
+            var self = this;
 
-                // DOM refs
-                this.authGuard = document.getElementById('authGuard');
-                this.authError = document.getElementById('authError');
-                this.authRetryBtn = document.getElementById('authRetryBtn');
-                this.mainNavbar = document.getElementById('mainNavbar');
-                this.mainContent = document.getElementById('mainContent');
-                this.disclaimer = document.getElementById('disclaimer');
+            // Data stores
+            this.allUsers = [];
+            this.filteredUsers = [];
+            this.selectedUsers = new Set();
+            this.allTools = [];
+            this.pendingTools = [];
+            this.selectedPending = new Set();
+            this.allFeedback = [];
+            this.allCards = [];
+            this.filteredCards = [];
+            this.notifications = [];
+            this.auditLog = [];
+            this.apiKeys = [];
+            this.userNotes = {};
+            this.currentUser = null;
+            this.authenticated = false;
+            this.leaderboardData = [];
 
-                // Bind auth retry
-                this.authRetryBtn.addEventListener('click', () => this.init());
+            // DOM refs
+            this.authGuard = document.getElementById('authGuard');
+            this.authError = document.getElementById('authError');
+            this.authRetryBtn = document.getElementById('authRetryBtn');
+            this.mainNavbar = document.getElementById('mainNavbar');
+            this.mainContent = document.getElementById('mainContent');
+            this.disclaimer = document.getElementById('disclaimer');
 
-                // Start
-                this.init();
-            }
+            // Bind auth retry
+            this.authRetryBtn.addEventListener('click', function() { self.init(); });
 
-            // ============================================================
-            // AUTHENTICATION — FAST & PROTECTED
-            // ============================================================
-            async init() {
-                // Show guard, hide content
-                this.authGuard.classList.remove('hidden');
-                this.authError.classList.remove('show');
-                this.authRetryBtn.classList.remove('show');
-                this.mainNavbar.style.display = 'none';
-                this.mainContent.style.display = 'none';
-                this.disclaimer.style.display = 'none';
+            // Start
+            this.init();
+        }
 
-                try {
-                    // 1. First, check session validity (fast)
-                    const sessionCheck = await fetch('/check-session', { credentials: 'include' });
-                    if (!sessionCheck.ok) {
-                        throw new Error('UNAUTHORIZED');
-                    }
-                    const sessionData = await sessionCheck.json();
-                    if (!sessionData.loggedIn) {
-                        throw new Error('UNAUTHORIZED');
-                    }
+        // ============================================================
+        // AUTHENTICATION — FAST & PROTECTED
+        // ============================================================
+        AdminDashboard.prototype.init = function() {
+            var self = this;
 
-                    // 2. Fetch profile to verify admin role
-                    const profile = await apiCall('/profile');
-                    if (profile.role !== 'admin') {
-                        throw new Error('FORBIDDEN');
-                    }
+            // Show guard, hide content
+            this.authGuard.classList.remove('hidden');
+            this.authError.classList.remove('show');
+            this.authRetryBtn.classList.remove('show');
+            this.mainNavbar.style.display = 'none';
+            this.mainContent.style.display = 'none';
+            this.disclaimer.style.display = 'none';
 
-                    this.currentUser = profile;
-                    this.authenticated = true;
-
+            // STEP 1: Check session FAST
+            fetch('/check-session', { credentials: 'include' })
+                .then(function(res) {
+                    if (!res.ok) throw new Error('UNAUTHORIZED');
+                    return res.json();
+                })
+                .then(function(data) {
+                    if (!data.loggedIn) throw new Error('UNAUTHORIZED');
+                    // STEP 2: Fetch profile to verify admin
+                    return apiCall('/profile');
+                })
+                .then(function(profile) {
+                    if (profile.role !== 'admin') throw new Error('FORBIDDEN');
+                    self.currentUser = profile;
+                    self.authenticated = true;
                     // Hide guard, show content
-                    this.authGuard.classList.add('hidden');
-                    this.mainNavbar.style.display = 'flex';
-                    this.mainContent.style.display = 'block';
-                    this.disclaimer.style.display = 'block';
-
-                    // 3. Load all data in parallel for speed
-                    await this.loadAllData();
-
-                    // 4. Bind events and render
-                    this.bindEvents();
-                    this.initTabs();
-                    this.initDarkMode();
-                    this.initGlobalSearch();
-                    this.initHamburgerMenu();
-                    this.initBackToTop();
-                    this.renderPermissionsMatrix();
-
-                    // 5. Start auto-refresh for stats
-                    setInterval(() => {
-                        if (this.authenticated) {
-                            this.loadStats();
-                            this.loadAdminActivity();
+                    self.authGuard.classList.add('hidden');
+                    self.mainNavbar.style.display = 'flex';
+                    self.mainContent.style.display = 'block';
+                    self.disclaimer.style.display = 'block';
+                    // Load all data in parallel
+                    return self.loadAllData();
+                })
+                .then(function() {
+                    self.bindEvents();
+                    self.initTabs();
+                    self.initDarkMode();
+                    self.initGlobalSearch();
+                    self.initHamburgerMenu();
+                    self.initBackToTop();
+                    self.renderPermissionsMatrix();
+                    // Auto-refresh stats every 60s
+                    setInterval(function() {
+                        if (self.authenticated) {
+                            self.loadStats();
+                            self.loadAdminActivity();
                         }
                     }, 60000);
-
-                } catch (err) {
+                })
+                .catch(function(err) {
                     console.error('Auth error:', err.message);
                     if (err.message === 'UNAUTHORIZED') {
-                        this.authError.textContent = '⚠️ Session expired. Please log in again.';
-                        this.authError.classList.add('show');
-                        this.authRetryBtn.classList.add('show');
-                        this.authRetryBtn.textContent = '↻ Log in';
-                        this.authRetryBtn.onclick = () => { window.location.href = '/login.html'; };
+                        self.authError.textContent = '⚠️ Session expired. Please log in again.';
+                        self.authError.classList.add('show');
+                        self.authRetryBtn.classList.add('show');
+                        self.authRetryBtn.textContent = '↻ Log in';
+                        self.authRetryBtn.onclick = function() { window.location.href = '/login.html'; };
                     } else if (err.message === 'FORBIDDEN') {
-                        this.authError.textContent = '⛔ Admin access required. You do not have permission.';
-                        this.authError.classList.add('show');
-                        this.authRetryBtn.classList.add('show');
-                        this.authRetryBtn.textContent = '↻ Go to Dashboard';
-                        this.authRetryBtn.onclick = () => { window.location.href = '/dashboard.html'; };
+                        self.authError.textContent = '⛔ Admin access required. You do not have permission.';
+                        self.authError.classList.add('show');
+                        self.authRetryBtn.classList.add('show');
+                        self.authRetryBtn.textContent = '↻ Go to Dashboard';
+                        self.authRetryBtn.onclick = function() { window.location.href = '/dashboard.html'; };
                     } else {
-                        this.authError.textContent = '❌ Failed to authenticate: ' + err.message;
-                        this.authError.classList.add('show');
-                        this.authRetryBtn.classList.add('show');
-                        this.authRetryBtn.textContent = '↻ Retry';
-                        this.authRetryBtn.onclick = () => this.init();
+                        self.authError.textContent = '❌ Failed to authenticate: ' + err.message;
+                        self.authError.classList.add('show');
+                        self.authRetryBtn.classList.add('show');
+                        self.authRetryBtn.textContent = '↻ Retry';
+                        self.authRetryBtn.onclick = function() { self.init(); };
                     }
-                }
-            }
+                });
+        };
 
-            // ============================================================
-            // LOAD ALL DATA IN PARALLEL (FAST)
-            // ============================================================
-            async loadAllData() {
-                const start = performance.now();
-                try {
-                    const results = await Promise.allSettled([
-                        this.loadStats(),
-                        this.loadUsersData(),
-                        this.loadToolsData(),
-                        this.loadPendingToolsData(),
-                        this.loadCardsData(),
-                        this.loadFeedbackData(),
-                        this.loadAdminActivity(),
-                        this.loadAuditLog(),
-                        this.loadApiKeysData(),
-                        this.loadLeaderboardData()
-                    ]);
+        // ============================================================
+        // LOAD ALL DATA IN PARALLEL (ULTRA FAST)
+        // ============================================================
+        AdminDashboard.prototype.loadAllData = function() {
+            var self = this;
+            var start = performance.now();
 
-                    // Check if any critical data failed
-                    const failures = results.filter(r => r.status === 'rejected');
-                    if (failures.length) {
-                        console.warn('Some data failed to load:', failures.map(f => f.reason?.message || 'unknown'));
-                    }
+            return Promise.allSettled([
+                this.loadStats(),
+                this.loadUsersData(),
+                this.loadToolsData(),
+                this.loadPendingToolsData(),
+                this.loadCardsData(),
+                this.loadFeedbackData(),
+                this.loadAdminActivity(),
+                this.loadAuditLog(),
+                this.loadApiKeysData(),
+                this.loadLeaderboardData()
+            ]).then(function() {
+                // Render everything
+                self.filterUsers();
+                self.renderUsersTable();
+                self.renderToolsTable();
+                self.renderPendingTable();
+                self.renderCardsTable();
+                self.renderFeedbackTable();
+                self.renderAuditLog();
+                self.renderApiKeys();
+                self.renderLeaderboard();
+                var elapsed = (performance.now() - start).toFixed(0);
+                console.log('✅ Admin dashboard loaded in ' + elapsed + 'ms');
+            }).catch(function(err) {
+                console.error('Error loading data:', err);
+            });
+        };
 
-                    // Always render whatever we have
-                    this.filterUsers();
-                    this.renderUsersTable();
-                    this.renderToolsTable();
-                    this.renderPendingTable();
-                    this.renderCardsTable();
-                    this.renderFeedbackTable();
-                    this.renderAuditLog();
-                    this.renderApiKeys();
-                    this.renderLeaderboard();
+        // ============================================================
+        // INDIVIDUAL DATA LOADERS (with fallback)
+        // ============================================================
 
-                    const elapsed = (performance.now() - start).toFixed(0);
-                    console.log(`✅ Admin dashboard loaded in ${elapsed}ms`);
+        AdminDashboard.prototype.loadStats = function() {
+            var self = this;
+            return apiCall('/api/admin/analytics').then(function(stats) {
+                document.getElementById('totalUsers').innerText = stats.totalUsers || 0;
+                document.getElementById('activeUsers').innerText = stats.activeUsers || 0;
+                document.getElementById('suspendedUsers').innerText = stats.suspendedUsers || 0;
+                document.getElementById('growthRate').innerText = (stats.growthRate || 0) + '%';
+            }).catch(function() {
+                document.getElementById('totalUsers').innerText = self.allUsers.length || 0;
+                var active = self.allUsers.filter(function(u) { return u.status === 'active'; }).length;
+                document.getElementById('activeUsers').innerText = active || 0;
+                var suspended = self.allUsers.filter(function(u) { return u.status === 'suspended'; }).length;
+                document.getElementById('suspendedUsers').innerText = suspended || 0;
+                document.getElementById('growthRate').innerText = '0%';
+            });
+        };
 
-                } catch (err) {
-                    console.error('Error loading data:', err);
-                    // Still show UI with fallback data
-                }
-            }
-
-            // ============================================================
-            // INDIVIDUAL DATA LOADERS (with fallback)
-            // ============================================================
-
-            async loadStats() {
-                try {
-                    const stats = await apiCall('/api/admin/analytics');
-                    document.getElementById('totalUsers').innerText = stats.totalUsers || 0;
-                    document.getElementById('activeUsers').innerText = stats.activeUsers || 0;
-                    document.getElementById('suspendedUsers').innerText = stats.suspendedUsers || 0;
-                    document.getElementById('growthRate').innerText = (stats.growthRate || 0) + '%';
-                } catch {
-                    // Fallback to dummy stats
-                    document.getElementById('totalUsers').innerText = this.allUsers.length || 0;
-                    const active = this.allUsers.filter(u => u.status === 'active').length;
-                    document.getElementById('activeUsers').innerText = active || 0;
-                    const suspended = this.allUsers.filter(u => u.status === 'suspended').length;
-                    document.getElementById('suspendedUsers').innerText = suspended || 0;
-                    document.getElementById('growthRate').innerText = '0%';
-                }
-            }
-
-            async loadUsersData() {
-                try {
-                    const users = await apiCall('/admin/users');
-                    this.allUsers = users.map(u => ({
-                        ...u,
+        AdminDashboard.prototype.loadUsersData = function() {
+            var self = this;
+            return apiCall('/admin/users').then(function(users) {
+                self.allUsers = users.map(function(u) {
+                    return {
+                        id: u.id,
+                        username: u.username,
+                        email: u.email,
+                        role: u.role,
                         status: u.is_banned ? 'suspended' : 'active',
-                        credits: u.credits ?? 0
-                    }));
-                } catch {
-                    // Fallback
-                    this.allUsers = [
-                        { id: 1, username: 'admin_user', email: 'admin@example.com', role: 'admin', status: 'active',
-                            created_at: new Date().toISOString(), credits: 1000 },
-                        { id: 2, username: 'demo_user', email: 'demo@example.com', role: 'user', status: 'active',
-                            created_at: new Date().toISOString(), credits: 250 },
-                        { id: 3, username: 'mod_user', email: 'mod@example.com', role: 'moderator', status: 'active',
-                            created_at: new Date().toISOString(), credits: 500 },
-                    ];
-                }
-            }
-
-            async loadToolsData() {
-                try {
-                    this.allTools = await apiCall('/api/admin/tools');
-                } catch {
-                    this.allTools = [];
-                }
-            }
-
-            async loadPendingToolsData() {
-                try {
-                    this.pendingTools = await apiCall('/api/admin/tools/pending');
-                } catch {
-                    this.pendingTools = [];
-                }
-            }
-
-            async loadCardsData() {
-                try {
-                    this.allCards = await apiCall('/api/cards');
-                } catch {
-                    this.allCards = [
-                        { id: 1, title: 'AI Assistant', description: 'Smart AI chat', icon: 'fa-robot',
-                            link: '/ai-chat.html', category: 'ai', order: 1 },
-                        { id: 2, title: 'Code Editor', description: 'Write code online', icon: 'fa-code',
-                            link: '/editor.html', category: 'coding', order: 2 }
-                    ];
-                }
-                this.filteredCards = [...this.allCards];
-            }
-
-            async loadFeedbackData() {
-                try {
-                    this.allFeedback = await apiCall('/api/admin/feedback');
-                } catch {
-                    this.allFeedback = [];
-                }
-            }
-
-            async loadAdminActivity() {
-                try {
-                    const activities = await apiCall('/api/admin/activity');
-                    const c = document.getElementById('adminActivityFeed');
-                    if (!activities?.length) {
-                        c.innerHTML = '<div style="text-align:center;padding:1rem;">No recent activity</div>';
-                        return;
-                    }
-                    c.innerHTML = activities.map(act =>
-                        `<div class="activity-item"><div class="activity-icon"><i class="fas ${act.icon || 'fa-bell'}"></i></div><div class="activity-detail"><div class="activity-text">${escapeHtml(act.action)}</div><div class="activity-time">${new Date(act.time).toLocaleString()}</div></div></div>`
-                        ).join('');
-                } catch {}
-            }
-
-            async loadAuditLog() {
-                try {
-                    this.auditLog = await apiCall('/api/admin/audit-log');
-                } catch {
-                    this.auditLog = [];
-                }
-            }
-
-            async loadApiKeysData() {
-                try {
-                    this.apiKeys = await apiCall('/api/admin/api-keys');
-                } catch {
-                    this.apiKeys = [];
-                }
-            }
-
-            async loadLeaderboardData() {
-                try {
-                    const lb = await apiCall('/api/admin/leaderboard');
-                    this.leaderboardData = lb;
-                } catch {
-                    this.leaderboardData = [];
-                }
-            }
-
-            // ============================================================
-            // RENDER FUNCTIONS
-            // ============================================================
-
-            filterUsers() {
-                const search = document.getElementById('searchInput').value.toLowerCase();
-                const role = document.getElementById('roleFilter').value;
-                const status = document.getElementById('statusFilter').value;
-                const sortBy = document.getElementById('sortUsers').value;
-                this.filteredUsers = this.allUsers.filter(u =>
-                    (!search || u.username.toLowerCase().includes(search) || u.email.toLowerCase().includes(search) || u
-                        .id.toString().includes(search)) &&
-                    (!role || u.role === role) &&
-                    (!status || u.status === status)
-                );
-                if (sortBy === 'username') this.filteredUsers.sort((a, b) => a.username.localeCompare(b.username));
-                else if (sortBy === 'created') this.filteredUsers.sort((a, b) => new Date(b.created_at) - new Date(a
-                .created_at));
-                else this.filteredUsers.sort((a, b) => a.id - b.id);
-                this.renderUsersTable();
-            }
-
-            renderUsersTable() {
-                const tbody = document.getElementById('userTableBody');
-                if (!this.filteredUsers.length) {
-                    tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;">No users found</td></tr>';
-                    return;
-                }
-                tbody.innerHTML = this.filteredUsers.map(u => {
-                    const notes = this.userNotes[u.id] || [];
-                    const noteChips = notes.map(n => `<span class="note-chip">${escapeHtml(n)}</span>`).join('');
-                    return `<tr>
-                        <td><input type="checkbox" class="user-checkbox" data-id="${u.id}" ${this.selectedUsers.has(u.id) ? 'checked' : ''}></td>
-                        <td>${u.id}</td>
-                        <td><strong>${escapeHtml(u.username)}</strong></td>
-                        <td>${escapeHtml(u.email)}</td>
-                        <td><span class="status-badge status-${u.role}">${u.role}</span></td>
-                        <td><span class="status-badge status-${u.status}">${u.status}</span></td>
-                        <td style="font-weight:600;color:#fbbf24;"><i class="fas fa-coins"></i> ${u.credits ?? 0}</td>
-                        <td>${noteChips || '<span style="opacity:0.4;font-size:0.75rem;">none</span>'}</td>
-                        <td>${new Date(u.created_at).toLocaleDateString()}</td>
-                        <td>
-                            <button class="btn-small edit-user" data-id="${u.id}"><i class="fas fa-edit"></i></button>
-                            <button class="btn-small toggle-status" data-id="${u.id}"><i class="fas fa-ban"></i></button>
-                            <button class="btn-small btn-danger delete-user" data-id="${u.id}"><i class="fas fa-trash"></i></button>
-                            <button class="btn-small give-credits" data-id="${u.id}"><i class="fas fa-coins"></i></button>
-                            <button class="btn-small add-note-btn" data-id="${u.id}" data-username="${escapeHtml(u.username)}"><i class="fas fa-sticky-note"></i></button>
-                        </td>
-                    </tr>`;
-                }).join('');
-
-                // Bind events
-                document.querySelectorAll('.user-checkbox').forEach(cb => {
-                    cb.addEventListener('change', () => {
-                        const id = parseInt(cb.dataset.id);
-                        if (cb.checked) this.selectedUsers.add(id);
-                        else this.selectedUsers.delete(id);
-                        this.updateSelectAllCheckbox();
-                    });
+                        created_at: u.created_at || new Date().toISOString(),
+                        credits: u.credits || 0
+                    };
                 });
-                document.querySelectorAll('.edit-user').forEach(btn => {
-                    btn.addEventListener('click', () => this.openEditModal(parseInt(btn.dataset.id)));
-                });
-                document.querySelectorAll('.toggle-status').forEach(btn => {
-                    btn.addEventListener('click', () => this.toggleUserStatus(parseInt(btn.dataset.id)));
-                });
-                document.querySelectorAll('.delete-user').forEach(btn => {
-                    btn.addEventListener('click', () => this.deleteUser(parseInt(btn.dataset.id)));
-                });
-                document.querySelectorAll('.give-credits').forEach(btn => {
-                    btn.addEventListener('click', () => this.openGiveCreditsModal(parseInt(btn.dataset.id)));
-                });
-                document.querySelectorAll('.add-note-btn').forEach(btn => {
-                    btn.addEventListener('click', () => this.openUserNotesModal(parseInt(btn.dataset.id), btn.dataset
-                        .username));
-                });
-                this.updateSelectAllCheckbox();
-            }
-
-            updateSelectAllCheckbox() {
-                const all = document.querySelectorAll('.user-checkbox');
-                const allChecked = all.length > 0 && all.length === this.selectedUsers.size;
-                document.getElementById('selectAllHeader').checked = allChecked;
-                document.getElementById('selectAll').checked = allChecked;
-            }
-
-            toggleSelectAll() {
-                const isChecked = document.getElementById('selectAll').checked;
-                document.querySelectorAll('.user-checkbox').forEach(cb => {
-                    cb.checked = isChecked;
-                    const id = parseInt(cb.dataset.id);
-                    if (isChecked) this.selectedUsers.add(id);
-                    else this.selectedUsers.delete(id);
-                });
-                this.updateSelectAllCheckbox();
-            }
-
-            renderToolsTable() {
-                const tbody = document.getElementById('toolsTableBody');
-                const search = document.getElementById('toolSearch').value.toLowerCase();
-                const catFilter = document.getElementById('toolCategoryFilter').value;
-                const approvalFilter = document.getElementById('toolApprovalFilter').value;
-                let filtered = this.allTools.filter(t => {
-                    if (search && !t.name.toLowerCase().includes(search)) return false;
-                    if (catFilter && t.category !== catFilter) return false;
-                    if (approvalFilter !== '' && ((approvalFilter === '1' && !t.approved) || (approvalFilter === '0' &&
-                        t.approved))) return false;
-                    return true;
-                });
-                if (!filtered.length) {
-                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">No tools found</td></tr>';
-                    return;
-                }
-                tbody.innerHTML = filtered.map(t => {
-                    const cat = categoryMap[t.category] || { icon: '📦', name: t.category || 'Uncategorized' };
-                    const isFeatured = t.is_featured === 1 || t.is_featured === true;
-                    return `<tr>
-                        <td>${t.id}</td><td><strong>${escapeHtml(t.name)}</strong></td>
-                        <td><a href="${escapeHtml(t.url)}" target="_blank" style="color:#00d4ff;">${escapeHtml((t.url||'').substring(0,40))}</a></td>
-                        <td>${cat.icon} ${cat.name}</td><td>${escapeHtml(t.submitted_by || 'Admin')}</td>
-                        <td><span class="status-badge ${t.approved ? 'status-active' : 'status-pending'}">${t.approved ? 'Approved' : 'Pending'}</span></td>
-                        <td><button class="featured-toggle-btn ${isFeatured ? 'active' : ''}" data-id="${t.id}" style="background:${isFeatured ? 'rgba(0,212,255,0.3)' : 'rgba(255,255,255,0.1)'};border:1px solid ${isFeatured ? '#00d4ff' : 'rgba(255,255,255,0.2)'};color:${isFeatured ? '#00d4ff' : 'rgba(255,255,255,0.6)'};padding:2px 8px;border-radius:20px;font-size:0.7rem;cursor:pointer;"><i class="fas fa-star"></i> ${isFeatured ? 'Featured' : 'Not Featured'}</button></td>
-                        <td>${t.usage_count || 0}</td>
-                        <td><button class="btn-small edit-tool" data-id="${t.id}"><i class="fas fa-edit"></i></button> <button class="btn-small btn-danger delete-tool" data-id="${t.id}"><i class="fas fa-trash"></i></button></td>
-                    </tr>`;
-                }).join('');
-                document.querySelectorAll('.edit-tool').forEach(btn => {
-                    btn.addEventListener('click', () => this.openToolModal(parseInt(btn.dataset.id)));
-                });
-                document.querySelectorAll('.delete-tool').forEach(btn => {
-                    btn.addEventListener('click', () => this.deleteTool(parseInt(btn.dataset.id)));
-                });
-                document.querySelectorAll('.featured-toggle-btn').forEach(btn => {
-                    btn.addEventListener('click', () => this.toggleFeaturedTool(parseInt(btn.dataset.id)));
-                });
-            }
-
-            renderPendingTable() {
-                const tbody = document.getElementById('pendingTableBody');
-                const search = document.getElementById('pendingSearch').value.toLowerCase();
-                const filtered = this.pendingTools.filter(t => !search || t.name.toLowerCase().includes(search));
-                if (!filtered.length) {
-                    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">No pending tools</td></tr>';
-                    return;
-                }
-                tbody.innerHTML = filtered.map(t => {
-                    const cat = categoryMap[t.category] || { icon: '📦', name: t.category || 'Uncategorized' };
-                    return `<tr>
-                        <td><input type="checkbox" class="pending-checkbox" data-id="${t.id}" ${this.selectedPending.has(t.id) ? 'checked' : ''}></td>
-                        <td>${t.id}</td><td><strong>${escapeHtml(t.name)}</strong></td>
-                        <td><a href="${escapeHtml(t.url)}" target="_blank" style="color:#00d4ff;">${escapeHtml((t.url||'').substring(0,40))}</a></td>
-                        <td>${escapeHtml((t.description||'').substring(0,60))}</td>
-                        <td>${cat.icon} ${cat.name}</td><td>${escapeHtml(t.submitted_by)}</td>
-                        <td>${new Date(t.submitted_at).toLocaleDateString()}</td>
-                        <td>
-                            <button class="btn-small approve-tool" data-id="${t.id}" style="background:#10b981;color:white;"><i class="fas fa-check"></i> Approve</button>
-                            <button class="btn-small reject-tool" data-id="${t.id}" style="background:#ef4444;color:white;"><i class="fas fa-times"></i> Reject</button>
-                        </td>
-                    </tr>`;
-                }).join('');
-                document.querySelectorAll('.approve-tool').forEach(btn => {
-                    btn.addEventListener('click', () => this.approveTool(parseInt(btn.dataset.id)));
-                });
-                document.querySelectorAll('.reject-tool').forEach(btn => {
-                    btn.addEventListener('click', () => this.rejectTool(parseInt(btn.dataset.id)));
-                });
-                document.querySelectorAll('.pending-checkbox').forEach(cb => {
-                    cb.addEventListener('change', () => {
-                        const id = parseInt(cb.dataset.id);
-                        if (cb.checked) this.selectedPending.add(id);
-                        else this.selectedPending.delete(id);
-                    });
-                });
-            }
-
-            renderCardsTable() {
-                const tbody = document.getElementById('cardsTableBody');
-                const search = document.getElementById('cardSearch').value.toLowerCase();
-                const cat = document.getElementById('cardCategoryFilter').value;
-                this.filteredCards = this.allCards.filter(c =>
-                    (!search || c.title.toLowerCase().includes(search)) &&
-                    (!cat || c.category === cat)
-                );
-                if (!this.filteredCards.length) {
-                    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No cards found</td></tr>';
-                    return;
-                }
-                tbody.innerHTML = this.filteredCards.map(c =>
-                    `<tr>
-                        <td>${c.id}</td><td style="font-size:1.5rem;"><i class="fas ${escapeHtml(c.icon)}"></i></td>
-                        <td><strong>${escapeHtml(c.title)}</strong></td><td>${escapeHtml(c.description)}</td>
-                        <td>${escapeHtml(c.category)}</td><td><a href="${escapeHtml(c.link)}" target="_blank" style="color:#00d4ff;">${escapeHtml((c.link||'').substring(0,30))}</a></td>
-                        <td>${c.order}</td>
-                        <td><button class="btn-small edit-card" data-id="${c.id}"><i class="fas fa-edit"></i></button> <button class="btn-small btn-danger delete-card" data-id="${c.id}"><i class="fas fa-trash"></i></button></td>
-                    </tr>`
-                ).join('');
-                document.querySelectorAll('.edit-card').forEach(btn => {
-                    btn.addEventListener('click', () => this.openCardModal(parseInt(btn.dataset.id)));
-                });
-                document.querySelectorAll('.delete-card').forEach(btn => {
-                    btn.addEventListener('click', () => this.deleteCard(parseInt(btn.dataset.id)));
-                });
-            }
-
-            renderFeedbackTable() {
-                const tbody = document.getElementById('feedbackTableBody');
-                const search = document.getElementById('feedbackSearch').value.toLowerCase();
-                const rating = document.getElementById('ratingFilter').value;
-                const filtered = this.allFeedback.filter(f =>
-                    (!search || (f.username + f.email + (f.comment || '')).toLowerCase().includes(search)) &&
-                    (!rating || f.rating == rating)
-                );
-                if (!filtered.length) {
-                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No feedback</td></tr>';
-                    return;
-                }
-                const stars = r => Array.from({ length: 5 }, (_, i) =>
-                    `<i class="${i < r ? 'fas' : 'far'} fa-star" style="color:#fbbf24;"></i>`).join('');
-                tbody.innerHTML = filtered.map(f =>
-                    `<tr><td>${f.id}</td><td><strong>${escapeHtml(f.username)}</strong><br><small>${escapeHtml(f.email)}</small></td>
-                    <td>${stars(f.rating)} (${f.rating})</td><td>${escapeHtml(f.comment) || '<em>No comment</em>'}</td>
-                    <td>${new Date(f.created_at).toLocaleString()}</td></tr>`
-                ).join('');
-            }
-
-            renderAuditLog() {
-                const search = document.getElementById('auditSearch')?.value.toLowerCase() || '';
-                const actionF = document.getElementById('auditActionFilter')?.value || '';
-                const filtered = this.auditLog.filter(e =>
-                    (!search || (e.user + e.detail + e.action).toLowerCase().includes(search)) &&
-                    (!actionF || e.action === actionF)
-                );
-                const iconMap = { login: 'fa-sign-in-alt', ban: 'fa-ban', delete: 'fa-trash', approve: 'fa-check',
-                    credits: 'fa-coins' };
-                document.getElementById('auditLogList').innerHTML = filtered.length ?
-                    filtered.map(e =>
-                        `<div class="activity-item"><div class="activity-icon"><i class="fas ${iconMap[e.action] || 'fa-bell'}"></i></div><div class="activity-detail"><div class="activity-text"><strong>[${e.action.toUpperCase()}]</strong> ${escapeHtml(e.user)} — ${escapeHtml(e.detail)}</div><div class="activity-time">${new Date(e.time).toLocaleString()}</div></div></div>`
-                    ).join('') :
-                    '<div style="padding:1rem;text-align:center;opacity:0.5;">No entries found</div>';
-            }
-
-            renderApiKeys() {
-                const container = document.getElementById('apiKeysList');
-                if (!this.apiKeys.length) {
-                    container.innerHTML = '<div style="padding:1rem;text-align:center;opacity:0.5;">No API keys generated yet.</div>';
-                    return;
-                }
-                container.innerHTML = this.apiKeys.map(k =>
-                    `<div class="activity-item"><div class="activity-icon"><i class="fas fa-key"></i></div><div class="activity-detail"><div class="activity-text"><strong>${escapeHtml(k.name)}</strong> — <span style="font-family:monospace;color:#00d4ff;">${k.key.substring(0,16)}•••••</span> <span class="status-badge ${k.status === 'active' ? 'status-active' : 'status-suspended'}" style="font-size:0.65rem;padding:2px 8px;">${k.status}</span></div><div class="activity-time">Created: ${new Date(k.created_at).toLocaleDateString()}</div></div></div>`
-                ).join('');
-            }
-
-            renderLeaderboard() {
-                const container = document.getElementById('creditLeaderboardList');
-                const sorted = [...this.allUsers].sort((a, b) => (b.credits || 0) - (a.credits || 0));
-                const rank = i => ['🥇', '🥈', '🥉'][i] || `${i + 1}.`;
-                container.innerHTML = sorted.slice(0, 10).map((u, i) =>
-                    `<div class="activity-item"><div class="activity-icon" style="background:rgba(245,158,11,0.2);color:#f59e0b;">${rank(i)}</div><div class="activity-detail"><div class="activity-text"><strong>${escapeHtml(u.username)}</strong> <span class="status-badge status-${u.role}" style="font-size:0.65rem;padding:2px 8px;">${u.role}</span></div></div><div style="font-weight:700;color:#fbbf24;"><i class="fas fa-coins"></i> ${u.credits || 0}</div></div>`
-                ).join('');
-            }
-
-            renderPermissionsMatrix() {
-                const perms = [
-                    ['View public tools', true, true, true],
-                    ['Submit tools', true, true, true],
-                    ['Approve/reject tools', false, true, true],
-                    ['Delete tools', false, false, true],
-                    ['View all users', false, true, true],
-                    ['Edit user roles', false, false, true],
-                    ['Ban/suspend users', false, true, true],
-                    ['Give credits', false, false, true],
-                    ['Post announcements', false, true, true],
-                    ['View audit log', false, false, true],
-                    ['Manage API keys', false, false, true],
-                    ['Toggle maintenance', false, false, true]
+            }).catch(function() {
+                self.allUsers = [
+                    { id: 1, username: 'admin_user', email: 'admin@example.com', role: 'admin', status: 'active',
+                        created_at: new Date().toISOString(), credits: 1000 },
+                    { id: 2, username: 'demo_user', email: 'demo@example.com', role: 'user', status: 'active',
+                        created_at: new Date().toISOString(), credits: 250 },
+                    { id: 3, username: 'mod_user', email: 'mod@example.com', role: 'moderator', status: 'active',
+                        created_at: new Date().toISOString(), credits: 500 }
                 ];
-                document.getElementById('permissionsMatrixBody').innerHTML = perms.map(p =>
-                    `<tr><td>${p[0]}</td><td class="${p[1] ? 'perm-yes' : 'perm-no'}" style="color:${p[1] ? '#10b981' : '#ef4444'};">${p[1] ? '✓' : '✗'}</td><td class="${p[2] ? 'perm-yes' : 'perm-no'}" style="color:${p[2] ? '#10b981' : '#ef4444'};">${p[2] ? '✓' : '✗'}</td><td class="${p[3] ? 'perm-yes' : 'perm-no'}" style="color:${p[3] ? '#10b981' : '#ef4444'};">${p[3] ? '✓' : '✗'}</td></tr>`
-                ).join('');
+            });
+        };
+
+        AdminDashboard.prototype.loadToolsData = function() {
+            var self = this;
+            return apiCall('/api/admin/tools').then(function(tools) {
+                self.allTools = tools || [];
+            }).catch(function() {
+                self.allTools = [];
+            });
+        };
+
+        AdminDashboard.prototype.loadPendingToolsData = function() {
+            var self = this;
+            return apiCall('/api/admin/tools/pending').then(function(pending) {
+                self.pendingTools = pending || [];
+            }).catch(function() {
+                self.pendingTools = [];
+            });
+        };
+
+        AdminDashboard.prototype.loadCardsData = function() {
+            var self = this;
+            return apiCall('/api/cards').then(function(cards) {
+                self.allCards = cards || [];
+                self.filteredCards = self.allCards.slice();
+            }).catch(function() {
+                self.allCards = [
+                    { id: 1, title: 'AI Assistant', description: 'Smart AI chat', icon: 'fa-robot',
+                        link: '/ai-chat.html', category: 'ai', order: 1 },
+                    { id: 2, title: 'Code Editor', description: 'Write code online', icon: 'fa-code',
+                        link: '/editor.html', category: 'coding', order: 2 }
+                ];
+                self.filteredCards = self.allCards.slice();
+            });
+        };
+
+        AdminDashboard.prototype.loadFeedbackData = function() {
+            var self = this;
+            return apiCall('/api/admin/feedback').then(function(feedback) {
+                self.allFeedback = feedback || [];
+            }).catch(function() {
+                self.allFeedback = [];
+            });
+        };
+
+        AdminDashboard.prototype.loadAdminActivity = function() {
+            return apiCall('/api/admin/activity').then(function(activities) {
+                var c = document.getElementById('adminActivityFeed');
+                if (!activities || !activities.length) {
+                    c.innerHTML = '<div style="text-align:center;padding:1rem;">No recent activity</div>';
+                    return;
+                }
+                c.innerHTML = activities.map(function(act) {
+                    return '<div class="activity-item"><div class="activity-icon"><i class="fas ' + (act.icon ||
+                        'fa-bell') + '"></i></div><div class="activity-detail"><div class="activity-text">' +
+                        escapeHtml(act.action) + '</div><div class="activity-time">' + new Date(act.time)
+                        .toLocaleString() + '</div></div></div>';
+                }).join('');
+            }).catch(function() {});
+        };
+
+        AdminDashboard.prototype.loadAuditLog = function() {
+            var self = this;
+            return apiCall('/api/admin/audit-log').then(function(log) {
+                self.auditLog = log || [];
+            }).catch(function() {
+                self.auditLog = [];
+            });
+        };
+
+        AdminDashboard.prototype.loadApiKeysData = function() {
+            var self = this;
+            return apiCall('/api/admin/api-keys').then(function(keys) {
+                self.apiKeys = keys || [];
+            }).catch(function() {
+                self.apiKeys = [];
+            });
+        };
+
+        AdminDashboard.prototype.loadLeaderboardData = function() {
+            var self = this;
+            return apiCall('/api/admin/leaderboard').then(function(lb) {
+                self.leaderboardData = lb || [];
+            }).catch(function() {
+                self.leaderboardData = [];
+            });
+        };
+
+        // ============================================================
+        // RENDER FUNCTIONS
+        // ============================================================
+
+        AdminDashboard.prototype.filterUsers = function() {
+            var self = this;
+            var search = document.getElementById('searchInput').value.toLowerCase();
+            var role = document.getElementById('roleFilter').value;
+            var status = document.getElementById('statusFilter').value;
+            var sortBy = document.getElementById('sortUsers').value;
+            this.filteredUsers = this.allUsers.filter(function(u) {
+                var match = true;
+                if (search) {
+                    match = match && (u.username.toLowerCase().includes(search) || u.email.toLowerCase().includes(
+                        search) || u.id.toString().includes(search));
+                }
+                if (role) match = match && (u.role === role);
+                if (status) match = match && (u.status === status);
+                return match;
+            });
+            if (sortBy === 'username') {
+                this.filteredUsers.sort(function(a, b) { return a.username.localeCompare(b.username); });
+            } else if (sortBy === 'created') {
+                this.filteredUsers.sort(function(a, b) { return new Date(b.created_at) - new Date(a.created_at); });
+            } else {
+                this.filteredUsers.sort(function(a, b) { return a.id - b.id; });
             }
+            this.renderUsersTable();
+        };
 
-            // ============================================================
-            // USER ACTIONS
-            // ============================================================
+        AdminDashboard.prototype.renderUsersTable = function() {
+            var self = this;
+            var tbody = document.getElementById('userTableBody');
+            if (!this.filteredUsers.length) {
+                tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;">No users found</td></tr>';
+                return;
+            }
+            tbody.innerHTML = this.filteredUsers.map(function(u) {
+                var notes = self.userNotes[u.id] || [];
+                var noteChips = notes.map(function(n) { return '<span class="note-chip">' + escapeHtml(n) +
+                    '</span>'; }).join('');
+                return '<tr>' +
+                    '<td><input type="checkbox" class="user-checkbox" data-id="' + u.id + '" ' + (self
+                        .selectedUsers.has(u.id) ? 'checked' : '') + '></td>' +
+                    '<td>' + u.id + '</td>' +
+                    '<td><strong>' + escapeHtml(u.username) + '</strong></td>' +
+                    '<td>' + escapeHtml(u.email) + '</td>' +
+                    '<td><span class="status-badge status-' + u.role + '">' + u.role + '</span></td>' +
+                    '<td><span class="status-badge status-' + u.status + '">' + u.status + '</span></td>' +
+                    '<td style="font-weight:600;color:#fbbf24;"><i class="fas fa-coins"></i> ' + (u.credits || 0) +
+                    '</td>' +
+                    '<td>' + (noteChips || '<span style="opacity:0.4;font-size:0.75rem;">none</span>') + '</td>' +
+                    '<td>' + new Date(u.created_at).toLocaleDateString() + '</td>' +
+                    '<td>' +
+                    '<button class="btn-small edit-user" data-id="' + u.id + '"><i class="fas fa-edit"></i></button> ' +
+                    '<button class="btn-small toggle-status" data-id="' + u.id + '"><i class="fas fa-ban"></i></button> ' +
+                    '<button class="btn-small btn-danger delete-user" data-id="' + u.id + '"><i class="fas fa-trash"></i></button> ' +
+                    '<button class="btn-small give-credits" data-id="' + u.id + '"><i class="fas fa-coins"></i></button> ' +
+                    '<button class="btn-small add-note-btn" data-id="' + u.id + '" data-username="' + escapeHtml(u
+                        .username) + '"><i class="fas fa-sticky-note"></i></button>' +
+                    '</td>' +
+                    '</tr>';
+            }).join('');
 
-            async toggleUserStatus(userId) {
-                const user = this.allUsers.find(u => u.id === userId);
+            // Bind events
+            document.querySelectorAll('.user-checkbox').forEach(function(cb) {
+                cb.addEventListener('change', function() {
+                    var id = parseInt(this.dataset.id);
+                    if (this.checked) self.selectedUsers.add(id);
+                    else self.selectedUsers.delete(id);
+                    self.updateSelectAllCheckbox();
+                });
+            });
+            document.querySelectorAll('.edit-user').forEach(function(btn) {
+                btn.addEventListener('click', function() { self.openEditModal(parseInt(this.dataset.id)); });
+            });
+            document.querySelectorAll('.toggle-status').forEach(function(btn) {
+                btn.addEventListener('click', function() { self.toggleUserStatus(parseInt(this.dataset.id)); });
+            });
+            document.querySelectorAll('.delete-user').forEach(function(btn) {
+                btn.addEventListener('click', function() { self.deleteUser(parseInt(this.dataset.id)); });
+            });
+            document.querySelectorAll('.give-credits').forEach(function(btn) {
+                btn.addEventListener('click', function() { self.openGiveCreditsModal(parseInt(this.dataset.id)); });
+            });
+            document.querySelectorAll('.add-note-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    self.openUserNotesModal(parseInt(this.dataset.id), this.dataset.username);
+                });
+            });
+            this.updateSelectAllCheckbox();
+        };
+
+        AdminDashboard.prototype.updateSelectAllCheckbox = function() {
+            var all = document.querySelectorAll('.user-checkbox');
+            var allChecked = all.length > 0 && all.length === this.selectedUsers.size;
+            document.getElementById('selectAllHeader').checked = allChecked;
+            document.getElementById('selectAll').checked = allChecked;
+        };
+
+        AdminDashboard.prototype.toggleSelectAll = function() {
+            var self = this;
+            var isChecked = document.getElementById('selectAll').checked;
+            document.querySelectorAll('.user-checkbox').forEach(function(cb) {
+                cb.checked = isChecked;
+                var id = parseInt(cb.dataset.id);
+                if (isChecked) self.selectedUsers.add(id);
+                else self.selectedUsers.delete(id);
+            });
+            this.updateSelectAllCheckbox();
+        };
+
+        AdminDashboard.prototype.renderToolsTable = function() {
+            var self = this;
+            var tbody = document.getElementById('toolsTableBody');
+            var search = document.getElementById('toolSearch').value.toLowerCase();
+            var catFilter = document.getElementById('toolCategoryFilter').value;
+            var approvalFilter = document.getElementById('toolApprovalFilter').value;
+            var filtered = this.allTools.filter(function(t) {
+                if (search && !t.name.toLowerCase().includes(search)) return false;
+                if (catFilter && t.category !== catFilter) return false;
+                if (approvalFilter !== '' && ((approvalFilter === '1' && !t.approved) || (approvalFilter === '0' &&
+                        t.approved))) return false;
+                return true;
+            });
+            if (!filtered.length) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">No tools found</td></tr>';
+                return;
+            }
+            tbody.innerHTML = filtered.map(function(t) {
+                var cat = categoryMap[t.category] || { icon: '📦', name: t.category || 'Uncategorized' };
+                var isFeatured = t.is_featured === 1 || t.is_featured === true;
+                return '<tr>' +
+                    '<td>' + t.id + '</td>' +
+                    '<td><strong>' + escapeHtml(t.name) + '</strong></td>' +
+                    '<td><a href="' + escapeHtml(t.url) + '" target="_blank" style="color:#00d4ff;">' + escapeHtml((
+                        t.url || '').substring(0, 40)) + '</a></td>' +
+                    '<td>' + cat.icon + ' ' + cat.name + '</td>' +
+                    '<td>' + escapeHtml(t.submitted_by || 'Admin') + '</td>' +
+                    '<td><span class="status-badge ' + (t.approved ? 'status-active' : 'status-pending') + '">' + (t
+                        .approved ? 'Approved' : 'Pending') + '</span></td>' +
+                    '<td><button class="featured-toggle-btn ' + (isFeatured ? 'active' : '') + '" data-id="' + t.id +
+                    '" style="background:' + (isFeatured ? 'rgba(0,212,255,0.3)' :
+                        'rgba(255,255,255,0.1)') + ';border:1px solid ' + (isFeatured ? '#00d4ff' :
+                        'rgba(255,255,255,0.2)') + ';color:' + (isFeatured ? '#00d4ff' :
+                        'rgba(255,255,255,0.6)') + ';padding:2px 8px;border-radius:20px;font-size:0.7rem;cursor:pointer;"><i class="fas fa-star"></i> ' +
+                    (isFeatured ? 'Featured' : 'Not Featured') + '</button></td>' +
+                    '<td>' + (t.usage_count || 0) + '</td>' +
+                    '<td><button class="btn-small edit-tool" data-id="' + t.id + '"><i class="fas fa-edit"></i></button> <button class="btn-small btn-danger delete-tool" data-id="' +
+                    t.id + '"><i class="fas fa-trash"></i></button></td>' +
+                    '</tr>';
+            }).join('');
+            document.querySelectorAll('.edit-tool').forEach(function(btn) {
+                btn.addEventListener('click', function() { self.openToolModal(parseInt(this.dataset.id)); });
+            });
+            document.querySelectorAll('.delete-tool').forEach(function(btn) {
+                btn.addEventListener('click', function() { self.deleteTool(parseInt(this.dataset.id)); });
+            });
+            document.querySelectorAll('.featured-toggle-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() { self.toggleFeaturedTool(parseInt(this.dataset.id)); });
+            });
+        };
+
+        AdminDashboard.prototype.renderPendingTable = function() {
+            var self = this;
+            var tbody = document.getElementById('pendingTableBody');
+            var search = document.getElementById('pendingSearch').value.toLowerCase();
+            var filtered = this.pendingTools.filter(function(t) { return !search || t.name.toLowerCase().includes(search); });
+            if (!filtered.length) {
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;">No pending tools</td></tr>';
+                return;
+            }
+            tbody.innerHTML = filtered.map(function(t) {
+                var cat = categoryMap[t.category] || { icon: '📦', name: t.category || 'Uncategorized' };
+                return '<tr>' +
+                    '<td><input type="checkbox" class="pending-checkbox" data-id="' + t.id + '" ' + (self
+                        .selectedPending.has(t.id) ? 'checked' : '') + '></td>' +
+                    '<td>' + t.id + '</td>' +
+                    '<td><strong>' + escapeHtml(t.name) + '</strong></td>' +
+                    '<td><a href="' + escapeHtml(t.url) + '" target="_blank" style="color:#00d4ff;">' + escapeHtml((
+                        t.url || '').substring(0, 40)) + '</a></td>' +
+                    '<td>' + escapeHtml((t.description || '').substring(0, 60)) + '</td>' +
+                    '<td>' + cat.icon + ' ' + cat.name + '</td>' +
+                    '<td>' + escapeHtml(t.submitted_by) + '</td>' +
+                    '<td>' + new Date(t.submitted_at).toLocaleDateString() + '</td>' +
+                    '<td><button class="btn-small approve-tool" data-id="' + t.id +
+                    '" style="background:#10b981;color:white;"><i class="fas fa-check"></i> Approve</button> <button class="btn-small reject-tool" data-id="' +
+                    t.id + '" style="background:#ef4444;color:white;"><i class="fas fa-times"></i> Reject</button></td>' +
+                    '</tr>';
+            }).join('');
+            document.querySelectorAll('.approve-tool').forEach(function(btn) {
+                btn.addEventListener('click', function() { self.approveTool(parseInt(this.dataset.id)); });
+            });
+            document.querySelectorAll('.reject-tool').forEach(function(btn) {
+                btn.addEventListener('click', function() { self.rejectTool(parseInt(this.dataset.id)); });
+            });
+            document.querySelectorAll('.pending-checkbox').forEach(function(cb) {
+                cb.addEventListener('change', function() {
+                    var id = parseInt(this.dataset.id);
+                    if (this.checked) self.selectedPending.add(id);
+                    else self.selectedPending.delete(id);
+                });
+            });
+        };
+
+        AdminDashboard.prototype.renderCardsTable = function() {
+            var self = this;
+            var tbody = document.getElementById('cardsTableBody');
+            var search = document.getElementById('cardSearch').value.toLowerCase();
+            var cat = document.getElementById('cardCategoryFilter').value;
+            this.filteredCards = this.allCards.filter(function(c) {
+                var match = true;
+                if (search) match = match && c.title.toLowerCase().includes(search);
+                if (cat) match = match && c.category === cat;
+                return match;
+            });
+            if (!this.filteredCards.length) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;">No cards found</td></tr>';
+                return;
+            }
+            tbody.innerHTML = this.filteredCards.map(function(c) {
+                return '<tr>' +
+                    '<td>' + c.id + '</td>' +
+                    '<td style="font-size:1.5rem;"><i class="fas ' + escapeHtml(c.icon) + '"></i></td>' +
+                    '<td><strong>' + escapeHtml(c.title) + '</strong></td>' +
+                    '<td>' + escapeHtml(c.description) + '</td>' +
+                    '<td>' + escapeHtml(c.category) + '</td>' +
+                    '<td><a href="' + escapeHtml(c.link) + '" target="_blank" style="color:#00d4ff;">' + escapeHtml((
+                        c.link || '').substring(0, 30)) + '</a></td>' +
+                    '<td>' + c.order + '</td>' +
+                    '<td><button class="btn-small edit-card" data-id="' + c.id +
+                    '"><i class="fas fa-edit"></i></button> <button class="btn-small btn-danger delete-card" data-id="' +
+                    c.id + '"><i class="fas fa-trash"></i></button></td>' +
+                    '</tr>';
+            }).join('');
+            document.querySelectorAll('.edit-card').forEach(function(btn) {
+                btn.addEventListener('click', function() { self.openCardModal(parseInt(this.dataset.id)); });
+            });
+            document.querySelectorAll('.delete-card').forEach(function(btn) {
+                btn.addEventListener('click', function() { self.deleteCard(parseInt(this.dataset.id)); });
+            });
+        };
+
+        AdminDashboard.prototype.renderFeedbackTable = function() {
+            var tbody = document.getElementById('feedbackTableBody');
+            var search = document.getElementById('feedbackSearch').value.toLowerCase();
+            var rating = document.getElementById('ratingFilter').value;
+            var filtered = this.allFeedback.filter(function(f) {
+                var match = true;
+                if (search) match = match && (f.username + f.email + (f.comment || '')).toLowerCase().includes(search);
+                if (rating) match = match && f.rating == rating;
+                return match;
+            });
+            if (!filtered.length) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No feedback</td></tr>';
+                return;
+            }
+            var stars = function(r) {
+                return Array.from({ length: 5 }, function(_, i) {
+                    return '<i class="' + (i < r ? 'fas' : 'far') + ' fa-star" style="color:#fbbf24;"></i>';
+                }).join('');
+            };
+            tbody.innerHTML = filtered.map(function(f) {
+                return '<tr>' +
+                    '<td>' + f.id + '</td>' +
+                    '<td><strong>' + escapeHtml(f.username) + '</strong><br><small>' + escapeHtml(f.email) +
+                    '</small></td>' +
+                    '<td>' + stars(f.rating) + ' (' + f.rating + ')</td>' +
+                    '<td>' + escapeHtml(f.comment || '<em>No comment</em>') + '</td>' +
+                    '<td>' + new Date(f.created_at).toLocaleString() + '</td>' +
+                    '</tr>';
+            }).join('');
+        };
+
+        AdminDashboard.prototype.renderAuditLog = function() {
+            var search = document.getElementById('auditSearch').value.toLowerCase();
+            var actionF = document.getElementById('auditActionFilter').value;
+            var filtered = this.auditLog.filter(function(e) {
+                var match = true;
+                if (search) match = match && (e.user + e.detail + e.action).toLowerCase().includes(search);
+                if (actionF) match = match && e.action === actionF;
+                return match;
+            });
+            var iconMap = { login: 'fa-sign-in-alt', ban: 'fa-ban', delete: 'fa-trash', approve: 'fa-check',
+                credits: 'fa-coins' };
+            var c = document.getElementById('auditLogList');
+            if (!filtered.length) {
+                c.innerHTML = '<div style="padding:1rem;text-align:center;opacity:0.5;">No entries found</div>';
+                return;
+            }
+            c.innerHTML = filtered.map(function(e) {
+                return '<div class="activity-item"><div class="activity-icon"><i class="fas ' + (iconMap[e
+                    .action] || 'fa-bell') + '"></i></div><div class="activity-detail"><div class="activity-text"><strong>[' +
+                    e.action.toUpperCase() + ']</strong> ' + escapeHtml(e.user) + ' — ' + escapeHtml(e.detail) +
+                    '</div><div class="activity-time">' + new Date(e.time).toLocaleString() + '</div></div></div>';
+            }).join('');
+        };
+
+        AdminDashboard.prototype.renderApiKeys = function() {
+            var c = document.getElementById('apiKeysList');
+            if (!this.apiKeys.length) {
+                c.innerHTML = '<div style="padding:1rem;text-align:center;opacity:0.5;">No API keys generated yet.</div>';
+                return;
+            }
+            c.innerHTML = this.apiKeys.map(function(k) {
+                return '<div class="activity-item"><div class="activity-icon"><i class="fas fa-key"></i></div><div class="activity-detail"><div class="activity-text"><strong>' +
+                    escapeHtml(k.name) + '</strong> — <span style="font-family:monospace;color:#00d4ff;">' + k.key
+                    .substring(0, 16) + '•••••</span> <span class="status-badge ' + (k.status === 'active' ?
+                        'status-active' : 'status-suspended') +
+                    '" style="font-size:0.65rem;padding:2px 8px;">' + k.status + '</span></div><div class="activity-time">Created: ' +
+                    new Date(k.created_at).toLocaleDateString() + '</div></div></div>';
+            }).join('');
+        };
+
+        AdminDashboard.prototype.renderLeaderboard = function() {
+            var c = document.getElementById('creditLeaderboardList');
+            var sorted = this.allUsers.slice().sort(function(a, b) { return (b.credits || 0) - (a.credits || 0); });
+            var rank = function(i) { return ['🥇', '🥈', '🥉'][i] || (i + 1 + '.'); };
+            if (!sorted.length) {
+                c.innerHTML = '<div style="padding:1rem;text-align:center;opacity:0.5;">No users found</div>';
+                return;
+            }
+            c.innerHTML = sorted.slice(0, 10).map(function(u, i) {
+                return '<div class="activity-item"><div class="activity-icon" style="background:rgba(245,158,11,0.2);color:#f59e0b;">' +
+                    rank(i) + '</div><div class="activity-detail"><div class="activity-text"><strong>' + escapeHtml(u
+                    .username) + '</strong> <span class="status-badge status-' + u.role +
+                    '" style="font-size:0.65rem;padding:2px 8px;">' + u.role + '</span></div></div><div style="font-weight:700;color:#fbbf24;"><i class="fas fa-coins"></i> ' +
+                    (u.credits || 0) + '</div></div>';
+            }).join('');
+        };
+
+        AdminDashboard.prototype.renderPermissionsMatrix = function() {
+            var perms = [
+                ['View public tools', true, true, true],
+                ['Submit tools', true, true, true],
+                ['Approve/reject tools', false, true, true],
+                ['Delete tools', false, false, true],
+                ['View all users', false, true, true],
+                ['Edit user roles', false, false, true],
+                ['Ban/suspend users', false, true, true],
+                ['Give credits', false, false, true],
+                ['Post announcements', false, true, true],
+                ['View audit log', false, false, true],
+                ['Manage API keys', false, false, true]
+            ];
+            var tbody = document.getElementById('permissionsMatrixBody');
+            tbody.innerHTML = perms.map(function(p) {
+                return '<tr><td>' + p[0] + '</td><td class="' + (p[1] ? 'perm-yes' : 'perm-no') +
+                    '" style="color:' + (p[1] ? '#10b981' : '#ef4444') + ';">' + (p[1] ? '✓' : '✗') +
+                    '</td><td class="' + (p[2] ? 'perm-yes' : 'perm-no') + '" style="color:' + (p[2] ?
+                        '#10b981' : '#ef4444') + ';">' + (p[2] ? '✓' : '✗') +
+                    '</td><td class="' + (p[3] ? 'perm-yes' : 'perm-no') + '" style="color:' + (p[3] ?
+                        '#10b981' : '#ef4444') + ';">' + (p[3] ? '✓' : '✗') + '</td></tr>';
+            }).join('');
+        };
+
+        // ============================================================
+        // USER ACTIONS
+        // ============================================================
+
+        AdminDashboard.prototype.toggleUserStatus = function(userId) {
+            var self = this;
+            var user = this.allUsers.find(function(u) { return u.id === userId; });
+            if (!user) return;
+            var isBanned = user.status === 'suspended';
+            user.status = isBanned ? 'active' : 'suspended';
+            apiCall('/api/admin/users/' + userId + '/' + (isBanned ? 'unban' : 'ban'), { method: 'PUT' }).catch(function() {});
+            this.filterUsers();
+            this.loadStats();
+            showToast('User ' + (user.status === 'active' ? 'activated' : 'suspended'));
+        };
+
+        AdminDashboard.prototype.deleteUser = function(userId) {
+            var self = this;
+            if (!confirm('Delete this user?')) return;
+            apiCall('/admin/users/' + userId, { method: 'DELETE' }).catch(function() {});
+            this.allUsers = this.allUsers.filter(function(u) { return u.id !== userId; });
+            this.selectedUsers.delete(userId);
+            this.filterUsers();
+            this.loadStats();
+            showToast('User deleted');
+        };
+
+        AdminDashboard.prototype.openEditModal = function(userId) {
+            var user = this.allUsers.find(function(u) { return u.id === userId; });
+            if (!user) return;
+            document.getElementById('editUserId').value = user.id;
+            document.getElementById('editUsername').value = user.username;
+            document.getElementById('editEmail').value = user.email;
+            document.getElementById('editRole').value = user.role;
+            document.getElementById('editStatus').value = user.status;
+            document.getElementById('userModal').classList.add('active');
+        };
+
+        AdminDashboard.prototype.saveUserChanges = function() {
+            var self = this;
+            var userId = parseInt(document.getElementById('editUserId').value);
+            var newRole = document.getElementById('editRole').value;
+            var newStatus = document.getElementById('editStatus').value;
+            apiCall('/admin/users/' + userId, {
+                method: 'PATCH',
+                body: { role: newRole, is_banned: newStatus === 'suspended' ? 1 : 0 }
+            }).catch(function() {});
+            var user = this.allUsers.find(function(u) { return u.id === userId; });
+            if (user) { user.role = newRole;
+                user.status = newStatus; }
+            this.filterUsers();
+            this.loadStats();
+            showToast('User updated');
+            document.getElementById('userModal').classList.remove('active');
+        };
+
+        AdminDashboard.prototype.openGiveCreditsModal = function(userId) {
+            document.getElementById('creditUserId').value = userId;
+            document.getElementById('creditAmount').value = '';
+            document.getElementById('creditReason').value = '';
+            document.getElementById('creditsModal').classList.add('active');
+        };
+
+        AdminDashboard.prototype.giveCredits = function() {
+            var self = this;
+            var userId = parseInt(document.getElementById('creditUserId').value);
+            var amount = parseInt(document.getElementById('creditAmount').value);
+            var reason = document.getElementById('creditReason').value.trim() || 'Admin grant';
+            if (isNaN(amount) || amount <= 0) { showToast('Enter a valid amount', 'error'); return; }
+            var user = this.allUsers.find(function(u) { return u.id === userId; });
+            if (!user) { showToast('User not found', 'error'); return; }
+            user.credits = (user.credits || 0) + amount;
+            this.filterUsers();
+            showToast('✅ Added ' + amount + ' credits to ' + user.username);
+            document.getElementById('creditsModal').classList.remove('active');
+            apiCall('/api/admin/users/' + userId + '/credits', { method: 'POST', body: { amount: amount,
+                    reason: reason } }).catch(function() {});
+        };
+
+        AdminDashboard.prototype.openUserNotesModal = function(userId, username) {
+            document.getElementById('noteUserId').value = userId;
+            document.getElementById('noteUserLabel').innerText = 'Notes for: ' + username;
+            document.getElementById('noteInput').value = '';
+            this.renderUserNotesList(userId);
+            document.getElementById('userNotesModal').classList.add('active');
+        };
+
+        AdminDashboard.prototype.renderUserNotesList = function(userId) {
+            var notes = this.userNotes[userId] || [];
+            var c = document.getElementById('currentNotesList');
+            if (!notes.length) {
+                c.innerHTML = '<div style="opacity:0.5;font-size:0.8rem;">No notes yet.</div>';
+                return;
+            }
+            var self = this;
+            c.innerHTML = notes.map(function(n, i) {
+                return '<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem;"><span class="note-chip">' +
+                    escapeHtml(n) +
+                    '</span><button class="btn-small btn-danger" onclick="window.adminDashboard.removeUserNote(' +
+                    userId + ',' + i + ')"><i class="fas fa-times"></i></button></div>';
+            }).join('');
+        };
+
+        AdminDashboard.prototype.addUserNote = function() {
+            var userId = parseInt(document.getElementById('noteUserId').value);
+            var note = document.getElementById('noteInput').value.trim();
+            if (!note) return;
+            if (!this.userNotes[userId]) this.userNotes[userId] = [];
+            this.userNotes[userId].push(note);
+            document.getElementById('noteInput').value = '';
+            this.renderUserNotesList(userId);
+            this.filterUsers();
+            showToast('Note added');
+        };
+
+        AdminDashboard.prototype.removeUserNote = function(userId, index) {
+            this.userNotes[userId].splice(index, 1);
+            this.renderUserNotesList(userId);
+            this.filterUsers();
+        };
+
+        AdminDashboard.prototype.toggleFeaturedTool = function(toolId) {
+            var self = this;
+            var tool = this.allTools.find(function(t) { return t.id === toolId; });
+            if (!tool) return;
+            var newFeatured = tool.is_featured ? 0 : 1;
+            var updated = { name: tool.name, url: tool.url, description: tool.description || '', category: tool
+                    .category, approved: tool.approved ? 1 : 0, is_featured: newFeatured };
+            apiCall('/api/admin/tools/' + toolId, { method: 'PUT', body: updated }).catch(function() {});
+            tool.is_featured = newFeatured;
+            this.renderToolsTable();
+            showToast('Tool ' + (newFeatured ? 'featured' : 'unfeatured'));
+        };
+
+        AdminDashboard.prototype.approveTool = function(toolId) {
+            var self = this;
+            if (!confirm('Approve this tool?')) return;
+            apiCall('/api/admin/tools/' + toolId + '/approve', { method: 'PUT' }).then(function() {
+                showToast('Tool approved!');
+                return Promise.all([self.loadToolsData(), self.loadPendingToolsData()]);
+            }).then(function() {
+                self.renderToolsTable();
+                self.renderPendingTable();
+            }).catch(function(e) { showToast('Approval failed: ' + e.message, 'error'); });
+        };
+
+        AdminDashboard.prototype.rejectTool = function(toolId) {
+            var self = this;
+            if (!confirm('Reject this tool?')) return;
+            apiCall('/api/admin/tools/' + toolId + '/reject', { method: 'DELETE' }).then(function() {
+                showToast('Tool rejected');
+                return Promise.all([self.loadToolsData(), self.loadPendingToolsData()]);
+            }).then(function() {
+                self.renderToolsTable();
+                self.renderPendingTable();
+            }).catch(function(e) { showToast('Rejection failed: ' + e.message, 'error'); });
+        };
+
+        AdminDashboard.prototype.deleteTool = function(toolId) {
+            var self = this;
+            if (!confirm('Delete this tool?')) return;
+            apiCall('/api/admin/tools/' + toolId, { method: 'DELETE' }).then(function() {
+                showToast('Tool deleted');
+                return self.loadToolsData();
+            }).then(function() {
+                self.renderToolsTable();
+            }).catch(function(e) { showToast('Delete failed: ' + e.message, 'error'); });
+        };
+
+        AdminDashboard.prototype.openToolModal = function(id) {
+            if (id) {
+                var tool = this.allTools.find(function(t) { return t.id === id; });
+                if (tool) {
+                    document.getElementById('toolModalTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Tool';
+                    document.getElementById('toolId').value = tool.id;
+                    document.getElementById('toolName').value = tool.name;
+                    document.getElementById('toolUrl').value = tool.url;
+                    document.getElementById('toolDesc').value = tool.description || '';
+                    document.getElementById('toolCategory').value = tool.category || 'study';
+                    document.getElementById('toolApproved').value = tool.approved ? '1' : '0';
+                }
+            } else {
+                document.getElementById('toolModalTitle').innerHTML = '<i class="fas fa-plus"></i> Add Tool';
+                ['toolId', 'toolName', 'toolUrl', 'toolDesc'].forEach(function(id) {
+                    document.getElementById(id).value = '';
+                });
+                document.getElementById('toolCategory').value = 'study';
+                document.getElementById('toolApproved').value = '1';
+            }
+            document.getElementById('toolModal').classList.add('active');
+        };
+
+        AdminDashboard.prototype.saveTool = function() {
+            var self = this;
+            var toolId = document.getElementById('toolId').value;
+            var data = {
+                name: document.getElementById('toolName').value.trim(),
+                url: document.getElementById('toolUrl').value.trim(),
+                description: document.getElementById('toolDesc').value.trim(),
+                category: document.getElementById('toolCategory').value,
+                approved: parseInt(document.getElementById('toolApproved').value)
+            };
+            if (!data.name || !data.url) { showToast('Name and URL required', 'error'); return; }
+            var promise;
+            if (toolId) {
+                promise = apiCall('/api/admin/tools/' + toolId, { method: 'PUT', body: data }).then(function() {
+                    showToast('Tool updated');
+                });
+            } else {
+                promise = apiCall('/api/admin/tools', { method: 'POST', body: data }).then(function() {
+                    showToast('Tool added');
+                });
+            }
+            promise.then(function() {
+                return Promise.all([self.loadToolsData(), self.loadPendingToolsData()]);
+            }).then(function() {
+                self.renderToolsTable();
+                self.renderPendingTable();
+                document.getElementById('toolModal').classList.remove('active');
+            }).catch(function(e) { showToast('Failed: ' + e.message, 'error'); });
+        };
+
+        AdminDashboard.prototype.openCardModal = function(id) {
+            if (id) {
+                var card = this.allCards.find(function(c) { return c.id === id; });
+                if (card) {
+                    document.getElementById('cardModalTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Card';
+                    document.getElementById('cardId').value = card.id;
+                    document.getElementById('cardTitle').value = card.title;
+                    document.getElementById('cardDesc').value = card.description;
+                    document.getElementById('cardIcon').value = card.icon;
+                    document.getElementById('cardLink').value = card.link;
+                    document.getElementById('cardCategory').value = card.category;
+                    document.getElementById('cardOrder').value = card.order;
+                }
+            } else {
+                document.getElementById('cardModalTitle').innerHTML = '<i class="fas fa-plus"></i> Add Card';
+                ['cardId', 'cardTitle', 'cardDesc', 'cardLink'].forEach(function(id) {
+                    document.getElementById(id).value = '';
+                });
+                document.getElementById('cardIcon').value = 'fa-cube';
+                document.getElementById('cardCategory').value = 'featured';
+                document.getElementById('cardOrder').value = '0';
+            }
+            document.getElementById('cardModal').classList.add('active');
+        };
+
+        AdminDashboard.prototype.saveCard = function() {
+            var self = this;
+            var id = document.getElementById('cardId').value;
+            var data = {
+                title: document.getElementById('cardTitle').value.trim(),
+                description: document.getElementById('cardDesc').value.trim(),
+                icon: document.getElementById('cardIcon').value.trim(),
+                link: document.getElementById('cardLink').value.trim(),
+                category: document.getElementById('cardCategory').value,
+                order: parseInt(document.getElementById('cardOrder').value) || 0
+            };
+            if (!data.title || !data.link) { showToast('Title and link required', 'error'); return; }
+            var promise;
+            if (id) {
+                promise = apiCall('/api/cards/' + id, { method: 'PUT', body: data }).then(function() {
+                    showToast('Card updated');
+                });
+            } else {
+                promise = apiCall('/api/cards', { method: 'POST', body: data }).then(function() {
+                    showToast('Card added');
+                });
+            }
+            promise.then(function() {
+                return self.loadCardsData();
+            }).then(function() {
+                self.renderCardsTable();
+                document.getElementById('cardModal').classList.remove('active');
+            }).catch(function(e) { showToast('Failed: ' + e.message, 'error'); });
+        };
+
+        AdminDashboard.prototype.deleteCard = function(cardId) {
+            var self = this;
+            if (!confirm('Delete this card?')) return;
+            apiCall('/api/cards/' + cardId, { method: 'DELETE' }).then(function() {
+                showToast('Card deleted');
+                return self.loadCardsData();
+            }).then(function() {
+                self.renderCardsTable();
+            }).catch(function(e) { showToast('Delete failed: ' + e.message, 'error'); });
+        };
+
+        AdminDashboard.prototype.openAnnouncementModal = function() {
+            document.getElementById('announceTitle').value = '';
+            document.getElementById('announceContent').value = '';
+            document.getElementById('announcementModal').classList.add('active');
+        };
+
+        AdminDashboard.prototype.postAnnouncement = function() {
+            var title = document.getElementById('announceTitle').value.trim();
+            var content = document.getElementById('announceContent').value.trim();
+            if (!title || !content) { showToast('Fill both fields', 'error'); return; }
+            apiCall('/api/announcements', { method: 'POST', body: { title: title, content: content } }).then(function() {
+                showToast('Announcement posted!');
+                document.getElementById('announcementModal').classList.remove('active');
+            }).catch(function(e) { showToast('Failed: ' + e.message, 'error'); });
+        };
+
+        AdminDashboard.prototype.refreshSystemHealth = function() {
+            var mock = {
+                cpu: Math.round(20 + Math.random() * 60),
+                mem: Math.round(30 + Math.random() * 50),
+                disk: Math.round(40 + Math.random() * 40)
+            };
+            document.getElementById('cpuValue').innerText = mock.cpu + '%';
+            document.getElementById('memValue').innerText = mock.mem + '%';
+            document.getElementById('diskValue').innerText = mock.disk + '%';
+            document.getElementById('uptimeValue').innerText = '14d 6h 23m';
+            var setBar = function(id, val) {
+                var el = document.getElementById(id);
+                if (el) el.style.width = val + '%';
+            };
+            setBar('cpuBar', mock.cpu);
+            setBar('memBar', mock.mem);
+            setBar('diskBar', mock.disk);
+            showToast('Health data refreshed', 'info');
+        };
+
+        AdminDashboard.prototype.bulkAction = function(action) {
+            var self = this;
+            if (this.selectedUsers.size === 0) { showToast('No users selected', 'warning'); return; }
+            if (!confirm(action.toUpperCase() + ' ' + this.selectedUsers.size + ' user(s)?')) return;
+            var ids = Array.from(this.selectedUsers);
+            ids.forEach(function(id) {
+                var user = self.allUsers.find(function(u) { return u.id === id; });
                 if (!user) return;
-                const isBanned = user.status === 'suspended';
-                user.status = isBanned ? 'active' : 'suspended';
-                try { await apiCall(`/api/admin/users/${userId}/${isBanned ? 'unban' : 'ban'}`, { method: 'PUT' }); } catch {}
-                this.filterUsers();
-                this.loadStats();
-                showToast(`User ${user.status === 'active' ? 'activated' : 'suspended'}`);
-            }
-
-            async deleteUser(userId) {
-                if (!confirm('Delete this user?')) return;
-                try { await apiCall(`/admin/users/${userId}`, { method: 'DELETE' }); } catch {}
-                this.allUsers = this.allUsers.filter(u => u.id !== userId);
-                this.selectedUsers.delete(userId);
-                this.filterUsers();
-                this.loadStats();
-                showToast('User deleted');
-            }
-
-            openEditModal(userId) {
-                const user = this.allUsers.find(u => u.id === userId);
-                if (!user) return;
-                document.getElementById('editUserId').value = user.id;
-                document.getElementById('editUsername').value = user.username;
-                document.getElementById('editEmail').value = user.email;
-                document.getElementById('editRole').value = user.role;
-                document.getElementById('editStatus').value = user.status;
-                document.getElementById('userModal').classList.add('active');
-            }
-
-            async saveUserChanges() {
-                const userId = parseInt(document.getElementById('editUserId').value);
-                const newRole = document.getElementById('editRole').value;
-                const newStatus = document.getElementById('editStatus').value;
-                try {
-                    await apiCall(`/admin/users/${userId}`, { method: 'PATCH', body: { role: newRole, is_banned: newStatus ===
-                                'suspended' ? 1 : 0 } });
-                } catch {}
-                const user = this.allUsers.find(u => u.id === userId);
-                if (user) { user.role = newRole;
-                    user.status = newStatus; }
-                this.filterUsers();
-                this.loadStats();
-                showToast('User updated');
-                document.getElementById('userModal').classList.remove('active');
-            }
-
-            openGiveCreditsModal(userId) {
-                document.getElementById('creditUserId').value = userId;
-                document.getElementById('creditAmount').value = '';
-                document.getElementById('creditReason').value = '';
-                document.getElementById('creditsModal').classList.add('active');
-            }
-
-            async giveCredits() {
-                const userId = parseInt(document.getElementById('creditUserId').value);
-                const amount = parseInt(document.getElementById('creditAmount').value);
-                const reason = document.getElementById('creditReason').value.trim() || 'Admin grant';
-                if (isNaN(amount) || amount <= 0) { showToast('Enter a valid amount', 'error'); return; }
-                const user = this.allUsers.find(u => u.id === userId);
-                if (!user) { showToast('User not found', 'error'); return; }
-                user.credits = (user.credits || 0) + amount;
-                this.filterUsers();
-                showToast(`✅ Added ${amount} credits to ${user.username}`);
-                document.getElementById('creditsModal').classList.remove('active');
-                try { await apiCall(`/api/admin/users/${userId}/credits`, { method: 'POST', body: { amount, reason } }); }
-                catch {}
-            }
-
-            openUserNotesModal(userId, username) {
-                document.getElementById('noteUserId').value = userId;
-                document.getElementById('noteUserLabel').innerText = `Notes for: ${username}`;
-                document.getElementById('noteInput').value = '';
-                this.renderUserNotesList(userId);
-                document.getElementById('userNotesModal').classList.add('active');
-            }
-
-            renderUserNotesList(userId) {
-                const notes = this.userNotes[userId] || [];
-                document.getElementById('currentNotesList').innerHTML = notes.length ?
-                    notes.map((n, i) =>
-                        `<div style="display:flex;align-items:center;gap:0.5rem;margin-bottom:0.4rem;"><span class="note-chip">${escapeHtml(n)}</span><button class="btn-small btn-danger" onclick="window.adminDashboard.removeUserNote(${userId},${i})"><i class="fas fa-times"></i></button></div>`
-                    ).join('') :
-                    '<div style="opacity:0.5;font-size:0.8rem;">No notes yet.</div>';
-            }
-
-            addUserNote() {
-                const userId = parseInt(document.getElementById('noteUserId').value);
-                const note = document.getElementById('noteInput').value.trim();
-                if (!note) return;
-                if (!this.userNotes[userId]) this.userNotes[userId] = [];
-                this.userNotes[userId].push(note);
-                document.getElementById('noteInput').value = '';
-                this.renderUserNotesList(userId);
-                this.filterUsers();
-                showToast('Note added');
-            }
-
-            removeUserNote(userId, index) {
-                this.userNotes[userId].splice(index, 1);
-                this.renderUserNotesList(userId);
-                this.filterUsers();
-            }
-
-            async toggleFeaturedTool(toolId) {
-                const tool = this.allTools.find(t => t.id === toolId);
-                if (!tool) return;
-                const newFeatured = tool.is_featured ? 0 : 1;
-                try { await apiCall(`/api/admin/tools/${toolId}`, { method: 'PUT', body: { ...tool, is_featured: newFeatured } }); }
-                catch {}
-                tool.is_featured = newFeatured;
-                this.renderToolsTable();
-                showToast(`Tool ${newFeatured ? 'featured' : 'unfeatured'}`);
-            }
-
-            async approveTool(toolId) {
-                if (!confirm('Approve this tool?')) return;
-                try { await apiCall(`/api/admin/tools/${toolId}/approve`, { method: 'PUT' });
-                    showToast('Tool approved!');
-                    await this.loadToolsData();
-                    await this.loadPendingToolsData();
-                    this.renderToolsTable();
-                    this.renderPendingTable();
-                } catch (e) { showToast('Approval failed: ' + e.message, 'error'); }
-            }
-
-            async rejectTool(toolId) {
-                if (!confirm('Reject this tool?')) return;
-                try { await apiCall(`/api/admin/tools/${toolId}/reject`, { method: 'DELETE' });
-                    showToast('Tool rejected');
-                    await this.loadToolsData();
-                    await this.loadPendingToolsData();
-                    this.renderToolsTable();
-                    this.renderPendingTable();
-                } catch (e) { showToast('Rejection failed: ' + e.message, 'error'); }
-            }
-
-            async deleteTool(toolId) {
-                if (!confirm('Delete this tool?')) return;
-                try { await apiCall(`/api/admin/tools/${toolId}`, { method: 'DELETE' });
-                    showToast('Tool deleted');
-                    await this.loadToolsData();
-                    this.renderToolsTable();
-                } catch (e) { showToast('Delete failed: ' + e.message, 'error'); }
-            }
-
-            openToolModal(id = null) {
-                if (id) {
-                    const tool = this.allTools.find(t => t.id === id);
-                    if (tool) {
-                        document.getElementById('toolModalTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Tool';
-                        document.getElementById('toolId').value = tool.id;
-                        document.getElementById('toolName').value = tool.name;
-                        document.getElementById('toolUrl').value = tool.url;
-                        document.getElementById('toolDesc').value = tool.description || '';
-                        document.getElementById('toolCategory').value = tool.category || 'study';
-                        document.getElementById('toolApproved').value = tool.approved ? '1' : '0';
-                    }
-                } else {
-                    document.getElementById('toolModalTitle').innerHTML = '<i class="fas fa-plus"></i> Add Tool';
-                    ['toolId', 'toolName', 'toolUrl', 'toolDesc'].forEach(id => document.getElementById(id).value = '');
-                    document.getElementById('toolCategory').value = 'study';
-                    document.getElementById('toolApproved').value = '1';
+                if (action === 'delete') {
+                    self.allUsers = self.allUsers.filter(function(u) { return u.id !== id; });
+                } else if (action === 'suspend' && user.status !== 'suspended') {
+                    user.status = 'suspended';
+                    apiCall('/api/admin/users/' + id + '/ban', { method: 'PUT' }).catch(function() {});
+                } else if (action === 'activate' && user.status !== 'active') {
+                    user.status = 'active';
+                    apiCall('/api/admin/users/' + id + '/unban', { method: 'PUT' }).catch(function() {});
                 }
-                document.getElementById('toolModal').classList.add('active');
-            }
+            });
+            this.selectedUsers.clear();
+            this.filterUsers();
+            this.loadStats();
+            showToast(action + ' completed');
+        };
 
-            async saveTool() {
-                const toolId = document.getElementById('toolId').value;
-                const data = {
-                    name: document.getElementById('toolName').value.trim(),
-                    url: document.getElementById('toolUrl').value.trim(),
-                    description: document.getElementById('toolDesc').value.trim(),
-                    category: document.getElementById('toolCategory').value,
-                    approved: parseInt(document.getElementById('toolApproved').value)
-                };
-                if (!data.name || !data.url) { showToast('Name and URL required', 'error'); return; }
-                try {
-                    if (toolId) { await apiCall(`/api/admin/tools/${toolId}`, { method: 'PUT', body: data });
-                        showToast('Tool updated'); } else { await apiCall('/api/admin/tools', { method: 'POST',
-                            body: data });
-                        showToast('Tool added'); }
-                    await this.loadToolsData();
-                    await this.loadPendingToolsData();
-                    this.renderToolsTable();
-                    this.renderPendingTable();
-                    document.getElementById('toolModal').classList.remove('active');
-                } catch (e) { showToast('Failed: ' + e.message, 'error'); }
-            }
+        AdminDashboard.prototype.exportData = function(format) {
+            var data = format === 'csv' ? this.convertToCSV(this.filteredUsers) : JSON.stringify(this.filteredUsers, null,
+            2);
+            var blob = new Blob([data], { type: format === 'csv' ? 'text/csv' : 'application/json' });
+            var a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = 'users_export_' + new Date().toISOString().split('T')[0] + '.' + format;
+            a.click();
+            showToast('Exported as ' + format.toUpperCase());
+        };
 
-            openCardModal(id = null) {
-                if (id) {
-                    const card = this.allCards.find(c => c.id === id);
-                    if (card) {
-                        document.getElementById('cardModalTitle').innerHTML = '<i class="fas fa-edit"></i> Edit Card';
-                        document.getElementById('cardId').value = card.id;
-                        document.getElementById('cardTitle').value = card.title;
-                        document.getElementById('cardDesc').value = card.description;
-                        document.getElementById('cardIcon').value = card.icon;
-                        document.getElementById('cardLink').value = card.link;
-                        document.getElementById('cardCategory').value = card.category;
-                        document.getElementById('cardOrder').value = card.order;
-                    }
-                } else {
-                    document.getElementById('cardModalTitle').innerHTML = '<i class="fas fa-plus"></i> Add Card';
-                    ['cardId', 'cardTitle', 'cardDesc', 'cardLink'].forEach(id => document.getElementById(id).value = '');
-                    document.getElementById('cardIcon').value = 'fa-cube';
-                    document.getElementById('cardCategory').value = 'featured';
-                    document.getElementById('cardOrder').value = '0';
-                }
-                document.getElementById('cardModal').classList.add('active');
-            }
+        AdminDashboard.prototype.convertToCSV = function(users) {
+            var headers = ['ID', 'Username', 'Email', 'Role', 'Status', 'Credits', 'Created At'];
+            var rows = users.map(function(u) {
+                return u.id + ',"' + u.username + '","' + u.email + '",' + u.role + ',' + u.status + ',' + (u
+                    .credits || 0) + ',"' + new Date(u.created_at).toLocaleString() + '"';
+            });
+            return headers.join(',') + '\n' + rows.join('\n');
+        };
 
-            async saveCard() {
-                const id = document.getElementById('cardId').value;
-                const data = {
-                    title: document.getElementById('cardTitle').value.trim(),
-                    description: document.getElementById('cardDesc').value.trim(),
-                    icon: document.getElementById('cardIcon').value.trim(),
-                    link: document.getElementById('cardLink').value.trim(),
-                    category: document.getElementById('cardCategory').value,
-                    order: parseInt(document.getElementById('cardOrder').value) || 0
-                };
-                if (!data.title || !data.link) { showToast('Title and link required', 'error'); return; }
-                try {
-                    if (id) { await apiCall(`/api/cards/${id}`, { method: 'PUT', body: data });
-                        showToast('Card updated'); } else { await apiCall('/api/cards', { method: 'POST',
-                            body: data });
-                        showToast('Card added'); }
-                    await this.loadCardsData();
-                    this.renderCardsTable();
-                    document.getElementById('cardModal').classList.remove('active');
-                } catch (e) { showToast('Failed: ' + e.message, 'error'); }
-            }
+        AdminDashboard.prototype.generateApiKey = function() {
+            var name = prompt('API Key name:');
+            if (!name) return;
+            var key = 'nv_sk_live_' + Math.random().toString(36).substring(2, 18);
+            this.apiKeys.unshift({ id: Date.now(), name: name, key: key, status: 'active', created_at: new Date()
+                    .toISOString() });
+            this.renderApiKeys();
+            showToast('API key "' + name + '" generated');
+            apiCall('/api/admin/api-keys', { method: 'POST', body: { name: name, key: key } }).catch(function() {});
+        };
 
-            async deleteCard(cardId) {
-                if (!confirm('Delete this card?')) return;
-                try { await apiCall(`/api/cards/${cardId}`, { method: 'DELETE' });
-                    showToast('Card deleted');
-                    await this.loadCardsData();
-                    this.renderCardsTable();
-                } catch (e) { showToast('Delete failed: ' + e.message, 'error'); }
-            }
-
-            openAnnouncementModal() {
-                document.getElementById('announceTitle').value = '';
-                document.getElementById('announceContent').value = '';
-                document.getElementById('announcementModal').classList.add('active');
-            }
-
-            async postAnnouncement() {
-                const title = document.getElementById('announceTitle').value.trim();
-                const content = document.getElementById('announceContent').value.trim();
-                if (!title || !content) { showToast('Fill both fields', 'error'); return; }
-                try { await apiCall('/api/announcements', { method: 'POST', body: { title, content } });
-                    showToast('Announcement posted!');
-                    document.getElementById('announcementModal').classList.remove('active');
-                } catch (e) { showToast('Failed: ' + e.message, 'error'); }
-            }
-
-            async refreshSystemHealth() {
-                const mock = { cpu: Math.round(20 + Math.random() * 60), mem: Math.round(30 + Math.random() * 50),
-                    disk: Math.round(40 + Math.random() * 40) };
-                document.getElementById('cpuValue').innerText = mock.cpu + '%';
-                document.getElementById('memValue').innerText = mock.mem + '%';
-                document.getElementById('diskValue').innerText = mock.disk + '%';
-                document.getElementById('uptimeValue').innerText = '14d 6h 23m';
-                const setBar = (id, val) => { const el = document.getElementById(id); if (el) el.style.width = val + '%'; };
-                setBar('cpuBar', mock.cpu);
-                setBar('memBar', mock.mem);
-                setBar('diskBar', mock.disk);
-                showToast('Health data refreshed', 'info');
-            }
-
-            async bulkAction(action) {
-                if (this.selectedUsers.size === 0) { showToast('No users selected', 'warning'); return; }
-                if (!confirm(`${action.toUpperCase()} ${this.selectedUsers.size} user(s)?`)) return;
-                for (let id of this.selectedUsers) {
-                    const user = this.allUsers.find(u => u.id === id);
-                    if (!user) continue;
-                    if (action === 'delete') { this.allUsers = this.allUsers.filter(u => u.id !== id); } else if (action ===
-                        'suspend' && user.status !== 'suspended') { user.status = 'suspended'; try { await apiCall(
-                            `/api/admin/users/${id}/ban`, { method: 'PUT' }); } catch {} } else if (action ===
-                        'activate' && user.status !== 'active') { user.status = 'active'; try { await apiCall(
-                            `/api/admin/users/${id}/unban`, { method: 'PUT' }); } catch {} }
-                }
-                this.selectedUsers.clear();
-                this.filterUsers();
-                this.loadStats();
-                showToast(`${action} completed`);
-            }
-
-            exportData(format) {
-                const data = format === 'csv' ? this.convertToCSV(this.filteredUsers) : JSON.stringify(this.filteredUsers,
-                    null, 2);
-                const blob = new Blob([data], { type: format === 'csv' ? 'text/csv' : 'application/json' });
-                const a = document.createElement('a');
-                a.href = URL.createObjectURL(blob);
-                a.download = `users_export_${new Date().toISOString().split('T')[0]}.${format}`;
-                a.click();
-                showToast(`Exported as ${format.toUpperCase()}`);
-            }
-
-            convertToCSV(users) {
-                const headers = ['ID', 'Username', 'Email', 'Role', 'Status', 'Credits', 'Created At'];
-                const rows = users.map(u =>
-                    `${u.id},"${u.username}","${u.email}",${u.role},${u.status},${u.credits ?? 0},"${new Date(u.created_at).toLocaleString()}"`
-                    );
-                return headers.join(',') + '\n' + rows.join('\n');
-            }
-
-            generateApiKey() {
-                const name = prompt('API Key name:');
-                if (!name) return;
-                const key = 'nv_sk_live_' + Math.random().toString(36).substring(2, 18);
-                this.apiKeys.unshift({ id: Date.now(), name, key, status: 'active', created_at: new Date().toISOString() });
-                this.renderApiKeys();
-                showToast(`API key "${name}" generated`);
-                try { apiCall('/api/admin/api-keys', { method: 'POST', body: { name, key } }); } catch {}
-            }
-
-            loadSessions() {
-                const search = document.getElementById('sessionSearch').value.toLowerCase();
-                const sessions = this.allUsers.map((u, i) => ({
+        AdminDashboard.prototype.loadSessions = function() {
+            var self = this;
+            var search = document.getElementById('sessionSearch').value.toLowerCase();
+            var sessions = this.allUsers.map(function(u, i) {
+                return {
                     id: 'sess_' + u.id,
                     username: u.username,
                     role: u.role,
-                    ip: `192.168.${Math.floor(Math.random() * 254)}.${Math.floor(Math.random() * 254)}`,
+                    ip: '192.168.' + Math.floor(Math.random() * 254) + '.' + Math.floor(Math.random() * 254),
                     userAgent: 'Chrome/122 on Windows',
                     lastActive: new Date(Date.now() - i * 300000).toISOString(),
                     status: i === 0 ? 'active' : 'idle'
-                }));
-                const filtered = sessions.filter(s => !search || (s.username + s.ip).toLowerCase().includes(search));
-                document.getElementById('sessionsList').innerHTML = filtered.map(s =>
-                    `<div class="activity-item"><div class="activity-icon"><i class="fas fa-desktop"></i></div><div class="activity-detail"><div class="activity-text"><strong>${escapeHtml(s.username)}</strong> <span class="status-badge status-${s.role}" style="font-size:0.65rem;padding:2px 8px;">${s.role}</span> — <span style="font-family:monospace;color:#00d4ff;">${s.ip}</span><br><small>Last active: ${new Date(s.lastActive).toLocaleString()}</small></div></div><div><span class="status-badge ${s.status === 'idle' ? 'status-pending' : 'status-active'}" style="font-size:0.65rem;">${s.status}</span> <button class="btn-small btn-danger" onclick="window.adminDashboard.killSession('${s.id}')"><i class="fas fa-times"></i></button></div></div>`
-                ).join('');
+                };
+            });
+            var filtered = sessions.filter(function(s) {
+                return !search || (s.username + s.ip).toLowerCase().includes(search);
+            });
+            var c = document.getElementById('sessionsList');
+            if (!filtered.length) {
+                c.innerHTML = '<div style="padding:1rem;text-align:center;opacity:0.5;">No sessions found</div>';
+                return;
             }
+            c.innerHTML = filtered.map(function(s) {
+                return '<div class="activity-item"><div class="activity-icon"><i class="fas fa-desktop"></i></div><div class="activity-detail"><div class="activity-text"><strong>' +
+                    escapeHtml(s.username) + '</strong> <span class="status-badge status-' + s.role +
+                    '" style="font-size:0.65rem;padding:2px 8px;">' + s.role +
+                    '</span> — <span style="font-family:monospace;color:#00d4ff;">' + s.ip +
+                    '</span><br><small>Last active: ' + new Date(s.lastActive).toLocaleString() +
+                    '</small></div></div><div><span class="status-badge ' + (s.status === 'idle' ?
+                        'status-pending' : 'status-active') + '" style="font-size:0.65rem;">' + s.status +
+                    '</span> <button class="btn-small btn-danger" onclick="window.adminDashboard.killSession(\'' +
+                    s.id + '\')"><i class="fas fa-times"></i></button></div></div>';
+            }).join('');
+        };
 
-            killSession(sessionId) { showToast('Session terminated');
-                this.loadSessions(); }
-            killAllSessions() { if (!confirm('Kill ALL sessions?')) return;
-                showToast('All sessions killed', 'warning');
-                document.getElementById('sessionsList').innerHTML =
-                '<div style="padding:1rem;text-align:center;">All sessions terminated.</div>'; }
+        AdminDashboard.prototype.killSession = function(sessionId) {
+            showToast('Session terminated');
+            this.loadSessions();
+        };
 
-            // ============================================================
-            // UI HELPERS
-            // ============================================================
+        AdminDashboard.prototype.killAllSessions = function() {
+            if (!confirm('Kill ALL sessions?')) return;
+            showToast('All sessions killed', 'warning');
+            document.getElementById('sessionsList').innerHTML =
+                '<div style="padding:1rem;text-align:center;">All sessions terminated.</div>';
+        };
 
-            initDarkMode() {
-                const saved = localStorage.getItem('nova_admin_dark');
-                if (saved === '1') { document.body.classList.add('dark');
-                    this.darkMode = true;
-                    this.updateDarkBtn(); }
-                document.getElementById('darkModeToggle').addEventListener('click', () => {
-                    this.darkMode = !this.darkMode;
-                    document.body.classList.toggle('dark', this.darkMode);
-                    localStorage.setItem('nova_admin_dark', this.darkMode ? '1' : '0');
-                    this.updateDarkBtn();
+        // ============================================================
+        // UI HELPERS
+        // ============================================================
+
+        AdminDashboard.prototype.initDarkMode = function() {
+            var self = this;
+            var saved = localStorage.getItem('nova_admin_dark');
+            if (saved === '1') {
+                document.body.classList.add('dark');
+                this.darkMode = true;
+                this.updateDarkBtn();
+            }
+            document.getElementById('darkModeToggle').addEventListener('click', function() {
+                self.darkMode = !self.darkMode;
+                document.body.classList.toggle('dark', self.darkMode);
+                localStorage.setItem('nova_admin_dark', self.darkMode ? '1' : '0');
+                self.updateDarkBtn();
+            });
+        };
+
+        AdminDashboard.prototype.updateDarkBtn = function() {
+            document.getElementById('darkModeToggle').innerHTML = this.darkMode ? '<i class="fas fa-sun"></i> Light' :
+                '<i class="fas fa-moon"></i> Dark';
+        };
+
+        AdminDashboard.prototype.initGlobalSearch = function() {
+            var self = this;
+            var input = document.getElementById('globalSearchInput');
+            var results = document.getElementById('globalSearchResults');
+            input.addEventListener('input', function() {
+                var q = this.value.trim().toLowerCase();
+                if (q.length < 2) { results.classList.remove('show'); return; }
+                var found = [];
+                self.allUsers.forEach(function(u) {
+                    if ((u.username + u.email).toLowerCase().includes(q)) {
+                        found.push({ type: 'User', label: u.username + ' (' + u.email + ')',
+                            action: function() {
+                                document.querySelector('.tab-btn[data-tab=users]').click();
+                            } });
+                    }
                 });
-            }
-
-            updateDarkBtn() {
-                document.getElementById('darkModeToggle').innerHTML = this.darkMode ? '<i class="fas fa-sun"></i> Light' :
-                    '<i class="fas fa-moon"></i> Dark';
-            }
-
-            initGlobalSearch() {
-                const input = document.getElementById('globalSearchInput');
-                const results = document.getElementById('globalSearchResults');
-                input.addEventListener('input', () => {
-                    const q = input.value.trim().toLowerCase();
-                    if (q.length < 2) { results.classList.remove('show'); return; }
-                    const found = [];
-                    this.allUsers.forEach(u => {
-                        if ((u.username + u.email).toLowerCase().includes(q)) found.push({ type: 'User',
-                            label: `${u.username} (${u.email})`, action: () => document.querySelector(
-                                '.tab-btn[data-tab=users]').click() });
-                    });
-                    this.allTools.forEach(t => {
-                        if (t.name.toLowerCase().includes(q)) found.push({ type: 'Tool', label: t.name,
-                            action: () => document.querySelector('.tab-btn[data-tab=tools]').click() });
-                    });
-                    this.allCards.forEach(c => {
-                        if (c.title.toLowerCase().includes(q)) found.push({ type: 'Card', label: c.title,
-                            action: () => document.querySelector('.tab-btn[data-tab=cards]').click() });
-                    });
-                    if (!found.length) { results.innerHTML =
-                            '<div class="global-result-item">No results found</div>';
-                        results.classList.add('show'); return; }
-                    results.innerHTML = found.slice(0, 8).map((r, i) =>
-                        `<div class="global-result-item" data-idx="${i}"><div class="global-result-type">${r.type}</div>${escapeHtml(r.label)}</div>`
-                        ).join('');
-                    results.querySelectorAll('.global-result-item').forEach((el, i) => {
-                        if (found[i]) el.addEventListener('click', () => { found[i].action();
-                            input.value = '';
-                            results.classList.remove('show'); });
-                    });
+                self.allTools.forEach(function(t) {
+                    if (t.name.toLowerCase().includes(q)) {
+                        found.push({ type: 'Tool', label: t.name, action: function() {
+                                document.querySelector('.tab-btn[data-tab=tools]').click();
+                            } });
+                    }
+                });
+                self.allCards.forEach(function(c) {
+                    if (c.title.toLowerCase().includes(q)) {
+                        found.push({ type: 'Card', label: c.title, action: function() {
+                                document.querySelector('.tab-btn[data-tab=cards]').click();
+                            } });
+                    }
+                });
+                if (!found.length) {
+                    results.innerHTML = '<div class="global-result-item">No results found</div>';
                     results.classList.add('show');
-                });
-                document.addEventListener('click', (e) => {
-                    if (!e.target.closest('.global-search-wrapper')) results.classList.remove('show');
-                });
-            }
-
-            initHamburgerMenu() {
-                const hamburger = document.getElementById('hamburgerBtn');
-                const navLinks = document.getElementById('navLinks');
-                if (!hamburger || !navLinks) return;
-                hamburger.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    hamburger.classList.toggle('active');
-                    navLinks.classList.toggle('active');
-                });
-                navLinks.querySelectorAll('a').forEach(link => {
-                    link.addEventListener('click', () => {
-                        hamburger.classList.remove('active');
-                        navLinks.classList.remove('active');
-                    });
-                });
-                document.addEventListener('click', (e) => {
-                    if (!navLinks.contains(e.target) && !hamburger.contains(e.target)) {
-                        hamburger.classList.remove('active');
-                        navLinks.classList.remove('active');
+                    return;
+                }
+                results.innerHTML = found.slice(0, 8).map(function(r, i) {
+                    return '<div class="global-result-item" data-idx="' + i +
+                        '"><div class="global-result-type">' + r.type + '</div>' + escapeHtml(r.label) +
+                        '</div>';
+                }).join('');
+                results.querySelectorAll('.global-result-item').forEach(function(el, i) {
+                    if (found[i]) {
+                        el.addEventListener('click', function() {
+                            found[i].action();
+                            input.value = '';
+                            results.classList.remove('show');
+                        });
                     }
                 });
-            }
+                results.classList.add('show');
+            });
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.global-search-wrapper')) results.classList.remove('show');
+            });
+        };
 
-            initBackToTop() {
-                const btn = document.getElementById('backToTop');
-                window.addEventListener('scroll', () => {
-                    btn.classList.toggle('visible', window.scrollY > 300);
+        AdminDashboard.prototype.initHamburgerMenu = function() {
+            var hamburger = document.getElementById('hamburgerBtn');
+            var navLinks = document.getElementById('navLinks');
+            if (!hamburger || !navLinks) return;
+            hamburger.addEventListener('click', function(e) {
+                e.stopPropagation();
+                hamburger.classList.toggle('active');
+                navLinks.classList.toggle('active');
+            });
+            navLinks.querySelectorAll('a').forEach(function(link) {
+                link.addEventListener('click', function() {
+                    hamburger.classList.remove('active');
+                    navLinks.classList.remove('active');
                 });
-                btn.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-            }
+            });
+            document.addEventListener('click', function(e) {
+                if (!navLinks.contains(e.target) && !hamburger.contains(e.target)) {
+                    hamburger.classList.remove('active');
+                    navLinks.classList.remove('active');
+                }
+            });
+        };
 
-            initTabs() {
-                document.querySelectorAll('.tab-btn').forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const id = btn.dataset.tab;
-                        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                        btn.classList.add('active');
-                        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-                        const target = document.getElementById(id + 'Tab');
-                        if (target) target.classList.add('active');
-                        const actions = {
-                            users: () => this.filterUsers(),
-                            tools: () => this.renderToolsTable(),
-                            pending: () => this.renderPendingTable(),
-                            cards: () => this.renderCardsTable(),
-                            feedback: () => this.renderFeedbackTable(),
-                            sessions: () => this.loadSessions(),
-                            apikeys: () => this.renderApiKeys(),
-                            leaderboard: () => this.renderLeaderboard(),
-                            auditlog: () => this.renderAuditLog(),
-                            systemhealth: () => this.refreshSystemHealth(),
-                            permissions: () => this.renderPermissionsMatrix()
-                        };
-                        if (actions[id]) actions[id]();
-                    });
+        AdminDashboard.prototype.initBackToTop = function() {
+            var btn = document.getElementById('backToTop');
+            window.addEventListener('scroll', function() {
+                btn.classList.toggle('visible', window.scrollY > 300);
+            });
+            btn.addEventListener('click', function() { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+        };
+
+        AdminDashboard.prototype.initTabs = function() {
+            var self = this;
+            document.querySelectorAll('.tab-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    var id = this.dataset.tab;
+                    document.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+                    this.classList.add('active');
+                    document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove(
+                        'active'); });
+                    var target = document.getElementById(id + 'Tab');
+                    if (target) target.classList.add('active');
+                    var actions = {
+                        users: function() { self.filterUsers(); },
+                        tools: function() { self.renderToolsTable(); },
+                        pending: function() { self.renderPendingTable(); },
+                        cards: function() { self.renderCardsTable(); },
+                        feedback: function() { self.renderFeedbackTable(); },
+                        sessions: function() { self.loadSessions(); },
+                        apikeys: function() { self.renderApiKeys(); },
+                        leaderboard: function() { self.renderLeaderboard(); },
+                        auditlog: function() { self.renderAuditLog(); },
+                        systemhealth: function() { self.refreshSystemHealth(); },
+                        permissions: function() { self.renderPermissionsMatrix(); }
+                    };
+                    if (actions[id]) actions[id]();
                 });
+            });
 
-                // Nav links
-                const navMap = { dashboardNav: 'dashboard', usersNav: 'users', toolsNav: 'tools',
-                    pendingToolsNav: 'pending', cardsNav: 'cards' };
-                Object.entries(navMap).forEach(([navId, tabId]) => {
-                    document.getElementById(navId)?.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        document.querySelector(`.tab-btn[data-tab="${tabId}"]`).click();
-                    });
-                });
-                document.getElementById('announcementNav')?.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    this.openAnnouncementModal();
-                });
-            }
-
-            bindEvents() {
-                // Users
-                document.getElementById('searchInput').addEventListener('input', () => this.filterUsers());
-                document.getElementById('roleFilter').addEventListener('change', () => this.filterUsers());
-                document.getElementById('statusFilter').addEventListener('change', () => this.filterUsers());
-                document.getElementById('sortUsers').addEventListener('change', () => this.filterUsers());
-                document.getElementById('refreshBtn').addEventListener('click', () => { this.loadUsersData();
-                    this.filterUsers();
-                    this.loadStats(); });
-                document.getElementById('selectAll').addEventListener('change', () => this.toggleSelectAll());
-                document.getElementById('selectAllHeader').addEventListener('change', () => this.toggleSelectAll());
-                document.getElementById('bulkDelete').addEventListener('click', () => this.bulkAction('delete'));
-                document.getElementById('bulkSuspend').addEventListener('click', () => this.bulkAction('suspend'));
-                document.getElementById('bulkActivate').addEventListener('click', () => this.bulkAction('activate'));
-                document.getElementById('exportCSV').addEventListener('click', () => this.exportData('csv'));
-                document.getElementById('closeModal').addEventListener('click', () => document.getElementById('userModal')
-                    .classList.remove('active'));
-                document.getElementById('saveUserChanges').addEventListener('click', () => this.saveUserChanges());
-                document.getElementById('closeCreditsModal').addEventListener('click', () => document.getElementById(
-                    'creditsModal').classList.remove('active'));
-                document.getElementById('giveCreditsBtn').addEventListener('click', () => this.giveCredits());
-
-                // Tools
-                document.getElementById('toolSearch').addEventListener('input', () => this.renderToolsTable());
-                document.getElementById('toolCategoryFilter').addEventListener('change', () => this.renderToolsTable());
-                document.getElementById('toolApprovalFilter').addEventListener('change', () => this.renderToolsTable());
-                document.getElementById('pendingSearch').addEventListener('input', () => this.renderPendingTable());
-                document.getElementById('addToolBtn').addEventListener('click', () => this.openToolModal());
-                document.getElementById('refreshToolsBtn').addEventListener('click', () => { this.loadToolsData();
-                    this.renderToolsTable(); });
-                document.getElementById('refreshPendingBtn').addEventListener('click', () => { this.loadPendingToolsData();
-                    this.renderPendingTable(); });
-                document.getElementById('closeToolModal').addEventListener('click', () => document.getElementById('toolModal')
-                    .classList.remove('active'));
-                document.getElementById('saveToolChanges').addEventListener('click', () => this.saveTool());
-                document.getElementById('selectAllPending').addEventListener('change', e => {
-                    document.querySelectorAll('.pending-checkbox').forEach(cb => {
-                        cb.checked = e.target.checked;
-                        const id = parseInt(cb.dataset.id);
-                        if (e.target.checked) this.selectedPending.add(id);
-                        else this.selectedPending.delete(id);
-                    });
-                });
-                document.getElementById('bulkApprovePending').addEventListener('click', () => {
-                    if (!this.selectedPending.size) { showToast('No tools selected', 'warning'); return; }
-                    if (!confirm(`Approve ${this.selectedPending.size} tool(s)?`)) return;
-                    this.selectedPending.forEach(id => this.approveTool(id));
-                    this.selectedPending.clear();
-                    showToast('Bulk approval done');
-                });
-                document.getElementById('bulkRejectPending').addEventListener('click', () => {
-                    if (!this.selectedPending.size) { showToast('No tools selected', 'warning'); return; }
-                    if (!confirm(`Reject ${this.selectedPending.size} tool(s)?`)) return;
-                    this.selectedPending.forEach(id => this.rejectTool(id));
-                    this.selectedPending.clear();
-                    showToast('Bulk rejection done');
-                });
-
-                // Cards
-                document.getElementById('cardSearch').addEventListener('input', () => this.renderCardsTable());
-                document.getElementById('cardCategoryFilter').addEventListener('change', () => this.renderCardsTable());
-                document.getElementById('addCardBtn').addEventListener('click', () => this.openCardModal());
-                document.getElementById('refreshCardsBtn').addEventListener('click', () => { this.loadCardsData();
-                    this.renderCardsTable(); });
-                document.getElementById('closeCardModal').addEventListener('click', () => document.getElementById('cardModal')
-                    .classList.remove('active'));
-                document.getElementById('saveCardChanges').addEventListener('click', () => this.saveCard());
-
-                // Feedback
-                document.getElementById('feedbackSearch').addEventListener('input', () => this.renderFeedbackTable());
-                document.getElementById('ratingFilter').addEventListener('change', () => this.renderFeedbackTable());
-                document.getElementById('refreshFeedbackBtn').addEventListener('click', () => { this.loadFeedbackData();
-                    this.renderFeedbackTable(); });
-
-                // Announce
-                document.getElementById('closeAnnounceModal').addEventListener('click', () => document.getElementById(
-                    'announcementModal').classList.remove('active'));
-                document.getElementById('postAnnounceBtn').addEventListener('click', () => this.postAnnouncement());
-
-                // Audit
-                document.getElementById('auditSearch').addEventListener('input', () => this.renderAuditLog());
-                document.getElementById('auditActionFilter').addEventListener('change', () => this.renderAuditLog());
-                document.getElementById('sessionSearch').addEventListener('input', () => this.loadSessions());
-
-                // Logout
-                document.getElementById('logoutBtn').addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    if (confirm('Logout?')) {
-                        await fetch('/logout', { method: 'POST', credentials: 'include' });
-                        window.location.href = '/login.html';
-                    }
-                });
-
-                // Notifications bell
-                const bell = document.getElementById('notificationBell');
-                const dropdown = document.getElementById('notificationDropdown');
-                if (bell && dropdown) {
-                    bell.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        dropdown.classList.toggle('show');
-                    });
-                    document.addEventListener('click', () => dropdown.classList.remove('show'));
+            var navMap = { dashboardNav: 'dashboard', usersNav: 'users', toolsNav: 'tools',
+                pendingToolsNav: 'pending', cardsNav: 'cards' };
+            for (var navId in navMap) {
+                if (navMap.hasOwnProperty(navId)) {
+                    (function(navId, tabId) {
+                        var el = document.getElementById(navId);
+                        if (el) {
+                            el.addEventListener('click', function(e) {
+                                e.preventDefault();
+                                document.querySelector('.tab-btn[data-tab="' + tabId + '"]').click();
+                            });
+                        }
+                    })(navId, navMap[navId]);
                 }
             }
-        }
+            var annEl = document.getElementById('announcementNav');
+            if (annEl) {
+                annEl.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    self.openAnnouncementModal();
+                });
+            }
+        };
+
+        AdminDashboard.prototype.bindEvents = function() {
+            var self = this;
+
+            // Users
+            document.getElementById('searchInput').addEventListener('input', function() { self.filterUsers(); });
+            document.getElementById('roleFilter').addEventListener('change', function() { self.filterUsers(); });
+            document.getElementById('statusFilter').addEventListener('change', function() { self.filterUsers(); });
+            document.getElementById('sortUsers').addEventListener('change', function() { self.filterUsers(); });
+            document.getElementById('refreshBtn').addEventListener('click', function() {
+                self.loadUsersData().then(function() {
+                    self.filterUsers();
+                    self.loadStats();
+                });
+            });
+            document.getElementById('selectAll').addEventListener('change', function() { self.toggleSelectAll(); });
+            document.getElementById('selectAllHeader').addEventListener('change', function() { self.toggleSelectAll(); });
+            document.getElementById('bulkDelete').addEventListener('click', function() { self.bulkAction('delete'); });
+            document.getElementById('bulkSuspend').addEventListener('click', function() { self.bulkAction('suspend'); });
+            document.getElementById('bulkActivate').addEventListener('click', function() { self.bulkAction('activate'); });
+            document.getElementById('exportCSV').addEventListener('click', function() { self.exportData('csv'); });
+            document.getElementById('closeModal').addEventListener('click', function() {
+                document.getElementById('userModal').classList.remove('active');
+            });
+            document.getElementById('saveUserChanges').addEventListener('click', function() { self.saveUserChanges(); });
+            document.getElementById('closeCreditsModal').addEventListener('click', function() {
+                document.getElementById('creditsModal').classList.remove('active');
+            });
+            document.getElementById('giveCreditsBtn').addEventListener('click', function() { self.giveCredits(); });
+
+            // Tools
+            document.getElementById('toolSearch').addEventListener('input', function() { self.renderToolsTable(); });
+            document.getElementById('toolCategoryFilter').addEventListener('change', function() { self.renderToolsTable(); });
+            document.getElementById('toolApprovalFilter').addEventListener('change', function() { self.renderToolsTable(); });
+            document.getElementById('pendingSearch').addEventListener('input', function() { self.renderPendingTable(); });
+            document.getElementById('addToolBtn').addEventListener('click', function() { self.openToolModal(); });
+            document.getElementById('refreshToolsBtn').addEventListener('click', function() {
+                self.loadToolsData().then(function() { self.renderToolsTable(); });
+            });
+            document.getElementById('refreshPendingBtn').addEventListener('click', function() {
+                self.loadPendingToolsData().then(function() { self.renderPendingTable(); });
+            });
+            document.getElementById('closeToolModal').addEventListener('click', function() {
+                document.getElementById('toolModal').classList.remove('active');
+            });
+            document.getElementById('saveToolChanges').addEventListener('click', function() { self.saveTool(); });
+            document.getElementById('selectAllPending').addEventListener('change', function(e) {
+                document.querySelectorAll('.pending-checkbox').forEach(function(cb) {
+                    cb.checked = e.target.checked;
+                    var id = parseInt(cb.dataset.id);
+                    if (e.target.checked) self.selectedPending.add(id);
+                    else self.selectedPending.delete(id);
+                });
+            });
+            document.getElementById('bulkApprovePending').addEventListener('click', function() {
+                if (!self.selectedPending.size) { showToast('No tools selected', 'warning'); return; }
+                if (!confirm('Approve ' + self.selectedPending.size + ' tool(s)?')) return;
+                var ids = Array.from(self.selectedPending);
+                ids.forEach(function(id) { self.approveTool(id); });
+                self.selectedPending.clear();
+                showToast('Bulk approval done');
+            });
+            document.getElementById('bulkRejectPending').addEventListener('click', function() {
+                if (!self.selectedPending.size) { showToast('No tools selected', 'warning'); return; }
+                if (!confirm('Reject ' + self.selectedPending.size + ' tool(s)?')) return;
+                var ids = Array.from(self.selectedPending);
+                ids.forEach(function(id) { self.rejectTool(id); });
+                self.selectedPending.clear();
+                showToast('Bulk rejection done');
+            });
+
+            // Cards
+            document.getElementById('cardSearch').addEventListener('input', function() { self.renderCardsTable(); });
+            document.getElementById('cardCategoryFilter').addEventListener('change', function() { self.renderCardsTable(); });
+            document.getElementById('addCardBtn').addEventListener('click', function() { self.openCardModal(); });
+            document.getElementById('refreshCardsBtn').addEventListener('click', function() {
+                self.loadCardsData().then(function() { self.renderCardsTable(); });
+            });
+            document.getElementById('closeCardModal').addEventListener('click', function() {
+                document.getElementById('cardModal').classList.remove('active');
+            });
+            document.getElementById('saveCardChanges').addEventListener('click', function() { self.saveCard(); });
+
+            // Feedback
+            document.getElementById('feedbackSearch').addEventListener('input', function() { self.renderFeedbackTable(); });
+            document.getElementById('ratingFilter').addEventListener('change', function() { self.renderFeedbackTable(); });
+            document.getElementById('refreshFeedbackBtn').addEventListener('click', function() {
+                self.loadFeedbackData().then(function() { self.renderFeedbackTable(); });
+            });
+
+            // Announce
+            document.getElementById('closeAnnounceModal').addEventListener('click', function() {
+                document.getElementById('announcementModal').classList.remove('active');
+            });
+            document.getElementById('postAnnounceBtn').addEventListener('click', function() { self.postAnnouncement(); });
+
+            // Audit
+            document.getElementById('auditSearch').addEventListener('input', function() { self.renderAuditLog(); });
+            document.getElementById('auditActionFilter').addEventListener('change', function() { self.renderAuditLog(); });
+            document.getElementById('sessionSearch').addEventListener('input', function() { self.loadSessions(); });
+
+            // Logout
+            document.getElementById('logoutBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                if (confirm('Logout?')) {
+                    fetch('/logout', { method: 'POST', credentials: 'include' }).then(function() {
+                        window.location.href = '/login.html';
+                    });
+                }
+            });
+
+            // Notifications bell
+            var bell = document.getElementById('notificationBell');
+            var dropdown = document.getElementById('notificationDropdown');
+            if (bell && dropdown) {
+                bell.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    dropdown.classList.toggle('show');
+                });
+                document.addEventListener('click', function() { dropdown.classList.remove('show'); });
+            }
+        };
 
         // ============================================================
         // INSTANTIATE
         // ============================================================
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', function() {
             window.adminDashboard = new AdminDashboard();
         });
     </script>
