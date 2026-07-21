@@ -266,7 +266,6 @@
       left: 170px;
       z-index: 2;
     }
-    /* Premium lock overlay */
     .tool-card.premium-locked {
       position: relative;
       overflow: hidden;
@@ -331,6 +330,14 @@
       position: relative;
     }
     .tool-card .btn:hover { transform: scale(1.05); }
+    /* Share button specific */
+    .tool-card .share-btn {
+      background: rgba(255,255,255,0.15);
+      border: 1px solid rgba(255,255,255,0.3);
+    }
+    .tool-card .share-btn:hover {
+      background: rgba(255,255,255,0.3);
+    }
     .pagination {
       display: flex;
       justify-content: center;
@@ -851,31 +858,86 @@
     `).join('');
   }
 
+  // ===================== ENHANCED SUBMIT TOOL (no delay) =====================
   async function submitTool() {
     const name = document.getElementById('newName').value.trim();
     const url = document.getElementById('newUrl').value.trim();
     const description = document.getElementById('newDesc').value.trim();
     const category = document.getElementById('newCategory').value;
-    if (!name || !url || !description) { showToast('Please fill all fields', 'error'); return; }
-    try { new URL(url); } catch { showToast('Please enter a valid URL (including https://)', 'error'); return; }
+
+    if (!name || !url || !description) {
+      showToast('Please fill all fields', 'error');
+      return;
+    }
+    try { new URL(url); } catch {
+      showToast('Please enter a valid URL (including https://)', 'error');
+      return;
+    }
+
     const submitBtn = document.getElementById('submitToolBtn');
+    const originalText = submitBtn.innerHTML;
     submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting…';
+
     try {
-      await apiCall('/api/tools/submit', { method: 'POST', body: JSON.stringify({ name, url, description, category, pageType: PAGE_TYPE }) });
+      await apiCall('/api/tools/submit', {
+        method: 'POST',
+        body: JSON.stringify({ name, url, description, category, pageType: PAGE_TYPE })
+      });
+
       showToast('✅ Tool submitted! Admin will review it shortly.', 'success');
+      // Clear form immediately
       document.getElementById('newName').value = '';
       document.getElementById('newUrl').value = '';
       document.getElementById('newDesc').value = '';
-      setTimeout(() => loadAndMergeTools(), 2000);
+
+      // Refresh tool list without artificial delay
+      await loadAndMergeTools();
     } catch (error) {
       showToast(error.message || 'Submission failed', 'error');
     } finally {
       submitBtn.disabled = false;
-      submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit for Review';
+      submitBtn.innerHTML = originalText;
     }
   }
 
+  // ===================== SHARE FUNCTIONALITY =====================
+  function shareTool(url, name) {
+    // Use native Web Share API if available (mobile)
+    if (navigator.share) {
+      navigator.share({
+        title: `Check out ${name} on Sarveik!`,
+        text: `I found this awesome tool for students: ${name}`,
+        url: url
+      }).catch(() => { /* user cancelled */ });
+      return;
+    }
+
+    // Fallback: copy to clipboard
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url)
+        .then(() => showToast(`🔗 Link copied! Share it with your friends.`, 'info'))
+        .catch(() => fallbackCopy(url));
+    } else {
+      fallbackCopy(url);
+    }
+  }
+
+  function fallbackCopy(text) {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    document.body.appendChild(textarea);
+    textarea.select();
+    try {
+      document.execCommand('copy');
+      showToast(`🔗 Link copied! Share it with your friends.`, 'info');
+    } catch {
+      showToast('Could not copy link. Please copy it manually.', 'error');
+    }
+    document.body.removeChild(textarea);
+  }
+
+  // ===================== STORAGE HELPERS =====================
   if (!localStorage.getItem('popularity')) localStorage.setItem('popularity', '{}');
   if (!localStorage.getItem('ratings')) localStorage.setItem('ratings', '{}');
   if (!localStorage.getItem('favorites')) localStorage.setItem('favorites', '[]');
@@ -967,13 +1029,38 @@
           <h3>${escapeHtml(tool.name)}</h3>
           <p>${escapeHtml(tool.desc)}</p>
           <div class="meta"><span class="rating">${stars || '☆☆☆☆☆'}</span><span class="popularity">🔥 ${pop}</span></div>
-          <button class="btn details-btn" ${isPremiumLocked ? 'disabled style="opacity:0.6;"' : ''}>Details</button>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
+            <button class="btn details-btn" ${isPremiumLocked ? 'disabled style="opacity:0.6;"' : ''}>Details</button>
+            <button class="btn share-btn" data-url="${escapeHtml(tool.url)}" data-name="${escapeHtml(tool.name)}" title="Share this tool with friends">
+              <i class="fas fa-share-alt"></i> Share
+            </button>
+          </div>
           ${lockOverlay}
         </div>
       `;
     }).join('');
-    document.querySelectorAll('.fav-icon').forEach(icon => { icon.addEventListener('click', (e) => { e.stopPropagation(); toggleFavorite(icon.dataset.fav); }); });
-    document.querySelectorAll('.details-btn:not([disabled])').forEach(btn => { btn.addEventListener('click', (e) => { const card = e.target.closest('.tool-card'); openModal(card.dataset.name, card.dataset.url, card.dataset.desc, card.dataset.icon); }); });
+
+    // Attach fav icon events
+    document.querySelectorAll('.fav-icon').forEach(icon => { 
+      icon.addEventListener('click', (e) => { e.stopPropagation(); toggleFavorite(icon.dataset.fav); }); 
+    });
+    // Attach details button events
+    document.querySelectorAll('.details-btn:not([disabled])').forEach(btn => { 
+      btn.addEventListener('click', (e) => { 
+        const card = e.target.closest('.tool-card'); 
+        openModal(card.dataset.name, card.dataset.url, card.dataset.desc, card.dataset.icon); 
+      }); 
+    });
+    // Attach share button events
+    document.querySelectorAll('.share-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const url = btn.dataset.url;
+        const name = btn.dataset.name;
+        shareTool(url, name);
+      });
+    });
+
     renderPagination();
   }
 
@@ -1001,12 +1088,27 @@
           <h3>${escapeHtml(tool.name)}</h3>
           <p>${escapeHtml(tool.desc)}</p>
           <div class="meta"><span class="rating">${stars || '☆☆☆☆☆'}</span><span class="popularity">🔥 ${pop}</span></div>
-          <button class="btn details-btn" ${isPremiumLocked ? 'disabled' : ''}>Details</button>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
+            <button class="btn details-btn" ${isPremiumLocked ? 'disabled' : ''}>Details</button>
+            <button class="btn share-btn" data-url="${escapeHtml(tool.url)}" data-name="${escapeHtml(tool.name)}" title="Share this tool">
+              <i class="fas fa-share-alt"></i> Share
+            </button>
+          </div>
           ${lockOverlay}
         </div>
       `;
     }).join('');
-    favoritesGrid.querySelectorAll('.details-btn:not([disabled])').forEach(btn => { btn.addEventListener('click', (e) => { const card = e.target.closest('.tool-card'); openModal(card.dataset.name, card.dataset.url, card.dataset.desc, card.dataset.icon); }); });
+    favoritesGrid.querySelectorAll('.details-btn:not([disabled])').forEach(btn => { 
+      btn.addEventListener('click', (e) => { const card = e.target.closest('.tool-card'); openModal(card.dataset.name, card.dataset.url, card.dataset.desc, card.dataset.icon); }); 
+    });
+    favoritesGrid.querySelectorAll('.share-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const url = btn.dataset.url;
+        const name = btn.dataset.name;
+        shareTool(url, name);
+      });
+    });
   }
 
   function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
@@ -1073,6 +1175,7 @@
     } catch(e) { console.log('Tracking not available'); }
   }
 
+  // Event listeners
   document.getElementById('searchInput').addEventListener('input', (e) => { currentSearch = e.target.value; currentPage = 1; renderTools(); });
   document.getElementById('sortSelect').addEventListener('change', (e) => { currentSort = e.target.value; renderTools(); });
   document.getElementById('refreshToolsBtn').addEventListener('click', () => { loadAndMergeTools(); showToast('Refreshing tools from database...', 'info'); });
