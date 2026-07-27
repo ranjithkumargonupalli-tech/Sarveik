@@ -8,8 +8,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    /* ... (keep all existing styles from previous version) ... */
-    /* I'll keep the styles compact but complete */
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
     :root{
       --bg:#07070e;--bg2:#0f0f1a;--bg3:#161625;--bg4:#1c1c2e;
@@ -37,28 +35,64 @@
       --glow-accent:0 0 30px rgba(124,108,240,0.12);
     }
     html{scroll-behavior:smooth}
-    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background 0.3s,color 0.3s;overflow-x:hidden}
-    body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 50% at 5% 0%,rgba(124,108,240,0.13) 0%,transparent 60%),radial-gradient(ellipse 50% 60% at 95% 90%,rgba(240,108,138,0.09) 0%,transparent 60%),radial-gradient(ellipse 40% 40% at 50% 50%,rgba(108,240,184,0.05) 0%,transparent 70%);pointer-events:none;z-index:0;animation:bgPulse 8s ease infinite alternate}
+    body{
+      font-family:'DM Sans',sans-serif;
+      background:var(--bg);color:var(--text);
+      min-height:100vh;transition:background 0.3s,color 0.3s;overflow-x:hidden;
+    }
+    body::before{
+      content:'';position:fixed;inset:0;
+      background:
+        radial-gradient(ellipse 70% 50% at 5% 0%,rgba(124,108,240,0.13) 0%,transparent 60%),
+        radial-gradient(ellipse 50% 60% at 95% 90%,rgba(240,108,138,0.09) 0%,transparent 60%),
+        radial-gradient(ellipse 40% 40% at 50% 50%,rgba(108,240,184,0.05) 0%,transparent 70%);
+      pointer-events:none;z-index:0;animation:bgPulse 8s ease infinite alternate;
+    }
     @keyframes bgPulse{0%{opacity:0.8}100%{opacity:1}}
+    body::after{
+      content:'';position:fixed;inset:0;
+      background-image:linear-gradient(rgba(255,255,255,0.015) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.015) 1px,transparent 1px);
+      background-size:60px 60px;pointer-events:none;z-index:0;
+    }
+    body.light-mode::after{background-image:linear-gradient(rgba(0,0,0,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,0.03) 1px,transparent 1px);}
     .container{max-width:1440px;margin:0 auto;padding:0 28px;position:relative;z-index:1}
-    ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:var(--bg2)}::-webkit-scrollbar-thumb{background:rgba(124,108,240,0.35);border-radius:3px}::-webkit-scrollbar-thumb:hover{background:var(--accent)}
-    
-    /* Header */
-    .site-header{padding:13px 0;border-bottom:1px solid var(--border);position:sticky;top:0;background:rgba(7,7,14,0.85);backdrop-filter:blur(28px) saturate(180%);z-index:100;transition:background 0.3s,box-shadow 0.3s}
+    ::-webkit-scrollbar{width:5px;height:5px}
+    ::-webkit-scrollbar-track{background:var(--bg2)}
+    ::-webkit-scrollbar-thumb{background:rgba(124,108,240,0.35);border-radius:3px}
+    ::-webkit-scrollbar-thumb:hover{background:var(--accent)}
+
+    /* ===== HEADER ===== */
+    .site-header{
+      padding:13px 0;border-bottom:1px solid var(--border);
+      position:sticky;top:0;
+      background:rgba(7,7,14,0.85);
+      backdrop-filter:blur(28px) saturate(180%);-webkit-backdrop-filter:blur(28px);
+      z-index:100;transition:background 0.3s,box-shadow 0.3s;
+    }
     .site-header.scrolled{box-shadow:0 4px 32px rgba(0,0,0,0.4)}
     body.light-mode .site-header{background:rgba(240,240,248,0.85)}
     .header-inner{display:flex;align-items:center;justify-content:space-between;gap:12px}
     .logo{display:flex;align-items:center;gap:11px;cursor:pointer;user-select:none;text-decoration:none}
-    .logo-icon{width:42px;height:42px;background:var(--grad1);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.25rem;box-shadow:var(--glow-accent);position:relative;flex-shrink:0;transition:transform 0.3s ease,box-shadow 0.3s ease}
+    .logo-icon{
+      width:42px;height:42px;background:var(--grad1);border-radius:12px;
+      display:flex;align-items:center;justify-content:center;font-size:1.25rem;
+      box-shadow:var(--glow-accent);position:relative;flex-shrink:0;
+      transition:transform 0.3s ease,box-shadow 0.3s ease;
+    }
     .logo:hover .logo-icon{transform:scale(1.08) rotate(-4deg);box-shadow:0 0 40px rgba(124,108,240,0.5)}
     .logo-icon::after{content:'';position:absolute;inset:-1px;border-radius:13px;border:1px solid rgba(255,255,255,0.18);pointer-events:none}
     .logo-text h1{font-family:'Syne',sans-serif;font-size:1.22rem;font-weight:800;line-height:1;background:var(--grad1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
     .logo-text span{font-size:0.68rem;color:var(--text3);font-weight:400;letter-spacing:0.3px}
     .header-center{flex:1;max-width:380px;margin:0 auto}
-    .header-search{position:relative;display:flex;align-items:center}
+    .header-search{position:relative;display:flex;align-items:center;}
     .header-search i{position:absolute;left:14px;color:var(--text3);font-size:0.85rem;pointer-events:none;transition:color 0.2s}
-    .header-search input{width:100%;padding:9px 14px 9px 38px;border-radius:50px;border:1px solid var(--border);background:var(--card);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.85rem;outline:none;transition:var(--transition)}
+    .header-search input{
+      width:100%;padding:9px 14px 9px 38px;border-radius:50px;
+      border:1px solid var(--border);background:var(--card);color:var(--text);
+      font-family:'DM Sans',sans-serif;font-size:0.85rem;outline:none;transition:var(--transition);
+    }
     .header-search input:focus{border-color:rgba(124,108,240,0.5);background:var(--card-hover);box-shadow:0 0 0 3px rgba(124,108,240,0.1)}
+    .header-search input:focus+i,.header-search i{pointer-events:none}
     .header-search input::placeholder{color:var(--text3)}
     .header-actions{display:flex;align-items:center;gap:8px;flex-wrap:nowrap}
     .hamburger{display:none;flex-direction:column;justify-content:space-between;width:28px;height:18px;background:transparent;border:none;cursor:pointer;z-index:110;padding:0}
@@ -66,51 +100,125 @@
     .hamburger.open span:nth-child(1){transform:translateY(8px) rotate(45deg)}
     .hamburger.open span:nth-child(2){opacity:0;transform:scaleX(0)}
     .hamburger.open span:nth-child(3){transform:translateY(-8px) rotate(-45deg)}
-    @media(max-width:860px){.header-center{display:none}.header-actions>*:not(.btn-icon-only):not(.btn-primary-sm){display:none}.hamburger{display:flex}}
-    
-    /* Buttons */
-    .btn-ghost{padding:8px 16px;border-radius:50px;border:1px solid var(--border);background:var(--card);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:500;cursor:pointer;transition:var(--transition);text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+    @media(max-width:860px){
+      .header-center{display:none}
+      .header-actions>*:not(.btn-icon-only):not(.btn-primary-sm){display:none}
+      .hamburger{display:flex}
+    }
+
+    /* ===== MOBILE DRAWER ===== */
+    .mobile-drawer{
+      position:fixed;top:0;right:0;width:82%;max-width:300px;height:100vh;
+      background:var(--bg2);backdrop-filter:blur(20px);z-index:200;
+      transform:translateX(100%);transition:transform 0.32s cubic-bezier(0.4,0,0.2,1);
+      display:flex;flex-direction:column;padding:72px 20px 28px;gap:10px;
+      border-left:1px solid var(--border);
+    }
+    .mobile-drawer.open{transform:translateX(0)}
+    .drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);z-index:150;display:none;opacity:0;transition:opacity 0.3s}
+    .drawer-overlay.active{display:block;opacity:1}
+    .drawer-close{position:absolute;top:18px;right:18px;background:var(--card);border:1px solid var(--border);color:var(--text2);width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;transition:var(--transition)}
+    .drawer-close:hover{background:var(--red);color:white;border-color:var(--red)}
+    .drawer-item{
+      background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 16px;
+      color:var(--text2);font-size:0.9rem;font-weight:500;display:flex;align-items:center;gap:12px;
+      cursor:pointer;transition:var(--transition);width:100%;text-align:left;font-family:inherit;
+    }
+    .drawer-item:hover{background:var(--card-hover);color:var(--text);border-color:var(--border-active);transform:translateX(4px)}
+    .drawer-item i{width:20px;text-align:center;font-size:0.95rem}
+    .drawer-item.primary-item{background:var(--grad1);border-color:transparent;color:#fff}
+    .drawer-item.gold-item{background:var(--grad3);border-color:transparent;color:#000}
+
+    /* ===== BUTTONS ===== */
+    .btn-ghost{
+      padding:8px 16px;border-radius:50px;border:1px solid var(--border);
+      background:var(--card);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:500;
+      cursor:pointer;transition:var(--transition);text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
+    }
     .btn-ghost:hover{border-color:var(--border-active);color:var(--text);background:var(--card-hover)}
-    .btn-primary{padding:9px 18px;border-radius:50px;border:none;background:var(--grad1);color:#fff;font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:600;cursor:pointer;transition:var(--transition);text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;box-shadow:0 4px 18px rgba(124,108,240,0.3);position:relative;overflow:hidden}
+    .btn-primary{
+      padding:9px 18px;border-radius:50px;border:none;background:var(--grad1);color:#fff;
+      font-family:'DM Sans',sans-serif;font-size:0.82rem;font-weight:600;
+      cursor:pointer;transition:var(--transition);text-decoration:none;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
+      box-shadow:0 4px 18px rgba(124,108,240,0.3);position:relative;overflow:hidden;
+    }
     .btn-primary::after{content:'';position:absolute;inset:0;background:linear-gradient(rgba(255,255,255,0.12),transparent);border-radius:inherit}
     .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(124,108,240,0.45)}
     .btn-primary:active{transform:translateY(0)}
     .btn-gold{background:var(--grad3)!important;box-shadow:0 4px 18px rgba(240,200,74,0.3)!important;color:#000!important}
     .btn-gold:hover{box-shadow:0 8px 28px rgba(240,200,74,0.45)!important;transform:translateY(-2px)}
-    .btn-icon-only{width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--card);color:var(--text2);font-size:0.9rem;cursor:pointer;transition:var(--transition);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .btn-green{background:linear-gradient(135deg,#22c55e,#16a34a);box-shadow:0 4px 18px rgba(34,197,94,0.3)}
+    .btn-icon-only{
+      width:38px;height:38px;border-radius:50%;border:1px solid var(--border);background:var(--card);
+      color:var(--text2);font-size:0.9rem;cursor:pointer;transition:var(--transition);
+      display:flex;align-items:center;justify-content:center;flex-shrink:0;
+    }
     .btn-icon-only:hover{border-color:var(--border-active);color:var(--text);background:var(--card-hover);transform:scale(1.08)}
-    
-    /* Hero, Stats, Controls, Grid, Cards, Modals - keeping compact */
+
+    /* ===== HERO ===== */
     .hero{padding:64px 0 48px;text-align:center;position:relative}
-    .hero-eyebrow{display:inline-flex;align-items:center;gap:7px;background:rgba(124,108,240,0.1);border:1px solid rgba(124,108,240,0.22);border-radius:50px;padding:5px 14px;font-size:0.74rem;color:var(--accent);font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:20px;animation:fadeUp 0.5s ease both}
+    .hero-eyebrow{
+      display:inline-flex;align-items:center;gap:7px;
+      background:rgba(124,108,240,0.1);border:1px solid rgba(124,108,240,0.22);
+      border-radius:50px;padding:5px 14px;font-size:0.74rem;color:var(--accent);font-weight:600;
+      letter-spacing:1px;text-transform:uppercase;margin-bottom:20px;
+      animation:fadeUp 0.5s ease both;
+    }
     .hero-eyebrow .dot{width:6px;height:6px;border-radius:50%;background:var(--accent);display:inline-block;animation:pulse 2s ease infinite}
-    .hero h2{font-family:'Syne',sans-serif;font-size:clamp(2.2rem,5.5vw,4rem);font-weight:800;line-height:1.06;margin-bottom:18px;animation:fadeUp 0.5s 0.08s ease both;letter-spacing:-1.5px}
+    .hero h2{
+      font-family:'Syne',sans-serif;font-size:clamp(2.2rem,5.5vw,4rem);font-weight:800;
+      line-height:1.06;margin-bottom:18px;animation:fadeUp 0.5s 0.08s ease both;letter-spacing:-1.5px;
+    }
     .hero h2 .grad{background:var(--grad1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
     .hero h2 .grad2{background:var(--grad3);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
     .hero p{color:var(--text2);font-size:1.05rem;max-width:540px;margin:0 auto 36px;line-height:1.72;animation:fadeUp 0.5s 0.16s ease both}
     .hero-actions{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:48px;animation:fadeUp 0.5s 0.24s ease both}
     .hero-actions .btn-primary{padding:12px 28px;font-size:0.92rem}
     .hero-actions .btn-ghost{padding:12px 28px;font-size:0.92rem}
-    .stats-bar{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:16px;overflow:hidden;max-width:680px;margin:0 auto 52px;animation:fadeUp 0.5s 0.3s ease both}
+
+    /* ===== STATS ===== */
+    .stats-bar{
+      display:grid;grid-template-columns:repeat(4,1fr);gap:1px;
+      background:var(--border);border:1px solid var(--border);border-radius:16px;overflow:hidden;
+      max-width:680px;margin:0 auto 52px;animation:fadeUp 0.5s 0.3s ease both;
+    }
     .stat-item{background:var(--bg2);padding:22px 16px;text-align:center;transition:background 0.2s}
     .stat-item:hover{background:var(--bg3)}
-    .stat-item .num{font-family:'Syne',sans-serif;font-size:2.1rem;font-weight:800;background:var(--grad1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;display:block;margin-bottom:4px}
+    .stat-item .num{
+      font-family:'Syne',sans-serif;font-size:2.1rem;font-weight:800;
+      background:var(--grad1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+      line-height:1;display:block;margin-bottom:4px;
+    }
     .stat-item .label{font-size:0.7rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.8px;font-weight:500}
     @media(max-width:500px){.stats-bar{grid-template-columns:1fr 1fr;max-width:100%}}
-    
-    /* Earn banner */
-    .earn-banner{background:linear-gradient(135deg,rgba(108,240,184,0.08),rgba(59,130,246,0.08));border:1px solid rgba(108,240,184,0.2);border-radius:var(--r);padding:16px 22px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;position:relative;overflow:hidden;transition:var(--transition)}
+
+    /* ===== EARN CREDITS BANNER ===== */
+    .earn-banner{
+      background:linear-gradient(135deg,rgba(108,240,184,0.08),rgba(59,130,246,0.08));
+      border:1px solid rgba(108,240,184,0.2);border-radius:var(--r);padding:16px 22px;margin-bottom:20px;
+      display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+      position:relative;overflow:hidden;transition:var(--transition);
+    }
     .earn-banner:hover{border-color:rgba(108,240,184,0.35);transform:translateY(-2px)}
+    .earn-banner::before{content:'';position:absolute;right:-40px;top:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(108,240,184,0.12),transparent);pointer-events:none}
     .earn-banner-left{display:flex;align-items:center;gap:14px}
     .earn-banner-icon{width:46px;height:46px;background:rgba(108,240,184,0.18);border:1px solid rgba(108,240,184,0.3);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0}
     .earn-banner-text h4{font-family:'Syne',sans-serif;font-size:0.92rem;font-weight:700;margin-bottom:3px;color:var(--text)}
     .earn-banner-text p{font-size:0.76rem;color:var(--text2);margin:0}
-    .credit-badge{background:var(--grad4);padding:5px 14px;border-radius:50px;font-size:0.8rem;font-weight:700;color:#fff;white-space:nowrap;flex-shrink:0;box-shadow:0 4px 14px rgba(108,240,184,0.3);animation:shimmerBadge 3s ease infinite}
+    .credit-badge{
+      background:var(--grad4);padding:5px 14px;border-radius:50px;
+      font-size:0.8rem;font-weight:700;color:#fff;white-space:nowrap;flex-shrink:0;
+      box-shadow:0 4px 14px rgba(108,240,184,0.3);animation:shimmerBadge 3s ease infinite;
+    }
     @keyframes shimmerBadge{0%,100%{box-shadow:0 4px 14px rgba(108,240,184,0.3)}50%{box-shadow:0 4px 24px rgba(108,240,184,0.6)}}
-    
-    /* Packages, Controls, Grid, Cards, Modals - compressed but complete */
+
+    /* ===== SPONSORED PACKAGES ===== */
     .packages-section{margin-bottom:28px}
-    .packages-toggle-bar{display:flex;align-items:center;justify-content:space-between;background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:14px 20px;cursor:pointer;transition:var(--transition);margin-bottom:0}
+    .packages-toggle-bar{
+      display:flex;align-items:center;justify-content:space-between;
+      background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);
+      padding:14px 20px;cursor:pointer;transition:var(--transition);margin-bottom:0;
+    }
     .packages-toggle-bar:hover{border-color:rgba(240,200,74,0.3);background:var(--bg3)}
     .packages-toggle-bar.open{border-radius:var(--r) var(--r) 0 0;border-bottom:1px solid transparent}
     .packages-toggle-left{display:flex;align-items:center;gap:12px}
@@ -120,11 +228,18 @@
     .packages-toggle-right{display:flex;align-items:center;gap:10px}
     .packages-toggle-arrow{transition:transform 0.3s ease;color:var(--text3)}
     .packages-toggle-bar.open .packages-toggle-arrow{transform:rotate(180deg)}
-    .packages-body{background:var(--bg2);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--r) var(--r);padding:22px;display:none}
+    .packages-body{
+      background:var(--bg2);border:1px solid var(--border);border-top:none;
+      border-radius:0 0 var(--r) var(--r);padding:22px;
+      display:none;
+    }
     .packages-body.open{display:block;animation:fadeUp 0.22s ease}
     .sponsored-packages{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
     @media(max-width:700px){.sponsored-packages{grid-template-columns:1fr}}
-    .package-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;text-align:center;transition:var(--transition);cursor:pointer;position:relative;overflow:hidden}
+    .package-card{
+      background:var(--card);border:1px solid var(--border);border-radius:14px;padding:22px;
+      text-align:center;transition:var(--transition);cursor:pointer;position:relative;overflow:hidden;
+    }
     .package-card::before{content:'';position:absolute;inset:0;border-radius:inherit;background:var(--grad1);opacity:0;transition:opacity 0.3s}
     .package-card:hover::before{opacity:0.05}
     .package-card:hover{transform:translateY(-6px);border-color:var(--accent);box-shadow:var(--shadow-md)}
@@ -138,46 +253,80 @@
     .package-features li{padding:5px 0;font-size:0.78rem;color:var(--text2);display:flex;align-items:flex-start;gap:8px;line-height:1.4}
     .package-features li i{color:var(--accent3);width:14px;flex-shrink:0;margin-top:2px}
     .package-card .pkg-btn{width:100%;padding:10px;border-radius:50px;font-size:0.82rem;justify-content:center}
-    
-    .controls-wrapper{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:18px;margin-bottom:28px;transition:var(--transition)}
+
+    /* ===== CONTROLS ===== */
+    .controls-wrapper{
+      background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);
+      padding:18px;margin-bottom:28px;transition:var(--transition);
+    }
     .search-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap}
     .search-wrap{flex:1 1 220px;position:relative}
     .search-wrap i{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:0.85rem;pointer-events:none;transition:color 0.2s}
-    .search-wrap input{width:100%;padding:11px 14px 11px 40px;border-radius:50px;border:1px solid var(--border);background:var(--card);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;outline:none;transition:var(--transition)}
+    .search-wrap input{
+      width:100%;padding:11px 14px 11px 40px;border-radius:50px;
+      border:1px solid var(--border);background:var(--card);color:var(--text);
+      font-family:'DM Sans',sans-serif;font-size:0.88rem;outline:none;transition:var(--transition);
+    }
     .search-wrap input:focus{border-color:rgba(124,108,240,0.5);box-shadow:0 0 0 3px rgba(124,108,240,0.1)}
     .search-wrap input:focus~i{color:var(--accent)}
     .search-wrap input::placeholder{color:var(--text3)}
-    .select-wrap select{padding:11px 34px 11px 14px;border-radius:50px;border:1px solid var(--border);background:var(--card);color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.82rem;outline:none;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 12 12'%3E%3Cpath fill='%239090a8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 12px center;transition:var(--transition);white-space:nowrap}
+    .select-wrap select{
+      padding:11px 34px 11px 14px;border-radius:50px;
+      border:1px solid var(--border);background:var(--card);color:var(--text);
+      font-family:'DM Sans',sans-serif;font-size:0.82rem;outline:none;cursor:pointer;appearance:none;
+      background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='11' viewBox='0 0 12 12'%3E%3Cpath fill='%239090a8' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat:no-repeat;background-position:right 12px center;transition:var(--transition);white-space:nowrap;
+    }
     .select-wrap select:focus{border-color:rgba(124,108,240,0.5)}
     .filter-chips{display:flex;gap:7px;flex-wrap:wrap;padding-top:2px}
-    .chip{padding:6px 14px;border-radius:50px;border:1px solid var(--border);background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:0.78rem;cursor:pointer;transition:var(--transition);display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+    .chip{
+      padding:6px 14px;border-radius:50px;border:1px solid var(--border);background:transparent;
+      color:var(--text2);font-family:'DM Sans',sans-serif;font-size:0.78rem;
+      cursor:pointer;transition:var(--transition);display:inline-flex;align-items:center;gap:4px;white-space:nowrap;
+    }
     .chip:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-1px)}
     .chip.active{background:var(--grad1);border-color:transparent;color:#fff;font-weight:600;box-shadow:0 4px 14px rgba(124,108,240,0.28);transform:translateY(-1px)}
-    
-    .view-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px}
+
+    /* ===== VIEW BAR ===== */
+    .view-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:10px;}
     .result-count{font-size:0.84rem;color:var(--text2)}
     .result-count strong{color:var(--text);font-weight:600}
     .view-bar-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-    .filter-toggle-pill{display:flex;align-items:center;gap:6px;padding:6px 13px;border-radius:50px;border:1px solid var(--border);background:var(--card);color:var(--text2);font-size:0.78rem;cursor:pointer;transition:var(--transition);user-select:none}
+    .filter-toggle-pill{
+      display:flex;align-items:center;gap:6px;padding:6px 13px;border-radius:50px;
+      border:1px solid var(--border);background:var(--card);color:var(--text2);font-size:0.78rem;cursor:pointer;
+      transition:var(--transition);user-select:none;
+    }
     .filter-toggle-pill:has(input:checked){border-color:var(--accent);color:var(--accent);background:rgba(124,108,240,0.08)}
     .filter-toggle-pill input{display:none}
     .view-toggle{display:flex;gap:3px;background:var(--bg2);border:1px solid var(--border);border-radius:9px;padding:3px}
-    .view-btn{width:32px;height:28px;border-radius:6px;border:none;background:transparent;color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.8rem;transition:var(--transition)}
+    .view-btn{width:32px;height:28px;border-radius:6px;border:none;background:transparent;color:var(--text3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.8rem;transition:var(--transition);}
     .view-btn.active{background:var(--accent);color:#fff;box-shadow:0 2px 8px rgba(124,108,240,0.4)}
-    
+
+    /* ===== BUSINESS GRID & CARDS ===== */
     #businessGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;margin-bottom:28px}
     #businessGrid.list-view{grid-template-columns:1fr}
-    .biz-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;transition:transform 0.3s cubic-bezier(0.34,1.3,0.64,1),border-color 0.25s,box-shadow 0.3s;cursor:pointer;position:relative;display:flex;flex-direction:column}
+    .biz-card{
+      background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;
+      transition:transform 0.3s cubic-bezier(0.34,1.3,0.64,1),border-color 0.25s,box-shadow 0.3s;
+      cursor:pointer;position:relative;display:flex;flex-direction:column;
+    }
     .biz-card:hover{border-color:var(--border-active);transform:translateY(-6px);box-shadow:var(--shadow-md);background:var(--card-hover)}
     .biz-card.sponsored-card{border:2px solid rgba(240,200,74,0.35);background:linear-gradient(160deg,rgba(240,200,74,0.04),transparent)}
     .biz-card.sponsored-card::after{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(135deg,rgba(240,200,74,0.04),transparent 60%);pointer-events:none}
     #businessGrid.list-view .biz-card{flex-direction:row;align-items:stretch}
+
     .biz-card-banner{height:88px;position:relative;flex-shrink:0;background:linear-gradient(135deg,var(--bg3),var(--bg4));overflow:hidden}
     #businessGrid.list-view .biz-card-banner{width:100px;height:auto}
     .biz-card-banner-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.7;transition:opacity 0.3s,transform 0.5s}
     .biz-card:hover .biz-card-banner-img{opacity:0.9;transform:scale(1.05)}
     .biz-card-banner-overlay{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 20%,rgba(0,0,0,0.65))}
-    .biz-logo{position:absolute;bottom:-18px;left:18px;width:50px;height:50px;background:var(--bg3);border:2px solid var(--border-active);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.4rem;z-index:2;box-shadow:var(--shadow-sm);transition:transform 0.3s ease}
+    .biz-logo{
+      position:absolute;bottom:-18px;left:18px;width:50px;height:50px;
+      background:var(--bg3);border:2px solid var(--border-active);border-radius:12px;
+      display:flex;align-items:center;justify-content:center;font-size:1.4rem;z-index:2;
+      box-shadow:var(--shadow-sm);transition:transform 0.3s ease;
+    }
     .biz-card:hover .biz-logo{transform:scale(1.1) rotate(-5deg)}
     #businessGrid.list-view .biz-logo{position:relative;bottom:auto;left:auto;margin:14px;width:46px;height:46px;font-size:1.3rem}
     .biz-badges{position:absolute;top:9px;right:9px;display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;z-index:3}
@@ -188,8 +337,14 @@
     .badge-sponsored{background:var(--grad3);color:#000;border:none;box-shadow:0 2px 8px rgba(240,200,74,0.4)}
     .badge-open{background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.28)}
     .badge-closed{background:rgba(239,68,68,0.15);color:var(--red);border:1px solid rgba(239,68,68,0.28)}
-    .fav-btn-card{position:absolute;top:9px;left:9px;width:28px;height:28px;border-radius:50%;background:rgba(0,0,0,0.45);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.65);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.8rem;transition:var(--transition);z-index:3}
+    .fav-btn-card{
+      position:absolute;top:9px;left:9px;width:28px;height:28px;border-radius:50%;
+      background:rgba(0,0,0,0.45);backdrop-filter:blur(6px);border:1px solid rgba(255,255,255,0.12);
+      color:rgba(255,255,255,0.65);cursor:pointer;display:flex;align-items:center;justify-content:center;
+      font-size:0.8rem;transition:var(--transition);z-index:3;
+    }
     .fav-btn-card:hover,.fav-btn-card.active{color:var(--accent2);background:rgba(240,108,138,0.25);border-color:rgba(240,108,138,0.4);transform:scale(1.15)}
+
     .biz-card-body{padding:28px 18px 18px;flex:1;display:flex;flex-direction:column}
     #businessGrid.list-view .biz-card-body{padding:14px 16px}
     .biz-name{font-family:'Syne',sans-serif;font-size:1.02rem;font-weight:700;margin-bottom:3px;display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
@@ -213,30 +368,61 @@
     .compare-label{display:flex;align-items:center;gap:4px;cursor:pointer;font-size:0.68rem;color:var(--text3)}
     .btn-details{padding:5px 13px;border-radius:50px;border:1px solid var(--border);background:var(--card);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:0.76rem;cursor:pointer;transition:var(--transition)}
     .btn-details:hover{background:var(--grad1);border-color:transparent;color:#fff;box-shadow:0 4px 12px rgba(124,108,240,0.3)}
-    
+
+    /* ===== SPONSORED LISTINGS ===== */
     .sponsored-listings-section{margin-bottom:24px}
-    .sponsored-section-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:linear-gradient(135deg,rgba(240,200,74,0.08),rgba(249,115,22,0.06));border:1px solid rgba(240,200,74,0.2);border-radius:12px 12px 0 0;border-bottom:none}
+    .sponsored-section-header{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:10px 16px;background:linear-gradient(135deg,rgba(240,200,74,0.08),rgba(249,115,22,0.06));
+      border:1px solid rgba(240,200,74,0.2);border-radius:12px 12px 0 0;border-bottom:none;
+    }
     .sponsored-section-title{font-size:0.8rem;font-weight:700;color:var(--gold);display:flex;align-items:center;gap:7px;letter-spacing:0.3px}
-    .sponsored-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0;border:1px solid rgba(240,200,74,0.2);border-radius:0 0 12px 12px;overflow:hidden}
+    .sponsored-grid{
+      display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:0;
+      border:1px solid rgba(240,200,74,0.2);border-radius:0 0 12px 12px;overflow:hidden;
+    }
     .sponsored-grid .biz-card{border-radius:0;border:none;border-right:1px solid rgba(240,200,74,0.12);border-bottom:1px solid rgba(240,200,74,0.12)}
     .sponsored-grid .biz-card:last-child{border-right:none}
-    
-    .modal-backdrop{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.78);backdrop-filter:blur(14px);z-index:1000;align-items:center;justify-content:center;padding:18px}
+
+    /* ===== MODALS ===== */
+    .modal-backdrop{
+      display:none;position:fixed;inset:0;background:rgba(0,0,0,0.78);
+      backdrop-filter:blur(14px);z-index:1000;align-items:center;justify-content:center;padding:18px;
+    }
     .modal-backdrop.open{display:flex;animation:fadeIn 0.18s ease}
-    .modal{background:var(--bg2);border:1px solid var(--border);border-radius:22px;max-width:820px;width:100%;max-height:92vh;overflow-y:auto;position:relative;animation:scaleIn 0.24s cubic-bezier(0.34,1.4,0.64,1) both}
-    .modal::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:rgba(124,108,240,0.3);border-radius:2px}
-    .modal-close{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;background:var(--card);border:1px solid var(--border);color:var(--text2);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--transition);z-index:5}
+    .modal{
+      background:var(--bg2);border:1px solid var(--border);border-radius:22px;
+      max-width:820px;width:100%;max-height:92vh;overflow-y:auto;position:relative;
+      animation:scaleIn 0.24s cubic-bezier(0.34,1.4,0.64,1) both;
+    }
+    .modal::-webkit-scrollbar{width:4px}
+    .modal::-webkit-scrollbar-thumb{background:rgba(124,108,240,0.3);border-radius:2px}
+    .modal-close{
+      position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:50%;
+      background:var(--card);border:1px solid var(--border);color:var(--text2);font-size:1rem;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;transition:var(--transition);z-index:5;
+    }
     .modal-close:hover{background:var(--red);color:#fff;border-color:var(--red);transform:rotate(90deg)}
     .modal-banner{height:168px;background:var(--grad1);border-radius:22px 22px 0 0;position:relative;overflow:hidden}
     .modal-banner-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.5}
     .modal-banner-shimmer{position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,0.08),transparent,rgba(255,255,255,0.04))}
-    .modal-logo-wrap{position:absolute;bottom:-28px;left:26px;width:68px;height:68px;border-radius:16px;background:var(--bg2);border:3px solid var(--border-active);display:flex;align-items:center;justify-content:center;font-size:2rem;box-shadow:var(--shadow-md);transition:transform 0.3s ease}
+    .modal-logo-wrap{
+      position:absolute;bottom:-28px;left:26px;width:68px;height:68px;border-radius:16px;
+      background:var(--bg2);border:3px solid var(--border-active);
+      display:flex;align-items:center;justify-content:center;font-size:2rem;
+      box-shadow:var(--shadow-md);transition:transform 0.3s ease;
+    }
     .modal-logo-wrap:hover{transform:scale(1.08) rotate(-5deg)}
     .modal-body{padding:48px 26px 26px}
     .modal-title-row{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:7px;flex-wrap:wrap}
     .modal-title{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;letter-spacing:-0.5px}
     .modal-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
-    .google-rating-block{display:flex;align-items:center;gap:14px;background:rgba(251,188,4,0.06);border:1px solid rgba(251,188,4,0.15);border-radius:12px;padding:14px 16px;margin-bottom:20px;flex-wrap:wrap}
+
+    .google-rating-block{
+      display:flex;align-items:center;gap:14px;
+      background:rgba(251,188,4,0.06);border:1px solid rgba(251,188,4,0.15);
+      border-radius:12px;padding:14px 16px;margin-bottom:20px;flex-wrap:wrap;
+    }
     .grb-left{display:flex;align-items:center;gap:9px}
     .grb-logo{width:18px;height:18px}
     .grb-score{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:var(--gold);line-height:1}
@@ -247,6 +433,7 @@
     .gcache-badge{display:inline-flex;align-items:center;gap:3px;font-size:0.62rem;color:var(--text3);background:var(--card);border:1px solid var(--border);border-radius:20px;padding:2px 7px;margin-left:auto}
     .gcache-badge.fresh{color:var(--accent3);border-color:rgba(108,240,184,0.28)}
     .gcache-badge.stale{color:var(--gold);border-color:rgba(240,200,74,0.28)}
+
     .modal-section{margin-bottom:22px}
     .modal-section h4{font-family:'Syne',sans-serif;font-size:0.8rem;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:10px;display:flex;align-items:center;gap:6px}
     .modal-section h4 i{color:var(--accent);font-size:0.85rem}
@@ -292,11 +479,13 @@
     .modal-action-btn.sponsor-btn:hover{box-shadow:var(--glow-gold)}
     .maps-thumb-wrap{position:relative;height:156px;overflow:hidden;border-radius:10px;margin-bottom:14px;background:var(--bg3);border:1px solid var(--border)}
     .maps-thumb-wrap img{width:100%;height:100%;object-fit:cover;display:block}
-    .maps-thumb-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.55) 0%,transparent 50%);display:flex;align-items:flex-end;padding:11px}
+    .maps-thumb-wrap iframe{width:100%;height:100%;border:0;display:block}
+    .maps-thumb-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,0.55) 0%,transparent 50%);display:flex;align-items:flex-end;padding:11px;pointer-events:none}
+    .maps-thumb-overlay .maps-open-btn{pointer-events:auto}
     .maps-open-btn{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.9);color:#111;border:none;border-radius:20px;padding:6px 13px;font-family:'DM Sans',sans-serif;font-size:0.76rem;font-weight:600;cursor:pointer;transition:var(--transition);text-decoration:none}
     .maps-open-btn:hover{background:#fff;transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,0.25)}
-    
-    /* Form styles */
+
+    /* ===== ADD BUSINESS MODAL ===== */
     .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px}
     .form-grid .full{grid-column:1/-1}
     .form-group{display:flex;flex-direction:column;gap:5px}
@@ -328,8 +517,8 @@
     .credit-reward-note p{font-size:0.8rem;color:var(--text2);margin:0}
     .places-hint{background:rgba(66,133,244,0.07);border:1px solid rgba(66,133,244,0.18);border-radius:8px;padding:9px 12px;font-size:0.74rem;color:#4285f4;display:flex;align-items:flex-start;gap:7px;margin-top:7px}
     .places-hint i{margin-top:2px;flex-shrink:0}
-    
-    /* Sponsor Modal, Affiliate Modal */
+
+    /* ===== SPONSOR MODAL ===== */
     .sponsor-modal-inner{padding:28px}
     .sponsor-modal-header{display:flex;align-items:center;gap:13px;margin-bottom:20px}
     .sponsor-modal-icon{width:52px;height:52px;background:var(--grad3);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.7rem;flex-shrink:0;box-shadow:var(--glow-gold)}
@@ -343,6 +532,8 @@
     .sponsor-upi-note{font-size:0.7rem;color:var(--text3);text-align:center;margin-top:10px}
     .no-biz-hint{background:rgba(124,108,240,0.07);border:1px solid rgba(124,108,240,0.2);border-radius:10px;padding:14px;text-align:center;font-size:0.82rem;color:var(--text2);margin-bottom:14px}
     .no-biz-hint strong{color:var(--accent);display:block;margin-bottom:4px}
+
+    /* ===== AFFILIATE MODAL ===== */
     .affiliate-stat-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:20px}
     .affiliate-stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;text-align:center}
     .affiliate-stat .aff-num{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;color:var(--accent3);line-height:1;margin-bottom:4px}
@@ -354,8 +545,8 @@
     .aff-link-stats{font-size:0.7rem;color:var(--text3);margin-bottom:8px}
     .aff-link-url{display:flex;align-items:center;gap:7px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:6px 10px}
     .aff-link-url code{font-size:0.72rem;color:var(--text2);flex:1;word-break:break-all}
-    
-    /* Admin, Compare, Toast, etc */
+
+    /* ===== ADMIN PANEL ===== */
     .admin-panel{background:var(--bg2);border:1px solid rgba(240,200,74,0.2);border-radius:var(--r);padding:22px;margin-bottom:28px;display:none}
     .admin-panel.visible{display:block;animation:fadeUp 0.3s ease}
     .pending-item{background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:13px;margin-bottom:9px;display:flex;align-items:center;gap:13px;flex-wrap:wrap}
@@ -370,40 +561,62 @@
     .reject-btn:hover{background:var(--red);color:#fff;border-color:var(--red)}
     .section-title-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:10px}
     .section-title{font-family:'Syne',sans-serif;font-size:1.15rem;font-weight:800;display:flex;align-items:center;gap:7px}
-    
-    #compareBar{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border);padding:12px 22px;display:flex;align-items:center;gap:13px;z-index:300;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.34,1.2,0.64,1);flex-wrap:wrap;backdrop-filter:blur(16px)}
+
+    /* ===== COMPARE BAR ===== */
+    #compareBar{
+      position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--border);
+      padding:12px 22px;display:flex;align-items:center;gap:13px;
+      z-index:300;transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.34,1.2,0.64,1);
+      flex-wrap:wrap;backdrop-filter:blur(16px);
+    }
     #compareBar.show{transform:translateY(0)}
     .compare-items{display:flex;gap:9px;flex:1;flex-wrap:wrap}
     .compare-chip{padding:5px 12px;border-radius:30px;background:var(--card);border:1px solid var(--border);font-size:0.78rem;display:flex;align-items:center;gap:6px}
     .compare-chip .remove{cursor:pointer;color:var(--text3);font-size:1rem;line-height:1}
     .compare-chip .remove:hover{color:var(--red)}
+
+    /* ===== COMPARE MODAL ===== */
     .compare-table-wrap{overflow-x:auto}
     .compare-table{width:100%;border-collapse:collapse;font-size:0.82rem}
     .compare-table th,.compare-table td{padding:9px 13px;border:1px solid var(--border);text-align:left}
     .compare-table th{background:var(--bg2);font-family:'Syne',sans-serif;font-size:0.78rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--text2)}
     .compare-table tr:nth-child(even) td{background:rgba(255,255,255,0.015)}
-    
+
+    /* ===== TOAST ===== */
     #toastContainer{position:fixed;bottom:26px;right:26px;z-index:9999;display:flex;flex-direction:column;gap:7px}
-    .toast{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:11px 16px;font-size:0.84rem;display:flex;align-items:center;gap:9px;animation:slideToast 0.28s ease;max-width:320px;box-shadow:var(--shadow-md);color:var(--text)}
+    .toast{
+      background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:11px 16px;
+      font-size:0.84rem;display:flex;align-items:center;gap:9px;
+      animation:slideToast 0.28s ease;max-width:320px;box-shadow:var(--shadow-md);color:var(--text);
+    }
     .toast.success{border-color:rgba(34,197,94,0.28)}.toast.success i{color:var(--green)}
     .toast.error{border-color:rgba(239,68,68,0.28)}.toast.error i{color:var(--red)}
     .toast.info{border-color:rgba(124,108,240,0.28)}.toast.info i{color:var(--accent)}
-    
-    #backToTop{position:fixed;bottom:26px;left:26px;width:44px;height:44px;border-radius:50%;background:var(--grad1);border:none;color:#fff;font-size:1.1rem;cursor:pointer;display:none;align-items:center;justify-content:center;box-shadow:0 8px 22px rgba(124,108,240,0.45);transition:var(--transition);z-index:200}
+
+    /* ===== BACK TO TOP ===== */
+    #backToTop{
+      position:fixed;bottom:26px;left:26px;width:44px;height:44px;border-radius:50%;
+      background:var(--grad1);border:none;color:#fff;font-size:1.1rem;
+      cursor:pointer;display:none;align-items:center;justify-content:center;
+      box-shadow:0 8px 22px rgba(124,108,240,0.45);transition:var(--transition);z-index:200;
+    }
     #backToTop.show{display:flex}
     #backToTop:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(124,108,240,0.6)}
-    
+
+    /* ===== EMPTY STATE ===== */
     .empty-state{grid-column:1/-1;text-align:center;padding:72px 20px;color:var(--text3)}
     .empty-state i{font-size:2.8rem;margin-bottom:14px;display:block;opacity:0.3}
     .empty-state h3{font-family:'Syne',sans-serif;font-size:1.15rem;color:var(--text2);margin-bottom:7px}
     .empty-state p{font-size:0.84rem}
-    
+
+    /* ===== PAGINATION ===== */
     .pagination{display:flex;justify-content:center;align-items:center;gap:5px;margin-bottom:36px;flex-wrap:wrap}
     .page-btn{width:36px;height:36px;border-radius:9px;border:1px solid var(--border);background:var(--card);color:var(--text2);font-family:'DM Sans',sans-serif;font-size:0.84rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--transition)}
     .page-btn:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-2px)}
     .page-btn.active{background:var(--grad1);border-color:transparent;color:#fff;font-weight:700;box-shadow:0 4px 14px rgba(124,108,240,0.35)}
     .page-btn:disabled{opacity:0.3;cursor:not-allowed;transform:none}
-    
+
+    /* ===== SKELETON LOADER ===== */
     .skeleton-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;margin-bottom:28px}
     .skeleton-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);overflow:hidden}
     .skeleton-banner{height:88px;background:linear-gradient(90deg,var(--bg3) 25%,var(--bg2) 50%,var(--bg3) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite}
@@ -412,7 +625,8 @@
     .skeleton-line.short{width:60%}
     .skeleton-line.med{width:80%}
     @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
-    
+
+    /* ===== FOOTER ===== */
     .page-footer{border-top:1px solid var(--border);padding:22px 0 28px;margin-top:56px;text-align:center;font-size:0.78rem;color:var(--text3);position:relative;z-index:1}
     .page-footer a{color:var(--text2);text-decoration:none;transition:var(--transition)}
     .page-footer a:hover{color:var(--accent)}
@@ -421,7 +635,8 @@
     .footer-links a{font-size:0.78rem;color:var(--text3)}
     .footer-links a:hover{color:var(--accent)}
     .footer-credits{font-size:0.7rem;color:var(--text3);margin-top:8px;padding-top:10px;border-top:1px solid var(--border)}
-    
+
+    /* ===== ANIMATIONS ===== */
     @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
     @keyframes fadeIn{from{opacity:0}to{opacity:1}}
     @keyframes scaleIn{from{opacity:0;transform:scale(0.92)}to{opacity:1;transform:scale(1)}}
@@ -429,22 +644,31 @@
     @keyframes spinRefresh{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
     @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
     @keyframes cardIn{from{opacity:0;transform:translateY(24px) scale(0.97)}to{opacity:1;transform:translateY(0) scale(1)}}
-    
-    .mobile-drawer{position:fixed;top:0;right:0;width:82%;max-width:300px;height:100vh;background:var(--bg2);backdrop-filter:blur(20px);z-index:200;transform:translateX(100%);transition:transform 0.32s cubic-bezier(0.4,0,0.2,1);display:flex;flex-direction:column;padding:72px 20px 28px;gap:10px;border-left:1px solid var(--border)}
-    .mobile-drawer.open{transform:translateX(0)}
-    .drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(4px);z-index:150;display:none;opacity:0;transition:opacity 0.3s}
-    .drawer-overlay.active{display:block;opacity:1}
-    .drawer-close{position:absolute;top:18px;right:18px;background:var(--card);border:1px solid var(--border);color:var(--text2);width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;transition:var(--transition)}
-    .drawer-close:hover{background:var(--red);color:white;border-color:var(--red)}
-    .drawer-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 16px;color:var(--text2);font-size:0.9rem;font-weight:500;display:flex;align-items:center;gap:12px;cursor:pointer;transition:var(--transition);width:100%;text-align:left;font-family:inherit}
-    .drawer-item:hover{background:var(--card-hover);color:var(--text);border-color:var(--border-active);transform:translateX(4px)}
-    .drawer-item i{width:20px;text-align:center;font-size:0.95rem}
-    .drawer-item.primary-item{background:var(--grad1);border-color:transparent;color:#fff}
-    .drawer-item.gold-item{background:var(--grad3);border-color:transparent;color:#000}
-    
-    @media(max-width:768px){.form-grid{grid-template-columns:1fr}.info-grid{grid-template-columns:1fr}.hours-grid{grid-template-columns:1fr}#businessGrid{grid-template-columns:1fr}.hero h2{font-size:1.95rem;letter-spacing:-0.5px}.modal-body{padding:44px 16px 18px}.sponsored-packages{grid-template-columns:1fr}.stats-bar{grid-template-columns:1fr 1fr}.affiliate-stat-grid{grid-template-columns:1fr 1fr}.packages-toggle-sub{display:none}.container{padding:0 16px}}
-    @media(max-width:480px){.hero{padding:40px 0 28px}.hero-actions{flex-direction:column;align-items:center}.hero-actions .btn-primary,.hero-actions .btn-ghost{width:100%;justify-content:center}.search-row{flex-direction:column}.select-wrap select{width:100%}}
-    @media(prefers-reduced-motion:reduce){*{animation-duration:0.01ms!important;transition-duration:0.01ms!important}}
+
+    /* ===== RESPONSIVE ===== */
+    @media(max-width:768px){
+      .form-grid{grid-template-columns:1fr}
+      .info-grid{grid-template-columns:1fr}
+      .hours-grid{grid-template-columns:1fr}
+      #businessGrid{grid-template-columns:1fr}
+      .hero h2{font-size:1.95rem;letter-spacing:-0.5px}
+      .modal-body{padding:44px 16px 18px}
+      .sponsored-packages{grid-template-columns:1fr}
+      .stats-bar{grid-template-columns:1fr 1fr}
+      .affiliate-stat-grid{grid-template-columns:1fr 1fr}
+      .packages-toggle-sub{display:none}
+      .container{padding:0 16px}
+    }
+    @media(max-width:480px){
+      .hero{padding:40px 0 28px}
+      .hero-actions{flex-direction:column;align-items:center}
+      .hero-actions .btn-primary,.hero-actions .btn-ghost{width:100%;justify-content:center}
+      .search-row{flex-direction:column}
+      .select-wrap select{width:100%}
+    }
+    @media(prefers-reduced-motion:reduce){
+      *{animation-duration:0.01ms!important;transition-duration:0.01ms!important}
+    }
   </style>
 </head>
 <body>
@@ -470,7 +694,6 @@
         <button class="btn-ghost" id="showFavBtn"><i class="fas fa-heart"></i> Saved</button>
         <button class="btn-primary" id="openAddModal"><i class="fas fa-plus"></i> Add Business</button>
         <button class="btn-primary btn-gold" id="openSponsorModalBtn"><i class="fas fa-crown"></i> Sponsor</button>
-        <button class="btn-ghost" id="affiliateBtn"><i class="fas fa-link"></i> Affiliate</button>
       </div>
       <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
         <span></span><span></span><span></span>
@@ -495,6 +718,7 @@
 <main>
   <div class="container">
 
+    <!-- HERO -->
     <section class="hero">
       <div class="hero-eyebrow"><span class="dot"></span> India's Local Business Directory</div>
       <h2>Find <span class="grad">Businesses,</span><br>Shops <span class="grad2">&amp; Services</span> Near You</h2>
@@ -511,6 +735,7 @@
       </div>
     </section>
 
+    <!-- EARN CREDITS BANNER -->
     <div class="earn-banner" id="earnBanner">
       <div class="earn-banner-left">
         <div class="earn-banner-icon">🎁</div>
@@ -522,6 +747,7 @@
       <div class="credit-badge" id="creditBalance">Credits: --</div>
     </div>
 
+    <!-- SPONSORED PACKAGES -->
     <div class="packages-section">
       <div class="packages-toggle-bar" id="packagesToggleBar">
         <div class="packages-toggle-left">
@@ -581,6 +807,7 @@
       </div>
     </div>
 
+    <!-- CONTROLS -->
     <div class="controls-wrapper">
       <div class="search-row">
         <div class="search-wrap">
@@ -608,6 +835,7 @@
       <div id="locationStatus" style="font-size:0.72rem;color:var(--text3);margin-top:8px;display:none;"></div>
     </div>
 
+    <!-- ADMIN PANEL -->
     <div class="admin-panel" id="adminPanel">
       <div class="section-title-row">
         <div class="section-title"><i class="fas fa-shield-alt" style="color:var(--gold)"></i> Admin Panel</div>
@@ -627,6 +855,7 @@
       <div id="reportsList"></div>
     </div>
 
+    <!-- FAVORITES -->
     <div id="favoritesSection" style="display:none">
       <div class="section-title-row">
         <div class="section-title"><i class="fas fa-heart" style="color:var(--accent2)"></i> Saved Businesses</div>
@@ -635,6 +864,7 @@
       <div id="favoritesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;margin-bottom:28px"></div>
     </div>
 
+    <!-- MAIN SECTION -->
     <div id="mainSection">
       <div class="sponsored-listings-section" id="sponsoredListingsSection" style="display:none">
         <div class="sponsored-section-header">
@@ -667,8 +897,7 @@
   </div>
 </main>
 
-<!-- ===== MODALS ===== -->
-<!-- Sponsor Modal -->
+<!-- ===== SPONSOR MODAL ===== -->
 <div class="modal-backdrop" id="sponsorModal">
   <div class="modal" style="max-width:500px">
     <button class="modal-close" id="closeSponsorModal"><i class="fas fa-times"></i></button>
@@ -680,6 +909,7 @@
           <p style="font-size:0.8rem;color:var(--text2)">Get featured at the top and attract more customers!</p>
         </div>
       </div>
+      <!-- No businesses hint (shown when user hasn't added any) -->
       <div class="no-biz-hint" id="noBizHint" style="display:none">
         <strong>You haven't added any businesses yet!</strong>
         To sponsor a listing, first add your business using the "Add Business" button. Once it's approved, you can sponsor it.
@@ -707,7 +937,7 @@
   </div>
 </div>
 
-<!-- Affiliate Modal -->
+<!-- ===== AFFILIATE MODAL ===== -->
 <div class="modal-backdrop" id="affiliateModal">
   <div class="modal" style="max-width:580px">
     <button class="modal-close" id="closeAffiliateModal"><i class="fas fa-times"></i></button>
@@ -738,7 +968,7 @@
   </div>
 </div>
 
-<!-- Detail Modal -->
+<!-- ===== DETAIL MODAL ===== -->
 <div class="modal-backdrop" id="detailModal">
   <div class="modal" id="detailModalInner">
     <button class="modal-close" id="closeDetailModal"><i class="fas fa-times"></i></button>
@@ -806,7 +1036,7 @@
   </div>
 </div>
 
-<!-- Add Business Modal -->
+<!-- ===== ADD BUSINESS MODAL ===== -->
 <div class="modal-backdrop" id="addModal">
   <div class="modal" style="max-width:760px">
     <button class="modal-close" id="closeAddModal"><i class="fas fa-times"></i></button>
@@ -957,7 +1187,7 @@
   </div>
 </div>
 
-<!-- Report Modal -->
+<!-- ===== REPORT MODAL ===== -->
 <div class="modal-backdrop" id="reportModal">
   <div class="modal" style="max-width:400px">
     <button class="modal-close" id="closeReportModal"><i class="fas fa-times"></i></button>
@@ -983,7 +1213,7 @@
   </div>
 </div>
 
-<!-- Compare Modal -->
+<!-- ===== COMPARE MODAL ===== -->
 <div class="modal-backdrop" id="compareModal">
   <div class="modal" style="max-width:920px">
     <button class="modal-close" id="closeCompareModal"><i class="fas fa-times"></i></button>
@@ -1021,86 +1251,141 @@
 </footer>
 
 <script>
-// =================================================================
-// COMPLETE JAVASCRIPT - All features working
-// =================================================================
-
-const API_BASE = '/api';
-const GOOGLE_RATINGS_CACHE_KEY = 'sarveik_google_ratings_v3';
+/* ================================================================
+   DEMO BACKEND (in-memory) — replace with a real server for
+   production use by pointing API_BASE at your server and removing
+   the mock layer below.
+================================================================ */
 const GOOGLE_RATINGS_CACHE_TTL = 15 * 24 * 60 * 60 * 1000;
+let googleRatingsCache = {}; // in-memory cache (session only)
 
-// ===== STATE =====
-let state = {
-  filterCategory: 'all', search: '', sort: 'newest',
-  stateFilter: 'all', districtFilter: 'all',
-  openNow: false, verifiedOnly: false,
-  page: 1, perPage: 9, viewMode: 'grid',
-  compareList: [], allBusinesses: [],
-  favorites: [], pendingBusinesses: [],
-  currentReportBizId: null
+function seedBusinesses(){
+  const now = Date.now();
+  return [
+    {id:1,name:'Meenakshi Silks & Sarees',type:'shop',category:'retail',description:'Premium silk sarees, wedding collections and traditional wear with generations of craftsmanship.',address:'West Masi Street, Near Meenakshi Temple',city:'Madurai',district:'Madurai',state:'Tamil Nadu',phone:'+91 9843012345',email:'contact@meenakshisilks.in',whatsapp:'+919843012345',website:'https://example.com',place_id:'ChIJVVVVVVVVVVVVVVVVVVVVVVU',lat:9.9195,lng:78.1193,verified:true,featured:true,views:1240,created_at:new Date(now-2*86400000).toISOString(),image_urls:'https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&q=80',hours:{Mon:'09:30-21:00',Tue:'09:30-21:00',Wed:'09:30-21:00',Thu:'09:30-21:00',Fri:'09:30-21:00',Sat:'09:30-21:30',Sun:'10:00-20:00'},amenities:['parking','card','ac','upi']},
+    {id:2,name:'Temple City Biryani House',type:'restaurant',category:'food',description:'Authentic Madurai-style biryani, chettinad curries and filter coffee in a cozy dine-in setting.',address:'12 Town Hall Road',city:'Madurai',district:'Madurai',state:'Tamil Nadu',phone:'+91 9944012345',email:'hello@templecitybiryani.in',whatsapp:'+919944012345',website:'',place_id:'ChIJWWWWWWWWWWWWWWWWWWWWWWU',lat:9.9252,lng:78.1198,verified:true,featured:false,views:3120,created_at:new Date(now-6*86400000).toISOString(),image_urls:'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=600&q=80',hours:{Mon:'11:00-22:30',Tue:'11:00-22:30',Wed:'11:00-22:30',Thu:'11:00-22:30',Fri:'11:00-22:30',Sat:'11:00-23:00',Sun:'11:00-23:00'},amenities:['delivery','takeaway','ac','card']},
+    {id:3,name:'Vandiyur Pharmacy',type:'pharmacy',category:'health',description:'24-hour pharmacy stocking all major medicine brands with home delivery available.',address:'Vandiyur Main Road',city:'Madurai',district:'Madurai',state:'Tamil Nadu',phone:'+91 9500123456',email:'vandiyurpharmacy@example.com',whatsapp:'',website:'',place_id:'',lat:9.9046,lng:78.1382,verified:false,featured:false,views:410,created_at:new Date(now-1*86400000).toISOString(),image_urls:'https://images.unsplash.com/photo-1584017911766-d451b3d0e843?w=600&q=80',hours:{Mon:'00:00-23:59',Tue:'00:00-23:59',Wed:'00:00-23:59',Thu:'00:00-23:59',Fri:'00:00-23:59',Sat:'00:00-23:59',Sun:'00:00-23:59'},amenities:['24h','delivery','upi']},
+    {id:4,name:'GreenLeaf Organic Mart',type:'mart',category:'retail',description:'Fresh organic groceries, cold-pressed oils and locally sourced produce.',address:'K K Nagar Main Road',city:'Madurai',district:'Madurai',state:'Tamil Nadu',phone:'+91 9600123456',email:'store@greenleaforganic.in',whatsapp:'+919600123456',website:'https://example.com',place_id:'ChIJXXXXXXXXXXXXXXXXXXXXXXU',lat:9.9339,lng:78.1116,verified:true,featured:false,views:860,created_at:new Date(now-10*86400000).toISOString(),image_urls:'https://images.unsplash.com/photo-1542838132-92c53300491e?w=600&q=80',hours:{Mon:'08:00-21:30',Tue:'08:00-21:30',Wed:'08:00-21:30',Thu:'08:00-21:30',Fri:'08:00-21:30',Sat:'08:00-21:30',Sun:'08:00-21:30'},amenities:['parking','card','upi','kids']},
+    {id:6,name:'Sri Balaji Tech Solutions',type:'tech',category:'technology',description:'Laptop and mobile repair, IT support, and web development services for small businesses.',address:'Simmakkal Junction',city:'Madurai',district:'Madurai',state:'Tamil Nadu',phone:'+91 9976543210',email:'support@sribalajitech.in',whatsapp:'+919976543210',website:'https://example.com',place_id:'ChIJYYYYYYYYYYYYYYYYYYYYYYU',lat:9.9268,lng:78.1198,verified:true,featured:true,views:990,created_at:new Date(now-4*86400000).toISOString(),image_urls:'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&q=80',hours:{Mon:'10:00-19:30',Tue:'10:00-19:30',Wed:'10:00-19:30',Thu:'10:00-19:30',Fri:'10:00-19:30',Sat:'10:00-19:30',Sun:'Closed'},amenities:['wifi','card','accessible']},
+  ];
+}
+
+const DB = {
+  businesses: seedBusinesses(),
+  pending: [],
+  reports: [],
+  favorites: new Set(),
+  sponsorships: [], // {id,business_id,package,price,endDate,custom_message}
+  affiliateLinks: [], // {id,business_id,product_name,product_url,commission_rate,click_count,sale_count,total_commission}
+  myBusinessIds: new Set([1,6]), // businesses "owned" by the current demo user
+  credits: 35,
+  nextId: 100,
+  nextAffId: 1,
+  nextSponsorId: 1,
 };
-let currentSponsorPackage = { name: 'Basic Spotlight', price: 499 };
-let userLocation = null;
 
-// ===== HELPERS =====
-function escHtml(s) { if (!s) return ''; return String(s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m])); }
+function delay(ms){return new Promise(r=>setTimeout(r, ms));}
 
-function showToast(msg, type = 'success') {
-  const c = document.getElementById('toastContainer');
-  const t = document.createElement('div');
-  t.className = `toast ${type}`;
-  const icons = { success: 'fa-check-circle', error: 'fa-exclamation-circle', info: 'fa-info-circle' };
-  t.innerHTML = `<i class="fas ${icons[type] || 'fa-info-circle'}"></i> ${escHtml(msg)}`;
+// Deterministic pseudo-random rating generated from a place_id/string seed,
+// standing in for a real Google Places lookup (which must be done server-side
+// to keep your API key private and avoid browser CORS restrictions).
+function seededRating(seed){
+  let h=0; for(let i=0;i<seed.length;i++){h=(h*31+seed.charCodeAt(i))>>>0;}
+  const rating = 3.6 + (h%140)/100; // 3.6 - 5.0
+  const count = 25 + (h%475);
+  return {rating:Math.round(rating*10)/10, user_ratings_total:count};
+}
+
+/* ================================================================
+   HELPERS
+================================================================ */
+window.addEventListener('scroll', () => {
+  document.getElementById('siteHeader').classList.toggle('scrolled', window.scrollY > 10);
+}, {passive: true});
+
+function calculateDistance(lat1, lon1, lat2, lon2) {
+  if (!lat1||!lon1||!lat2||!lon2) return null;
+  const R=6371, dLat=(lat2-lat1)*Math.PI/180, dLon=(lon2-lon1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+function formatDistance(km) {
+  if (km===null) return null;
+  return km<1?`${Math.round(km*1000)}m`:`${km.toFixed(1)}km`;
+}
+
+let userLocation=null, userLocationPromise=null;
+function getUserLocation() {
+  if (userLocationPromise) return userLocationPromise;
+  userLocationPromise=new Promise(resolve=>{
+    if (!navigator.geolocation){resolve(null);return;}
+    const ls=document.getElementById('locationStatus');
+    ls.style.display='block';ls.innerHTML='<i class="fas fa-spinner fa-spin"></i> Detecting your location…';
+    navigator.geolocation.getCurrentPosition(
+      p=>{userLocation={lat:p.coords.latitude,lng:p.coords.longitude};ls.innerHTML='<i class="fas fa-check-circle" style="color:var(--green)"></i> Location detected';setTimeout(()=>ls.style.display='none',3000);resolve(userLocation);},
+      ()=>{ls.innerHTML='<i class="fas fa-exclamation-triangle"></i> Location access denied.';resolve(null);},
+      {enableHighAccuracy:true,timeout:10000,maximumAge:600000}
+    );
+  });
+  return userLocationPromise;
+}
+
+function escHtml(str){if(!str)return '';return String(str).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+
+function showToast(msg,type='success'){
+  const c=document.getElementById('toastContainer');
+  const t=document.createElement('div');t.className=`toast ${type}`;
+  const icons={success:'fa-check-circle',error:'fa-exclamation-circle',info:'fa-info-circle'};
+  t.innerHTML=`<i class="fas ${icons[type]||'fa-info-circle'}"></i> ${escHtml(msg)}`;
   c.appendChild(t);
-  setTimeout(() => { t.style.animation = 'slideToast 0.3s ease reverse'; setTimeout(() => t.remove(), 300); }, 3800);
+  setTimeout(()=>{t.style.animation='slideToast 0.3s ease reverse';setTimeout(()=>t.remove(),300);},3800);
 }
 
-function timeAgo(iso) {
-  if (!iso) return '';
-  const s = Math.floor((Date.now() - new Date(iso)) / 1000);
-  if (s < 60) return 'just now';
-  const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m ago`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h ago`;
-  const d = Math.floor(h / 24);
-  if (d < 7) return `${d}d ago`;
-  return new Date(iso).toLocaleDateString();
+function timeAgo(iso){
+  if(!iso)return '';
+  const s=Math.floor((Date.now()-new Date(iso))/1000);
+  if(s<60)return 'just now';const m=Math.floor(s/60);if(m<60)return `${m}m ago`;
+  const h=Math.floor(m/60);if(h<24)return `${h}h ago`;const d=Math.floor(h/24);
+  if(d<7)return `${d}d ago`;return new Date(iso).toLocaleDateString();
+}
+function isNewItem(dt){return (Date.now()-new Date(dt))<7*86400000;}
+
+function isOpenNow(hours){
+  if(!hours)return null;
+  const dayNames=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  const di=new Date().getDay()===0?6:new Date().getDay()-1;
+  const range=hours[dayNames[di]];
+  if(!range||range==='Closed')return false;
+  const [start,end]=range.split('-');
+  const now=new Date().getHours()*60+new Date().getMinutes();
+  const toMin=t=>{const[h,m]=t.split(':').map(Number);return h*60+(m||0);};
+  return now>=toMin(start)&&now<toMin(end);
 }
 
-function isNewItem(dt) { return (Date.now() - new Date(dt)) < 7 * 86400000; }
-
-function isOpenNow(hours) {
-  if (!hours) return null;
-  const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  const di = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
-  const range = hours[days[di]];
-  if (!range || range === 'Closed') return false;
-  const [start, end] = range.split('-');
-  const now = new Date().getHours() * 60 + new Date().getMinutes();
-  const toMin = t => { const [h, m] = t.split(':').map(Number); return h * 60 + (m || 0); };
-  return now >= toMin(start) && now < toMin(end);
+function renderGoogleStars(rating){
+  if(!rating)return '☆☆☆☆☆';
+  const full=Math.floor(rating),half=(rating%1)>=0.4;
+  let s='★'.repeat(full);if(half&&full<5)s+='½';
+  while(s.replace(/½/g,'x').length<5)s+='☆';return s;
 }
 
-function renderGoogleStars(rating) {
-  if (!rating) return '☆☆☆☆☆';
-  const full = Math.floor(rating), half = (rating % 1) >= 0.4;
-  let s = '★'.repeat(full);
-  if (half && full < 5) s += '½';
-  while (s.replace(/½/g, 'x').length < 5) s += '☆';
-  return s;
-}
-
-function buildGoogleMapsUrl(address, city, state, lat, lng) {
-  if (lat && lng) return `https://www.google.com/maps?q=${lat},${lng}`;
-  const q = encodeURIComponent([address, city, state].filter(Boolean).join(', '));
+function buildGoogleMapsUrl(address,city,state,lat,lng){
+  if(lat&&lng)return `https://www.google.com/maps?q=${lat},${lng}`;
+  const q=encodeURIComponent([address,city,state].filter(Boolean).join(', '));
   return `https://www.google.com/maps/search/?api=1&query=${q}`;
 }
 
+// Embeddable Google Maps iframe — works with NO API key required.
+function buildMapsEmbedUrl(address,city,state,lat,lng){
+  const q=(lat&&lng)?`${lat},${lng}`:[address,city,state].filter(Boolean).join(', ');
+  return `https://maps.google.com/maps?q=${encodeURIComponent(q)}&z=15&output=embed`;
+}
+
+// Pick best image from a business object
 function getBizImageUrl(biz) {
   if (biz.image_urls) {
-    const urls = Array.isArray(biz.image_urls) ? biz.image_urls : biz.image_urls.split(',').map(s => s.trim()).filter(Boolean);
-    if (urls.length && urls[0]) return urls[0];
+    const urls = Array.isArray(biz.image_urls) ? biz.image_urls : biz.image_urls.split(',').map(s=>s.trim());
+    if (urls[0]) return urls[0];
   }
   if (biz.images && biz.images.length) return biz.images[0];
   if (biz.image_url) return biz.image_url;
@@ -1109,170 +1394,351 @@ function getBizImageUrl(biz) {
   return null;
 }
 
-function googleSvgHtml() {
-  return `<svg class="g-logo" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>`;
+const EMOJIS={company:'🏢',shop:'🛍️',mart:'🏪',restaurant:'🍽️',hotel:'🏨',hospital:'🏥',school:'🏫',bank:'🏦',salon:'💇',gym:'💪',pharmacy:'💊',garage:'🔧',real_estate:'🏠',tech:'💻',service:'⚙️',market:'🛒',other:'📦'};
+const BANNER_GRADS=['135deg,#7c6cf0,#f06c8a','135deg,#6cf0b8,#3b82f6','135deg,#f0c84a,#f97316','135deg,#f06c8a,#f0c84a','135deg,#7c6cf0,#6cf0b8'];
+
+const AMENITY_LIST=[
+  {id:'parking',label:'Parking',icon:'fa-parking'},{id:'wifi',label:'Free Wi-Fi',icon:'fa-wifi'},
+  {id:'ac',label:'A/C',icon:'fa-snowflake'},{id:'delivery',label:'Delivery',icon:'fa-truck'},
+  {id:'card',label:'Card Payment',icon:'fa-credit-card'},{id:'upi',label:'UPI',icon:'fa-qrcode'},
+  {id:'accessible',label:'Wheelchair',icon:'fa-wheelchair'},{id:'kids',label:'Kids Friendly',icon:'fa-child'},
+  {id:'pet',label:'Pet Friendly',icon:'fa-paw'},{id:'outdoor',label:'Outdoor Seating',icon:'fa-umbrella-beach'},
+  {id:'reservation',label:'Reservation',icon:'fa-calendar-check'},{id:'takeaway',label:'Takeaway',icon:'fa-shopping-bag'},
+  {id:'24h',label:'Open 24H',icon:'fa-clock'},{id:'washroom',label:'Washroom',icon:'fa-restroom'}
+];
+
+const CATEGORIES=[
+  {id:'all',label:'All',icon:'🌐'},{id:'retail',label:'Retail',icon:'🛍️'},
+  {id:'food',label:'Food',icon:'🍽️'},{id:'health',label:'Health',icon:'🏥'},
+  {id:'education',label:'Education',icon:'🏫'},{id:'finance',label:'Finance',icon:'🏦'},
+  {id:'technology',label:'Tech',icon:'💻'},{id:'real_estate',label:'Real Estate',icon:'🏠'},
+  {id:'automotive',label:'Auto',icon:'🔧'},{id:'beauty',label:'Beauty',icon:'💇'},
+  {id:'entertainment',label:'Entertainment',icon:'🎭'},{id:'services',label:'Services',icon:'⚙️'},
+  {id:'other',label:'Other',icon:'📦'}
+];
+
+const DAYS=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+
+/* ================================================================
+   STATE
+================================================================ */
+let state={
+  filterCategory:'all',search:'',sort:'newest',stateFilter:'all',districtFilter:'all',
+  openNow:false,verifiedOnly:false,page:1,perPage:9,viewMode:'grid',
+  compareList:[],currentBizId:null,allBusinesses:[],favorites:[],
+  pendingBusinesses:[],currentReportBizId:null,
+};
+let userBusinesses=[];
+let currentSponsorPackage={name:'Basic Spotlight',price:499};
+
+/* ================================================================
+   GOOGLE RATINGS (in-memory cache + simulated lookup)
+================================================================ */
+function isCacheFresh(e){return e?.fetchedAt&&(Date.now()-e.fetchedAt)<GOOGLE_RATINGS_CACHE_TTL;}
+function cacheAgeLabel(t){const d=Math.floor((Date.now()-t)/86400000);return d===0?'Updated today':d===1?'Updated 1d ago':`Updated ${d}d ago`;}
+
+async function fetchGoogleRating(placeId){
+  if(!placeId)return null;
+  if(googleRatingsCache[placeId]&&isCacheFresh(googleRatingsCache[placeId]))return googleRatingsCache[placeId];
+  await delay(500+Math.random()*500); // simulate network latency
+  const g=seededRating(placeId);
+  const entry={rating:g.rating,user_ratings_total:g.user_ratings_total,fetchedAt:Date.now()};
+  googleRatingsCache[placeId]=entry;
+  return entry;
 }
 
-const EMOJIS = { company: '🏢', shop: '🛍️', mart: '🏪', restaurant: '🍽️', hotel: '🏨', hospital: '🏥', school: '🏫', bank: '🏦', salon: '💇', gym: '💪', pharmacy: '💊', garage: '🔧', real_estate: '🏠', tech: '💻', service: '⚙️', market: '🛒', other: '📦' };
-const BANNER_GRADS = ['135deg,#7c6cf0,#f06c8a', '135deg,#6cf0b8,#3b82f6', '135deg,#f0c84a,#f97316', '135deg,#f06c8a,#f0c84a', '135deg,#7c6cf0,#6cf0b8'];
-const AMENITY_LIST = [
-  { id: 'parking', label: 'Parking', icon: 'fa-parking' }, { id: 'wifi', label: 'Free Wi-Fi', icon: 'fa-wifi' },
-  { id: 'ac', label: 'A/C', icon: 'fa-snowflake' }, { id: 'delivery', label: 'Delivery', icon: 'fa-truck' },
-  { id: 'card', label: 'Card Payment', icon: 'fa-credit-card' }, { id: 'upi', label: 'UPI', icon: 'fa-qrcode' },
-  { id: 'accessible', label: 'Wheelchair', icon: 'fa-wheelchair' }, { id: 'kids', label: 'Kids Friendly', icon: 'fa-child' },
-  { id: 'pet', label: 'Pet Friendly', icon: 'fa-paw' }, { id: 'outdoor', label: 'Outdoor Seating', icon: 'fa-umbrella-beach' },
-  { id: 'reservation', label: 'Reservation', icon: 'fa-calendar-check' }, { id: 'takeaway', label: 'Takeaway', icon: 'fa-shopping-bag' },
-  { id: '24h', label: 'Open 24H', icon: 'fa-clock' }, { id: 'washroom', label: 'Washroom', icon: 'fa-restroom' }
-];
-const CATEGORIES = [
-  { id: 'all', label: 'All', icon: '🌐' }, { id: 'retail', label: 'Retail', icon: '🛍️' },
-  { id: 'food', label: 'Food', icon: '🍽️' }, { id: 'health', label: 'Health', icon: '🏥' },
-  { id: 'education', label: 'Education', icon: '🏫' }, { id: 'finance', label: 'Finance', icon: '🏦' },
-  { id: 'technology', label: 'Tech', icon: '💻' }, { id: 'real_estate', label: 'Real Estate', icon: '🏠' },
-  { id: 'automotive', label: 'Auto', icon: '🔧' }, { id: 'beauty', label: 'Beauty', icon: '💇' },
-  { id: 'entertainment', label: 'Entertainment', icon: '🎭' }, { id: 'services', label: 'Services', icon: '⚙️' },
-  { id: 'other', label: 'Other', icon: '📦' }
-];
-const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-// ===== GOOGLE RATINGS CACHE =====
-function loadGoogleCache() { try { return JSON.parse(localStorage.getItem(GOOGLE_RATINGS_CACHE_KEY) || '{}'); } catch { return {}; } }
-function saveGoogleCache(c) { try { localStorage.setItem(GOOGLE_RATINGS_CACHE_KEY, JSON.stringify(c)); } catch {} }
-function isCacheFresh(e) { return e?.fetchedAt && (Date.now() - e.fetchedAt) < GOOGLE_RATINGS_CACHE_TTL; }
-function cacheAgeLabel(t) { const d = Math.floor((Date.now() - t) / 86400000); return d === 0 ? 'Updated today' : d === 1 ? 'Updated 1d ago' : `Updated ${d}d ago`; }
-
-async function fetchGoogleRating(placeId) {
-  if (!placeId) return null;
-  const cache = loadGoogleCache();
-  if (cache[placeId] && isCacheFresh(cache[placeId])) return cache[placeId];
-  try {
-    const res = await fetch(`${API_BASE}/google-rating?place_id=${encodeURIComponent(placeId)}`);
-    if (res.ok) {
-      const data = await res.json();
-      if (data.rating != null) {
-        const entry = { rating: data.rating, user_ratings_total: data.user_ratings_total || 0, fetchedAt: Date.now() };
-        cache[placeId] = entry;
-        saveGoogleCache(cache);
-        return entry;
-      }
-    }
-  } catch (e) {}
-  return null;
-}
-
-// ===== API CALLS =====
-async function apiCall(url, opts = {}) {
-  const fetchOpts = { ...opts, credentials: 'include' };
-  if (opts.body && typeof opts.body === 'object') {
-    fetchOpts.body = JSON.stringify(opts.body);
-    fetchOpts.headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+/* ================================================================
+   MOCK API LAYER (in-memory, no server required)
+================================================================ */
+async function getBusinesses(){
+  await delay(150);
+  let list=DB.businesses.filter(b=>b.approved!==false);
+  if(state.filterCategory!=='all')list=list.filter(b=>b.category===state.filterCategory);
+  if(state.stateFilter!=='all')list=list.filter(b=>b.state===state.stateFilter);
+  if(state.districtFilter!=='all')list=list.filter(b=>(b.district||b.city)===state.districtFilter);
+  if(state.verifiedOnly)list=list.filter(b=>b.verified);
+  if(state.search){
+    const q=state.search.toLowerCase();
+    list=list.filter(b=>[b.name,b.description,b.city,b.type,b.category].some(f=>(f||'').toLowerCase().includes(q)));
   }
-  const res = await fetch(API_BASE + url, fetchOpts);
-  if (!res.ok) throw new Error(await res.text() || `HTTP ${res.status}`);
-  const ct = res.headers.get('content-type');
-  return ct?.includes('application/json') ? res.json() : res.text();
+  return list.map(b=>({...b}));
 }
 
-async function getBusinesses() {
-  try {
-    let url = `/businesses?approved=true&limit=200`;
-    if (state.filterCategory !== 'all') url += `&category=${encodeURIComponent(state.filterCategory)}`;
-    if (state.stateFilter !== 'all') url += `&state=${encodeURIComponent(state.stateFilter)}`;
-    if (state.districtFilter !== 'all') url += `&district=${encodeURIComponent(state.districtFilter)}`;
-    if (state.verifiedOnly) url += `&verifiedOnly=true`;
-    if (state.search) url += `&search=${encodeURIComponent(state.search)}`;
-    const data = await apiCall(url);
-    return data.businesses || data || [];
-  } catch (e) { console.error('getBusinesses error:', e); return []; }
+async function submitBusiness(bizData){
+  await delay(300);
+  const id=DB.nextId++;
+  const biz={...bizData,id,verified:false,featured:false,views:0,approved:false,created_at:new Date().toISOString()};
+  DB.pending.push(biz);
+  return {success:true,id};
+}
+async function getFavorites(){await delay(50);return Array.from(DB.favorites);}
+async function toggleFavoriteAPI(id){
+  await delay(80);
+  id=parseInt(id);
+  if(DB.favorites.has(id)){DB.favorites.delete(id);return false;}
+  DB.favorites.add(id);return true;
+}
+async function getStates(){await delay(50);return [...new Set(DB.businesses.map(b=>b.state).filter(Boolean))];}
+async function getDistrictsByState(s){await delay(50);return [...new Set(DB.businesses.filter(b=>b.state===s).map(b=>b.district||b.city).filter(Boolean))];}
+async function getPendingBusinesses(){await delay(100);return DB.pending.map(b=>({...b}));}
+async function approveBusinessAPI(id){
+  await delay(200);
+  id=parseInt(id);
+  const idx=DB.pending.findIndex(b=>b.id===id);
+  if(idx===-1)throw new Error('Not found');
+  const biz=DB.pending.splice(idx,1)[0];
+  biz.approved=true;biz.verified=true;
+  DB.businesses.push(biz);
+  DB.myBusinessIds.add(biz.id);
+  DB.credits+=15;
+  return {success:true};
+}
+async function rejectBusinessAPI(id,reason){
+  await delay(150);
+  id=parseInt(id);
+  DB.pending=DB.pending.filter(b=>b.id!==id);
+  return {success:true};
+}
+async function getCreditBalance(){await delay(50);return DB.credits;}
+async function getUserOwnBusinesses(){
+  await delay(80);
+  return DB.businesses.filter(b=>DB.myBusinessIds.has(b.id)).map(b=>({...b}));
+}
+async function getSponsoredList(limit=6){
+  await delay(120);
+  return DB.sponsorships
+    .filter(s=>new Date(s.endDate)>new Date())
+    .slice(0,limit)
+    .map(s=>({...s}));
+}
+async function buySponsorshipAPI(businessId,packageType,customMessage){
+  await delay(500);
+  businessId=parseInt(businessId);
+  const prices={'Basic Spotlight':499,'Premium Featured':1499,'Enterprise Dominance':4999};
+  const endDate=new Date(Date.now()+30*86400000).toISOString();
+  const entry={id:DB.nextSponsorId++,business_id:businessId,package:packageType,price:prices[packageType]||499,custom_message:customMessage||'',endDate};
+  DB.sponsorships=DB.sponsorships.filter(s=>s.business_id!==businessId);
+  DB.sponsorships.push(entry);
+  return {success:true,endDate};
+}
+async function createAffiliateLinkAPI(productName,productUrl,commissionRate,businessId){
+  await delay(300);
+  const id=DB.nextAffId++;
+  const link={id,business_id:businessId||null,product_name:productName,product_url:productUrl,commission_rate:commissionRate,click_count:0,sale_count:0,total_commission:0};
+  DB.affiliateLinks.push(link);
+  return {success:true,affiliateUrl:`${window.location.origin}/go/${id}`};
+}
+async function getAffiliateLinksAPI(){await delay(80);return DB.affiliateLinks.map(l=>({...l}));}
+async function getAffiliateLinksForBusiness(businessId){
+  await delay(80);
+  businessId=parseInt(businessId);
+  return DB.affiliateLinks.filter(l=>l.business_id===businessId).map(l=>({...l}));
+}
+async function submitReportAPI(businessId,reason,details){
+  await delay(150);
+  DB.reports.push({business_id:businessId,reason,details,created_at:new Date().toISOString()});
+  return {success:true};
 }
 
-async function getFavorites() { try { return await apiCall('/user/favorites'); } catch { return []; } }
-async function toggleFavoriteAPI(id) { try { const r = await apiCall(`/businesses/${id}/favorite`, { method: 'POST' }); return r.favorited; } catch { return false; } }
-async function getStates() { try { return await apiCall('/businesses/states'); } catch { return []; } }
-async function getCreditBalance() { try { const r = await apiCall('/credits/balance'); return r.balance || 0; } catch { return 0; } }
-async function getUserOwnBusinesses() { try { const data = await apiCall('/user/businesses'); return data.businesses || data || []; } catch { return []; } }
+/* ================================================================
+   PACKAGES TOGGLE
+================================================================ */
+document.getElementById('packagesToggleBar').addEventListener('click',()=>{
+  const bar=document.getElementById('packagesToggleBar'),body=document.getElementById('packagesBody');
+  bar.classList.toggle('open');body.classList.toggle('open');
+});
 
-// ===== SPONSOR =====
-async function buySponsorship(businessId, packageType, customMessage) {
-  try {
-    const response = await apiCall('/business/sponsor', { method: 'POST', body: { businessId, packageType, customMessage } });
-    if (response.success) { showToast(`✅ Sponsored! Active until ${new Date(response.endDate).toLocaleDateString()}`, 'success'); return true; }
-    showToast(response.error || 'Payment failed', 'error');
-    return false;
-  } catch (e) { showToast('Sponsorship failed. Try again.', 'error'); return false; }
-}
-
-async function loadUserBusinessesForSponsor() {
-  const select = document.getElementById('sponsorBusinessId');
-  const formBody = document.getElementById('sponsorFormBody');
-  const noBizHint = document.getElementById('noBizHint');
-  select.innerHTML = '<option value="">Loading…</option>';
-  try {
-    const businesses = await getUserOwnBusinesses();
-    if (!businesses.length) {
-      formBody.style.display = 'none';
-      noBizHint.style.display = 'block';
+/* ================================================================
+   VIEW SPONSORED
+================================================================ */
+async function loadSponsoredListings(){
+  const section=document.getElementById('sponsoredListingsSection');
+  const grid=document.getElementById('sponsoredGrid');
+  grid.innerHTML='<div style="padding:24px;text-align:center;color:var(--text3)"><i class="fas fa-spinner fa-spin"></i> Loading sponsored listings…</div>';
+  section.style.display='block';
+  try{
+    const sponsored=await getSponsoredList(6);
+    if(!sponsored.length){
+      grid.innerHTML='<div style="padding:24px;text-align:center;color:var(--text3)"><i class="fas fa-star"></i> No sponsored listings yet. Be the first — use the Sponsor button above!</div>';
+      section.scrollIntoView({behavior:'smooth',block:'start'});
       return;
     }
-    formBody.style.display = '';
-    noBizHint.style.display = 'none';
-    select.innerHTML = businesses.map(b => `<option value="${b.id}">${escHtml(b.name)} · ${escHtml(b.city || '')}</option>`).join('');
-  } catch (e) {
-    formBody.style.display = 'none';
-    noBizHint.style.display = 'block';
+    grid.innerHTML=sponsored.map((s,i)=>{
+      const biz=state.allBusinesses.find(b=>b.id==s.business_id)||DB.businesses.find(b=>b.id==s.business_id);
+      if(!biz)return '';
+      const emoji=EMOJIS[biz.type]||'📦';
+      const grad=BANNER_GRADS[i%BANNER_GRADS.length];
+      const mapsUrl=buildGoogleMapsUrl(biz.address,biz.city,biz.state,biz.lat,biz.lng);
+      const g=(biz.place_id&&googleRatingsCache[biz.place_id])||null;
+      const imgUrl=getBizImageUrl(biz);
+      return `
+        <div class="biz-card sponsored-card" data-id="${biz.id}">
+          <div class="biz-card-banner" style="background:linear-gradient(${grad})">
+            ${imgUrl?`<img class="biz-card-banner-img" src="${escHtml(imgUrl)}" alt="${escHtml(biz.name)}" loading="lazy" onerror="this.style.display='none'">`:''}
+            <div class="biz-card-banner-overlay"></div>
+            <div class="biz-badges"><span class="badge badge-sponsored">⭐ SPONSORED</span>${biz.verified?'<span class="badge badge-verified">✓</span>':''}</div>
+            <div class="biz-logo">${emoji}</div>
+          </div>
+          <div class="biz-card-body">
+            <div class="biz-name">${escHtml(biz.name)}</div>
+            <div class="biz-type-tag">${emoji} ${(biz.type||'').replace('_',' ')} · ${escHtml(biz.city||'')}</div>
+            ${s.custom_message?`<div style="font-size:0.76rem;background:rgba(240,200,74,0.1);border:1px solid rgba(240,200,74,0.2);border-radius:7px;padding:6px 10px;margin-bottom:10px;color:var(--gold)">${escHtml(s.custom_message)}</div>`:''}
+            <p class="biz-desc">${escHtml((biz.description||biz.desc||'').substring(0,90))}…</p>
+            <div class="biz-card-footer">
+              ${g?.rating?`<div class="google-rating-pill">${googleSvgHtml()}<span class="g-score">${g.rating.toFixed(1)}</span><span class="g-stars">${renderGoogleStars(g.rating)}</span></div>`:'<span style="font-size:0.72rem;color:var(--text3)">Fetching rating…</span>'}
+              <div class="card-actions"><a href="${mapsUrl}" target="_blank" rel="noopener" class="btn-maps-pill" onclick="event.stopPropagation()">📍 Maps</a><button class="btn-details details-btn" data-id="${biz.id}">Details</button></div>
+            </div>
+          </div>
+        </div>`;
+    }).join('');
+    grid.querySelectorAll('.details-btn').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();openDetailModal(btn.dataset.id);}));
+    grid.querySelectorAll('.biz-card').forEach(card=>card.addEventListener('click',()=>openDetailModal(card.dataset.id)));
+    section.scrollIntoView({behavior:'smooth',block:'start'});
+  }catch(e){
+    grid.innerHTML='<div style="padding:24px;text-align:center;color:var(--text3)">No sponsored listings available right now.</div>';
   }
 }
 
-function showSponsorModal(pkgName, price) {
-  currentSponsorPackage = { name: pkgName, price };
-  document.getElementById('sponsorPackageName').textContent = pkgName;
-  document.getElementById('sponsorTotal').textContent = `₹${price.toLocaleString()}`;
-  const msgGroup = document.getElementById('sponsorMessageGroup');
-  msgGroup.style.display = (pkgName === 'Premium Featured' || pkgName === 'Enterprise Dominance') ? 'flex' : 'none';
+document.getElementById('viewSponsoredBtn').addEventListener('click',e=>{e.stopPropagation();loadSponsoredListings();});
+document.getElementById('hideSponsoredBtn').addEventListener('click',()=>{document.getElementById('sponsoredListingsSection').style.display='none';});
+
+/* ================================================================
+   SPONSOR MODAL — only show user's OWN businesses
+================================================================ */
+async function loadUserBusinessesForSponsor(){
+  const select=document.getElementById('sponsorBusinessId');
+  const formBody=document.getElementById('sponsorFormBody');
+  const noBizHint=document.getElementById('noBizHint');
+
+  select.innerHTML='<option value="">Loading…</option>';
+  try{
+    let businesses=await getUserOwnBusinesses();
+    if(!businesses.length){
+      formBody.style.display='none';
+      noBizHint.style.display='block';
+      return;
+    }
+    userBusinesses=businesses;
+    formBody.style.display='';
+    noBizHint.style.display='none';
+    select.innerHTML=businesses.map(b=>`<option value="${b.id}">${escHtml(b.name)} · ${escHtml(b.city||'')}</option>`).join('');
+  }catch{
+    formBody.style.display='none';
+    noBizHint.style.display='block';
+  }
+}
+
+function showSponsorModal(pkgName,price){
+  currentSponsorPackage={name:pkgName,price};
+  document.getElementById('sponsorPackageName').textContent=pkgName;
+  document.getElementById('sponsorTotal').textContent=`₹${price.toLocaleString()}`;
+  const msgGroup=document.getElementById('sponsorMessageGroup');
+  msgGroup.style.display=(pkgName==='Premium Featured'||pkgName==='Enterprise Dominance')?'flex':'none';
   loadUserBusinessesForSponsor();
   document.getElementById('sponsorModal').classList.add('open');
 }
 
-// ===== AFFILIATE =====
-async function createAffiliateLink(productName, productUrl, commissionRate) {
-  try {
-    const res = await apiCall('/affiliate/create-link', { method: 'POST', body: { productName, productUrl, commissionRate: parseFloat(commissionRate) } });
-    if (res.success) { showToast(`Link created! Share: ${res.affiliateUrl}`, 'success'); loadAffiliateLinks(); return true; }
-    showToast(res.error || 'Failed', 'error');
-    return false;
-  } catch (e) { showToast('Failed to create link', 'error'); return false; }
+async function buySponsorship(businessId,packageType,customMessage){
+  try{
+    const response=await buySponsorshipAPI(businessId,packageType,customMessage);
+    if(response.success){showToast(`✅ Sponsored! Active until ${new Date(response.endDate).toLocaleDateString()}`,'success');return true;}
+    showToast(response.error||'Payment failed','error');return false;
+  }catch{showToast('Sponsorship failed. Try again.','error');return false;}
 }
 
-async function loadAffiliateLinks() {
-  try {
-    const links = await apiCall('/affiliate/links');
-    const c = document.getElementById('affiliateLinksList');
-    if (!c) return;
-    if (!links.length) { c.innerHTML = '<p style="color:var(--text3);font-size:0.82rem;text-align:center;padding:16px">No affiliate links yet. Create your first below!</p>'; return; }
-    const totalClicks = links.reduce((a, l) => a + (l.click_count || 0), 0);
-    const totalEarned = links.reduce((a, l) => a + (l.total_commission || 0), 0);
-    const stats = document.getElementById('affiliateStats');
-    if (stats) stats.innerHTML = `
+/* ================================================================
+   AFFILIATE
+================================================================ */
+async function createAffiliateLink(productName,productUrl,commissionRate){
+  try{
+    const res=await createAffiliateLinkAPI(productName,productUrl,parseFloat(commissionRate));
+    if(res.success){showToast(`Link created! Share: ${res.affiliateUrl}`,'success');loadAffiliateLinks();return true;}
+    showToast(res.error||'Failed','error');return false;
+  }catch{showToast('Failed to create link','error');return false;}
+}
+
+async function loadAffiliateLinks(){
+  try{
+    const links=await getAffiliateLinksAPI();
+    const c=document.getElementById('affiliateLinksList');
+    if(!c)return;
+    if(!links.length){c.innerHTML='<p style="color:var(--text3);font-size:0.82rem;text-align:center;padding:16px">No affiliate links yet. Create your first below!</p>';
+      const stats=document.getElementById('affiliateStats');
+      if(stats)stats.innerHTML=`
+        <div class="affiliate-stat"><div class="aff-num">0</div><div class="aff-label">Links</div></div>
+        <div class="affiliate-stat"><div class="aff-num">0</div><div class="aff-label">Clicks</div></div>
+        <div class="affiliate-stat"><div class="aff-num">₹0</div><div class="aff-label">Earned</div></div>`;
+      return;}
+    const totalClicks=links.reduce((a,l)=>a+(l.click_count||0),0);
+    const totalEarned=links.reduce((a,l)=>a+(l.total_commission||0),0);
+    const stats=document.getElementById('affiliateStats');
+    if(stats)stats.innerHTML=`
       <div class="affiliate-stat"><div class="aff-num">${links.length}</div><div class="aff-label">Links</div></div>
       <div class="affiliate-stat"><div class="aff-num">${totalClicks}</div><div class="aff-label">Clicks</div></div>
       <div class="affiliate-stat"><div class="aff-num">₹${totalEarned.toFixed(0)}</div><div class="aff-label">Earned</div></div>`;
-    c.innerHTML = `<div class="form-section-title" style="margin-bottom:12px">Your Links</div>` + links.map(link => `
+    c.innerHTML=`<div class="form-section-title" style="margin-bottom:12px">Your Links</div>`+links.map(link=>`
       <div class="aff-link-item">
-        <div class="aff-link-header"><div class="aff-link-name">${escHtml(link.product_name)}</div><div class="aff-link-earned">₹${(link.total_commission || 0).toFixed(2)}</div></div>
-        <div class="aff-link-stats">Clicks: ${link.click_count || 0} · Sales: ${link.sale_count || 0} · ${link.commission_rate}% commission</div>
+        <div class="aff-link-header"><div class="aff-link-name">${escHtml(link.product_name)}</div><div class="aff-link-earned">₹${(link.total_commission||0).toFixed(2)}</div></div>
+        <div class="aff-link-stats">Clicks: ${link.click_count||0} · Sales: ${link.sale_count||0} · ${link.commission_rate}% commission</div>
         <div class="aff-link-url"><code>${window.location.origin}/go/${link.id}</code>
           <button onclick="copyToClipboard('${window.location.origin}/go/${link.id}')" style="background:none;border:none;cursor:pointer;color:var(--accent);padding:0;font-size:0.85rem" title="Copy"><i class="fas fa-copy"></i></button>
         </div>
       </div>`).join('');
-  } catch (e) { console.error(e); }
+  }catch{}
 }
 
-function copyToClipboard(text) { navigator.clipboard.writeText(text); showToast('Copied to clipboard!', 'success'); }
+async function loadAffiliateProductsForBusiness(businessId){
+  try{
+    const links=await getAffiliateLinksForBusiness(businessId);
+    if(links?.length){
+      document.getElementById('affiliateSection').style.display='';
+      document.getElementById('affiliateProducts').innerHTML=links.map(link=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:11px;background:var(--card);border-radius:10px;margin-bottom:9px;gap:10px;border:1px solid var(--border)">
+          <div><strong style="font-size:0.88rem">${escHtml(link.product_name)}</strong><div style="font-size:0.7rem;color:var(--text3);margin-top:3px">${link.commission_rate}% commission</div></div>
+          <button class="btn-primary" onclick="window.open('${escHtml(link.product_url)}','_blank')" style="padding:6px 14px;font-size:0.78rem;white-space:nowrap"><i class="fas fa-external-link-alt"></i> Buy Now</button>
+        </div>`).join('');
+    }else{
+      document.getElementById('affiliateSection').style.display='none';
+    }
+  }catch{document.getElementById('affiliateSection').style.display='none';}
+}
 
-// ===== LOAD BUSINESSES =====
-function showSkeletonLoader() {
-  const grid = document.getElementById('businessGrid');
-  grid.innerHTML = Array(6).fill(0).map(() => `
+function copyToClipboard(text){
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text);}
+  showToast('Copied to clipboard!','success');
+}
+
+/* ================================================================
+   CREDIT BALANCE
+================================================================ */
+async function updateCreditBalance(){
+  try{const balance=await getCreditBalance();const badge=document.getElementById('creditBalance');if(badge)badge.textContent=`Credits: ${balance}`;}catch{}
+}
+
+/* ================================================================
+   GOOGLE SVG HELPER
+================================================================ */
+function googleSvgHtml(){
+  return `<svg class="g-logo" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>`;
+}
+
+/* ================================================================
+   LOAD BUSINESSES
+================================================================ */
+async function loadBusinesses(){
+  showSkeletonLoader();
+  try{
+    state.allBusinesses=await getBusinesses();
+    await renderBusinesses();
+    updateStats();
+    await loadStatesFilter();
+    await updateCreditBalance();
+  }catch{showToast('Failed to load businesses','error');}
+}
+
+function showSkeletonLoader(){
+  const grid=document.getElementById('businessGrid');
+  grid.innerHTML=Array(6).fill(0).map(()=>`
     <div class="skeleton-card">
       <div class="skeleton-banner"></div>
       <div class="skeleton-body">
@@ -1284,107 +1750,116 @@ function showSkeletonLoader() {
     </div>`).join('');
 }
 
-async function loadBusinesses() {
-  showSkeletonLoader();
-  try {
-    state.allBusinesses = await getBusinesses();
-    await renderBusinesses();
-    updateStats();
-    await loadStatesFilter();
-    await updateCreditBalance();
-  } catch (e) { showToast('Failed to load businesses', 'error'); }
+async function loadStatesFilter(){
+  const states=await getStates();
+  const sel=document.getElementById('stateFilter'),cur=sel.value;
+  sel.innerHTML='<option value="all">All States</option>'+states.map(s=>`<option value="${escHtml(s)}">${escHtml(s)}</option>`).join('');
+  if(cur!=='all')sel.value=cur;
 }
 
-async function loadStatesFilter() {
-  const states = await getStates();
-  const sel = document.getElementById('stateFilter');
-  sel.innerHTML = '<option value="all">All States</option>' + states.map(s => `<option value="${escHtml(s)}">${escHtml(s)}</option>`).join('');
+async function loadDistrictsFilter(st){
+  const sel=document.getElementById('districtFilter');
+  if(!st||st==='all'){sel.innerHTML='<option value="all">All Districts</option>';return;}
+  const districts=await getDistrictsByState(st),cur=sel.value;
+  sel.innerHTML='<option value="all">All Districts</option>'+districts.map(d=>`<option value="${escHtml(d)}">${escHtml(d)}</option>`).join('');
+  if(cur!=='all')sel.value=cur;
 }
 
-async function updateCreditBalance() {
-  try { const balance = await getCreditBalance(); const badge = document.getElementById('creditBalance'); if (badge) badge.textContent = `Credits: ${balance}`; } catch (e) {}
-}
+/* ================================================================
+   RENDER BUSINESSES
+================================================================ */
+async function renderBusinesses(){
+  let filtered=[...state.allBusinesses];
 
-// ===== RENDER BUSINESSES =====
-async function renderBusinesses() {
-  let filtered = [...state.allBusinesses];
-  if (state.districtFilter !== 'all') filtered = filtered.filter(b => (b.district || b.city) === state.districtFilter);
-  if (state.stateFilter !== 'all') filtered = filtered.filter(b => b.state === state.stateFilter);
+  if(state.sort==='nearby'){
+    const pos=await getUserLocation();
+    if(pos){
+      filtered=filtered.map(b=>({...b,distance:calculateDistance(pos.lat,pos.lng,b.lat,b.lng)}))
+        .filter(b=>b.distance!==null&&b.distance<=20).sort((a,b)=>(a.distance||999)-(b.distance||999));
+    }else{showToast('Enable location to use Nearby filter','info');state.sort='newest';document.getElementById('sortSelect').value='newest';}
+  }
 
-  if (state.sort === 'name') filtered.sort((a, b) => a.name.localeCompare(b.name));
-  else if (state.sort === 'rating') {
-    const cache = loadGoogleCache();
-    filtered.sort((a, b) => {
-      const ra = (a.place_id && cache[a.place_id]?.rating) || a.google_rating || 0;
-      const rb = (b.place_id && cache[b.place_id]?.rating) || b.google_rating || 0;
-      return rb - ra;
+  if(state.sort==='name')filtered.sort((a,b)=>a.name.localeCompare(b.name));
+  else if(state.sort==='rating'){
+    filtered.sort((a,b)=>{
+      const ra=(a.place_id&&googleRatingsCache[a.place_id]?.rating)||seededRating(a.place_id||String(a.id)).rating;
+      const rb=(b.place_id&&googleRatingsCache[b.place_id]?.rating)||seededRating(b.place_id||String(b.id)).rating;
+      return rb-ra;
     });
-  } else if (state.sort === 'views') filtered.sort((a, b) => (b.views || 0) - (a.views || 0));
-  else filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  }
+  else if(state.sort==='views')filtered.sort((a,b)=>(b.views||0)-(a.views||0));
+  else if(state.sort!=='nearby')filtered.sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
 
-  if (state.openNow) filtered = filtered.filter(b => isOpenNow(b.hours) === true);
+  if(state.openNow)filtered=filtered.filter(b=>isOpenNow(b.hours)===true);
 
-  const total = filtered.length;
-  const totalPages = Math.ceil(total / state.perPage) || 1;
-  if (state.page > totalPages) state.page = totalPages;
-  const start = (state.page - 1) * state.perPage;
-  const pageItems = filtered.slice(start, start + state.perPage);
+  const total=filtered.length;
+  const totalPages=Math.ceil(total/state.perPage)||1;
+  if(state.page>totalPages)state.page=totalPages;
+  const start=(state.page-1)*state.perPage;
+  const pageItems=filtered.slice(start,start+state.perPage);
 
-  document.getElementById('resultNum').textContent = total;
-  const grid = document.getElementById('businessGrid');
-  grid.className = state.viewMode === 'list' ? 'list-view' : '';
+  document.getElementById('resultNum').textContent=total;
+  const grid=document.getElementById('businessGrid');
+  grid.className=state.viewMode==='list'?'list-view':'';
 
-  if (!pageItems.length) {
-    grid.innerHTML = `<div class="empty-state"><i class="fas fa-store-alt-slash"></i><h3>No businesses found</h3><p>Try adjusting your filters or add the first one!</p></div>`;
-    document.getElementById('paginationControls').innerHTML = '';
+  if(!pageItems.length){
+    grid.innerHTML=`<div class="empty-state"><i class="fas fa-store-alt-slash"></i><h3>No businesses found</h3><p>Try adjusting your filters or add the first one!</p></div>`;
+    document.getElementById('paginationControls').innerHTML='';
     return;
   }
 
-  state.favorites = await getFavorites();
-  const cache = loadGoogleCache();
+  state.favorites=await getFavorites();
 
-  grid.innerHTML = pageItems.map((biz, i) => {
-    const openStatus = isOpenNow(biz.hours);
-    const isFav = state.favorites.includes(biz.id);
-    const emoji = EMOJIS[biz.type] || '📦';
-    const gData = (biz.place_id && cache[biz.place_id]) || (biz.google_rating ? { rating: biz.google_rating, user_ratings_total: biz.google_review_count || 0 } : null);
-    const mapsUrl = buildGoogleMapsUrl(biz.address, biz.city, biz.state, biz.lat, biz.lng);
-    const gradIdx = i % BANNER_GRADS.length;
-    const ratingHtml = gData?.rating ?
-      `<div class="google-rating-pill">${googleSvgHtml()}<span class="g-score">${gData.rating.toFixed(1)}</span><span class="g-stars">${renderGoogleStars(gData.rating)}</span><span class="g-count">(${(gData.user_ratings_total || 0).toLocaleString()})</span></div>` :
-      `<span style="font-size:0.7rem;color:var(--text3)" class="no-rating-placeholder" data-bizid="${biz.id}">Fetching rating…</span>`;
-    const imgUrl = getBizImageUrl(biz);
+  let sponsoredIds=new Set();
+  try{const sp=await getSponsoredList(20);sp.forEach(s=>sponsoredIds.add(String(s.business_id)));}catch{}
+
+  grid.innerHTML=pageItems.map((biz,i)=>{
+    const openStatus=isOpenNow(biz.hours);
+    const isFav=state.favorites.includes(biz.id);
+    const emoji=EMOJIS[biz.type]||'📦';
+    const gData=(biz.place_id&&googleRatingsCache[biz.place_id])||null;
+    const mapsUrl=buildGoogleMapsUrl(biz.address,biz.city,biz.state,biz.lat,biz.lng);
+    const distHtml=biz.distance?`<div class="biz-meta-item"><i class="fas fa-location-dot"></i> ${formatDistance(biz.distance)} away</div>`:'';
+    const isSponsored=sponsoredIds.has(String(biz.id));
+    const gradIdx=i%BANNER_GRADS.length;
+    const ratingHtml=gData?.rating
+      ?`<div class="google-rating-pill">${googleSvgHtml()}<span class="g-score">${gData.rating.toFixed(1)}</span><span class="g-stars">${renderGoogleStars(gData.rating)}</span><span class="g-count">(${(gData.user_ratings_total||0).toLocaleString()})</span></div>`
+      :`<span style="font-size:0.7rem;color:var(--text3)" class="no-rating-placeholder" data-bizid="${biz.id}">${biz.place_id?'Fetching rating…':'No Place ID'}</span>`;
+    const imgUrl=getBizImageUrl(biz);
 
     return `
-<div class="biz-card" data-id="${biz.id}" style="animation:cardIn ${0.1 + i * 0.05}s ease both">
+<div class="biz-card ${isSponsored?'sponsored-card':''}" data-id="${biz.id}" style="animation:cardIn ${0.1+i*0.05}s ease both">
   <div class="biz-card-banner" style="background:linear-gradient(${BANNER_GRADS[gradIdx]})">
-    ${imgUrl ? `<img class="biz-card-banner-img" src="${escHtml(imgUrl)}" alt="${escHtml(biz.name)}" loading="lazy" onerror="this.style.display='none'">` : ''}
+    ${imgUrl?`<img class="biz-card-banner-img" src="${escHtml(imgUrl)}" alt="${escHtml(biz.name)}" loading="lazy" onerror="this.style.display='none'">`:''}
     <div class="biz-card-banner-overlay"></div>
     <div class="biz-badges">
-      ${biz.verified ? '<span class="badge badge-verified">✓ Verified</span>' : ''}
-      ${isNewItem(biz.created_at) ? '<span class="badge badge-new">🔥 New</span>' : ''}
-      ${biz.featured ? '<span class="badge badge-featured">⭐ Featured</span>' : ''}
-      ${openStatus === true ? '<span class="badge badge-open">● Open</span>' : openStatus === false ? '<span class="badge badge-closed">✕ Closed</span>' : ''}
+      ${isSponsored?'<span class="badge badge-sponsored">⭐ SPONSORED</span>':''}
+      ${biz.verified?'<span class="badge badge-verified">✓ Verified</span>':''}
+      ${isNewItem(biz.created_at)?'<span class="badge badge-new">🔥 New</span>':''}
+      ${biz.featured?'<span class="badge badge-featured">⭐ Featured</span>':''}
+      ${openStatus===true?'<span class="badge badge-open">● Open</span>':openStatus===false?'<span class="badge badge-closed">✕ Closed</span>':''}
     </div>
-    <button class="fav-btn-card ${isFav ? 'active' : ''}" data-id="${biz.id}" onclick="event.stopPropagation()" aria-label="Save">
-      ${isFav ? '<i class="fas fa-heart"></i>' : '<i class="far fa-heart"></i>'}
+    <button class="fav-btn-card ${isFav?'active':''}" data-id="${biz.id}" onclick="event.stopPropagation()" aria-label="Save">
+      ${isFav?'<i class="fas fa-heart"></i>':'<i class="far fa-heart"></i>'}
     </button>
     <div class="biz-logo">${emoji}</div>
   </div>
   <div class="biz-card-body">
     <div class="biz-name">${escHtml(biz.name)}</div>
-    <div class="biz-type-tag">${emoji} ${escHtml((biz.type || '').replace('_', ' '))} · ${escHtml(biz.city || '')}${biz.state ? `, ${escHtml(biz.state)}` : ''}</div>
-    <p class="biz-desc">${escHtml((biz.description || biz.desc || '').substring(0, 100))}${(biz.description || '').length > 100 ? '…' : ''}</p>
+    <div class="biz-type-tag">${emoji} ${escHtml((biz.type||'').replace('_',' '))} · ${escHtml(biz.city||'')}${biz.state?`, ${escHtml(biz.state)}`:''}</div>
+    <p class="biz-desc">${escHtml((biz.description||biz.desc||'').substring(0,100))}${(biz.description||'').length>100?'…':''}</p>
     <div class="biz-meta">
-      <div class="biz-meta-item"><i class="fas fa-map-marker-alt"></i> ${escHtml((biz.address || '').substring(0, 52))}${(biz.address || '').length > 52 ? '…' : ''}</div>
-      ${biz.phone ? `<div class="biz-meta-item"><i class="fas fa-phone"></i><a href="tel:${escHtml(biz.phone)}" onclick="event.stopPropagation()">${escHtml(biz.phone)}</a></div>` : ''}
+      <div class="biz-meta-item"><i class="fas fa-map-marker-alt"></i> ${escHtml((biz.address||'').substring(0,52))}${(biz.address||'').length>52?'…':''}</div>
+      ${biz.district?`<div class="biz-meta-item"><i class="fas fa-building"></i> ${escHtml(biz.district)}</div>`:''}
+      ${distHtml}
+      ${biz.phone?`<div class="biz-meta-item"><i class="fas fa-phone"></i><a href="tel:${escHtml(biz.phone)}" onclick="event.stopPropagation()">${escHtml(biz.phone)}</a></div>`:''}
     </div>
     <div class="biz-card-footer">
       ${ratingHtml}
       <div class="card-actions">
         <a href="${mapsUrl}" target="_blank" rel="noopener" class="btn-maps-pill" onclick="event.stopPropagation()">📍 Maps</a>
         <label class="compare-label" onclick="event.stopPropagation()">
-          <input type="checkbox" class="compare-check" data-id="${biz.id}" data-name="${escHtml(biz.name)}" ${state.compareList.some(c => c.id == biz.id) ? 'checked' : ''}> Compare
+          <input type="checkbox" class="compare-check" data-id="${biz.id}" data-name="${escHtml(biz.name)}" ${state.compareList.some(c=>c.id==biz.id)?'checked':''}> Compare
         </label>
         <button class="btn-details details-btn" data-id="${biz.id}">Details</button>
       </div>
@@ -1393,312 +1868,406 @@ async function renderBusinesses() {
 </div>`;
   }).join('');
 
-  // Events
-  grid.querySelectorAll('.details-btn').forEach(btn => btn.addEventListener('click', e => { e.stopPropagation(); openDetailModal(btn.dataset.id); }));
-  grid.querySelectorAll('.fav-btn-card').forEach(btn => btn.addEventListener('click', async e => {
+  grid.querySelectorAll('.details-btn').forEach(btn=>btn.addEventListener('click',e=>{e.stopPropagation();openDetailModal(btn.dataset.id);}));
+  grid.querySelectorAll('.fav-btn-card').forEach(btn=>btn.addEventListener('click',async e=>{
     e.stopPropagation();
-    const ns = await toggleFavoriteAPI(btn.dataset.id);
-    btn.classList.toggle('active', ns);
-    btn.innerHTML = ns ? '<i class="fas fa-heart"></i>' : '<i class="far fa-heart"></i>';
-    showToast(ns ? 'Added to saved' : 'Removed from saved', ns ? 'success' : 'info');
+    const ns=await toggleFavoriteAPI(btn.dataset.id);
+    btn.classList.toggle('active',ns);btn.innerHTML=ns?'<i class="fas fa-heart"></i>':'<i class="far fa-heart"></i>';
+    showToast(ns?'Added to saved':'Removed from saved',ns?'success':'info');
   }));
-  grid.querySelectorAll('.compare-check').forEach(cb => cb.addEventListener('change', e => {
+  grid.querySelectorAll('.compare-check').forEach(cb=>cb.addEventListener('change',e=>{
     e.stopPropagation();
-    if (cb.checked) {
-      if (state.compareList.length >= 3) { showToast('Max 3 businesses', 'error'); cb.checked = false; return; }
-      if (!state.compareList.some(c => c.id == cb.dataset.id)) state.compareList.push({ id: parseInt(cb.dataset.id), name: cb.dataset.name });
-    } else state.compareList = state.compareList.filter(c => c.id != cb.dataset.id);
+    if(cb.checked){if(state.compareList.length>=3){showToast('Max 3 businesses','error');cb.checked=false;return;}
+      if(!state.compareList.some(c=>c.id==cb.dataset.id))state.compareList.push({id:parseInt(cb.dataset.id),name:cb.dataset.name});}
+    else state.compareList=state.compareList.filter(c=>c.id!=cb.dataset.id);
     updateCompareBar();
   }));
-  grid.querySelectorAll('.biz-card').forEach(card => card.addEventListener('click', () => openDetailModal(card.dataset.id)));
+  grid.querySelectorAll('.biz-card').forEach(card=>card.addEventListener('click',()=>openDetailModal(card.dataset.id)));
 
   renderPagination(totalPages);
 
-  // Fetch Google ratings
-  pageItems.forEach(biz => {
-    if (biz.place_id && !(cache[biz.place_id] && isCacheFresh(cache[biz.place_id]))) {
-      fetchGoogleRating(biz.place_id).then(g => {
-        if (g) {
-          document.querySelectorAll(`.no-rating-placeholder[data-bizid="${biz.id}"]`).forEach(el => {
-            const pill = document.createElement('div');
-            pill.className = 'google-rating-pill';
-            pill.innerHTML = `${googleSvgHtml()}<span class="g-score">${g.rating.toFixed(1)}</span><span class="g-stars">${renderGoogleStars(g.rating)}</span><span class="g-count">(${(g.user_ratings_total || 0).toLocaleString()})</span>`;
-            el.replaceWith(pill);
-          });
-        }
+  // Background: fetch Google ratings for items with a place_id
+  pageItems.forEach(biz=>{
+    if(biz.place_id&&!(googleRatingsCache[biz.place_id]&&isCacheFresh(googleRatingsCache[biz.place_id]))){
+      fetchGoogleRating(biz.place_id).then(g=>{
+        if(g)updateCardGoogleRating(biz.id,g);
       });
+    }else if(biz.place_id&&googleRatingsCache[biz.place_id]){
+      updateCardGoogleRating(biz.id,googleRatingsCache[biz.place_id]);
     }
   });
 }
 
-function renderPagination(totalPages) {
-  const c = document.getElementById('paginationControls');
-  if (totalPages <= 1) { c.innerHTML = ''; return; }
-  let h = `<button class="page-btn" ${state.page === 1 ? 'disabled' : ''} onclick="changePage(${state.page - 1})"><i class="fas fa-chevron-left"></i></button>`;
-  for (let i = 1; i <= totalPages; i++) {
-    h += `<button class="page-btn ${state.page === i ? 'active' : ''}" onclick="changePage(${i})">${i}</button>`;
-  }
-  h += `<button class="page-btn" ${state.page === totalPages ? 'disabled' : ''} onclick="changePage(${state.page + 1})"><i class="fas fa-chevron-right"></i></button>`;
-  c.innerHTML = h;
+function updateCardGoogleRating(bizId,gData){
+  document.querySelectorAll(`.biz-card[data-id="${bizId}"]`).forEach(card=>{
+    const old=card.querySelector('.google-rating-pill,.no-rating-placeholder');
+    if(!old)return;
+    const el=document.createElement('div');el.className='google-rating-pill';
+    el.innerHTML=`${googleSvgHtml()}<span class="g-score">${gData.rating.toFixed(1)}</span><span class="g-stars">${renderGoogleStars(gData.rating)}</span><span class="g-count">(${(gData.user_ratings_total||0).toLocaleString()})</span>`;
+    old.replaceWith(el);
+  });
 }
-window.changePage = p => { state.page = p; renderBusinesses(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
 
-function updateStats() {
-  const b = state.allBusinesses;
-  const animateNum = (el, target) => {
-    let start = 0, duration = 900, startTime = null;
-    const step = t => { if (!startTime) startTime = t; const p = Math.min((t - startTime) / duration, 1); el.textContent = Math.floor(p * target).toLocaleString(); if (p < 1) requestAnimationFrame(step); };
+function renderPagination(totalPages){
+  const c=document.getElementById('paginationControls');
+  if(totalPages<=1){c.innerHTML='';return;}
+  let h=`<button class="page-btn" ${state.page===1?'disabled':''} onclick="changePage(${state.page-1})"><i class="fas fa-chevron-left"></i></button>`;
+  const maxShow=5,half=Math.floor(maxShow/2);
+  let startP=Math.max(1,state.page-half),endP=Math.min(totalPages,startP+maxShow-1);
+  if(endP-startP<maxShow-1)startP=Math.max(1,endP-maxShow+1);
+  if(startP>1)h+=`<button class="page-btn" onclick="changePage(1)">1</button>${startP>2?'<span style="padding:0 4px;color:var(--text3)">…</span>':''}`;
+  for(let i=startP;i<=endP;i++)h+=`<button class="page-btn ${state.page===i?'active':''}" onclick="changePage(${i})">${i}</button>`;
+  if(endP<totalPages)h+=`${endP<totalPages-1?'<span style="padding:0 4px;color:var(--text3)">…</span>':''}<button class="page-btn" onclick="changePage(${totalPages})">${totalPages}</button>`;
+  h+=`<button class="page-btn" ${state.page===totalPages?'disabled':''} onclick="changePage(${state.page+1})"><i class="fas fa-chevron-right"></i></button>`;
+  c.innerHTML=h;
+}
+window.changePage=p=>{state.page=p;renderBusinesses();window.scrollTo({top:0,behavior:'smooth'});};
+
+function updateStats(){
+  const b=state.allBusinesses;
+  let totalReviews=0;
+  b.forEach(biz=>{
+    if(biz.place_id&&googleRatingsCache[biz.place_id])totalReviews+=googleRatingsCache[biz.place_id].user_ratings_total||0;
+    else if(biz.place_id)totalReviews+=seededRating(biz.place_id).user_ratings_total;
+  });
+  const animateNum=(el,target)=>{
+    let startTime=null,duration=900;
+    const step=t=>{if(!startTime)startTime=t;const p=Math.min((t-startTime)/duration,1);el.textContent=Math.floor(p*target).toLocaleString();if(p<1)requestAnimationFrame(step);};
     requestAnimationFrame(step);
   };
-  animateNum(document.getElementById('totalCount'), b.length);
-  animateNum(document.getElementById('verifiedCount'), b.filter(x => x.verified).length);
-  animateNum(document.getElementById('categoryCount'), new Set(b.map(x => x.category)).size);
+  animateNum(document.getElementById('totalCount'),b.length);
+  animateNum(document.getElementById('verifiedCount'),b.filter(x=>x.verified).length);
+  animateNum(document.getElementById('categoryCount'),new Set(b.map(x=>x.category)).size);
+  animateNum(document.getElementById('reviewCount'),totalReviews);
 }
 
-// ===== DETAIL MODAL =====
-async function openDetailModal(bizId) {
-  const biz = state.allBusinesses.find(b => b.id == bizId);
-  if (!biz) return;
-  const emoji = EMOJIS[biz.type] || '📦';
-  const imgUrl = getBizImageUrl(biz);
-  const modalBannerImg = document.getElementById('modalBannerImg');
-  const modalBanner = document.getElementById('modalBanner');
-  const gradIdx = state.allBusinesses.indexOf(biz) % BANNER_GRADS.length;
-  modalBanner.style.background = `linear-gradient(${BANNER_GRADS[gradIdx]})`;
-  if (imgUrl) {
-    modalBannerImg.src = imgUrl;
-    modalBannerImg.alt = biz.name;
-    modalBannerImg.style.display = '';
-  } else {
-    modalBannerImg.style.display = 'none';
+/* ================================================================
+   DETAIL MODAL — with image support
+================================================================ */
+async function openDetailModal(bizId){
+  const biz=state.allBusinesses.find(b=>b.id==bizId)||DB.businesses.find(b=>b.id==bizId);
+  if(!biz)return;
+  const emoji=EMOJIS[biz.type]||'📦';
+
+  const imgUrl=getBizImageUrl(biz);
+  const modalBannerImg=document.getElementById('modalBannerImg');
+  const modalBanner=document.getElementById('modalBanner');
+  const gradIdx=Math.max(0,state.allBusinesses.indexOf(biz))%BANNER_GRADS.length;
+  modalBanner.style.background=`linear-gradient(${BANNER_GRADS[gradIdx]})`;
+  if(imgUrl){
+    modalBannerImg.src=imgUrl;
+    modalBannerImg.alt=biz.name;
+    modalBannerImg.style.display='';
+  }else{
+    modalBannerImg.style.display='none';
   }
 
-  document.getElementById('modalLogoWrap').textContent = emoji;
-  document.getElementById('modalTitle').textContent = biz.name;
-  document.getElementById('modalDesc').textContent = biz.description || biz.desc || 'No description provided.';
+  document.getElementById('modalLogoWrap').textContent=emoji;
+  document.getElementById('modalTitle').textContent=biz.name;
+  document.getElementById('modalDesc').textContent=biz.description||biz.desc||'No description provided.';
 
-  const openStatus = isOpenNow(biz.hours);
-  document.getElementById('modalTags').innerHTML = `
-    <span class="biz-type-tag">${emoji} ${(biz.type || '').replace('_', ' ')}</span>
-    <span class="biz-type-tag">📁 ${biz.category || 'General'}</span>
-    ${biz.verified ? '<span class="badge badge-verified">✓ Verified</span>' : ''}
-    ${biz.featured ? '<span class="badge badge-featured">⭐ Featured</span>' : ''}
-    ${openStatus === true ? '<span class="badge badge-open">● Open Now</span>' : openStatus === false ? '<span class="badge badge-closed">✕ Closed</span>' : ''}
+  const openStatus=isOpenNow(biz.hours);
+  document.getElementById('modalTags').innerHTML=`
+    <span class="biz-type-tag">${emoji} ${(biz.type||'').replace('_',' ')}</span>
+    <span class="biz-type-tag">📁 ${biz.category||'General'}</span>
+    ${biz.verified?'<span class="badge badge-verified">✓ Verified</span>':''}
+    ${biz.featured?'<span class="badge badge-featured">⭐ Featured</span>':''}
+    ${openStatus===true?'<span class="badge badge-open">● Open Now</span>':openStatus===false?'<span class="badge badge-closed">✕ Closed</span>':''}
   `;
 
-  // Google rating
-  ['grbScore', 'grbStars', 'grbCount'].forEach((id, i) => { document.getElementById(id).textContent = ['—', '☆☆☆☆☆', 'Loading Google reviews…'][i]; });
-  document.getElementById('grbStatus').className = 'grb-status';
-  document.getElementById('grbStatus').innerHTML = '<i class="fas fa-sync-alt" style="animation:spinRefresh 1s linear infinite"></i> Fetching…';
+  ['grbScore','grbStars','grbCount'].forEach((id,i)=>{document.getElementById(id).textContent=['—','☆☆☆☆☆','Loading Google reviews…'][i];});
+  document.getElementById('grbStatus').className='grb-status';
+  document.getElementById('grbStatus').innerHTML='<i class="fas fa-sync-alt" style="animation:spinRefresh 1s linear infinite"></i> Fetching…';
+  document.getElementById('grbCacheBadge').style.display='none';
 
-  if (biz.place_id) {
-    const cache = loadGoogleCache(), cached = cache[biz.place_id];
-    if (cached && isCacheFresh(cached)) applyGoogleRatingToModal(cached, true, cached.fetchedAt);
-    else {
-      const g = await fetchGoogleRating(biz.place_id);
-      if (g) applyGoogleRatingToModal(g, false, g.fetchedAt);
-      else {
-        document.getElementById('grbScore').textContent = '—';
-        document.getElementById('grbStars').textContent = 'Not available';
-        document.getElementById('grbCount').textContent = 'Google rating unavailable';
-        document.getElementById('grbStatus').innerHTML = '<i class="fas fa-times-circle"></i> N/A';
-      }
-    }
-  } else {
-    document.getElementById('grbScore').textContent = '—';
-    document.getElementById('grbStars').textContent = 'No Place ID set';
-    document.getElementById('grbCount').textContent = 'Add a Google Place ID to enable live ratings.';
-    document.getElementById('grbStatus').innerHTML = '<i class="fas fa-info-circle"></i> Setup needed';
+  if(biz.place_id){
+    const cached=googleRatingsCache[biz.place_id];
+    if(cached&&isCacheFresh(cached))applyGoogleRatingToModal(cached,true,cached.fetchedAt);
+    else fetchGoogleRating(biz.place_id).then(g=>{
+      if(g)applyGoogleRatingToModal(g,false,g.fetchedAt);
+    });
+  }else{
+    document.getElementById('grbScore').textContent='—';
+    document.getElementById('grbStars').textContent='No Place ID set';
+    document.getElementById('grbCount').textContent='Add a Google Place ID to enable live ratings.';
+    document.getElementById('grbStatus').innerHTML='<i class="fas fa-info-circle"></i> Setup needed';
   }
 
-  // Map
-  const mapsUrl = buildGoogleMapsUrl(biz.address, biz.city, biz.state, biz.lat, biz.lng);
-  const thumbWrap = document.getElementById('mapsThumbWrap');
-  thumbWrap.style.cssText = 'height:auto;padding:14px;background:var(--card);display:flex;align-items:center;gap:12px;border-radius:10px;border:1px solid var(--border)';
-  thumbWrap.innerHTML = `<i class="fas fa-map-marker-alt" style="color:var(--accent);font-size:1.4rem;flex-shrink:0"></i>
-    <div><div style="font-size:0.86rem;font-weight:500">${escHtml(biz.address || '')}</div>
-    <div style="font-size:0.74rem;color:var(--text3);margin-top:3px">${escHtml([biz.city, biz.district, biz.state].filter(Boolean).join(', '))}</div></div>`;
-  document.getElementById('mapsActionRow').innerHTML = `
-    <a href="${mapsUrl}" target="_blank" rel="noopener" class="contact-btn maps-btn"><i class="fas fa-map-marker-alt"></i> Open in Google Maps</a>`;
+  const mapsUrl=buildGoogleMapsUrl(biz.address,biz.city,biz.state,biz.lat,biz.lng);
+  const embedUrl=buildMapsEmbedUrl(biz.address,biz.city,biz.state,biz.lat,biz.lng);
+  const thumbWrap=document.getElementById('mapsThumbWrap');
+  thumbWrap.style.cssText='';
+  thumbWrap.innerHTML=`<iframe src="${embedUrl}" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe><div class="maps-thumb-overlay"><a href="${mapsUrl}" target="_blank" rel="noopener" class="maps-open-btn"><i class="fas fa-map-marker-alt"></i> Open in Google Maps</a></div>`;
+  document.getElementById('mapsActionRow').innerHTML=`
+    <a href="${mapsUrl}" target="_blank" rel="noopener" class="contact-btn maps-btn"><i class="fas fa-map-marker-alt"></i> Open in Google Maps</a>
+    ${biz.maps_link?`<a href="${escHtml(biz.maps_link)}" target="_blank" rel="noopener" class="contact-btn maps-btn"><i class="fas fa-directions"></i> Directions</a>`:''}
+  `;
 
-  // Info grid
-  document.getElementById('modalInfoGrid').innerHTML = [
-    biz.address && `<div class="info-item"><div class="info-label"><i class="fas fa-map-marker-alt"></i> Address</div><div class="info-val">${escHtml(biz.address)}</div></div>`,
-    biz.city && `<div class="info-item"><div class="info-label"><i class="fas fa-city"></i> City</div><div class="info-val">${escHtml(biz.city)}</div></div>`,
-    biz.district && `<div class="info-item"><div class="info-label"><i class="fas fa-building"></i> District</div><div class="info-val">${escHtml(biz.district)}</div></div>`,
-    biz.state && `<div class="info-item"><div class="info-label"><i class="fas fa-map"></i> State</div><div class="info-val">${escHtml(biz.state)}</div></div>`,
-    biz.phone && `<div class="info-item"><div class="info-label"><i class="fas fa-phone"></i> Phone</div><div class="info-val"><a href="tel:${escHtml(biz.phone)}">${escHtml(biz.phone)}</a></div></div>`,
-    biz.email && `<div class="info-item"><div class="info-label"><i class="fas fa-envelope"></i> Email</div><div class="info-val"><a href="mailto:${escHtml(biz.email)}">${escHtml(biz.email)}</a></div></div>`,
-    biz.website && `<div class="info-item"><div class="info-label"><i class="fas fa-globe"></i> Website</div><div class="info-val"><a href="${escHtml(biz.website)}" target="_blank" rel="noopener">Visit Website ↗</a></div></div>`,
-    `<div class="info-item"><div class="info-label"><i class="fas fa-eye"></i> Views</div><div class="info-val">${(biz.views || 0).toLocaleString()}</div></div>`,
+  document.getElementById('modalInfoGrid').innerHTML=[
+    biz.address&&`<div class="info-item"><div class="info-label"><i class="fas fa-map-marker-alt"></i> Address</div><div class="info-val">${escHtml(biz.address)}</div></div>`,
+    biz.city&&`<div class="info-item"><div class="info-label"><i class="fas fa-city"></i> City</div><div class="info-val">${escHtml(biz.city)}</div></div>`,
+    biz.district&&`<div class="info-item"><div class="info-label"><i class="fas fa-building"></i> District</div><div class="info-val">${escHtml(biz.district)}</div></div>`,
+    biz.state&&`<div class="info-item"><div class="info-label"><i class="fas fa-map"></i> State</div><div class="info-val">${escHtml(biz.state)}</div></div>`,
+    biz.phone&&`<div class="info-item"><div class="info-label"><i class="fas fa-phone"></i> Phone</div><div class="info-val"><a href="tel:${escHtml(biz.phone)}">${escHtml(biz.phone)}</a></div></div>`,
+    biz.email&&`<div class="info-item"><div class="info-label"><i class="fas fa-envelope"></i> Email</div><div class="info-val"><a href="mailto:${escHtml(biz.email)}">${escHtml(biz.email)}</a></div></div>`,
+    biz.website&&`<div class="info-item"><div class="info-label"><i class="fas fa-globe"></i> Website</div><div class="info-val"><a href="${escHtml(biz.website)}" target="_blank" rel="noopener">Visit Website ↗</a></div></div>`,
+    `<div class="info-item"><div class="info-label"><i class="fas fa-eye"></i> Views</div><div class="info-val">${(biz.views||0).toLocaleString()}</div></div>`,
+    `<div class="info-item"><div class="info-label"><i class="fas fa-calendar"></i> Listed</div><div class="info-val">${timeAgo(biz.created_at)}</div></div>`,
   ].filter(Boolean).join('');
 
-  // Hours
-  if (biz.hours && Object.keys(biz.hours).length) {
-    document.getElementById('hoursSection').style.display = '';
-    const todayIdx = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1, today = DAYS[todayIdx];
-    document.getElementById('modalHours').innerHTML = DAYS.map(day => {
-      const h = biz.hours[day] || 'Closed';
-      return `<div class="hours-item ${day === today ? 'today' : ''} ${h === 'Closed' ? 'closed' : ''}"><span class="day">${day}${day === today ? ' ★' : ''}</span><span class="time">${h}</span></div>`;
+  if(biz.hours&&Object.keys(biz.hours).length){
+    document.getElementById('hoursSection').style.display='';
+    const todayIdx=new Date().getDay()===0?6:new Date().getDay()-1,today=DAYS[todayIdx];
+    document.getElementById('modalHours').innerHTML=DAYS.map(day=>{
+      const h=biz.hours[day]||'Closed';
+      return `<div class="hours-item ${day===today?'today':''} ${h==='Closed'?'closed':''}"><span class="day">${day}${day===today?' ★':''}</span><span class="time">${h}</span></div>`;
     }).join('');
-  } else document.getElementById('hoursSection').style.display = 'none';
+  }else document.getElementById('hoursSection').style.display='none';
 
-  // Amenities
-  if (biz.amenities?.length) {
-    document.getElementById('amenitiesSection').style.display = '';
-    document.getElementById('modalAmenities').innerHTML = biz.amenities.map(aid => {
-      const a = AMENITY_LIST.find(x => x.id === aid);
-      return a ? `<div class="amenity-tag"><i class="fas ${a.icon}"></i> ${a.label}</div>` : '';
-    }).join('');
-  } else document.getElementById('amenitiesSection').style.display = 'none';
+  if(biz.amenities?.length){
+    document.getElementById('amenitiesSection').style.display='';
+    document.getElementById('modalAmenities').innerHTML=biz.amenities.map(aid=>{const a=AMENITY_LIST.find(x=>x.id===aid);return a?`<div class="amenity-tag"><i class="fas ${a.icon}"></i> ${a.label}</div>`:''}).join('');
+  }else document.getElementById('amenitiesSection').style.display='none';
 
-  // Contact
-  document.getElementById('modalContactActions').innerHTML = [
-    biz.phone && `<a href="tel:${escHtml(biz.phone)}" class="contact-btn call"><i class="fas fa-phone"></i> Call</a>`,
-    biz.whatsapp && `<a href="https://api.whatsapp.com/send?phone=${encodeURIComponent(biz.whatsapp.replace(/\D/g, ''))}&text=Hello%20${encodeURIComponent(biz.name)}" target="_blank" rel="noopener" class="contact-btn whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</a>`,
-    biz.email && `<a href="mailto:${escHtml(biz.email)}" class="contact-btn email-btn"><i class="fas fa-envelope"></i> Email</a>`,
-    biz.website && `<a href="${escHtml(biz.website)}" target="_blank" rel="noopener" class="contact-btn"><i class="fas fa-external-link-alt"></i> Website</a>`,
+  document.getElementById('modalContactActions').innerHTML=[
+    biz.phone&&`<a href="tel:${escHtml(biz.phone)}" class="contact-btn call"><i class="fas fa-phone"></i> Call</a>`,
+    biz.whatsapp&&`<a href="https://api.whatsapp.com/send?phone=${encodeURIComponent(biz.whatsapp.replace(/\D/g,''))}&text=Hello%20${encodeURIComponent(biz.name)}" target="_blank" rel="noopener" class="contact-btn whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</a>`,
+    biz.email&&`<a href="mailto:${escHtml(biz.email)}" class="contact-btn email-btn"><i class="fas fa-envelope"></i> Email</a>`,
+    biz.website&&`<a href="${escHtml(biz.website)}" target="_blank" rel="noopener" class="contact-btn"><i class="fas fa-external-link-alt"></i> Website</a>`,
   ].filter(Boolean).join('');
 
-  // Share
-  const shareUrl = encodeURIComponent(window.location.href + '#biz-' + biz.id);
-  const shareText = encodeURIComponent(`Check out ${biz.name} on Sarveik Directory!`);
-  document.getElementById('modalShare').innerHTML = `
+  const shareUrl=encodeURIComponent(window.location.href+'#biz-'+biz.id);
+  const shareText=encodeURIComponent(`Check out ${biz.name} on Sarveik Directory!`);
+  document.getElementById('modalShare').innerHTML=`
     <a class="share-btn twitter" href="https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}" target="_blank" rel="noopener"><i class="fab fa-x-twitter"></i> X</a>
     <a class="share-btn facebook" href="https://www.facebook.com/sharer/sharer.php?u=${shareUrl}" target="_blank" rel="noopener"><i class="fab fa-facebook-f"></i> Facebook</a>
     <a class="share-btn whatsapp-share" href="https://api.whatsapp.com/send?text=${shareText}%20${shareUrl}" target="_blank" rel="noopener"><i class="fab fa-whatsapp"></i> WhatsApp</a>
     <button class="share-btn copy" id="copyLinkBtn"><i class="fas fa-copy"></i> Copy Link</button>
   `;
-  document.getElementById('copyLinkBtn').addEventListener('click', () => { navigator.clipboard.writeText(window.location.href); showToast('Link copied!', 'success'); });
+  document.getElementById('copyLinkBtn').addEventListener('click',()=>{copyToClipboard(window.location.href);});
 
-  // Favorite
-  const isFav = state.favorites.includes(biz.id);
-  const favBtn = document.getElementById('modalFavBtn');
-  favBtn.innerHTML = isFav ? '<i class="fas fa-heart"></i> Saved' : '<i class="far fa-heart"></i> Save';
-  favBtn.onclick = async () => {
-    const ns = await toggleFavoriteAPI(biz.id);
-    favBtn.innerHTML = ns ? '<i class="fas fa-heart"></i> Saved' : '<i class="far fa-heart"></i> Save';
-    showToast(ns ? 'Saved!' : 'Removed from saved', ns ? 'success' : 'info');
+  const isFav=state.favorites.includes(biz.id);
+  const favBtn=document.getElementById('modalFavBtn');
+  favBtn.innerHTML=isFav?'<i class="fas fa-heart"></i> Saved':'<i class="far fa-heart"></i> Save';
+  favBtn.onclick=async()=>{
+    const ns=await toggleFavoriteAPI(biz.id);
+    favBtn.innerHTML=ns?'<i class="fas fa-heart"></i> Saved':'<i class="far fa-heart"></i> Save';
+    showToast(ns?'Saved!':'Removed from saved',ns?'success':'info');
     await loadBusinesses();
   };
 
-  // Actions
-  document.getElementById('modalActions').innerHTML = `
+  document.getElementById('modalActions').innerHTML=`
     <a class="modal-action-btn gmaps" href="${mapsUrl}" target="_blank" rel="noopener"><i class="fas fa-map-marker-alt"></i> Open in Maps</a>
-    ${biz.phone ? `<a class="modal-action-btn primary" href="tel:${escHtml(biz.phone)}"><i class="fas fa-phone"></i> Call Now</a>` : ''}
+    ${biz.phone?`<a class="modal-action-btn primary" href="tel:${escHtml(biz.phone)}"><i class="fas fa-phone"></i> Call Now</a>`:''}
     <button class="modal-action-btn sponsor-btn" id="sponsorThisBizBtn"><i class="fas fa-crown"></i> Sponsor (₹499)</button>
     <button class="modal-action-btn" id="reportBizBtn"><i class="fas fa-flag"></i> Report</button>
   `;
-  document.getElementById('sponsorThisBizBtn').addEventListener('click', () => { document.getElementById('detailModal').classList.remove('open'); showSponsorModal('Basic Spotlight', 499); });
-  document.getElementById('reportBizBtn').addEventListener('click', () => { document.getElementById('detailModal').classList.remove('open'); openReportModal(biz.id); });
+  document.getElementById('sponsorThisBizBtn').addEventListener('click',()=>{document.getElementById('detailModal').classList.remove('open');showSponsorModal('Basic Spotlight',499);});
+  document.getElementById('reportBizBtn').addEventListener('click',()=>{document.getElementById('detailModal').classList.remove('open');openReportModal(biz.id);});
 
+  await loadAffiliateProductsForBusiness(biz.id);
   document.getElementById('detailModal').classList.add('open');
 }
 
-function applyGoogleRatingToModal(gData, fromCache, fetchedAt) {
-  document.getElementById('grbScore').textContent = gData.rating ? gData.rating.toFixed(1) : 'N/A';
-  document.getElementById('grbStars').textContent = renderGoogleStars(gData.rating);
-  document.getElementById('grbCount').textContent = `${(gData.user_ratings_total || 0).toLocaleString()} Google reviews`;
-  const status = document.getElementById('grbStatus');
-  status.className = 'grb-status live';
-  status.innerHTML = fromCache ? '<i class="fas fa-check-circle"></i> Cached' : '<i class="fas fa-wifi"></i> Live';
-  if (fetchedAt) {
-    const badge = document.getElementById('grbCacheBadge');
-    badge.style.display = 'inline-flex';
-    badge.className = `gcache-badge ${Math.floor((Date.now() - fetchedAt) / 86400000) < 7 ? 'fresh' : 'stale'}`;
-    badge.textContent = cacheAgeLabel(fetchedAt);
+function applyGoogleRatingToModal(gData,fromCache,fetchedAt){
+  document.getElementById('grbScore').textContent=gData.rating?gData.rating.toFixed(1):'N/A';
+  document.getElementById('grbStars').textContent=renderGoogleStars(gData.rating);
+  document.getElementById('grbCount').textContent=`${(gData.user_ratings_total||0).toLocaleString()} Google reviews`;
+  const status=document.getElementById('grbStatus');
+  status.className='grb-status live';
+  status.innerHTML=fromCache?'<i class="fas fa-check-circle"></i> Cached':'<i class="fas fa-wifi"></i> Live';
+  if(fetchedAt){
+    const badge=document.getElementById('grbCacheBadge');
+    badge.style.display='inline-flex';
+    badge.className=`gcache-badge ${Math.floor((Date.now()-fetchedAt)/86400000)<7?'fresh':'stale'}`;
+    badge.textContent=cacheAgeLabel(fetchedAt);
   }
 }
 
-// ===== REPORT =====
-function openReportModal(bizId) { state.currentReportBizId = bizId; document.getElementById('reportModal').classList.add('open'); }
-document.getElementById('submitReport').addEventListener('click', async () => {
-  const reason = document.getElementById('reportReason').value, details = document.getElementById('reportDetails').value;
-  try {
-    await apiCall('/reports', { method: 'POST', body: { business_id: state.currentReportBizId, reason, details } });
-    showToast('Report submitted. Admin will review it.', 'success');
+/* ================================================================
+   REPORT
+================================================================ */
+function openReportModal(bizId){state.currentReportBizId=bizId;document.getElementById('reportModal').classList.add('open');}
+document.getElementById('submitReport').addEventListener('click',async()=>{
+  const reason=document.getElementById('reportReason').value,details=document.getElementById('reportDetails').value;
+  try{
+    await submitReportAPI(state.currentReportBizId,reason,details);
+    showToast('Report submitted. Admin will review it.','success');
     document.getElementById('reportModal').classList.remove('open');
-    document.getElementById('reportDetails').value = '';
-  } catch (e) { showToast('Failed to submit report', 'error'); }
+    document.getElementById('reportDetails').value='';
+  }catch{showToast('Failed to submit report','error');}
 });
 
-// ===== COMPARE =====
-function updateCompareBar() {
-  const bar = document.getElementById('compareBar'), c = document.getElementById('compareItems');
-  if (!state.compareList.length) { bar.classList.remove('show'); return; }
-  bar.classList.add('show');
-  c.innerHTML = state.compareList.map(x => `<div class="compare-chip">${escHtml(x.name)}<span class="remove" data-id="${x.id}" style="margin-left:6px;font-size:1rem;cursor:pointer;color:var(--text3)">×</span></div>`).join('');
-  document.querySelectorAll('#compareItems .remove').forEach(btn => btn.addEventListener('click', () => {
-    state.compareList = state.compareList.filter(c => c.id !== parseInt(btn.dataset.id));
-    updateCompareBar();
-    document.querySelectorAll(`.compare-check[data-id="${btn.dataset.id}"]`).forEach(cb => cb.checked = false);
-  }));
+/* ================================================================
+   ADMIN
+================================================================ */
+async function loadPendingBusinesses(){state.pendingBusinesses=await getPendingBusinesses();renderPendingList();}
+function renderPendingList(){
+  const c=document.getElementById('pendingList');
+  if(!state.pendingBusinesses.length){c.innerHTML='<em style="color:var(--text3);font-size:0.84rem">No pending submissions.</em>';return;}
+  c.innerHTML=state.pendingBusinesses.map(b=>`
+    <div class="pending-item">
+      <div class="pending-info">
+        <div class="pending-name">${escHtml(b.name)} <span style="font-size:0.7rem;color:var(--text3)">(${b.type})</span></div>
+        <div class="pending-meta"><i class="fas fa-map-marker-alt"></i> ${escHtml(b.city)}${b.state?`, ${escHtml(b.state)}`:''} · ${timeAgo(b.created_at)}</div>
+        <div style="font-size:0.7rem;color:var(--accent);margin-top:4px">${escHtml(b.email)}</div>
+      </div>
+      <div class="pending-actions">
+        <button class="approve-btn" data-id="${b.id}"><i class="fas fa-check"></i> Approve (+15 Credits)</button>
+        <button class="reject-btn" data-id="${b.id}"><i class="fas fa-times"></i> Reject</button>
+      </div>
+    </div>`).join('');
+  document.querySelectorAll('.approve-btn').forEach(btn=>btn.addEventListener('click',()=>approveBusiness(btn.dataset.id)));
+  document.querySelectorAll('.reject-btn').forEach(btn=>btn.addEventListener('click',()=>rejectBusiness(btn.dataset.id)));
 }
-document.getElementById('doCompare').addEventListener('click', () => {
-  if (state.compareList.length < 2) { showToast('Select at least 2 businesses', 'info'); return; }
-  const selected = state.compareList.map(c => state.allBusinesses.find(b => b.id == c.id)).filter(Boolean);
-  const cache = loadGoogleCache();
-  const fields = [
-    { label: 'Name', fn: b => b.name }, { label: 'Type', fn: b => (b.type || '').replace('_', ' ') },
-    { label: 'Category', fn: b => b.category || '—' }, { label: 'City', fn: b => b.city || '—' },
-    { label: 'Phone', fn: b => b.phone || '—' }, { label: 'Email', fn: b => b.email || '—' },
-    { label: 'Google Rating', fn: b => { const g = b.place_id && cache[b.place_id]; return g?.rating ? `${g.rating.toFixed(1)} ★` : 'N/A'; } },
-    { label: 'Open Now', fn: b => isOpenNow(b.hours) === true ? '✅ Yes' : '❌ No' },
-    { label: 'Verified', fn: b => b.verified ? '✅' : '❌' },
-  ];
-  let t = `<table class="compare-table"><thead><tr><th>Attribute</th>`;
-  selected.forEach(b => { t += `<th>${escHtml(b.name)}</th>`; });
-  t += '</tr></thead><tbody>';
-  fields.forEach(f => { t += `<tr><td style="color:var(--text2)">${f.label}</td>`; selected.forEach(b => { t += `<td>${escHtml(f.fn(b))}</td>`; }); t += '</tr>'; });
-  t += '</tbody></table>';
-  document.getElementById('compareTable').innerHTML = t;
-  document.getElementById('compareModal').classList.add('open');
+async function approveBusiness(id){
+  if(!confirm('Approve this business? User will receive 15 credits.'))return;
+  try{await approveBusinessAPI(id);showToast('Approved! User awarded 15 credits.','success');await loadPendingBusinesses();await loadBusinesses();}
+  catch(e){showToast('Approval failed: '+e.message,'error');}
+}
+async function rejectBusiness(id){
+  const reason=prompt('Rejection reason (optional):');
+  if(!confirm('Reject this submission?'))return;
+  try{await rejectBusinessAPI(id,reason);showToast('Rejected','info');await loadPendingBusinesses();}
+  catch(e){showToast('Failed: '+e.message,'error');}
+}
+document.getElementById('exportDataBtn').addEventListener('click',()=>{
+  const rows=[['Name','Type','Category','City','District','State','Phone','Email','Verified','Featured','Views','Google Rating','Google Reviews']];
+  state.allBusinesses.forEach(b=>{
+    const g=b.place_id&&googleRatingsCache[b.place_id];
+    rows.push([b.name,b.type,b.category,b.city,b.district,b.state,b.phone,b.email,b.verified?'Yes':'No',b.featured?'Yes':'No',b.views||0,g?.rating||'',g?.user_ratings_total||'']);
+  });
+  const csv=rows.map(r=>r.map(v=>`"${String(v||'').replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='sarveik_businesses.csv';a.click();
+  showToast('CSV exported!','success');
 });
-document.getElementById('clearCompare').addEventListener('click', () => { state.compareList = []; updateCompareBar(); document.querySelectorAll('.compare-check').forEach(cb => cb.checked = false); });
 
-// ===== FAVORITES =====
-async function showFavorites() {
-  const favs = await getFavorites();
-  const businesses = state.allBusinesses.filter(b => favs.includes(b.id));
-  const grid = document.getElementById('favoritesGrid');
-  if (!businesses.length) {
-    grid.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-heart-broken"></i><h3>No saved businesses yet</h3><p>Click the heart on any card to save it here.</p></div>';
-  } else {
-    grid.innerHTML = businesses.map((biz, i) => {
-      const emoji = EMOJIS[biz.type] || '📦';
-      const grad = BANNER_GRADS[i % BANNER_GRADS.length];
-      const imgUrl = getBizImageUrl(biz);
+/* ================================================================
+   ADD BUSINESS
+================================================================ */
+document.getElementById('submitBizBtn').addEventListener('click',async()=>{
+  const fields={name:'f_name',type:'f_type',desc:'f_desc',address:'f_address',city:'f_city',phone:'f_phone',email:'f_email'};
+  const values={};
+  for(const[k,id]of Object.entries(fields)){values[k]=document.getElementById(id).value.trim();}
+  if(Object.values(values).some(v=>!v)){showToast('Please fill all required fields (*)','error');return;}
+  const hours={};
+  DAYS.forEach(day=>{
+    const closed=document.getElementById(`h_${day}_closed`)?.checked;
+    hours[day]=closed?'Closed':`${document.getElementById(`h_${day}_start`)?.value}-${document.getElementById(`h_${day}_end`)?.value}`;
+  });
+  const amenities=Array.from(document.querySelectorAll('.amenity-opt.selected')).map(el=>el.dataset.id);
+  const lat=parseFloat(document.getElementById('f_lat').value),lng=parseFloat(document.getElementById('f_lng').value);
+
+  const imageUrlsRaw=document.getElementById('f_image_urls').value.trim();
+  const imageUrls=imageUrlsRaw?imageUrlsRaw.split(',').map(s=>s.trim()).filter(Boolean):[];
+
+  const bizData={
+    name:values.name,type:values.type,category:document.getElementById('f_category').value,
+    description:values.desc,address:values.address,city:values.city,
+    state:document.getElementById('f_state').value.trim(),district:document.getElementById('f_district').value.trim(),
+    phone:values.phone,email:values.email,
+    whatsapp:document.getElementById('f_whatsapp').value.trim(),website:document.getElementById('f_website').value.trim(),
+    place_id:document.getElementById('f_place_id').value.trim(),maps_link:document.getElementById('f_maps').value.trim(),
+    instagram:document.getElementById('f_instagram').value.trim(),facebook:document.getElementById('f_facebook').value.trim(),
+    image_urls:imageUrls,hours,amenities,lat:isNaN(lat)?null:lat,lng:isNaN(lng)?null:lng
+  };
+  try{
+    await submitBusiness(bizData);
+    showToast('✅ Submitted! You will earn 15 credits upon approval. (Open the Admin panel — click the logo 5×  — to approve it in this demo.)','success');
+    document.getElementById('addModal').classList.remove('open');
+    ['f_name','f_type','f_desc','f_address','f_city','f_phone','f_email','f_whatsapp','f_website','f_place_id','f_maps','f_instagram','f_facebook','f_state','f_district','f_lat','f_lng','f_image_urls'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+    document.getElementById('f_24h').checked=false;
+    buildHoursForm();
+    document.querySelectorAll('.amenity-opt.selected').forEach(el=>el.classList.remove('selected'));
+    document.getElementById('previewStrip').innerHTML='';
+  }catch(e){showToast('Submission failed: '+e.message,'error');}
+});
+
+/* ================================================================
+   FAVORITES
+================================================================ */
+async function showFavorites(){
+  const favs=await getFavorites();
+  const businesses=DB.businesses.filter(b=>favs.includes(b.id));
+  const grid=document.getElementById('favoritesGrid');
+  if(!businesses.length){
+    grid.innerHTML='<div class="empty-state" style="grid-column:1/-1"><i class="fas fa-heart-broken"></i><h3>No saved businesses yet</h3><p>Click the heart on any card to save it here.</p></div>';
+  }else{
+    grid.innerHTML=businesses.map((biz,i)=>{
+      const emoji=EMOJIS[biz.type]||'📦';
+      const g=(biz.place_id&&googleRatingsCache[biz.place_id])||null;
+      const mapsUrl=buildGoogleMapsUrl(biz.address,biz.city,biz.state,biz.lat,biz.lng);
+      const grad=BANNER_GRADS[i%BANNER_GRADS.length];
+      const imgUrl=getBizImageUrl(biz);
       return `<div class="biz-card" data-id="${biz.id}">
         <div class="biz-card-banner" style="background:linear-gradient(${grad})">
-          ${imgUrl ? `<img class="biz-card-banner-img" src="${escHtml(imgUrl)}" alt="${escHtml(biz.name)}" loading="lazy" onerror="this.style.display='none'">` : ''}
+          ${imgUrl?`<img class="biz-card-banner-img" src="${escHtml(imgUrl)}" alt="${escHtml(biz.name)}" loading="lazy" onerror="this.style.display='none'">`:''}
           <div class="biz-card-banner-overlay"></div><div class="biz-logo">${emoji}</div>
         </div>
         <div class="biz-card-body">
           <div class="biz-name">${escHtml(biz.name)}</div>
-          <div class="biz-type-tag">${emoji} ${(biz.type || '').replace('_', ' ')} · ${biz.city || ''}</div>
-          <p class="biz-desc">${escHtml(biz.description || biz.desc || '')}</p>
+          <div class="biz-type-tag">${emoji} ${(biz.type||'').replace('_',' ')} · ${biz.city||''}</div>
+          <p class="biz-desc">${escHtml(biz.description||biz.desc||'')}</p>
           <div class="biz-card-footer">
-            <div class="card-actions"><button class="btn-details details-btn" data-id="${biz.id}">Details</button></div>
+            ${g?.rating?`<div class="google-rating-pill">${googleSvgHtml()}<span class="g-stars">${renderGoogleStars(g.rating)}</span><span class="g-score">${g.rating.toFixed(1)}</span></div>`:'<span style="font-size:0.7rem;color:var(--text3)">No rating</span>'}
+            <div class="card-actions"><a href="${mapsUrl}" target="_blank" rel="noopener" class="btn-maps-pill" onclick="event.stopPropagation()">📍 Maps</a><button class="btn-details details-btn" data-id="${biz.id}">Details</button></div>
           </div>
         </div>
       </div>`;
     }).join('');
-    grid.querySelectorAll('.details-btn').forEach(btn => btn.addEventListener('click', () => openDetailModal(btn.dataset.id)));
-    grid.querySelectorAll('.biz-card').forEach(card => card.addEventListener('click', () => openDetailModal(card.dataset.id)));
+    grid.querySelectorAll('.details-btn').forEach(btn=>btn.addEventListener('click',()=>openDetailModal(btn.dataset.id)));
+    grid.querySelectorAll('.biz-card').forEach(card=>card.addEventListener('click',()=>openDetailModal(card.dataset.id)));
   }
-  document.getElementById('mainSection').style.display = 'none';
-  document.getElementById('favoritesSection').style.display = '';
+  document.getElementById('mainSection').style.display='none';
+  document.getElementById('favoritesSection').style.display='';
 }
 
-// ===== BUILD UI =====
-function buildCategoryChips() {
-  const c = document.getElementById('filterChips');
-  c.innerHTML = CATEGORIES.map(x => `<button class="chip ${state.filterCategory === x.id ? 'active' : ''}" data-filter="${x.id}">${x.icon} ${x.label}</button>`).join('');
-  c.querySelectorAll('.chip').forEach(btn => btn.addEventListener('click', () => { state.filterCategory = btn.dataset.filter; state.page = 1; buildCategoryChips(); loadBusinesses(); }));
+/* ================================================================
+   COMPARE
+================================================================ */
+function updateCompareBar(){
+  const bar=document.getElementById('compareBar'),c=document.getElementById('compareItems');
+  if(!state.compareList.length){bar.classList.remove('show');return;}
+  bar.classList.add('show');
+  c.innerHTML=state.compareList.map(x=>`<div class="compare-chip">${escHtml(x.name)}<span class="remove" data-id="${x.id}" style="margin-left:6px;font-size:1rem;cursor:pointer;color:var(--text3)">×</span></div>`).join('');
+  document.querySelectorAll('#compareItems .remove').forEach(btn=>btn.addEventListener('click',()=>{
+    state.compareList=state.compareList.filter(c=>c.id!==parseInt(btn.dataset.id));updateCompareBar();
+    document.querySelectorAll(`.compare-check[data-id="${btn.dataset.id}"]`).forEach(cb=>cb.checked=false);
+  }));
+}
+document.getElementById('doCompare').addEventListener('click',()=>{
+  if(state.compareList.length<2){showToast('Select at least 2 businesses','info');return;}
+  const selected=state.compareList.map(c=>state.allBusinesses.find(b=>b.id==c.id)).filter(Boolean);
+  const fields=[
+    {label:'Name',fn:b=>b.name},{label:'Type',fn:b=>(b.type||'').replace('_',' ')},
+    {label:'Category',fn:b=>b.category||'—'},{label:'City',fn:b=>b.city||'—'},
+    {label:'District',fn:b=>b.district||'—'},{label:'State',fn:b=>b.state||'—'},
+    {label:'Phone',fn:b=>b.phone||'—'},{label:'Email',fn:b=>b.email||'—'},
+    {label:'Google Rating',fn:b=>{const g=b.place_id&&googleRatingsCache[b.place_id];return g?.rating?`${g.rating.toFixed(1)} ★ (${(g.user_ratings_total||0).toLocaleString()})`:'N/A'}},
+    {label:'Open Now',fn:b=>isOpenNow(b.hours)===true?'✅ Yes':'❌ No'},
+    {label:'Verified',fn:b=>b.verified?'✅':'❌'},{label:'Featured',fn:b=>b.featured?'⭐':'—'},
+  ];
+  let t=`<table class="compare-table"><thead><tr><th>Attribute</th>`;
+  selected.forEach(b=>{t+=`<th>${escHtml(b.name)}</th>`;});
+  t+='</tr></thead><tbody>';
+  fields.forEach(f=>{t+=`<tr><td style="color:var(--text2)">${f.label}</td>`;selected.forEach(b=>{t+=`<td>${escHtml(f.fn(b))}</td>`;});t+='</tr>';});
+  t+='</tbody></table>';
+  document.getElementById('compareTable').innerHTML=t;
+  document.getElementById('compareModal').classList.add('open');
+});
+document.getElementById('clearCompare').addEventListener('click',()=>{state.compareList=[];updateCompareBar();document.querySelectorAll('.compare-check').forEach(cb=>cb.checked=false);});
+
+/* ================================================================
+   BUILD UI
+================================================================ */
+function buildCategoryChips(){
+  const c=document.getElementById('filterChips');
+  c.innerHTML=CATEGORIES.map(x=>`<button class="chip ${state.filterCategory===x.id?'active':''}" data-filter="${x.id}">${x.icon} ${x.label}</button>`).join('');
+  c.querySelectorAll('.chip').forEach(btn=>btn.addEventListener('click',()=>{state.filterCategory=btn.dataset.filter;state.page=1;buildCategoryChips();loadBusinesses();}));
 }
 
-function buildHoursForm() {
-  document.getElementById('hoursFormGrid').innerHTML = DAYS.map(day => `
+function buildHoursForm(){
+  document.getElementById('hoursFormGrid').innerHTML=DAYS.map(day=>`
     <div class="hours-form-item">
       <span class="day-name">${day}</span>
       <input type="time" id="h_${day}_start" value="09:00">
@@ -1708,296 +2277,160 @@ function buildHoursForm() {
       <label for="h_${day}_closed" style="font-size:0.68rem;color:var(--text3)">Closed</label>
     </div>`).join('');
 }
-window.toggleDayClosed = day => {
-  const c = document.getElementById(`h_${day}_closed`).checked;
-  document.getElementById(`h_${day}_start`).disabled = c;
-  document.getElementById(`h_${day}_end`).disabled = c;
+window.toggleDayClosed=day=>{
+  const c=document.getElementById(`h_${day}_closed`).checked;
+  document.getElementById(`h_${day}_start`).disabled=c;
+  document.getElementById(`h_${day}_end`).disabled=c;
 };
 
-function buildAmenitiesSelector() {
-  const c = document.getElementById('amenitiesSelector');
-  c.innerHTML = AMENITY_LIST.map(a => `<div class="amenity-opt" data-id="${a.id}"><i class="fas ${a.icon}"></i> ${a.label}</div>`).join('');
-  c.querySelectorAll('.amenity-opt').forEach(el => el.addEventListener('click', () => el.classList.toggle('selected')));
+function buildAmenitiesSelector(){
+  const c=document.getElementById('amenitiesSelector');
+  c.innerHTML=AMENITY_LIST.map(a=>`<div class="amenity-opt" data-id="${a.id}"><i class="fas ${a.icon}"></i> ${a.label}</div>`).join('');
+  c.querySelectorAll('.amenity-opt').forEach(el=>el.addEventListener('click',()=>el.classList.toggle('selected')));
 }
 
-// ===== THEME =====
-function initTheme() {
-  const saved = localStorage.getItem('sarveik_theme');
-  if (saved === 'light') { document.body.classList.add('light-mode'); updateThemeUI(true); }
+document.getElementById('f_images').addEventListener('change',function(){
+  const s=document.getElementById('previewStrip');s.innerHTML='';
+  Array.from(this.files).slice(0,6).forEach(f=>{const r=new FileReader();r.onload=e=>{const img=document.createElement('img');img.className='img-thumb';img.src=e.target.result;s.appendChild(img);};r.readAsDataURL(f);});
+});
+document.getElementById('f_24h').addEventListener('change',e=>{
+  DAYS.forEach(day=>{if(e.target.checked){document.getElementById(`h_${day}_start`).value='00:00';document.getElementById(`h_${day}_end`).value='23:59';document.getElementById(`h_${day}_closed`).checked=false;toggleDayClosed(day);}});
+});
+
+/* ================================================================
+   THEME (in-memory only — no browser storage)
+================================================================ */
+let currentTheme='dark';
+function updateThemeUI(isLight){
+  const btn=document.getElementById('themeToggle');
+  btn.innerHTML=isLight?'<i class="fas fa-sun"></i>':'<i class="fas fa-moon"></i>';
+  btn.title=isLight?'Switch to dark mode':'Switch to light mode';
+  const dt=document.getElementById('drawerThemeToggle');
+  if(dt)dt.innerHTML=`<i class="fas ${isLight?'fa-sun':'fa-moon'}"></i> ${isLight?'Light Mode':'Dark Mode'}`;
 }
-function updateThemeUI(isLight) {
-  const btn = document.getElementById('themeToggle');
-  btn.innerHTML = isLight ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
-  btn.title = isLight ? 'Switch to dark mode' : 'Switch to light mode';
-}
-function toggleTheme() {
-  const isLight = document.body.classList.toggle('light-mode');
-  localStorage.setItem('sarveik_theme', isLight ? 'light' : 'dark');
+function toggleTheme(){
+  const isLight=document.body.classList.toggle('light-mode');
+  currentTheme=isLight?'light':'dark';
   updateThemeUI(isLight);
 }
-document.getElementById('themeToggle').addEventListener('click', toggleTheme);
-document.getElementById('drawerThemeToggle').addEventListener('click', () => { toggleTheme(); closeDrawer(); });
+document.getElementById('themeToggle').addEventListener('click',toggleTheme);
+document.getElementById('drawerThemeToggle').addEventListener('click',()=>{toggleTheme();closeDrawer();});
 
-// ===== MOBILE DRAWER =====
-const hamburger = document.getElementById('hamburgerBtn'), drawer = document.getElementById('mobileDrawer'), overlay = document.getElementById('drawerOverlay');
-function openDrawer() { drawer.classList.add('open'); overlay.classList.add('active'); document.body.style.overflow = 'hidden'; hamburger.classList.add('open'); }
-function closeDrawer() { drawer.classList.remove('open'); overlay.classList.remove('active'); document.body.style.overflow = ''; hamburger.classList.remove('open'); }
-hamburger.addEventListener('click', openDrawer);
-document.getElementById('drawerCloseBtn').addEventListener('click', closeDrawer);
-overlay.addEventListener('click', closeDrawer);
-document.getElementById('drawerFavBtn').addEventListener('click', () => { showFavorites(); closeDrawer(); });
-document.getElementById('drawerAddBtn').addEventListener('click', () => { document.getElementById('addModal').classList.add('open'); closeDrawer(); });
-document.getElementById('drawerSponsorBtn').addEventListener('click', () => { showSponsorModal('Basic Spotlight', 499); closeDrawer(); });
-document.getElementById('drawerAffiliateBtn').addEventListener('click', () => { document.getElementById('affiliateModal').classList.add('open'); loadAffiliateLinks(); closeDrawer(); });
-document.getElementById('drawerSponsoredViewBtn').addEventListener('click', () => { loadSponsoredListings(); closeDrawer(); });
+/* ================================================================
+   MOBILE DRAWER
+================================================================ */
+const hamburger=document.getElementById('hamburgerBtn'),drawer=document.getElementById('mobileDrawer'),overlay=document.getElementById('drawerOverlay');
+function openDrawer(){drawer.classList.add('open');overlay.classList.add('active');document.body.style.overflow='hidden';hamburger.classList.add('open');}
+function closeDrawer(){drawer.classList.remove('open');overlay.classList.remove('active');document.body.style.overflow='';hamburger.classList.remove('open');}
+hamburger.addEventListener('click',openDrawer);
+document.getElementById('drawerCloseBtn').addEventListener('click',closeDrawer);
+overlay.addEventListener('click',closeDrawer);
+document.getElementById('drawerFavBtn').addEventListener('click',()=>{showFavorites();closeDrawer();});
+document.getElementById('drawerAddBtn').addEventListener('click',()=>{document.getElementById('addModal').classList.add('open');closeDrawer();});
+document.getElementById('drawerSponsorBtn').addEventListener('click',()=>{showSponsorModal('Basic Spotlight',499);closeDrawer();});
+document.getElementById('drawerAffiliateBtn').addEventListener('click',()=>{document.getElementById('affiliateModal').classList.add('open');loadAffiliateLinks();closeDrawer();});
+document.getElementById('drawerSponsoredViewBtn').addEventListener('click',()=>{loadSponsoredListings();closeDrawer();});
 
-// ===== SPONSORED LISTINGS =====
-async function loadSponsoredListings() {
-  const section = document.getElementById('sponsoredListingsSection');
-  const grid = document.getElementById('sponsoredGrid');
-  grid.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text3)"><i class="fas fa-spinner fa-spin"></i> Loading sponsored listings…</div>';
-  section.style.display = 'block';
-  try {
-    const res = await fetch('/api/sponsored/list?limit=6');
-    if (!res.ok) throw new Error();
-    const sponsored = await res.json();
-    if (!sponsored.length) {
-      grid.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text3)"><i class="fas fa-star"></i> No sponsored listings yet.</div>';
-      return;
-    }
-    const cache = loadGoogleCache();
-    grid.innerHTML = sponsored.map((s, i) => {
-      const biz = state.allBusinesses.find(b => b.id == s.business_id) || s;
-      const emoji = EMOJIS[biz.type] || '📦';
-      const grad = BANNER_GRADS[i % BANNER_GRADS.length];
-      const mapsUrl = buildGoogleMapsUrl(biz.address, biz.city, biz.state, biz.lat, biz.lng);
-      const g = (biz.place_id && cache[biz.place_id]) || (biz.google_rating ? { rating: biz.google_rating, user_ratings_total: biz.google_review_count || 0 } : null);
-      const imgUrl = getBizImageUrl(biz);
-      return `
-        <div class="biz-card sponsored-card" data-id="${biz.id}">
-          <div class="biz-card-banner" style="background:linear-gradient(${grad})">
-            ${imgUrl ? `<img class="biz-card-banner-img" src="${escHtml(imgUrl)}" alt="${escHtml(biz.name)}" loading="lazy" onerror="this.style.display='none'">` : ''}
-            <div class="biz-card-banner-overlay"></div>
-            <div class="biz-badges"><span class="badge badge-sponsored">⭐ SPONSORED</span>${biz.verified ? '<span class="badge badge-verified">✓</span>' : ''}</div>
-            <div class="biz-logo">${emoji}</div>
-          </div>
-          <div class="biz-card-body">
-            <div class="biz-name">${escHtml(biz.name)}</div>
-            <div class="biz-type-tag">${emoji} ${(biz.type || '').replace('_', ' ')} · ${escHtml(biz.city || '')}</div>
-            ${s.custom_message ? `<div style="font-size:0.76rem;background:rgba(240,200,74,0.1);border:1px solid rgba(240,200,74,0.2);border-radius:7px;padding:6px 10px;margin-bottom:10px;color:var(--gold)">${escHtml(s.custom_message)}</div>` : ''}
-            <p class="biz-desc">${escHtml((biz.description || biz.desc || '').substring(0, 90))}…</p>
-            <div class="biz-card-footer">
-              ${g?.rating ? `<div class="google-rating-pill">${googleSvgHtml()}<span class="g-score">${g.rating.toFixed(1)}</span><span class="g-stars">${renderGoogleStars(g.rating)}</span></div>` : '<span style="font-size:0.72rem;color:var(--text3)">No rating yet</span>'}
-              <div class="card-actions"><a href="${mapsUrl}" target="_blank" rel="noopener" class="btn-maps-pill" onclick="event.stopPropagation()">📍 Maps</a><button class="btn-details details-btn" data-id="${biz.id}">Details</button></div>
-            </div>
-          </div>
-        </div>`;
-    }).join('');
-    grid.querySelectorAll('.details-btn').forEach(btn => btn.addEventListener('click', e => { e.stopPropagation(); openDetailModal(btn.dataset.id); }));
-    grid.querySelectorAll('.biz-card').forEach(card => card.addEventListener('click', () => openDetailModal(card.dataset.id)));
-  } catch (e) {
-    grid.innerHTML = '<div style="padding:24px;text-align:center;color:var(--text3)">No sponsored listings available right now.</div>';
-  }
-}
-document.getElementById('viewSponsoredBtn').addEventListener('click', e => { e.stopPropagation(); loadSponsoredListings(); });
-document.getElementById('hideSponsoredBtn').addEventListener('click', () => { document.getElementById('sponsoredListingsSection').style.display = 'none'; });
-
-// ===== ADD BUSINESS =====
-document.getElementById('submitBizBtn').addEventListener('click', async () => {
-  const fields = { name: 'f_name', type: 'f_type', desc: 'f_desc', address: 'f_address', city: 'f_city', phone: 'f_phone', email: 'f_email' };
-  const values = {};
-  for (const [k, id] of Object.entries(fields)) { values[k] = document.getElementById(id).value.trim(); }
-  if (Object.values(values).some(v => !v)) { showToast('Please fill all required fields (*)', 'error'); return; }
-  const hours = {};
-  DAYS.forEach(day => {
-    const closed = document.getElementById(`h_${day}_closed`)?.checked;
-    hours[day] = closed ? 'Closed' : `${document.getElementById(`h_${day}_start`)?.value}-${document.getElementById(`h_${day}_end`)?.value}`;
-  });
-  const amenities = Array.from(document.querySelectorAll('.amenity-opt.selected')).map(el => el.dataset.id);
-  const lat = parseFloat(document.getElementById('f_lat').value), lng = parseFloat(document.getElementById('f_lng').value);
-  const imageUrlsRaw = document.getElementById('f_image_urls').value.trim();
-  const imageUrls = imageUrlsRaw ? imageUrlsRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
-
-  const bizData = {
-    name: values.name, type: values.type, category: document.getElementById('f_category').value,
-    description: values.desc, address: values.address, city: values.city,
-    state: document.getElementById('f_state').value.trim(), district: document.getElementById('f_district').value.trim(),
-    phone: values.phone, email: values.email,
-    whatsapp: document.getElementById('f_whatsapp').value.trim(), website: document.getElementById('f_website').value.trim(),
-    place_id: document.getElementById('f_place_id').value.trim(), maps_link: document.getElementById('f_maps').value.trim(),
-    instagram: document.getElementById('f_instagram').value.trim(), facebook: document.getElementById('f_facebook').value.trim(),
-    image_urls: imageUrls, hours, amenities, lat: isNaN(lat) ? null : lat, lng: isNaN(lng) ? null : lng
-  };
-  try {
-    await apiCall('/businesses/submit', { method: 'POST', body: bizData });
-    showToast('✅ Submitted! You will earn 15 credits upon approval.', 'success');
-    document.getElementById('addModal').classList.remove('open');
-    ['f_name', 'f_type', 'f_desc', 'f_address', 'f_city', 'f_phone', 'f_email', 'f_whatsapp', 'f_website', 'f_place_id', 'f_maps', 'f_instagram', 'f_facebook', 'f_state', 'f_district', 'f_lat', 'f_lng', 'f_image_urls'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
-    document.getElementById('f_24h').checked = false;
-    buildHoursForm();
-    document.querySelectorAll('.amenity-opt.selected').forEach(el => el.classList.remove('selected'));
-    document.getElementById('previewStrip').innerHTML = '';
-    await loadBusinesses();
-  } catch (e) { showToast('Submission failed: ' + e.message, 'error'); }
-});
-
-// ===== EVENTS =====
-function handleSearch(val) { state.search = val; state.page = 1; loadBusinesses(); }
+/* ================================================================
+   EVENTS
+================================================================ */
+function handleSearch(val){state.search=val;state.page=1;loadBusinesses();}
 let searchDebounce;
-document.getElementById('searchInput').addEventListener('input', e => { clearTimeout(searchDebounce); searchDebounce = setTimeout(() => handleSearch(e.target.value), 320); });
-document.getElementById('mobileSearchInput').addEventListener('input', e => { clearTimeout(searchDebounce); searchDebounce = setTimeout(() => handleSearch(e.target.value), 320); });
-document.getElementById('sortSelect').addEventListener('change', e => { state.sort = e.target.value; state.page = 1; loadBusinesses(); });
-document.getElementById('stateFilter').addEventListener('change', e => { state.stateFilter = e.target.value; state.page = 1; loadBusinesses(); });
-document.getElementById('districtFilter').addEventListener('change', e => { state.districtFilter = e.target.value; state.page = 1; loadBusinesses(); });
-document.getElementById('openNowFilter').addEventListener('change', e => { state.openNow = e.target.checked; loadBusinesses(); });
-document.getElementById('verifiedFilter').addEventListener('change', e => { state.verifiedOnly = e.target.checked; loadBusinesses(); });
-document.getElementById('clearFiltersBtn').addEventListener('click', () => {
-  state.filterCategory = 'all'; state.search = ''; state.stateFilter = 'all'; state.districtFilter = 'all';
-  state.openNow = false; state.verifiedOnly = false; state.sort = 'newest'; state.page = 1;
-  document.getElementById('searchInput').value = ''; document.getElementById('mobileSearchInput').value = '';
-  document.getElementById('sortSelect').value = 'newest'; document.getElementById('stateFilter').value = 'all';
-  document.getElementById('districtFilter').innerHTML = '<option value="all">All Districts</option>';
-  document.getElementById('openNowFilter').checked = false; document.getElementById('verifiedFilter').checked = false;
-  buildCategoryChips(); loadBusinesses();
+document.getElementById('searchInput').addEventListener('input',e=>{clearTimeout(searchDebounce);searchDebounce=setTimeout(()=>handleSearch(e.target.value),320);});
+document.getElementById('mobileSearchInput').addEventListener('input',e=>{clearTimeout(searchDebounce);searchDebounce=setTimeout(()=>handleSearch(e.target.value),320);});
+document.getElementById('sortSelect').addEventListener('change',e=>{state.sort=e.target.value;state.page=1;loadBusinesses();});
+document.getElementById('stateFilter').addEventListener('change',async e=>{state.stateFilter=e.target.value;state.districtFilter='all';await loadDistrictsFilter(state.stateFilter);state.page=1;loadBusinesses();});
+document.getElementById('districtFilter').addEventListener('change',e=>{state.districtFilter=e.target.value;state.page=1;loadBusinesses();});
+document.getElementById('openNowFilter').addEventListener('change',e=>{state.openNow=e.target.checked;loadBusinesses();});
+document.getElementById('verifiedFilter').addEventListener('change',e=>{state.verifiedOnly=e.target.checked;loadBusinesses();});
+document.getElementById('clearFiltersBtn').addEventListener('click',()=>{
+  state.filterCategory='all';state.search='';state.stateFilter='all';state.districtFilter='all';
+  state.openNow=false;state.verifiedOnly=false;state.sort='newest';state.page=1;
+  document.getElementById('searchInput').value='';document.getElementById('mobileSearchInput').value='';
+  document.getElementById('sortSelect').value='newest';document.getElementById('stateFilter').value='all';
+  document.getElementById('districtFilter').innerHTML='<option value="all">All Districts</option>';
+  document.getElementById('openNowFilter').checked=false;document.getElementById('verifiedFilter').checked=false;
+  buildCategoryChips();loadBusinesses();
 });
-document.getElementById('gridViewBtn').addEventListener('click', () => { state.viewMode = 'grid'; document.getElementById('gridViewBtn').classList.add('active'); document.getElementById('listViewBtn').classList.remove('active'); renderBusinesses(); });
-document.getElementById('listViewBtn').addEventListener('click', () => { state.viewMode = 'list'; document.getElementById('listViewBtn').classList.add('active'); document.getElementById('gridViewBtn').classList.remove('active'); renderBusinesses(); });
-document.getElementById('showFavBtn').addEventListener('click', showFavorites);
-document.getElementById('closeFavBtn').addEventListener('click', () => { document.getElementById('favoritesSection').style.display = 'none'; document.getElementById('mainSection').style.display = ''; loadBusinesses(); });
-document.getElementById('openAddModal').addEventListener('click', () => document.getElementById('addModal').classList.add('open'));
-document.getElementById('heroAddBtn').addEventListener('click', () => document.getElementById('addModal').classList.add('open'));
-document.getElementById('openSponsorModalBtn').addEventListener('click', () => showSponsorModal('Basic Spotlight', 499));
-document.getElementById('heroSponsorBtn').addEventListener('click', () => showSponsorModal('Basic Spotlight', 499));
-document.getElementById('affiliateBtn').addEventListener('click', () => { document.getElementById('affiliateModal').classList.add('open'); loadAffiliateLinks(); });
-['closeAddModal', 'cancelAddBtn'].forEach(id => document.getElementById(id).addEventListener('click', () => document.getElementById('addModal').classList.remove('open')));
-document.getElementById('closeDetailModal').addEventListener('click', () => document.getElementById('detailModal').classList.remove('open'));
-document.getElementById('closeReportModal').addEventListener('click', () => document.getElementById('reportModal').classList.remove('open'));
-document.getElementById('closeCompareModal').addEventListener('click', () => document.getElementById('compareModal').classList.remove('open'));
-document.getElementById('closeSponsorModal').addEventListener('click', () => document.getElementById('sponsorModal').classList.remove('open'));
-document.getElementById('closeAffiliateModal').addEventListener('click', () => document.getElementById('affiliateModal').classList.remove('open'));
-document.getElementById('closeAdminBtn').addEventListener('click', () => document.getElementById('adminPanel').classList.remove('visible'));
+document.getElementById('gridViewBtn').addEventListener('click',()=>{state.viewMode='grid';document.getElementById('gridViewBtn').classList.add('active');document.getElementById('listViewBtn').classList.remove('active');renderBusinesses();});
+document.getElementById('listViewBtn').addEventListener('click',()=>{state.viewMode='list';document.getElementById('listViewBtn').classList.add('active');document.getElementById('gridViewBtn').classList.remove('active');renderBusinesses();});
+document.getElementById('showFavBtn').addEventListener('click',showFavorites);
+document.getElementById('closeFavBtn').addEventListener('click',()=>{document.getElementById('favoritesSection').style.display='none';document.getElementById('mainSection').style.display='';loadBusinesses();});
+document.getElementById('openAddModal').addEventListener('click',()=>document.getElementById('addModal').classList.add('open'));
+document.getElementById('heroAddBtn').addEventListener('click',()=>document.getElementById('addModal').classList.add('open'));
+document.getElementById('openSponsorModalBtn').addEventListener('click',()=>showSponsorModal('Basic Spotlight',499));
+document.getElementById('heroSponsorBtn').addEventListener('click',()=>showSponsorModal('Basic Spotlight',499));
+['closeAddModal','cancelAddBtn'].forEach(id=>document.getElementById(id).addEventListener('click',()=>document.getElementById('addModal').classList.remove('open')));
+document.getElementById('closeDetailModal').addEventListener('click',()=>document.getElementById('detailModal').classList.remove('open'));
+document.getElementById('closeReportModal').addEventListener('click',()=>document.getElementById('reportModal').classList.remove('open'));
+document.getElementById('closeCompareModal').addEventListener('click',()=>document.getElementById('compareModal').classList.remove('open'));
+document.getElementById('closeSponsorModal').addEventListener('click',()=>document.getElementById('sponsorModal').classList.remove('open'));
+document.getElementById('closeAffiliateModal').addEventListener('click',()=>document.getElementById('affiliateModal').classList.remove('open'));
+document.getElementById('showReportsBtn').addEventListener('click',()=>{document.getElementById('reportsPanel').style.display='block';renderReportsList();});
+document.getElementById('closeReportsBtn').addEventListener('click',()=>document.getElementById('reportsPanel').style.display='none');
+document.getElementById('closeAdminBtn').addEventListener('click',()=>document.getElementById('adminPanel').classList.remove('visible'));
 
-// ===== MODAL BACKDROP CLOSE =====
-['addModal', 'detailModal', 'reportModal', 'compareModal', 'sponsorModal', 'affiliateModal'].forEach(id => {
-  document.getElementById(id).addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('open'); });
-});
-
-// ===== CONFIRM SPONSOR =====
-document.getElementById('confirmSponsorBtn').addEventListener('click', async () => {
-  const bizId = document.getElementById('sponsorBusinessId').value;
-  if (!bizId) { showToast('Please select a business', 'error'); return; }
-  const msg = document.getElementById('sponsorMessage').value;
-  const btn = document.getElementById('confirmSponsorBtn');
-  btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing…';
-  const success = await buySponsorship(bizId, currentSponsorPackage.name, msg);
-  btn.disabled = false; btn.innerHTML = '<i class="fas fa-credit-card"></i> Pay & Activate';
-  if (success) { document.getElementById('sponsorModal').classList.remove('open'); await loadBusinesses(); }
-});
-
-// ===== CREATE AFFILIATE LINK =====
-document.getElementById('createAffiliateLinkBtn').addEventListener('click', async () => {
-  const name = document.getElementById('affProductName').value.trim();
-  const url = document.getElementById('affProductUrl').value.trim();
-  const rate = document.getElementById('affCommissionRate').value;
-  if (!name || !url) { showToast('Product name and URL are required', 'error'); return; }
-  await createAffiliateLink(name, url, rate);
-  document.getElementById('affProductName').value = '';
-  document.getElementById('affProductUrl').value = '';
-});
-
-// ===== ADMIN SECRET =====
-let clickCount = 0, clickTimeout;
-document.getElementById('secretAdminTrigger').addEventListener('click', e => {
-  e.preventDefault(); clickCount++; clearTimeout(clickTimeout); clickTimeout = setTimeout(() => clickCount = 0, 800);
-  if (clickCount >= 5) { document.getElementById('adminPanel').classList.add('visible'); loadPendingBusinesses(); clickCount = 0; showToast('🔐 Admin panel unlocked', 'info'); }
-});
-
-// ===== PENDING BUSINESSES =====
-async function loadPendingBusinesses() {
-  try { state.pendingBusinesses = await apiCall('/admin/businesses/pending'); renderPendingList(); } catch (e) {}
-}
-function renderPendingList() {
-  const c = document.getElementById('pendingList');
-  if (!state.pendingBusinesses.length) { c.innerHTML = '<em style="color:var(--text3);font-size:0.84rem">No pending submissions.</em>'; return; }
-  c.innerHTML = state.pendingBusinesses.map(b => `
-    <div class="pending-item">
-      <div class="pending-info">
-        <div class="pending-name">${escHtml(b.name)} <span style="font-size:0.7rem;color:var(--text3)">(${b.type})</span></div>
-        <div class="pending-meta"><i class="fas fa-map-marker-alt"></i> ${escHtml(b.city)}${b.state ? `, ${escHtml(b.state)}` : ''} · ${timeAgo(b.created_at)}</div>
-        <div style="font-size:0.7rem;color:var(--accent);margin-top:4px">${escHtml(b.email)}</div>
-      </div>
-      <div class="pending-actions">
-        <button class="approve-btn" data-id="${b.id}"><i class="fas fa-check"></i> Approve (+15 Credits)</button>
-        <button class="reject-btn" data-id="${b.id}"><i class="fas fa-times"></i> Reject</button>
-      </div>
-    </div>`).join('');
-  document.querySelectorAll('.approve-btn').forEach(btn => btn.addEventListener('click', () => approveBusiness(btn.dataset.id)));
-  document.querySelectorAll('.reject-btn').forEach(btn => btn.addEventListener('click', () => rejectBusiness(btn.dataset.id)));
-}
-async function approveBusiness(id) {
-  if (!confirm('Approve this business? User will receive 15 credits.')) return;
-  try { await apiCall(`/admin/businesses/${id}/approve`, { method: 'PUT' }); showToast('Approved! User awarded 15 credits.', 'success'); await loadPendingBusinesses(); await loadBusinesses(); } catch (e) { showToast('Approval failed: ' + e.message, 'error'); }
-}
-async function rejectBusiness(id) {
-  const reason = prompt('Rejection reason (optional):');
-  if (!confirm('Reject this submission?')) return;
-  try { await apiCall(`/admin/businesses/${id}/reject`, { method: 'DELETE', body: { reason } }); showToast('Rejected', 'info'); await loadPendingBusinesses(); } catch (e) { showToast('Failed: ' + e.message, 'error'); }
+function renderReportsList(){
+  const c=document.getElementById('reportsList');
+  if(!DB.reports.length){c.innerHTML='<em style="color:var(--text3);font-size:0.84rem">No reports yet.</em>';return;}
+  c.innerHTML=DB.reports.map(r=>{
+    const biz=DB.businesses.find(b=>b.id==r.business_id);
+    return `<div class="pending-item"><div class="pending-info"><div class="pending-name">${escHtml(biz?biz.name:'Business #'+r.business_id)}</div><div class="pending-meta">${escHtml(r.reason)} · ${timeAgo(r.created_at)}</div>${r.details?`<div style="font-size:0.76rem;color:var(--text2);margin-top:4px">${escHtml(r.details)}</div>`:''}</div></div>`;
+  }).join('');
 }
 
-// ===== EXPORT CSV =====
-document.getElementById('exportDataBtn').addEventListener('click', () => {
-  const rows = [['Name', 'Type', 'Category', 'City', 'State', 'Phone', 'Email', 'Verified', 'Featured', 'Views']];
-  state.allBusinesses.forEach(b => {
-    rows.push([b.name, b.type, b.category, b.city, b.state, b.phone, b.email, b.verified ? 'Yes' : 'No', b.featured ? 'Yes' : 'No', b.views || 0]);
-  });
-  const csv = rows.map(r => r.map(v => `"${String(v || '').replace(/"/g, '""')}"`).join(',')).join('\n');
-  const a = document.createElement('a'); a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv); a.download = 'sarveik_businesses.csv'; a.click();
-  showToast('CSV exported!', 'success');
+// Backdrop click to close
+['addModal','detailModal','reportModal','compareModal','sponsorModal','affiliateModal'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',e=>{if(e.target===e.currentTarget)e.currentTarget.classList.remove('open');});
 });
 
-// ===== BACK TO TOP =====
-window.addEventListener('scroll', () => document.getElementById('backToTop').classList.toggle('show', window.scrollY > 500), { passive: true });
-document.getElementById('backToTop').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-
-// ===== ESC KEY =====
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { document.querySelectorAll('.modal-backdrop.open').forEach(m => m.classList.remove('open')); closeDrawer(); }
+// Confirm sponsor
+document.getElementById('confirmSponsorBtn').addEventListener('click',async()=>{
+  const bizId=document.getElementById('sponsorBusinessId').value;
+  if(!bizId){showToast('Please select a business','error');return;}
+  const msg=document.getElementById('sponsorMessage').value;
+  const btn=document.getElementById('confirmSponsorBtn');
+  btn.disabled=true;btn.innerHTML='<i class="fas fa-spinner fa-spin"></i> Processing…';
+  const success=await buySponsorship(bizId,currentSponsorPackage.name,msg);
+  btn.disabled=false;btn.innerHTML='<i class="fas fa-credit-card"></i> Pay & Activate';
+  if(success){document.getElementById('sponsorModal').classList.remove('open');await loadBusinesses();}
 });
 
-// ===== IMAGE PREVIEW =====
-document.getElementById('f_images').addEventListener('change', function() {
-  const s = document.getElementById('previewStrip'); s.innerHTML = '';
-  Array.from(this.files).slice(0, 6).forEach(f => { const r = new FileReader(); r.onload = e => { const img = document.createElement('img'); img.className = 'img-thumb'; img.src = e.target.result; s.appendChild(img); }; r.readAsDataURL(f); });
+// Create affiliate link
+document.getElementById('createAffiliateLinkBtn').addEventListener('click',async()=>{
+  const name=document.getElementById('affProductName').value.trim();
+  const url=document.getElementById('affProductUrl').value.trim();
+  const rate=document.getElementById('affCommissionRate').value;
+  if(!name||!url){showToast('Product name and URL are required','error');return;}
+  await createAffiliateLink(name,url,rate);
+  document.getElementById('affProductName').value='';document.getElementById('affProductUrl').value='';
 });
 
-// ===== 24H TOGGLE =====
-document.getElementById('f_24h').addEventListener('change', e => {
-  DAYS.forEach(day => {
-    if (e.target.checked) {
-      document.getElementById(`h_${day}_start`).value = '00:00';
-      document.getElementById(`h_${day}_end`).value = '23:59';
-      document.getElementById(`h_${day}_closed`).checked = false;
-      toggleDayClosed(day);
-    }
-  });
+// Admin secret trigger (5 clicks on logo)
+let clickCount=0,clickTimeout;
+document.getElementById('secretAdminTrigger').addEventListener('click',e=>{
+  e.preventDefault();clickCount++;clearTimeout(clickTimeout);clickTimeout=setTimeout(()=>clickCount=0,800);
+  if(clickCount>=5){document.getElementById('adminPanel').classList.add('visible');loadPendingBusinesses();clickCount=0;showToast('🔐 Admin panel unlocked','info');}
 });
 
-// ===== PACKAGES TOGGLE =====
-document.getElementById('packagesToggleBar').addEventListener('click', () => {
-  document.getElementById('packagesToggleBar').classList.toggle('open');
-  document.getElementById('packagesBody').classList.toggle('open');
+// Back to top
+window.addEventListener('scroll',()=>document.getElementById('backToTop').classList.toggle('show',window.scrollY>500),{passive:true});
+document.getElementById('backToTop').addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+
+// ESC closes modals
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){document.querySelectorAll('.modal-backdrop.open').forEach(m=>m.classList.remove('open'));closeDrawer();}
 });
 
-// ===== INIT =====
+/* ================================================================
+   INIT
+================================================================ */
 buildCategoryChips();
 buildHoursForm();
 buildAmenitiesSelector();
-initTheme();
+getUserLocation();
 loadBusinesses();
 updateCreditBalance();
-
-console.log('✅ Sarveik Business Directory loaded successfully!');
-console.log(`📊 ${state.allBusinesses.length} businesses loaded`);
 </script>
 </body>
 </html>
