@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
+    /* ... (keep existing styles) ... */
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
     :root{
       --bg:#07070e;--bg2:#0f0f1a;--bg3:#161625;--bg4:#1c1c2e;
@@ -692,6 +693,7 @@
         <button class="btn-ghost" id="showFavBtn"><i class="fas fa-heart"></i> Saved</button>
         <button class="btn-primary" id="openAddModal"><i class="fas fa-plus"></i> Add Business</button>
         <button class="btn-primary btn-gold" id="openSponsorModalBtn"><i class="fas fa-crown"></i> Sponsor</button>
+        <button class="btn-ghost" id="affiliateBtn"><i class="fas fa-link"></i> Affiliate</button>
       </div>
       <button class="hamburger" id="hamburgerBtn" aria-label="Menu">
         <span></span><span></span><span></span>
@@ -907,7 +909,6 @@
           <p style="font-size:0.8rem;color:var(--text2)">Get featured at the top and attract more customers!</p>
         </div>
       </div>
-      <!-- No businesses hint (shown when user hasn't added any) -->
       <div class="no-biz-hint" id="noBizHint" style="display:none">
         <strong>You haven't added any businesses yet!</strong>
         To sponsor a listing, first add your business using the "Add Business" button. Once it's approved, you can sponsor it.
@@ -926,7 +927,7 @@
         <div class="sponsor-package-display">
           <div class="sponsor-package-row"><span class="label">Package</span><span class="val" id="sponsorPackageName">Basic Spotlight</span></div>
           <div class="sponsor-package-row"><span class="label">Duration</span><span class="val">30 days</span></div>
-          <div class="sponsor-package-row total"><span class="label">Total</span><span class="val" id="sponsorTotal">₹499</span></div>
+          <div class="sponsor-package-row.total"><span class="label">Total</span><span class="val" id="sponsorTotal">₹499</span></div>
         </div>
         <button class="btn-primary btn-gold" id="confirmSponsorBtn" style="width:100%;padding:12px;font-size:0.9rem;justify-content:center"><i class="fas fa-credit-card"></i> Pay &amp; Activate</button>
         <p class="sponsor-upi-note">Secure payment via PhonePe / UPI. Active immediately on confirmation.</p>
@@ -1344,8 +1345,8 @@ function buildStaticMapsUrl(address,city,state,lat,lng){
 function getBizImageUrl(biz) {
   // Try image_urls field (comma separated string or array)
   if (biz.image_urls) {
-    const urls = Array.isArray(biz.image_urls) ? biz.image_urls : biz.image_urls.split(',').map(s=>s.trim());
-    if (urls[0]) return urls[0];
+    const urls = Array.isArray(biz.image_urls) ? biz.image_urls : biz.image_urls.split(',').map(s=>s.trim()).filter(Boolean);
+    if (urls.length && urls[0]) return urls[0];
   }
   if (biz.images && biz.images.length) return biz.images[0];
   if (biz.image_url) return biz.image_url;
@@ -1549,11 +1550,8 @@ async function loadUserBusinessesForSponsor(){
 
   select.innerHTML='<option value="">Loading…</option>';
   try{
-    // Try user's own businesses endpoint first
     let businesses=await getUserOwnBusinesses();
-    // Fallback: if endpoint doesn't exist, filter all businesses (for demo mode)
     if(!businesses.length){
-      // No businesses found for this user
       formBody.style.display='none';
       noBizHint.style.display='block';
       return;
@@ -1562,17 +1560,9 @@ async function loadUserBusinessesForSponsor(){
     formBody.style.display='';
     noBizHint.style.display='none';
     select.innerHTML=businesses.map(b=>`<option value="${b.id}">${escHtml(b.name)} · ${escHtml(b.city||'')}</option>`).join('');
-  }catch{
-    // API error — show all businesses as fallback (for demo without backend)
-    if(state.allBusinesses.length){
-      userBusinesses=state.allBusinesses;
-      formBody.style.display='';
-      noBizHint.style.display='none';
-      select.innerHTML=state.allBusinesses.map(b=>`<option value="${b.id}">${escHtml(b.name)} · ${escHtml(b.city||'')}</option>`).join('');
-    }else{
-      formBody.style.display='none';
-      noBizHint.style.display='block';
-    }
+  }catch(e){
+    formBody.style.display='none';
+    noBizHint.style.display='block';
   }
 }
 
@@ -1591,7 +1581,7 @@ async function buySponsorship(businessId,packageType,customMessage){
     const response=await apiCall('/business/sponsor',{method:'POST',body:{businessId,packageType,customMessage}});
     if(response.success){showToast(`✅ Sponsored! Active until ${new Date(response.endDate).toLocaleDateString()}`,'success');return true;}
     showToast(response.error||'Payment failed','error');return false;
-  }catch{showToast('Sponsorship failed. Try again.','error');return false;}
+  }catch(e){showToast('Sponsorship failed. Try again.','error');return false;}
 }
 
 /* ================================================================
@@ -1602,7 +1592,7 @@ async function createAffiliateLink(productName,productUrl,commissionRate){
     const res=await apiCall('/affiliate/create-link',{method:'POST',body:{productName,productUrl,commissionRate:parseFloat(commissionRate)}});
     if(res.success){showToast(`Link created! Share: ${res.affiliateUrl}`,'success');loadAffiliateLinks();return true;}
     showToast(res.error||'Failed','error');return false;
-  }catch{showToast('Failed to create link','error');return false;}
+  }catch(e){showToast('Failed to create link','error');return false;}
 }
 
 async function loadAffiliateLinks(){
@@ -1626,7 +1616,7 @@ async function loadAffiliateLinks(){
           <button onclick="copyToClipboard('${window.location.origin}/go/${link.id}')" style="background:none;border:none;cursor:pointer;color:var(--accent);padding:0;font-size:0.85rem" title="Copy"><i class="fas fa-copy"></i></button>
         </div>
       </div>`).join('');
-  }catch{}
+  }catch(e){console.error(e);}
 }
 
 async function loadAffiliateProductsForBusiness(businessId){
@@ -1640,7 +1630,7 @@ async function loadAffiliateProductsForBusiness(businessId){
           <button class="btn-primary" onclick="window.open('/go/${link.id}','_blank')" style="padding:6px 14px;font-size:0.78rem;white-space:nowrap"><i class="fas fa-external-link-alt"></i> Buy Now</button>
         </div>`).join('');
     }
-  }catch{}
+  }catch(e){}
 }
 
 function copyToClipboard(text){navigator.clipboard.writeText(text);showToast('Copied to clipboard!','success');}
@@ -1649,7 +1639,7 @@ function copyToClipboard(text){navigator.clipboard.writeText(text);showToast('Co
    CREDIT BALANCE
 ================================================================ */
 async function updateCreditBalance(){
-  try{const balance=await getCreditBalance();const badge=document.getElementById('creditBalance');if(badge)badge.textContent=`Credits: ${balance}`;}catch{}
+  try{const balance=await getCreditBalance();const badge=document.getElementById('creditBalance');if(badge)badge.textContent=`Credits: ${balance}`;}catch(e){}
 }
 
 /* ================================================================
@@ -1670,7 +1660,7 @@ async function loadBusinesses(){
     updateStats();
     await loadStatesFilter();
     await updateCreditBalance();
-  }catch{showToast('Failed to load businesses','error');}
+  }catch(e){showToast('Failed to load businesses','error');}
 }
 
 function showSkeletonLoader(){
@@ -1834,7 +1824,6 @@ async function renderBusinesses(){
       fetchGoogleRating(biz.place_id).then(g=>{
         if(g){
           updateCardGoogleRating(biz.id,g);
-          // Remove the "Fetching…" placeholder
           document.querySelectorAll(`.no-rating-placeholder[data-bizid="${biz.id}"]`).forEach(el=>{
             const pill=document.createElement('div');
             pill.className='google-rating-pill';
@@ -1846,7 +1835,6 @@ async function renderBusinesses(){
         }
       });
     }else if(biz.place_id&&cache[biz.place_id]){
-      // Update the "Fetching…" placeholder immediately from cache
       document.querySelectorAll(`.no-rating-placeholder[data-bizid="${biz.id}"]`).forEach(el=>{
         const g=cache[biz.place_id];
         const pill=document.createElement('div');
@@ -2074,7 +2062,7 @@ document.getElementById('submitReport').addEventListener('click',async()=>{
     showToast('Report submitted. Admin will review it.','success');
     document.getElementById('reportModal').classList.remove('open');
     document.getElementById('reportDetails').value='';
-  }catch{showToast('Failed to submit report','error');}
+  }catch(e){showToast('Failed to submit report','error');}
 });
 
 /* ================================================================
@@ -2138,7 +2126,6 @@ document.getElementById('submitBizBtn').addEventListener('click',async()=>{
   const amenities=Array.from(document.querySelectorAll('.amenity-opt.selected')).map(el=>el.dataset.id);
   const lat=parseFloat(document.getElementById('f_lat').value),lng=parseFloat(document.getElementById('f_lng').value);
   
-  // Collect image URLs from the text input
   const imageUrlsRaw=document.getElementById('f_image_urls').value.trim();
   const imageUrls=imageUrlsRaw?imageUrlsRaw.split(',').map(s=>s.trim()).filter(Boolean):[];
 
@@ -2344,6 +2331,7 @@ document.getElementById('openAddModal').addEventListener('click',()=>document.ge
 document.getElementById('heroAddBtn').addEventListener('click',()=>document.getElementById('addModal').classList.add('open'));
 document.getElementById('openSponsorModalBtn').addEventListener('click',()=>showSponsorModal('Basic Spotlight',499));
 document.getElementById('heroSponsorBtn').addEventListener('click',()=>showSponsorModal('Basic Spotlight',499));
+document.getElementById('affiliateBtn').addEventListener('click',()=>{document.getElementById('affiliateModal').classList.add('open');loadAffiliateLinks();});
 ['closeAddModal','cancelAddBtn'].forEach(id=>document.getElementById(id).addEventListener('click',()=>document.getElementById('addModal').classList.remove('open')));
 document.getElementById('closeDetailModal').addEventListener('click',()=>document.getElementById('detailModal').classList.remove('open'));
 document.getElementById('closeReportModal').addEventListener('click',()=>document.getElementById('reportModal').classList.remove('open'));
