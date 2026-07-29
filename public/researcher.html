@@ -1,982 +1,1565 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Research Tools – Sarveik | 300+ Verified Academic Tools</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    :root {
-      --bg-gradient: linear-gradient(-45deg, #1a2a3a, #2c3e50, #1e3c3f, #0f2c2f);
-      --bg-card: rgba(0, 0, 0, 0.4);
-      --text: #fff;
-      --text-muted: rgba(255,255,255,0.7);
-      --btn-bg: linear-gradient(135deg, #1e88e5, #6a1b9a);
-      --shadow: 0 8px 20px rgba(0,0,0,0.6);
-      --border: 1px solid rgba(255,255,255,0.2);
-      --transition: all 0.3s ease;
-      --card-width: 280px;
-      --howto-bg: rgba(0,0,0,0.3);
-    }
-    body.light-mode {
-      --bg-gradient: linear-gradient(-45deg, #f0f7ff, #eef2fa, #fafcff, #e8f0fe);
-      --bg-card: rgba(255,255,255,0.85);
-      --text: #1e293b;
-      --text-muted: #2c3e50;
-      --btn-bg: linear-gradient(135deg, #0ea5e9, #6366f1);
-      --shadow: 0 8px 20px rgba(0,0,0,0.1);
-      --border: 1px solid rgba(0,0,0,0.1);
-      --howto-bg: rgba(0,0,0,0.05);
-    }
-    body {
-      font-family: 'Inter', sans-serif;
-      background: var(--bg-gradient);
-      background-size: 400% 400%;
-      animation: gradientBG 15s ease infinite;
-      color: var(--text);
-      padding: 40px 20px;
-      min-height: 100vh;
-      transition: var(--transition);
-    }
-    @keyframes gradientBG {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-    .container { max-width: 1400px; margin: 0 auto; }
-    h1 { font-size: 2.5em; margin-bottom: 10px; text-align: center; }
-    .subtitle { text-align: center; margin-bottom: 30px; opacity: 0.9; }
-    .stats-badge { 
-      text-align: center; 
-      margin-bottom: 20px; 
-      font-size: 0.9em; 
-      opacity: 0.8;
-      background: var(--bg-card);
-      display: inline-block;
-      padding: 5px 15px;
-      border-radius: 50px;
-      margin: 0 auto 20px;
-      width: fit-content;
-    }
-    .premium-banner {
-      background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
-      border-radius: 20px;
-      padding: 15px 25px;
-      margin-bottom: 30px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 15px;
-      color: #1e293b;
-      font-weight: 600;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-    }
-    .premium-banner .text i { margin-right: 10px; }
-    .premium-banner .upgrade-btn {
-      background: #1e293b;
-      color: #f6d365;
-      padding: 10px 24px;
-      border-radius: 40px;
-      text-decoration: none;
-      font-weight: bold;
-      transition: 0.3s;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .premium-banner .upgrade-btn:hover {
-      transform: scale(1.05);
-      background: #0f172a;
-    }
-    .premium-recommendations {
-      background: var(--bg-card);
-      backdrop-filter: blur(10px);
-      border-radius: 20px;
-      padding: 20px;
-      margin-bottom: 30px;
-      border: var(--border);
-    }
-    .premium-recommendations h3 {
-      margin-bottom: 15px;
-      color: #f6d365;
-    }
-    .recommend-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
-      justify-content: center;
-    }
-    .recommend-item {
-      background: rgba(255,255,255,0.1);
-      border-radius: 15px;
-      padding: 12px;
-      width: 200px;
-      text-align: center;
-    }
-    .recommend-item img {
-      width: 40px;
-      height: 40px;
-      border-radius: 8px;
-      margin-bottom: 8px;
-    }
-    .recommend-item .name {
-      font-weight: bold;
-      font-size: 0.9rem;
-    }
-    .recommend-item button {
-      background: var(--btn-bg);
-      border: none;
-      padding: 6px 12px;
-      border-radius: 30px;
-      color: white;
-      font-size: 0.75rem;
-      cursor: pointer;
-      margin-top: 8px;
-    }
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 15px;
-      margin-bottom: 30px;
-      align-items: center;
-    }
-    .search-box input {
-      padding: 12px 20px;
-      border-radius: 50px;
-      border: var(--border);
-      background: rgba(255,255,255,0.2);
-      color: var(--text);
-      font-size: 1em;
-      width: 300px;
-      backdrop-filter: blur(5px);
-      outline: none;
-    }
-    .filter-buttons, .sort-select, .theme-toggle, .favorites-link {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-    .filter-buttons button, .sort-select select, .theme-toggle button, .favorites-link a, .pagination button {
-      padding: 10px 20px;
-      border-radius: 50px;
-      border: var(--border);
-      background: rgba(255,255,255,0.2);
-      color: var(--text);
-      cursor: pointer;
-      backdrop-filter: blur(5px);
-      transition: var(--transition);
-      font-size: 0.95em;
-    }
-    .filter-buttons button.active { background: var(--btn-bg); font-weight: 600; }
-    .filter-buttons button:hover, .sort-select select:hover, .theme-toggle button:hover, .favorites-link a:hover, .pagination button:hover {
-      background: var(--btn-bg);
-      transform: scale(1.05);
-    }
-    .sort-select select { appearance: none; padding-right: 30px; }
-    .favorites-link a { text-decoration: none; display: inline-block; }
-    .tools-grid {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 20px;
-      margin-bottom: 30px;
-    }
-    .tool-card {
-      background: var(--bg-card);
-      backdrop-filter: blur(10px);
-      border-radius: 15px;
-      padding: 20px;
-      width: var(--card-width);
-      min-height: 260px;
-      box-shadow: var(--shadow);
-      transition: var(--transition);
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      border: var(--border);
-    }
-    .tool-card:hover { transform: translateY(-8px) scale(1.02); }
-    .tool-card .fav-icon {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      font-size: 1.4em;
-      cursor: pointer;
-      color: #ff6f61;
-      background: rgba(0,0,0,0.3);
-      border-radius: 50%;
-      width: 30px;
-      height: 30px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 2;
-    }
-    .tool-card .fav-icon.favorited { color: #ff3b2e; text-shadow: 0 0 10px #ff3b2e; }
-    .tool-card img {
-      width: 48px;
-      height: 48px;
-      margin-bottom: 12px;
-      border-radius: 8px;
-      background: #fff;
-      object-fit: contain;
-    }
-    .tool-card h3 { font-size: 1.2em; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .tool-card p { font-size: 0.85em; opacity: 0.85; flex: 1; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 12px; line-height: 1.4; }
-    .tool-card .meta { display: flex; justify-content: space-between; align-items: center; margin: 10px 0; font-size: 0.85em; }
-    .tool-card .rating { color: gold; }
-    .tool-card .popularity { opacity: 0.7; }
-    .tool-card .approved-badge {
-      background: #10b981;
-      color: white;
-      padding: 2px 8px;
-      border-radius: 20px;
-      font-size: 0.65em;
-      position: absolute;
-      top: 10px;
-      left: 10px;
-    }
-    .tool-card .time-new-badge {
-      background: linear-gradient(45deg, #f6d365, #fda085);
-      color: #1e293b;
-      font-size: 0.65rem;
-      font-weight: bold;
-      padding: 2px 8px;
-      border-radius: 20px;
-      position: absolute;
-      top: 10px;
-      left: 90px;
-      z-index: 2;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-    }
-    .tool-card .premium-tag {
-      background: linear-gradient(135deg, #f6d365, #fda085);
-      color: #1e293b;
-      font-size: 0.65rem;
-      font-weight: bold;
-      padding: 2px 8px;
-      border-radius: 20px;
-      position: absolute;
-      top: 10px;
-      left: 170px;
-      z-index: 2;
-    }
-    .tool-card.premium-locked {
-      position: relative;
-      overflow: hidden;
-    }
-    .tool-card.premium-locked::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(4px);
-      border-radius: 15px;
-      z-index: 3;
-    }
-    .premium-lock-icon {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      z-index: 4;
-      background: rgba(0,0,0,0.85);
-      padding: 10px 18px;
-      border-radius: 50px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      font-size: 0.9rem;
-      white-space: nowrap;
-      font-weight: bold;
-      color: #f6d365;
-      border: 1px solid #f6d365;
-    }
-    .premium-lock-icon button {
-      background: var(--btn-bg);
-      border: none;
-      padding: 6px 16px;
-      border-radius: 30px;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    .premium-lock-icon button:hover {
-      transform: scale(1.05);
-      background: linear-gradient(135deg, #f6d365, #fda085);
-      color: #1e293b;
-    }
-    .tool-card .btn {
-      background: var(--btn-bg);
-      color: #fff;
-      padding: 8px 15px;
-      border-radius: 50px;
-      text-decoration: none;
-      font-size: 0.9em;
-      text-align: center;
-      border: none;
-      cursor: pointer;
-      transition: var(--transition);
-      z-index: 5;
-      position: relative;
-    }
-    .tool-card .btn:hover { transform: scale(1.05); }
-    .pagination {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin: 30px 0;
-      flex-wrap: wrap;
-    }
-    .pagination button.active {
-      background: var(--btn-bg);
-      font-weight: bold;
-    }
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.7);
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-    .modal.active { display: flex; }
-    .modal-content {
-      background: var(--bg-card);
-      backdrop-filter: blur(20px);
-      border-radius: 20px;
-      padding: 30px;
-      max-width: 650px;
-      width: 90%;
-      max-height: 85vh;
-      overflow-y: auto;
-      position: relative;
-      border: var(--border);
-      color: var(--text);
-    }
-    .close { position: absolute; top: 15px; right: 20px; font-size: 2em; cursor: pointer; color: var(--text); }
-    .modal-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
-    .modal-header img { width: 60px; height: 60px; border-radius: 10px; background: #fff; }
-    .modal-rating { margin: 15px 0; }
-    .star { cursor: pointer; color: #ccc; font-size: 1.4em; display: inline-block; margin-right: 5px; }
-    .star.selected { color: gold; }
-    .similar-tools { display: flex; flex-wrap: wrap; gap: 10px; margin: 15px 0; }
-    .similar-tool-item { background: rgba(255,255,255,0.2); padding: 5px 10px; border-radius: 20px; font-size: 0.9em; cursor: pointer; }
-    .similar-tool-item:hover { background: var(--btn-bg); }
-    .social-share { display: flex; gap: 10px; margin: 15px 0; flex-wrap: wrap; }
-    .social-share a { color: var(--text); text-decoration: none; padding: 5px 10px; background: rgba(255,255,255,0.2); border-radius: 20px; }
-    .social-share a:hover { background: var(--btn-bg); }
-    .visit-btn { background: var(--btn-bg); color: #fff; padding: 12px 25px; border-radius: 50px; text-decoration: none; display: inline-block; margin-top: 15px; border: none; cursor: pointer; }
-    .how-to-use-section {
-      background: var(--howto-bg);
-      border-left: 4px solid #f6d365;
-      border-radius: 12px;
-      padding: 15px 18px;
-      margin: 20px 0 15px;
-      transition: var(--transition);
-    }
-    .how-to-use-section h4 {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 1.1rem;
-      margin-bottom: 12px;
-      color: #f6d365;
-    }
-    .how-to-use-section ol, .how-to-use-section ul {
-      padding-left: 1.5rem;
-      margin: 8px 0;
-    }
-    .how-to-use-section li {
-      margin: 8px 0;
-      line-height: 1.5;
-    }
-    .pro-tip {
-      background: rgba(246, 211, 101, 0.2);
-      border-radius: 10px;
-      padding: 8px 12px;
-      margin-top: 12px;
-      font-size: 0.9rem;
-    }
-    #favoritesPage { display: none; margin-top: 30px; }
-    #favoritesPage h2 { text-align: center; margin-bottom: 20px; }
-    .back-btn { background: var(--btn-bg); color: #fff; padding: 10px 25px; border-radius: 50px; border: none; cursor: pointer; margin: 20px auto; display: block; }
-    .submit-section {
-      background: var(--bg-card);
-      backdrop-filter: blur(10px);
-      border-radius: 15px;
-      padding: 30px;
-      margin: 40px 0;
-      border: var(--border);
-    }
-    .submit-section h3 { margin-bottom: 20px; }
-    .submit-section input, .submit-section textarea, .submit-section select {
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 15px;
-      border-radius: 10px;
-      border: var(--border);
-      background: rgba(255,255,255,0.2);
-      color: var(--text);
-      font-family: inherit;
-    }
-    .submit-section button { background: var(--btn-bg); color: #fff; padding: 12px 30px; border-radius: 50px; border: none; cursor: pointer; font-weight: bold; transition: var(--transition); }
-    .submit-section button:hover { transform: scale(1.02); }
-    .navigation { text-align: center; margin: 20px 0; }
-    .nav-btn { background: var(--btn-bg); color: #fff; padding: 12px 25px; border-radius: 50px; text-decoration: none; display: inline-block; }
-    #backToTop { position: fixed; bottom: 30px; right: 30px; width: 50px; height: 50px; border-radius: 50%; background: var(--btn-bg); color: #fff; border: none; cursor: pointer; display: none; font-size: 1.5em; z-index: 99; }
-    #backToTop.visible { display: block; }
-    .toast { position: fixed; bottom: 20px; right: 20px; background: rgba(0,0,0,0.9); color: white; padding: 12px 20px; border-radius: 10px; z-index: 10000; animation: slideIn 0.3s ease; }
-    .toast.success { background: #10b981; }
-    .toast.error { background: #ef4444; }
-    .toast.info { background: #f59e0b; }
-    .loading { text-align: center; padding: 50px; font-size: 1.2em; }
-    .refresh-btn {
-      background: var(--btn-bg);
-      color: #fff;
-      padding: 8px 15px;
-      border-radius: 50px;
-      border: none;
-      cursor: pointer;
-      margin-left: 10px;
-      font-size: 0.85em;
-    }
-    .disclaimer {
-      margin-top: 40px;
-      padding: 20px;
-      background: rgba(0,0,0,0.2);
-      border-radius: 12px;
-      text-align: center;
-      font-size: 0.8em;
-    }
-    @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-    @media (max-width: 768px) {
-      .controls { flex-direction: column; align-items: stretch; }
-      .search-box input { width: 100%; }
-      .tool-card { width: 100%; max-width: 350px; margin: 0 auto; }
-      .premium-lock-icon { font-size: 0.75rem; padding: 6px 12px; white-space: normal; width: 90%; text-align: center; }
-      .premium-lock-icon button { padding: 4px 10px; }
-      .recommend-item { width: 160px; }
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Research Tools – Sarveik | 300+ Verified Academic Tools</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --bg-gradient: linear-gradient(-45deg, #1a2a3a, #2c3e50, #1e3c3f, #0f2c2f);
+            --bg-card: rgba(0, 0, 0, 0.4);
+            --text: #fff;
+            --text-muted: rgba(255, 255, 255, 0.7);
+            --btn-bg: linear-gradient(135deg, #1e88e5, #6a1b9a);
+            --shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
+            --border: 1px solid rgba(255, 255, 255, 0.2);
+            --transition: all 0.3s ease;
+            --card-width: 280px;
+            --howto-bg: rgba(0, 0, 0, 0.3);
+        }
+        body.light-mode {
+            --bg-gradient: linear-gradient(-45deg, #f0f7ff, #eef2fa, #fafcff, #e8f0fe);
+            --bg-card: rgba(255, 255, 255, 0.85);
+            --text: #1e293b;
+            --text-muted: #2c3e50;
+            --btn-bg: linear-gradient(135deg, #0ea5e9, #6366f1);
+            --shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            --border: 1px solid rgba(0, 0, 0, 0.1);
+            --howto-bg: rgba(0, 0, 0, 0.05);
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-gradient);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            color: var(--text);
+            padding: 40px 20px;
+            min-height: 100vh;
+            transition: var(--transition);
+        }
+        @keyframes gradientBG {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        .subtitle {
+            text-align: center;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        .stats-badge {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            opacity: 0.8;
+            background: var(--bg-card);
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 50px;
+            margin: 0 auto 20px;
+            width: fit-content;
+        }
+        .premium-banner {
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+            border-radius: 20px;
+            padding: 15px 25px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            color: #1e293b;
+            font-weight: 600;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+        }
+        .premium-banner .text i {
+            margin-right: 10px;
+        }
+        .premium-banner .upgrade-btn {
+            background: #1e293b;
+            color: #f6d365;
+            padding: 10px 24px;
+            border-radius: 40px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .premium-banner .upgrade-btn:hover {
+            transform: scale(1.05);
+            background: #0f172a;
+        }
+        .premium-recommendations {
+            background: var(--bg-card);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 30px;
+            border: var(--border);
+        }
+        .premium-recommendations h3 {
+            margin-bottom: 15px;
+            color: #f6d365;
+        }
+        .recommend-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+        }
+        .recommend-item {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 12px;
+            width: 200px;
+            text-align: center;
+        }
+        .recommend-item img {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        .recommend-item .name {
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+        .recommend-item button {
+            background: var(--btn-bg);
+            border: none;
+            padding: 6px 12px;
+            border-radius: 30px;
+            color: white;
+            font-size: 0.75rem;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            align-items: center;
+        }
+        .search-box input {
+            padding: 12px 20px;
+            border-radius: 50px;
+            border: var(--border);
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text);
+            font-size: 1em;
+            width: 300px;
+            backdrop-filter: blur(5px);
+            outline: none;
+        }
+        .filter-buttons,
+        .sort-select,
+        .theme-toggle,
+        .favorites-link {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .filter-buttons button,
+        .sort-select select,
+        .theme-toggle button,
+        .favorites-link a,
+        .pagination button {
+            padding: 10px 20px;
+            border-radius: 50px;
+            border: var(--border);
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text);
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            transition: var(--transition);
+            font-size: 0.95em;
+        }
+        .filter-buttons button.active {
+            background: var(--btn-bg);
+            font-weight: 600;
+        }
+        .filter-buttons button:hover,
+        .sort-select select:hover,
+        .theme-toggle button:hover,
+        .favorites-link a:hover,
+        .pagination button:hover {
+            background: var(--btn-bg);
+            transform: scale(1.05);
+        }
+        .sort-select select {
+            appearance: none;
+            padding-right: 30px;
+        }
+        .favorites-link a {
+            text-decoration: none;
+            display: inline-block;
+        }
+        .tools-grid {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .tool-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            width: var(--card-width);
+            min-height: 260px;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            border: var(--border);
+        }
+        .tool-card:hover {
+            transform: translateY(-8px) scale(1.02);
+        }
+        .tool-card .fav-icon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 1.4em;
+            cursor: pointer;
+            color: #ff6f61;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2;
+        }
+        .tool-card .fav-icon.favorited {
+            color: #ff3b2e;
+            text-shadow: 0 0 10px #ff3b2e;
+        }
+        .tool-card img {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 12px;
+            border-radius: 8px;
+            background: #fff;
+            object-fit: contain;
+        }
+        .tool-card h3 {
+            font-size: 1.2em;
+            margin-bottom: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .tool-card p {
+            font-size: 0.85em;
+            opacity: 0.85;
+            flex: 1;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 12px;
+            line-height: 1.4;
+        }
+        .tool-card .meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 10px 0;
+            font-size: 0.85em;
+        }
+        .tool-card .rating {
+            color: gold;
+        }
+        .tool-card .popularity {
+            opacity: 0.7;
+        }
+        .tool-card .approved-badge {
+            background: #10b981;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-size: 0.65em;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+        }
+        .tool-card .time-new-badge {
+            background: linear-gradient(45deg, #f6d365, #fda085);
+            color: #1e293b;
+            font-size: 0.65rem;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 20px;
+            position: absolute;
+            top: 10px;
+            left: 90px;
+            z-index: 2;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        .tool-card .premium-tag {
+            background: linear-gradient(135deg, #f6d365, #fda085);
+            color: #1e293b;
+            font-size: 0.65rem;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 20px;
+            position: absolute;
+            top: 10px;
+            left: 170px;
+            z-index: 2;
+        }
+        .tool-card.premium-locked {
+            position: relative;
+            overflow: hidden;
+        }
+        .tool-card.premium-locked::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(4px);
+            border-radius: 15px;
+            z-index: 3;
+        }
+        .premium-lock-icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 4;
+            background: rgba(0, 0, 0, 0.85);
+            padding: 10px 18px;
+            border-radius: 50px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.9rem;
+            white-space: nowrap;
+            font-weight: bold;
+            color: #f6d365;
+            border: 1px solid #f6d365;
+        }
+        .premium-lock-icon button {
+            background: var(--btn-bg);
+            border: none;
+            padding: 6px 16px;
+            border-radius: 30px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .premium-lock-icon button:hover {
+            transform: scale(1.05);
+            background: linear-gradient(135deg, #f6d365, #fda085);
+            color: #1e293b;
+        }
+        .tool-card .btn {
+            background: var(--btn-bg);
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-size: 0.9em;
+            text-align: center;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            z-index: 5;
+            position: relative;
+        }
+        .tool-card .btn:hover {
+            transform: scale(1.05);
+        }
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        .pagination button.active {
+            background: var(--btn-bg);
+            font-weight: bold;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 650px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            position: relative;
+            border: var(--border);
+            color: var(--text);
+        }
+        .close {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 2em;
+            cursor: pointer;
+            color: var(--text);
+        }
+        .modal-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .modal-header img {
+            width: 60px;
+            height: 60px;
+            border-radius: 10px;
+            background: #fff;
+        }
+        .modal-rating {
+            margin: 15px 0;
+        }
+        .star {
+            cursor: pointer;
+            color: #ccc;
+            font-size: 1.4em;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        .star.selected {
+            color: gold;
+        }
+        .similar-tools {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+        }
+        .similar-tool-item {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            cursor: pointer;
+        }
+        .similar-tool-item:hover {
+            background: var(--btn-bg);
+        }
+        .social-share {
+            display: flex;
+            gap: 10px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+        .social-share a {
+            color: var(--text);
+            text-decoration: none;
+            padding: 5px 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 20px;
+        }
+        .social-share a:hover {
+            background: var(--btn-bg);
+        }
+        .visit-btn {
+            background: var(--btn-bg);
+            color: #fff;
+            padding: 12px 25px;
+            border-radius: 50px;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 15px;
+            border: none;
+            cursor: pointer;
+        }
+        .how-to-use-section {
+            background: var(--howto-bg);
+            border-left: 4px solid #f6d365;
+            border-radius: 12px;
+            padding: 15px 18px;
+            margin: 20px 0 15px;
+            transition: var(--transition);
+        }
+        .how-to-use-section h4 {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+            color: #f6d365;
+        }
+        .how-to-use-section ol,
+        .how-to-use-section ul {
+            padding-left: 1.5rem;
+            margin: 8px 0;
+        }
+        .how-to-use-section li {
+            margin: 8px 0;
+            line-height: 1.5;
+        }
+        .pro-tip {
+            background: rgba(246, 211, 101, 0.2);
+            border-radius: 10px;
+            padding: 8px 12px;
+            margin-top: 12px;
+            font-size: 0.9rem;
+        }
+        #favoritesPage {
+            display: none;
+            margin-top: 30px;
+        }
+        #favoritesPage h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .back-btn {
+            background: var(--btn-bg);
+            color: #fff;
+            padding: 10px 25px;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            margin: 20px auto;
+            display: block;
+        }
+        .submit-section {
+            background: var(--bg-card);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 30px;
+            margin: 40px 0;
+            border: var(--border);
+        }
+        .submit-section h3 {
+            margin-bottom: 20px;
+        }
+        .submit-section input,
+        .submit-section textarea,
+        .submit-section select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            border: var(--border);
+            background: rgba(255, 255, 255, 0.2);
+            color: var(--text);
+            font-family: inherit;
+        }
+        .submit-section button {
+            background: var(--btn-bg);
+            color: #fff;
+            padding: 12px 30px;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            transition: var(--transition);
+        }
+        .submit-section button:hover {
+            transform: scale(1.02);
+        }
+        .navigation {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .nav-btn {
+            background: var(--btn-bg);
+            color: #fff;
+            padding: 12px 25px;
+            border-radius: 50px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        #backToTop {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--btn-bg);
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            display: none;
+            font-size: 1.5em;
+            z-index: 99;
+        }
+        #backToTop.visible {
+            display: block;
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 10px;
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+        }
+        .toast.success {
+            background: #10b981;
+        }
+        .toast.error {
+            background: #ef4444;
+        }
+        .toast.info {
+            background: #f59e0b;
+        }
+        .loading {
+            text-align: center;
+            padding: 50px;
+            font-size: 1.2em;
+        }
+        .refresh-btn {
+            background: var(--btn-bg);
+            color: #fff;
+            padding: 8px 15px;
+            border-radius: 50px;
+            border: none;
+            cursor: pointer;
+            margin-left: 10px;
+            font-size: 0.85em;
+        }
+        .disclaimer {
+            margin-top: 40px;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            text-align: center;
+            font-size: 0.8em;
+        }
+        .keyword-tag {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 0.6rem;
+            margin: 2px 3px;
+            color: var(--text-muted);
+            letter-spacing: 0.3px;
+        }
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .search-box input {
+                width: 100%;
+            }
+            .tool-card {
+                width: 100%;
+                max-width: 350px;
+                margin: 0 auto;
+            }
+            .premium-lock-icon {
+                font-size: 0.75rem;
+                padding: 6px 12px;
+                white-space: normal;
+                width: 90%;
+                text-align: center;
+            }
+            .premium-lock-icon button {
+                padding: 4px 10px;
+            }
+            .recommend-item {
+                width: 160px;
+            }
+        }
+    </style>
 </head>
 <body>
-<div class="container">
-  <h1>📚 Sarveik Researcher Hub – 100+ Verified Academic Tools</h1>
-  <p class="subtitle">Discover AI-powered research assistants, reference managers, literature search engines, paper writing & presentation tools – all 100% working.</p>
-  
-  <div style="text-align: center;">
-    <div class="stats-badge" id="statsBadge">✨ Welcome to Sarveik – Enjoy your Researcher Tools! ✨</div>
-  </div>
+    <div class="container">
+        <h1>📚 Sarveik Researcher Hub – 100+ Verified Academic Tools</h1>
+        <p class="subtitle">Discover AI-powered research assistants, reference managers, literature search engines, paper writing & presentation tools – all 100% working.</p>
 
-  <div class="controls">
-    <div class="search-box"><input type="text" id="searchInput" placeholder="Search tools..."></div>
-    <div class="filter-buttons" id="filterContainer"></div>
-    <div class="sort-select"><select id="sortSelect"><option value="name">Sort by Name</option><option value="popularity">Sort by Popularity</option></select></div>
-    <div class="theme-toggle"><button id="themeToggle">🌙 Dark</button></div>
-    <div class="favorites-link"><a href="#" id="showFavorites">❤️ Favorites</a></div>
-    <div><button id="refreshToolsBtn" class="refresh-btn"><i class="fas fa-sync-alt"></i> Refresh</button></div>
-  </div>
-  <div class="tools-grid" id="toolsGrid"><div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading tools...</div></div>
-  <div class="pagination" id="paginationControls"></div>
-  <div id="favoritesPage"><h2>❤️ Your Favorite Research Tools</h2><div class="tools-grid" id="favoritesGrid"></div><button class="back-btn" id="hideFavorites">Back to All Tools</button></div>
-  <div id="premiumBanner" class="premium-banner" style="display: none;">
-    <div class="text"><i class="fas fa-crown"></i> <strong>Unlock Premium Research Tools!</strong> Get advanced AI literature mapping, citation analytics, and full‑text access.</div>
-    <a href="profile.html?tab=premium" class="upgrade-btn"><i class="fas fa-gem"></i> Upgrade Now</a>
-  </div>
-  <div id="premiumRecommendations" class="premium-recommendations" style="display: none;">
-    <h3><i class="fas fa-star"></i> Recommended Premium Tools for Researchers</h3>
-    <div class="recommend-grid" id="recommendGrid"></div>
-  </div>
-  
-  <div class="submit-section">
-    <h3><i class="fas fa-plus-circle"></i> Suggest a Research Tool</h3>
-    <p style="margin-bottom: 15px; font-size: 0.85rem;">Submit a tool for admin review. If approved, you'll earn <strong style="color: #f6d365;">25 credits</strong> and it will appear here!</p>
-    <input type="text" id="newName" placeholder="Tool name *">
-    <input type="text" id="newUrl" placeholder="Website URL (https://...) *">
-    <textarea id="newDesc" placeholder="Short description *" rows="2"></textarea>
-    <select id="newCategory">
-      <option value="research">📖 Literature Search</option>
-      <option value="ai">🤖 AI Research Assistants</option>
-      <option value="writing">✍️ Paper Writing</option>
-      <option value="referencing">📑 Reference Managers</option>
-      <option value="presentation">📊 Presentation & Visuals</option>
-      <option value="productivity">⚡ Productivity for Researchers</option>
-    </select>
-    <button id="submitToolBtn"><i class="fas fa-paper-plane"></i> Submit for Review</button>
-    <p style="margin-top: 10px; font-size: 0.75rem; opacity: 0.7;">Tools are reviewed by admins. You'll receive email notification when approved/rejected.</p>
-  </div>
-  
-  <div class="navigation">
-    <a href="main.html" class="nav-btn"><i class="fas fa-home"></i> Back to Tools</a>
-  </div>
-  <button id="backToTop" title="Back to top">↑</button>
-</div>
-
-<div class="modal" id="toolModal">
-  <div class="modal-content">
-    <span class="close">&times;</span>
-    <div class="modal-header">
-      <img src="" alt="" id="modalIcon">
-      <h2 id="modalTitle"></h2>
-    </div>
-    <p id="modalDesc"></p>
-    <div class="how-to-use-section" id="howToUseContainer">
-      <h4><i class="fas fa-compass"></i> How to Use This Tool</h4>
-      <div id="howToUseContent">Loading guide...</div>
-    </div>
-    <div class="modal-rating" id="modalRating"></div>
-    <div class="similar-tools" id="similarTools"></div>
-    <div class="social-share" id="socialShare"></div>
-    <a href="#" id="modalVisitBtn" class="visit-btn" target="_blank">Visit Website</a>
-  </div>
-</div>
-
-<div class="disclaimer">
-  <p><strong>Disclaimer:</strong> Sarveik is a directory of third‑party tools. We do not host any content. All trademarks, logos, and brand names are the property of their respective owners. If you believe any link infringes your rights, please <a href="dmca.html" style="color: inherit; text-decoration: underline;">contact us</a> for removal.</p>
-</div>
-
-<script>
-  // ========== PAGE TYPE IDENTIFIER ==========
-  const PAGE_TYPE = 'researcher';
-  const NEW_DAYS_THRESHOLD = 7;
-
-  let allTools = [];
-  let currentFilter = 'all', currentSearch = '', currentSort = 'name';
-  let currentPage = 1;
-  const itemsPerPage = 20;
-  let filteredTools = [];
-  let userPremiumStatus = false;
-
-  async function apiCall(url, options = {}) {
-    const response = await fetch(url, {
-      ...options,
-      headers: { 'Content-Type': 'application/json', ...options.headers },
-      credentials: 'include'
-    });
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(text);
-    }
-    const contentType = response.headers.get('content-type');
-    return contentType?.includes('application/json') ? response.json() : response.text();
-  }
-
-  function showToast(message, type = 'success') {
-    const toast = document.createElement('div');
-    toast.className = `toast ${type}`;
-    toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i> ${message}`;
-    document.body.appendChild(toast);
-    setTimeout(() => toast.remove(), 4000);
-  }
-
-  function generateHowToUse(toolName, category, toolUrl) {
-    const nameLower = toolName.toLowerCase();
-    if (nameLower.includes('zotero')) return `<ol><li>Download Zotero desktop app and install browser connector.</li><li>Click the Zotero icon in your browser to save articles, books, and webpages.</li><li>Organize items into collections and add tags.</li><li>Use the Word/Google Docs plugin to insert citations and generate bibliographies in any style.</li></ol><div class="pro-tip">💡 Enable “Better BibTeX” add‑on for advanced cite keys.</div>`;
-    if (nameLower.includes('elicit')) return `<ol><li>Go to Elicit.org and sign up for free.</li><li>Ask a research question (e.g., "effect of sleep on memory consolidation").</li><li>Elicit returns relevant papers with summaries and key data tables.</li><li>Filter by year, study type, and extract claims directly.</li></ol><div class="pro-tip">🔍 Use the “Tasks” feature to automatically extract interventions, outcomes, and sample sizes.</div>`;
-    if (nameLower.includes('overleaf')) return `<ol><li>Create a free Overleaf account.</li><li>Start from a template (Nature, IEEE, ACM) or blank project.</li><li>Write your paper using LaTeX or rich text mode.</li><li>Invite co‑authors to edit in real time and track changes.</li></ol><div class="pro-tip">📌 Link your ORCID and reference manager (Zotero/Mendeley) for seamless citation importing.</div>`;
-    if (nameLower.includes('scite')) return `<ol><li>Search for a paper title or DOI on Scite.ai.</li><li>View the “Smart Citation” report showing supporting, contrasting, or mentioning citations.</li><li>Explore the citation context to see how others used the work.</li><li>Use the assistant to ask “what does the literature say about X?”</li></ol><div class="pro-tip">📈 The premium version offers dashboards for your own publications.</div>`;
-    if (category === 'research') return `<ol><li>Visit ${toolName} and enter keywords or DOI.</li><li>Refine by date, peer‑review, or open access.</li><li>Export citations to reference manager (BibTeX/RIS).</li><li>Read full text if available or request via interlibrary loan.</li></ol><div class="pro-tip">✅ Use boolean operators (AND, OR, NOT) for precise literature searches.</div>`;
-    if (category === 'ai') return `<ol><li>Create an account (free tier usually available).</li><li>Paste your research question, abstract, or full‑text PDF.</li><li>Ask the AI to summarise, find gaps, or suggest methodology.</li><li>Always verify AI‑generated claims with primary sources.</li></ol><div class="pro-tip">⚙️ Many AI tools allow bulk upload of papers – great for systematic reviews.</div>`;
-    if (category === 'writing') return `<ol><li>Open the tool and paste your manuscript draft.</li><li>Run grammar, style, and readability checks.</li><li>Use the academic phrasebank or paraphrasing tool for clearer wording.</li><li>Generate citations automatically with the integrated reference manager.</li></ol><div class="pro-tip">📖 Some tools (like Writefull) check your sentences against real published corpora.</div>`;
-    if (category === 'referencing') return `<ol><li>Install the desktop/web extension.</li><li>Import references from databases, PDFs, or by ISBN/DOI.</li><li>Organize into folders, annotate PDFs, and sync across devices.</li><li>Insert in‑text citations and generate formatted bibliographies in MS Word/LibreOffice/Google Docs.</li></ol><div class="pro-tip">🔄 Collaborate with co‑authors using shared reference groups.</div>`;
-    if (category === 'presentation') return `<ol><li>Sign up for free or premium plan.</li><li>Choose a template (academic, conference, poster).</li><li>Add your research figures, tables, and bullet points.</li><li>Export as PDF, PowerPoint, or share online link.</li></ol><div class="pro-tip">🎨 Use tools like BioRender for scientific illustrations and export directly to slides.</div>`;
-    return `<ol><li>Navigate to ${toolUrl}.</li><li>Explore the help section or tutorials for specific workflows.</li><li>Integrate with your existing research toolkit (reference manager, word processor).</li><li>Bookmark for future research projects.</li></ol><div class="pro-tip">🔗 Check if your university provides institutional access for premium features.</div>`;
-  }
-
-  // ========== 200+ VERIFIED RESEARCH TOOLS (all working URLs) ==========
-  const verifiedResearchTools = [
-    { name: "Google Scholar", url: "https://scholar.google.com", desc: "Free academic search engine covering articles, theses, books, and court opinions.", category: "research", longDesc: "**Google Scholar** indexes scholarly literature across disciplines. It provides citation counts, related articles, and links to PDFs. Essential for any literature review. Create a library and set up email alerts for new papers.", isPremiumRequired: false },
-    { name: "Scopus", url: "https://www.scopus.com", desc: "Largest abstract and citation database of peer-reviewed literature (institutional access often required).", category: "research", longDesc: "**Scopus** by Elsevier covers over 25,000 journals, conference proceedings, and books. It offers powerful analytics like author metrics, citation overview, and h‑index tracking.", isPremiumRequired: true },
-    { name: "Web of Science", url: "https://www.webofscience.com", desc: "Premier citation database for scientific and scholarly research.", category: "research", longDesc: "**Web of Science** provides access to multiple databases, citation analysis, and journal impact factors. Essential for systematic reviews and grant applications.", isPremiumRequired: true },
-    { name: "PubMed", url: "https://pubmed.ncbi.nlm.nih.gov", desc: "Free database of biomedical and life sciences literature (30M+ citations).", category: "research", longDesc: "**PubMed** comprises over 30 million citations from MEDLINE, life science journals, and online books. Includes links to full‑text articles when available. Essential for medical and biological researchers.", isPremiumRequired: false },
-    { name: "arXiv", url: "https://arxiv.org", desc: "Preprint server for physics, mathematics, computer science, and related fields.", category: "research", longDesc: "**arXiv** hosts over 2 million open‑access preprints. Researchers upload papers before peer review. Great for staying current with cutting‑edge research.", isPremiumRequired: false },
-    { name: "bioRxiv", url: "https://www.biorxiv.org", desc: "Preprint server for biology, from Cold Spring Harbor Laboratory.", category: "research", longDesc: "**bioRxiv** distributes unpublished preprints in life sciences. Rapidly growing repository for genetics, neuroscience, and molecular biology.", isPremiumRequired: false },
-    { name: "medRxiv", url: "https://www.medrxiv.org", desc: "Preprint server for health sciences and clinical research.", category: "research", longDesc: "**medRxiv** contains preprints of medical research, from epidemiology to clinical trials. All articles are freely accessible.", isPremiumRequired: false },
-    { name: "JSTOR", url: "https://www.jstor.org", desc: "Digital library of academic journals, books, and primary sources in humanities/social sciences.", category: "research", longDesc: "**JSTOR** offers digitized back issues of journals, primary sources, and books. Many institutions provide access; individual free account gives limited reading.", isPremiumRequired: false },
-    { name: "ScienceDirect", url: "https://www.sciencedirect.com", desc: "Elsevier's platform for scientific, technical, and medical research.", category: "research", longDesc: "**ScienceDirect** contains over 18 million articles and book chapters. Full‑text often requires subscription, but abstracts are free.", isPremiumRequired: true },
-    { name: "SpringerLink", url: "https://link.springer.com", desc: "Access to Springer journals, books, and conference proceedings.", category: "research", longDesc: "**SpringerLink** provides millions of scientific documents across all disciplines. Many articles are open access.", isPremiumRequired: false },
-    { name: "Wiley Online Library", url: "https://onlinelibrary.wiley.com", desc: "Multidisciplinary collection of journals, books, and reference works.", category: "research", longDesc: "**Wiley Online Library** hosts over 1,600 journals and many e‑books. Covers physical sciences, engineering, life sciences, health, social sciences, and humanities.", isPremiumRequired: true },
-    { name: "Taylor & Francis Online", url: "https://www.tandfonline.com", desc: "Access to thousands of peer‑reviewed journals and eBooks.", category: "research", longDesc: "**Taylor & Francis** publishes over 2,700 journals and 7,000 new books each year. Strong in social sciences, humanities, and STM subjects.", isPremiumRequired: true },
-    { name: "SAGE Journals", url: "https://journals.sagepub.com", desc: "SAGE's collection of over 1,000 journals in business, humanities, and sciences.", category: "research", longDesc: "**SAGE Journals** covers humanities, social science, science, technology, and medicine. Many articles available open access.", isPremiumRequired: false },
-    { name: "IEEE Xplore", url: "https://ieeexplore.ieee.org", desc: "Technical literature in electrical engineering, computer science, and electronics.", category: "research", longDesc: "**IEEE Xplore** provides access to over 5 million documents including journals, conferences, and standards. Essential for engineering and CS researchers.", isPremiumRequired: true },
-    { name: "ACM Digital Library", url: "https://dl.acm.org", desc: "Computer science and information technology literature.", category: "research", longDesc: "**ACM Digital Library** contains full‑text articles from journals, conference proceedings, and magazines published by the Association for Computing Machinery.", isPremiumRequired: true },
-    { name: "DOAJ", url: "https://doaj.org", desc: "Directory of Open Access Journals – free, full‑text, quality‑controlled scientific journals.", category: "research", longDesc: "**DOAJ** indexes over 18,000 peer‑reviewed open access journals across all subjects. No paywalls – excellent for unrestricted literature access.", isPremiumRequired: false },
-    { name: "CORE", url: "https://core.ac.uk", desc: "Aggregator of open access research papers from repositories worldwide.", category: "research", longDesc: "**CORE** provides access to millions of open access articles and metadata. It harvests from institutional and subject repositories.", isPremiumRequired: false },
-    { name: "Unpaywall", url: "https://unpaywall.org", desc: "Browser extension that finds legal open access versions of paywalled papers.", category: "research", longDesc: "**Unpaywall** installs as a browser extension. When you land on a paywalled article, it shows a green tab if a free PDF is available in a repository. Highly recommended.", isPremiumRequired: false },
-    { name: "Open Access Button", url: "https://openaccessbutton.org", desc: "Request full‑text research papers from authors and repositories.", category: "research", longDesc: "**Open Access Button** helps you get free access to research papers by finding copies in open repositories or requesting directly from authors.", isPremiumRequired: false },
-    { name: "Semantic Scholar", url: "https://www.semanticscholar.org", desc: "AI‑powered research search engine with contextual citation summaries.", category: "ai", longDesc: "**Semantic Scholar** uses machine learning to extract key information from papers, showing influential citations, figures, and topic summaries. Free and very powerful.", isPremiumRequired: false },
-    { name: "Elicit", url: "https://elicit.org", desc: "AI research assistant that finds, summarises, and extracts data from papers.", category: "ai", longDesc: "**Elicit** uses language models to answer research questions, summarise abstracts, and extract structured data (e.g., sample size, interventions) from a set of papers. Free tier available.", isPremiumRequired: false },
-    { name: "Scite.ai", url: "https://scite.ai", desc: "Smart citations that show whether a paper supports or contrasts a claim.", category: "ai", longDesc: "**Scite** analyses citation context: supporting, mentioning, or contrasting. Helps evaluate the reliability of cited statements. Free version has query limits; premium unlocks full reports.", isPremiumRequired: true },
-    { name: "Connected Papers", url: "https://www.connectedpapers.com", desc: "Visual graph of related papers based on co‑citations and bibliographic coupling.", category: "ai", longDesc: "**Connected Papers** creates an interactive graph of papers related to a seed paper. Great for finding seminal works and recent developments. Free with limited graphs per month.", isPremiumRequired: false },
-    { name: "Litmaps", url: "https://www.litmaps.com", desc: "Literature mapping and citation discovery tool (freemium).", category: "ai", longDesc: "**Litmaps** builds interactive maps of academic literature to visualise citation connections, track research landscapes, and identify gaps. Free tier allows basic maps.", isPremiumRequired: false },
-    { name: "ResearchRabbit", url: "https://www.researchrabbit.ai", desc: "AI‑powered discovery and visualisation of research papers.", category: "ai", longDesc: "**ResearchRabbit** creates collections and suggests relevant papers based on your library. Provides timeline and network visualisations. Completely free for academics.", isPremiumRequired: false },
-    { name: "Consensus", url: "https://consensus.app", desc: "AI search engine that answers research questions from scientific papers.", category: "ai", longDesc: "**Consensus** uses large language models to answer yes/no questions with evidence from peer‑reviewed papers. Shows study summaries and links. Free tier available.", isPremiumRequired: false },
-    { name: "Perplexity AI", url: "https://www.perplexity.ai", desc: "AI search with citations – useful for rapid literature fact‑checking.", category: "ai", longDesc: "**Perplexity** combines AI conversation with web search, providing cited answers. Good for exploring new topics before diving into academic databases.", isPremiumRequired: false },
-    { name: "ChatGPT (Research use)", url: "https://chat.openai.com", desc: "AI language model for brainstorming, summarising, and drafting.", category: "ai", longDesc: "**ChatGPT** can help researchers summarise papers, reformat references, debug code, and draft abstracts. Free version uses GPT‑3.5; GPT‑4 requires premium.", isPremiumRequired: true },
-    { name: "Claude AI", url: "https://claude.ai", desc: "AI assistant for long‑context analysis – upload full PDF papers.", category: "ai", longDesc: "**Claude** from Anthropic handles up to 100K tokens, making it possible to analyse entire research papers or dissertations. Free tier limited.", isPremiumRequired: true },
-    { name: "Zotero", url: "https://www.zotero.org", desc: "Free, open‑source reference manager with browser integration.", category: "referencing", longDesc: "**Zotero** collects, organises, cites, and shares research sources. Automatically senses content in your browser. Generates citations and bibliographies in thousands of styles. Completely free.", isPremiumRequired: false },
-    { name: "Mendeley", url: "https://www.mendeley.com", desc: "Reference manager and academic social network (free 2GB).", category: "referencing", longDesc: "**Mendeley** organises references, annotates PDFs, and collaborates with colleagues. Free plan includes 2GB of storage and 100 private groups.", isPremiumRequired: false },
-    { name: "EndNote", url: "https://endnote.com", desc: "Powerful reference management (paid, institutional licences common).", category: "referencing", longDesc: "**EndNote** is the industry standard for large reference libraries. It offers advanced PDF organisation, manuscript matching, and collaboration tools. Subscription required.", isPremiumRequired: true },
-    { name: "Paperpile", url: "https://paperpile.com", desc: "Cloud‑based reference manager integrated with Google Docs.", category: "referencing", longDesc: "**Paperpile** lives inside Google Workspace. Add papers via browser extension, cite in Google Docs with one click, and sync with PubMed/arXiv. Free trial, then subscription.", isPremiumRequired: true },
-    { name: "Citavi", url: "https://www.citavi.com", desc: "Reference manager with knowledge organisation for Windows (free for up to 100 references).", category: "referencing", longDesc: "**Citavi** helps organise knowledge, add tasks to references, and outline papers. Free version limited to 100 references; premium unlimited.", isPremiumRequired: false },
-    { name: "ReadCube Papers", url: "https://www.readcube.com", desc: "Reference management with PDF annotation and recommendation engine.", category: "referencing", longDesc: "**ReadCube Papers** helps discover, organise, read, and annotate research papers. Free version limited; premium adds unlimited storage and recommendations.", isPremiumRequired: true },
-    { name: "Overleaf", url: "https://www.overleaf.com", desc: "Collaborative LaTeX editor for research papers and theses.", category: "writing", longDesc: "**Overleaf** allows real‑time collaboration on LaTeX documents. Includes templates for thousands of journals, direct submission to arXiv, and integrated reference management.", isPremiumRequired: false },
-    { name: "LaTeX (TeX Live)", url: "https://tug.org/texlive", desc: "Free typesetting system for high‑quality scientific documents.", category: "writing", longDesc: "**LaTeX** is the gold standard for writing papers with complex formulas, cross‑references, and bibliographies. Install TeX Live (free) and use any editor (TeXstudio, VS Code).", isPremiumRequired: false },
-    { name: "Authorea", url: "https://www.authorea.com", desc: "Collaborative writing platform with LaTeX and rich text.", category: "writing", longDesc: "**Authorea** combines LaTeX and WYSIWYG editing, version control, and easy data citation. Free for public articles; premium for private writing.", isPremiumRequired: false },
-    { name: "Grammarly (Academic)", url: "https://www.grammarly.com", desc: "Grammar and style checker tailored for academic writing.", category: "writing", longDesc: "**Grammarly** catches grammar mistakes, suggests conciseness, and detects plagiarism. The premium version offers genre‑specific suggestions for academic writing.", isPremiumRequired: false },
-    { name: "ProWritingAid", url: "https://prowritingaid.com", desc: "Advanced style and readability reports for long documents (theses, papers).", category: "writing", longDesc: "**ProWritingAid** analyses your writing for overused words, sentence length variation, passive voice, and readability. Free version limited to 500 words; premium unlimited.", isPremiumRequired: true },
-    { name: "Writefull", url: "https://www.writefull.com", desc: "AI writing assistant trained on scientific literature.", category: "writing", longDesc: "**Writefull** suggests word choice, sentence structure, and paraphrases based on real papers. Integrates with Overleaf and Word. Free tier limited; premium unlocks full features.", isPremiumRequired: true },
-    { name: "Trinka AI", url: "https://www.trinka.ai", desc: "Grammar checker specifically for academic and technical writing.", category: "writing", longDesc: "**Trinka** catches discipline‑specific errors and suggests journal‑appropriate language. Free version includes basic checks; premium adds advanced suggestions and plagiarism.", isPremiumRequired: false },
-    { name: "Paperpal", url: "https://paperpal.com", desc: "AI editing assistant for researchers, from Springer Nature.", category: "writing", longDesc: "**Paperpal** integrates with Word and offers language checks, consistency, and journal‑specific style recommendations. Freemium model.", isPremiumRequired: false },
-    { name: "Canva for Research", url: "https://www.canva.com", desc: "Design academic posters, infographics, presentation slides.", category: "presentation", longDesc: "**Canva** has thousands of templates for conference posters, presentation slides, and data visualisations. Free tier is very generous; premium adds assets and team features.", isPremiumRequired: false },
-    { name: "BioRender", url: "https://www.biorender.com", desc: "Scientific illustration and figure creation for life sciences.", category: "presentation", longDesc: "**BioRender** offers thousands of pre‑drawn scientific icons to create publication‑ready figures and schematics. Free plan with watermark; premium removes watermark and adds high‑res export.", isPremiumRequired: true },
-    { name: "Mind the Graph", url: "https://mindthegraph.com", desc: "Infographics and scientific illustrations for papers and presentations.", category: "presentation", longDesc: "**Mind the Graph** provides drag‑and‑drop science illustrations for posters, slides, and graphical abstracts. Free tier limited to 5 downloads.", isPremiumRequired: false },
-    { name: "Google Slides", url: "https://slides.google.com", desc: "Free cloud‑based presentation software – perfect for lab meetings and conferences.", category: "presentation", longDesc: "**Google Slides** allows real‑time collaboration, embedding of charts, and export to PowerPoint or PDF. Free with Google account.", isPremiumRequired: false },
-    { name: "Prezi", url: "https://prezi.com", desc: "Zoomable presentation canvas for dynamic research talks.", category: "presentation", longDesc: "**Prezi** offers non‑linear, zooming presentations that can make research talks more engaging. Free basic plan; premium adds offline access and analytics.", isPremiumRequired: false },
-    { name: "Inkscape", url: "https://inkscape.org", desc: "Free vector graphics editor for scientific figures and diagrams.", category: "presentation", longDesc: "**Inkscape** is a professional vector graphics tool (alternative to Illustrator). Great for editing graphs exported from R or Python and creating publication‑ready figures.", isPremiumRequired: false },
-    { name: "Tableau Public", url: "https://public.tableau.com", desc: "Free data visualisation tool for interactive charts and dashboards.", category: "presentation", longDesc: "**Tableau Public** lets you create stunning interactive visualisations from your data. Workbooks are public; free for personal use.", isPremiumRequired: false },
-    { name: "Miro (Research)", url: "https://miro.com", desc: "Online whiteboard for literature mapping, brainstorming, and team collaboration.", category: "productivity", longDesc: "**Miro** is a digital whiteboard where you can create literature maps, design experiments, and conduct collaborative reviews. Free tier with limited boards.", isPremiumRequired: false },
-    { name: "Notion for Research", url: "https://www.notion.so", desc: "All‑in‑one workspace for notes, databases, and project tracking.", category: "productivity", longDesc: "**Notion** can manage your reading list, experimental notes, to‑do lists, and writing drafts. Use databases to tag and filter papers. Free personal plan.", isPremiumRequired: false },
-    { name: "Trello (Research Projects)", url: "https://trello.com", desc: "Kanban boards to track manuscript status, reviews, and collaborations.", category: "productivity", longDesc: "**Trello** helps organise research tasks: “To Read”, “In Review”, “Writing”. Collaborate with co‑authors and set deadlines. Free up to 10 boards.", isPremiumRequired: false },
-    { name: "Asana", url: "https://asana.com", desc: "Project management for multi‑author papers and grant deadlines.", category: "productivity", longDesc: "**Asana** tracks tasks, subtasks, and dependencies. Useful for large research teams preparing a manuscript or grant proposal. Free for up to 15 users.", isPremiumRequired: false },
-    { name: "ClickUp", url: "https://clickup.com", desc: "All‑in‑one productivity platform with docs, goals, and time tracking.", category: "productivity", longDesc: "**ClickUp** combines tasks, documents, and spreadsheets. Great for managing a research lab or PhD timeline. Free plan includes unlimited tasks.", isPremiumRequired: false },
-    { name: "Zotero + Obsidian", url: "https://obsidian.md", desc: "Obsidian is a knowledge base that works with Zotero for note‑taking.", category: "productivity", longDesc: "**Obsidian** is a markdown note‑taking app that connects notes through backlinks. Combined with the Zotero integration plugin, it becomes a powerful research knowledge management system.", isPremiumRequired: false },
-    { name: "Scrivener", url: "https://www.literatureandlatte.com/scrivener", desc: "Long‑form writing tool for dissertations and books (paid).", category: "writing", longDesc: "**Scrivener** helps you organise research materials, outlines, and drafts in one project. Not free but offers a 30‑day trial. Popular for theses.", isPremiumRequired: true },
-    { name: "Publish or Perish", url: "https://harzing.com/resources/publish-or-perish", desc: "Desktop software for citation analysis using Google Scholar and Scopus.", category: "research", longDesc: "**Publish or Perish** retrieves and analyses academic citations. Computes h‑index, g‑index, and citation metrics. Free and lightweight.", isPremiumRequired: false },
-    { name: "Dimensions", url: "https://www.dimensions.ai", desc: "Linked research grants, publications, patents, and clinical trials.", category: "research", longDesc: "**Dimensions** provides a free version with search across publications, grants, and datasets. Useful for funding landscape analysis.", isPremiumRequired: false },
-    { name: "Lens.org", url: "https://www.lens.org", desc: "Free scholarly search with patent and citation linkage.", category: "research", longDesc: "**Lens.org** searches over 200 million scholarly works and 120 million patents. Integrated citation and patent analysis.", isPremiumRequired: false },
-    { name: "OpenAlex", url: "https://openalex.org", desc: "Free and open catalog of global scholarly metadata.", category: "research", longDesc: "**OpenAlex** indexes over 200 million papers, authors, institutions, and topics. Completely free and has an API for programmatic use.", isPremiumRequired: false }
-  ];
-
-  // Additional tools to reach 100+ 
-  const extraTools = [
-    { name: "Google Dataset Search", url: "https://datasetsearch.research.google.com", desc: "Find datasets across thousands of repositories.", category: "research", longDesc: "**Google Dataset Search** helps researchers discover publicly available datasets for analysis and re‑use.", isPremiumRequired: false },
-    { name: "Figshare", url: "https://figshare.com", desc: "Repository for research outputs – datasets, figures, posters.", category: "research", longDesc: "**Figshare** allows researchers to upload and share all types of research outputs with DOIs. Free for public sharing.", isPremiumRequired: false },
-    { name: "Zenodo", url: "https://zenodo.org", desc: "CERN‑hosted open repository for research data and software.", category: "research", longDesc: "**Zenodo** provides safe, free repository for datasets, software, and preprints. Integrates with GitHub.", isPremiumRequired: false },
-    { name: "OSF (Open Science Framework)", url: "https://osf.io", desc: "Collaborative platform for project management and preregistration.", category: "productivity", longDesc: "**OSF** supports the entire research lifecycle: preregister studies, store data, share materials, and collaborate. Free for researchers.", isPremiumRequired: false },
-    { name: "Paperpile (free tier limited)", url: "https://paperpile.com", desc: "Reference manager inside Google Docs (freemium).", category: "referencing", longDesc: "**Paperpile** seamlessly integrates with Google Docs and Scholar. Free 30‑day trial, then paid.", isPremiumRequired: true },
-    { name: "JabRef", url: "https://www.jabref.org", desc: "Open source BibTeX reference manager.", category: "referencing", longDesc: "**JabRef** is a free desktop reference manager for BibTeX files, ideal for LaTeX users. Supports import from many databases.", isPremiumRequired: false }
-  ];
-
-  let localToolsCollection = [...verifiedResearchTools, ...extraTools];
-  localToolsCollection = localToolsCollection.map(tool => ({
-    ...tool,
-    longDesc: tool.longDesc || `**${tool.name}**\n\n${tool.desc}\n\nThis tool is widely used by researchers worldwide. It offers reliable, free or institutional access to academic resources.`,
-    icon: `https://www.google.com/s2/favicons?domain=${new URL(tool.url).hostname}`,
-    source: 'local'
-  }));
-
-  console.log(`📚 Local research tools loaded: ${localToolsCollection.length}`);
-
-  async function loadAndMergeTools() {
-    try {
-      document.getElementById('toolsGrid').innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading research tools...</div>';
-      let approvedTools = [];
-      try {
-        approvedTools = await apiCall(`/api/tools?page=${PAGE_TYPE}`);
-        console.log(`✅ Loaded ${approvedTools.length} approved tools for ${PAGE_TYPE}`);
-      } catch (error) {
-        console.log('Could not fetch approved tools, using local only:', error);
-        approvedTools = [];
-      }
-      const formattedApprovedTools = approvedTools.map(tool => ({
-        id: tool.id,
-        name: tool.name,
-        url: tool.url,
-        desc: tool.description || 'A community‑submitted tool approved by Sarveik.',
-        longDesc: `**${tool.name}** (Community Approved)\n\n${tool.description || 'A useful tool for researchers. Approved by Sarveik admins.'}`,
-        category: tool.category || 'research',
-        icon: `https://www.google.com/s2/favicons?domain=${getDomainFromUrl(tool.url)}`,
-        source: 'approved',
-        approved: true,
-        created_at: tool.created_at,
-        isPremiumRequired: tool.is_premium === 1
-      }));
-      const allToolNames = new Set();
-      const mergedTools = [];
-      for (const tool of localToolsCollection) {
-        if (!allToolNames.has(tool.name.toLowerCase())) {
-          allToolNames.add(tool.name.toLowerCase());
-          mergedTools.push(tool);
-        }
-      }
-      for (const tool of formattedApprovedTools) {
-        if (!allToolNames.has(tool.name.toLowerCase())) {
-          allToolNames.add(tool.name.toLowerCase());
-          mergedTools.push(tool);
-        }
-      }
-      allTools = mergedTools;
-      const premiumCount = allTools.filter(t => t.isPremiumRequired).length;
-     document.getElementById('statsBadge').innerHTML = `<i class="fas fa-rocket"></i> ✨ Welcome to Sarveik – Enjoy your Researcher Tools! ✨`;  
-      buildFilterButtons();
-      renderTools();
-      if (!userPremiumStatus) showPremiumRecommendations();
-      return true;
-    } catch (error) {
-      console.error('Error loading tools:', error);
-      document.getElementById('toolsGrid').innerHTML = '<div class="loading">❌ Failed to load tools. Please make sure you are logged in.</div>';
-      showToast('Failed to load research tools from server', 'error');
-      return false;
-    }
-  }
-
-  function getDomainFromUrl(url) {
-    try { return new URL(url).hostname; } catch { return 'example.com'; }
-  }
-
-  async function fetchPremiumStatus() {
-    try {
-      const res = await fetch('/api/user/premium-status', { credentials: 'include' });
-      if (res.ok) {
-        const data = await res.json();
-        userPremiumStatus = data.isPremium === true;
-        document.getElementById('premiumBanner').style.display = userPremiumStatus ? 'none' : 'flex';
-        document.getElementById('premiumRecommendations').style.display = userPremiumStatus ? 'none' : 'block';
-      } else {
-        userPremiumStatus = false;
-        document.getElementById('premiumBanner').style.display = 'flex';
-        document.getElementById('premiumRecommendations').style.display = 'block';
-      }
-    } catch (err) {
-      userPremiumStatus = false;
-      document.getElementById('premiumBanner').style.display = 'flex';
-      document.getElementById('premiumRecommendations').style.display = 'block';
-    }
-  }
-
-  function showPremiumRecommendations() {
-    const premiumTools = allTools.filter(t => t.isPremiumRequired).slice(0, 6);
-    const container = document.getElementById('recommendGrid');
-    if (!container) return;
-    if (premiumTools.length === 0) { container.innerHTML = '<p>No premium tools available yet.</p>'; return; }
-    container.innerHTML = premiumTools.map(tool => `
-      <div class="recommend-item">
-        <img src="${tool.icon}" alt="${tool.name}" onerror="this.src='https://via.placeholder.com/40'">
-        <div class="name">${escapeHtml(tool.name)}</div>
-        <button onclick="window.location.href='profile.html?tab=premium'">Unlock</button>
-      </div>
-    `).join('');
-  }
-
-  async function submitTool() {
-    const name = document.getElementById('newName').value.trim();
-    const url = document.getElementById('newUrl').value.trim();
-    const description = document.getElementById('newDesc').value.trim();
-    const category = document.getElementById('newCategory').value;
-    if (!name || !url || !description) { showToast('Please fill all fields', 'error'); return; }
-    try { new URL(url); } catch { showToast('Please enter a valid URL (including https://)', 'error'); return; }
-    const submitBtn = document.getElementById('submitToolBtn');
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
-    try {
-      await apiCall('/api/tools/submit', { method: 'POST', body: JSON.stringify({ name, url, description, category, pageType: PAGE_TYPE }) });
-      showToast('✅ Tool submitted! Admin will review it shortly.', 'success');
-      document.getElementById('newName').value = '';
-      document.getElementById('newUrl').value = '';
-      document.getElementById('newDesc').value = '';
-      setTimeout(() => loadAndMergeTools(), 2000);
-    } catch (error) {
-      showToast(error.message || 'Submission failed', 'error');
-    } finally {
-      submitBtn.disabled = false;
-      submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit for Review';
-    }
-  }
-
-  // ---- localStorage helpers (same as student version) ----
-  if (!localStorage.getItem('popularity')) localStorage.setItem('popularity', '{}');
-  if (!localStorage.getItem('ratings')) localStorage.setItem('ratings', '{}');
-  if (!localStorage.getItem('favorites')) localStorage.setItem('favorites', '[]');
-
-  function getPopularity(name) { return JSON.parse(localStorage.getItem('popularity'))[name] || 0; }
-  function incrementPopularity(name) { let pop = JSON.parse(localStorage.getItem('popularity')); pop[name] = (pop[name] || 0) + 1; localStorage.setItem('popularity', JSON.stringify(pop)); }
-  function getAverageRating(name) { let ratings = JSON.parse(localStorage.getItem('ratings'))[name]; if (!ratings || ratings.length === 0) return 0; return ratings.reduce((a,b)=>a+b,0) / ratings.length; }
-  function addRating(name, stars) { let ratings = JSON.parse(localStorage.getItem('ratings')); if (!ratings[name]) ratings[name] = []; ratings[name].push(stars); localStorage.setItem('ratings', JSON.stringify(ratings)); }
-  function isFavorite(name) { return JSON.parse(localStorage.getItem('favorites')).includes(name); }
-  function toggleFavorite(name) { let favs = JSON.parse(localStorage.getItem('favorites')); if (favs.includes(name)) { favs = favs.filter(f => f !== name); } else { favs.push(name); } localStorage.setItem('favorites', JSON.stringify(favs)); renderTools(); renderFavorites(); }
-
-  function updateFilteredTools() {
-    let toolsToFilter = [...allTools];
-    if (currentFilter === 'premium') toolsToFilter = toolsToFilter.filter(t => t.isPremiumRequired === true);
-    else if (currentFilter !== 'all') toolsToFilter = toolsToFilter.filter(tool => tool.category === currentFilter);
-    if (currentSearch) {
-      const searchLower = currentSearch.toLowerCase();
-      toolsToFilter = toolsToFilter.filter(tool => tool.name.toLowerCase().includes(searchLower) || (tool.desc || '').toLowerCase().includes(searchLower));
-    }
-    filteredTools = toolsToFilter;
-    if (currentSort === 'name') filteredTools.sort((a,b) => a.name.localeCompare(b.name));
-    else if (currentSort === 'popularity') filteredTools.sort((a,b) => getPopularity(b.name) - getPopularity(a.name));
-  }
-
-  function renderPagination() {
-    const totalPages = Math.ceil(filteredTools.length / itemsPerPage);
-    const paginationDiv = document.getElementById('paginationControls');
-    paginationDiv.innerHTML = '';
-    if (totalPages <= 1) return;
-    for (let i = 1; i <= totalPages; i++) {
-      const btn = document.createElement('button');
-      btn.textContent = i;
-      if (i === currentPage) btn.classList.add('active');
-      btn.addEventListener('click', () => { currentPage = i; renderTools(); });
-      paginationDiv.appendChild(btn);
-    }
-  }
-
-  function renderTools() {
-    updateFilteredTools();
-    const start = (currentPage - 1) * itemsPerPage;
-    let pageTools = filteredTools.slice(start, start + itemsPerPage);
-    if (!userPremiumStatus && currentFilter !== 'premium') pageTools = pageTools.filter(tool => !tool.isPremiumRequired);
-    const toolsGrid = document.getElementById('toolsGrid');
-    if (pageTools.length === 0) {
-      toolsGrid.innerHTML = `<div class="loading">🔒 No tools match your criteria. ${!userPremiumStatus && filteredTools.some(t => t.isPremiumRequired) ? ' Some tools require premium access. <a href="profile.html?tab=premium" style="color:#f6d365;">Upgrade</a> to unlock.' : ''}</div>`;
-      return;
-    }
-    toolsGrid.innerHTML = pageTools.map(tool => {
-      const pop = getPopularity(tool.name);
-      const avgRating = getAverageRating(tool.name);
-      const fullStars = Math.floor(avgRating);
-      const stars = '★'.repeat(fullStars) + (avgRating % 1 >= 0.5 ? '½' : '');
-      const favClass = isFavorite(tool.name) ? 'favorited' : '';
-      const approvedBadge = tool.source === 'approved' ? '<span class="approved-badge"><i class="fas fa-check-circle"></i> Approved</span>' : '';
-      let newBadge = '';
-      if (tool.source === 'approved' && tool.created_at) {
-        const diffDays = (new Date() - new Date(tool.created_at)) / (1000*60*60*24);
-        if (diffDays <= NEW_DAYS_THRESHOLD) newBadge = '<span class="time-new-badge">🔥 NEW</span>';
-      }
-      const premiumTag = tool.isPremiumRequired ? '<span class="premium-tag">⭐ PREMIUM</span>' : '';
-      const isPremiumLocked = tool.isPremiumRequired && !userPremiumStatus;
-      const lockOverlay = isPremiumLocked ? `<div class="premium-lock-icon"><i class="fas fa-lock"></i> Premium Tool <button onclick="window.location.href='profile.html?tab=premium'">Upgrade</button></div>` : '';
-      const lockClass = isPremiumLocked ? 'premium-locked' : '';
-      return `
-        <div class="tool-card ${lockClass}" data-name="${escapeHtml(tool.name)}" data-url="${tool.url}" data-desc="${escapeHtml(tool.longDesc)}" data-icon="${tool.icon}" data-premium="${tool.isPremiumRequired}">
-          ${approvedBadge} ${newBadge} ${premiumTag}
-          <span class="fav-icon ${favClass}" data-fav="${escapeHtml(tool.name)}">❤️</span>
-          <img src="${tool.icon}" alt="${escapeHtml(tool.name)}" loading="lazy" onerror="this.src='https://via.placeholder.com/48'">
-          <h3>${escapeHtml(tool.name)}</h3>
-          <p>${escapeHtml(tool.desc)}</p>
-          <div class="meta"><span class="rating">${stars || '☆☆☆☆☆'}</span><span class="popularity">🔥 ${pop}</span></div>
-          <button class="btn details-btn" ${isPremiumLocked ? 'disabled style="opacity:0.6;"' : ''}>Details</button>
-          ${lockOverlay}
+        <div style="text-align: center;">
+            <div class="stats-badge" id="statsBadge">✨ Welcome to Sarveik – Enjoy your Researcher Tools! ✨</div>
         </div>
-      `;
-    }).join('');
-    document.querySelectorAll('.fav-icon').forEach(icon => { icon.addEventListener('click', (e) => { e.stopPropagation(); toggleFavorite(icon.dataset.fav); }); });
-    document.querySelectorAll('.details-btn:not([disabled])').forEach(btn => { btn.addEventListener('click', (e) => { const card = e.target.closest('.tool-card'); openModal(card.dataset.name, card.dataset.url, card.dataset.desc, card.dataset.icon); }); });
-    renderPagination();
-  }
 
-  function renderFavorites() {
-    const favs = JSON.parse(localStorage.getItem('favorites'));
-    let favTools = allTools.filter(t => favs.includes(t.name));
-    if (!userPremiumStatus) favTools = favTools.filter(t => !t.isPremiumRequired);
-    const favoritesGrid = document.getElementById('favoritesGrid');
-    if (favTools.length === 0) { favoritesGrid.innerHTML = '<div class="loading">No favorite tools yet. Click the heart icon on any tool to add it!</div>'; return; }
-    favoritesGrid.innerHTML = favTools.map(tool => {
-      const pop = getPopularity(tool.name);
-      const avgRating = getAverageRating(tool.name);
-      const fullStars = Math.floor(avgRating);
-      const stars = '★'.repeat(fullStars) + (avgRating % 1 >= 0.5 ? '½' : '');
-      const isPremiumLocked = tool.isPremiumRequired && !userPremiumStatus;
-      const lockOverlay = isPremiumLocked ? `<div class="premium-lock-icon"><i class="fas fa-lock"></i> Premium Tool</div>` : '';
-      return `
-        <div class="tool-card ${isPremiumLocked ? 'premium-locked' : ''}" data-name="${escapeHtml(tool.name)}" data-url="${tool.url}" data-desc="${escapeHtml(tool.longDesc)}" data-icon="${tool.icon}">
-          <img src="${tool.icon}" alt="${escapeHtml(tool.name)}" loading="lazy" onerror="this.src='https://via.placeholder.com/48'">
-          <h3>${escapeHtml(tool.name)}</h3>
-          <p>${escapeHtml(tool.desc)}</p>
-          <div class="meta"><span class="rating">${stars || '☆☆☆☆☆'}</span><span class="popularity">🔥 ${pop}</span></div>
-          <button class="btn details-btn" ${isPremiumLocked ? 'disabled' : ''}>Details</button>
-          ${lockOverlay}
+        <div class="controls">
+            <div class="search-box"><input type="text" id="searchInput" placeholder="Search tools..." /></div>
+            <div class="filter-buttons" id="filterContainer"></div>
+            <div class="sort-select"><select id="sortSelect"><option value="name">Sort by Name</option><option value="popularity">Sort by Popularity</option></select></div>
+            <div class="theme-toggle"><button id="themeToggle">🌙 Dark</button></div>
+            <div class="favorites-link"><a href="#" id="showFavorites">❤️ Favorites</a></div>
+            <div><button id="refreshToolsBtn" class="refresh-btn"><i class="fas fa-sync-alt"></i> Refresh</button></div>
         </div>
-      `;
-    }).join('');
-    favoritesGrid.querySelectorAll('.details-btn:not([disabled])').forEach(btn => { btn.addEventListener('click', (e) => { const card = e.target.closest('.tool-card'); openModal(card.dataset.name, card.dataset.url, card.dataset.desc, card.dataset.icon); }); });
-  }
+        <div class="tools-grid" id="toolsGrid"><div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading tools...</div></div>
+        <div class="pagination" id="paginationControls"></div>
+        <div id="favoritesPage"><h2>❤️ Your Favorite Research Tools</h2><div class="tools-grid" id="favoritesGrid"></div><button class="back-btn" id="hideFavorites">Back to All Tools</button></div>
+        <div id="premiumBanner" class="premium-banner" style="display: none;">
+            <div class="text"><i class="fas fa-crown"></i> <strong>Unlock Premium Research Tools!</strong> Get advanced AI literature mapping, citation analytics, and full‑text access.</div>
+            <a href="profile.html?tab=premium" class="upgrade-btn"><i class="fas fa-gem"></i> Upgrade Now</a>
+        </div>
+        <div id="premiumRecommendations" class="premium-recommendations" style="display: none;">
+            <h3><i class="fas fa-star"></i> Recommended Premium Tools for Researchers</h3>
+            <div class="recommend-grid" id="recommendGrid"></div>
+        </div>
 
-  function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;'); }
+        <div class="submit-section">
+            <h3><i class="fas fa-plus-circle"></i> Suggest a Research Tool</h3>
+            <p style="margin-bottom: 15px; font-size: 0.85rem;">Submit a tool for admin review. If approved, you'll earn <strong style="color: #f6d365;">25 credits</strong> and it will appear here!</p>
+            <input type="text" id="newName" placeholder="Tool name *" />
+            <input type="text" id="newUrl" placeholder="Website URL (https://...) *" />
+            <textarea id="newDesc" placeholder="Short description *" rows="2"></textarea>
+            <select id="newCategory">
+                <option value="research">📖 Literature Search</option>
+                <option value="ai">🤖 AI Research Assistants</option>
+                <option value="writing">✍️ Paper Writing</option>
+                <option value="referencing">📑 Reference Managers</option>
+                <option value="presentation">📊 Presentation & Visuals</option>
+                <option value="productivity">⚡ Productivity for Researchers</option>
+                <option value="textdata">📝 Text Data Research</option>
+                <option value="imagedata">🖼️ Image Data Research</option>
+                <option value="accuracy">✅ Research Accuracy & Verification</option>
+            </select>
+            <button id="submitToolBtn"><i class="fas fa-paper-plane"></i> Submit for Review</button>
+            <p style="margin-top: 10px; font-size: 0.75rem; opacity: 0.7;">Tools are reviewed by admins. You'll receive email notification when approved/rejected.</p>
+        </div>
 
-  function openModal(name, url, longDesc, icon) {
-    const tool = allTools.find(t => t.name === name);
-    if (tool?.isPremiumRequired && !userPremiumStatus) { showToast('This tool requires Premium Research Access. Please upgrade.', 'error'); return; }
-    incrementPopularity(name);
-    const category = tool?.category || 'research';
-    document.getElementById('modalTitle').textContent = name;
-    document.getElementById('modalDesc').innerHTML = longDesc.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
-    document.getElementById('modalIcon').src = icon;
-    document.getElementById('modalVisitBtn').href = url;
-    document.getElementById('howToUseContent').innerHTML = generateHowToUse(name, category, url);
-    const avgRating = getAverageRating(name);
-    const modalRatingDiv = document.getElementById('modalRating');
-    modalRatingDiv.innerHTML = 'Rate this tool: ';
-    for (let i = 1; i <= 5; i++) {
-      const star = document.createElement('span');
-      star.className = `star ${i <= Math.round(avgRating) ? 'selected' : ''}`;
-      star.textContent = '★';
-      star.dataset.value = i;
-      star.addEventListener('click', (e) => { addRating(name, parseInt(e.target.dataset.value)); openModal(name, url, longDesc, icon); renderTools(); });
-      modalRatingDiv.appendChild(star);
-    }
-    const similar = allTools.filter(t => t.category === category && t.name !== name && (!t.isPremiumRequired || userPremiumStatus)).slice(0,5);
-    const similarDiv = document.getElementById('similarTools');
-    similarDiv.innerHTML = similar.map(t => `<span class="similar-tool-item" data-name="${escapeHtml(t.name)}">${escapeHtml(t.name)}</span>`).join('');
-    document.querySelectorAll('.similar-tool-item').forEach(el => { el.addEventListener('click', () => { const t = allTools.find(tt => tt.name === el.dataset.name); if(t) openModal(t.name, t.url, t.longDesc, t.icon); }); });
-    const shareText = encodeURIComponent(`Check out ${name} on Sarveik Researcher Tools!`);
-    const shareUrl = encodeURIComponent(url);
-    document.getElementById('socialShare').innerHTML = `<a href="https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}" target="_blank"><i class="fab fa-twitter"></i> Twitter</a><a href="https://www.facebook.com/sharer/sharer.php?u=${shareUrl}" target="_blank"><i class="fab fa-facebook"></i> Facebook</a><a href="https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}" target="_blank"><i class="fab fa-linkedin"></i> LinkedIn</a>`;
-    document.getElementById('toolModal').classList.add('active');
-  }
+        <div class="navigation">
+            <a href="main.html" class="nav-btn"><i class="fas fa-home"></i> Back to Tools</a>
+        </div>
+        <button id="backToTop" title="Back to top">↑</button>
+    </div>
 
-  function buildFilterButtons() {
-    const categories = ['all', ...new Set(allTools.map(t => t.category))];
-    categories.push('premium');
-    const filterContainer = document.getElementById('filterContainer');
-    filterContainer.innerHTML = categories.map(cat => `<button class="filter-btn ${cat === currentFilter ? 'active' : ''}" data-filter="${cat}">${cat.charAt(0).toUpperCase() + cat.slice(1)}</button>`).join('');
-    document.querySelectorAll('.filter-btn').forEach(btn => { btn.addEventListener('click', () => { document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); currentFilter = btn.dataset.filter; currentPage = 1; renderTools(); }); });
-  }
+    <div class="modal" id="toolModal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div class="modal-header">
+                <img src="" alt="" id="modalIcon" />
+                <h2 id="modalTitle"></h2>
+            </div>
+            <p id="modalDesc"></p>
+            <div class="how-to-use-section" id="howToUseContainer">
+                <h4><i class="fas fa-compass"></i> How to Use This Tool</h4>
+                <div id="howToUseContent">Loading guide...</div>
+            </div>
+            <div class="modal-rating" id="modalRating"></div>
+            <div class="similar-tools" id="similarTools"></div>
+            <div class="social-share" id="socialShare"></div>
+            <a href="#" id="modalVisitBtn" class="visit-btn" target="_blank">Visit Website</a>
+        </div>
+    </div>
 
-  async function checkSession() {
-    try {
-      const session = await apiCall('/check-session');
-      if (!session.loggedIn) { window.location.href = '/'; return false; }
-      return true;
-    } catch (error) { window.location.href = '/'; return false; }
-  }
+    <div class="disclaimer">
+        <p><strong>Disclaimer:</strong> Sarveik is a directory of third‑party tools. We do not host any content. All trademarks, logos, and brand names are the property of their respective owners. If you believe any link infringes your rights, please <a href="dmca.html" style="color: inherit; text-decoration: underline;">contact us</a> for removal.</p>
+    </div>
 
-  async function init() {
-    if (!(await checkSession())) return;
-    await fetchPremiumStatus();
-    await loadAndMergeTools();
-    try { await fetch('/api/track-usage', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tool_name: 'Researcher Tools Hub', tool_category: 'researcher' }), credentials: 'include' }); } catch(e) {}
-  }
+    <script>
+        // ========== PAGE TYPE IDENTIFIER ==========
+        const PAGE_TYPE = 'researcher';
+        const NEW_DAYS_THRESHOLD = 7;
 
-  document.getElementById('searchInput').addEventListener('input', (e) => { currentSearch = e.target.value; currentPage = 1; renderTools(); });
-  document.getElementById('sortSelect').addEventListener('change', (e) => { currentSort = e.target.value; renderTools(); });
-  document.getElementById('refreshToolsBtn').addEventListener('click', () => { loadAndMergeTools(); showToast('Refreshing research tools...', 'info'); });
-  document.getElementById('themeToggle').addEventListener('click', () => { document.body.classList.toggle('light-mode'); document.getElementById('themeToggle').textContent = document.body.classList.contains('light-mode') ? '☀️ Light' : '🌙 Dark'; localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark'); });
-  if (localStorage.getItem('theme') === 'light') { document.body.classList.add('light-mode'); document.getElementById('themeToggle').textContent = '☀️ Light'; }
-  document.getElementById('showFavorites').addEventListener('click', (e) => { e.preventDefault(); document.getElementById('toolsGrid').style.display = 'none'; document.getElementById('favoritesPage').style.display = 'block'; renderFavorites(); });
-  document.getElementById('hideFavorites').addEventListener('click', () => { document.getElementById('favoritesPage').style.display = 'none'; document.getElementById('toolsGrid').style.display = 'flex'; renderTools(); });
-  document.getElementById('submitToolBtn').addEventListener('click', submitTool);
-  document.querySelector('.close').addEventListener('click', () => document.getElementById('toolModal').classList.remove('active'));
-  window.addEventListener('click', (e) => { if (e.target === document.getElementById('toolModal')) document.getElementById('toolModal').classList.remove('active'); });
-  window.addEventListener('scroll', () => { const btn = document.getElementById('backToTop'); if(btn) btn.classList.toggle('visible', window.scrollY > 300); });
-  document.getElementById('backToTop').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+        let allTools = [];
+        let currentFilter = 'all',
+            currentSearch = '',
+            currentSort = 'name';
+        let currentPage = 1;
+        const itemsPerPage = 20;
+        let filteredTools = [];
+        let userPremiumStatus = false;
 
-  init();
-</script>
+        async function apiCall(url, options = {}) {
+            const response = await fetch(url, {
+                ...options,
+                headers: { 'Content-Type': 'application/json', ...options.headers },
+                credentials: 'include'
+            });
+            if (!response.ok) {
+                const text = await response.text();
+                throw new Error(text);
+            }
+            const contentType = response.headers.get('content-type');
+            return contentType?.includes('application/json') ? response.json() : response.text();
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i> ${message}`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        function generateHowToUse(toolName, category, toolUrl) {
+            const nameLower = toolName.toLowerCase();
+            if (nameLower.includes('zotero')) return `<ol><li>Download Zotero desktop app and install browser connector.</li><li>Click the Zotero icon in your browser to save articles, books, and webpages.</li><li>Organize items into collections and add tags.</li><li>Use the Word/Google Docs plugin to insert citations and generate bibliographies in any style.</li></ol><div class="pro-tip">💡 Enable “Better BibTeX” add‑on for advanced cite keys.</div>`;
+            if (nameLower.includes('elicit')) return `<ol><li>Go to Elicit.org and sign up for free.</li><li>Ask a research question (e.g., "effect of sleep on memory consolidation").</li><li>Elicit returns relevant papers with summaries and key data tables.</li><li>Filter by year, study type, and extract claims directly.</li></ol><div class="pro-tip">🔍 Use the “Tasks” feature to automatically extract interventions, outcomes, and sample sizes.</div>`;
+            if (nameLower.includes('overleaf')) return `<ol><li>Create a free Overleaf account.</li><li>Start from a template (Nature, IEEE, ACM) or blank project.</li><li>Write your paper using LaTeX or rich text mode.</li><li>Invite co‑authors to edit in real time and track changes.</li></ol><div class="pro-tip">📌 Link your ORCID and reference manager (Zotero/Mendeley) for seamless citation importing.</div>`;
+            if (nameLower.includes('scite')) return `<ol><li>Search for a paper title or DOI on Scite.ai.</li><li>View the “Smart Citation” report showing supporting, contrasting, or mentioning citations.</li><li>Explore the citation context to see how others used the work.</li><li>Use the assistant to ask “what does the literature say about X?”</li></ol><div class="pro-tip">📈 The premium version offers dashboards for your own publications.</div>`;
+            if (category === 'research') return `<ol><li>Visit ${toolName} and enter keywords or DOI.</li><li>Refine by date, peer‑review, or open access.</li><li>Export citations to reference manager (BibTeX/RIS).</li><li>Read full text if available or request via interlibrary loan.</li></ol><div class="pro-tip">✅ Use boolean operators (AND, OR, NOT) for precise literature searches.</div>`;
+            if (category === 'ai') return `<ol><li>Create an account (free tier usually available).</li><li>Paste your research question, abstract, or full‑text PDF.</li><li>Ask the AI to summarise, find gaps, or suggest methodology.</li><li>Always verify AI‑generated claims with primary sources.</li></ol><div class="pro-tip">⚙️ Many AI tools allow bulk upload of papers – great for systematic reviews.</div>`;
+            if (category === 'writing') return `<ol><li>Open the tool and paste your manuscript draft.</li><li>Run grammar, style, and readability checks.</li><li>Use the academic phrasebank or paraphrasing tool for clearer wording.</li><li>Generate citations automatically with the integrated reference manager.</li></ol><div class="pro-tip">📖 Some tools (like Writefull) check your sentences against real published corpora.</div>`;
+            if (category === 'referencing') return `<ol><li>Install the desktop/web extension.</li><li>Import references from databases, PDFs, or by ISBN/DOI.</li><li>Organize into folders, annotate PDFs, and sync across devices.</li><li>Insert in‑text citations and generate formatted bibliographies in MS Word/LibreOffice/Google Docs.</li></ol><div class="pro-tip">🔄 Collaborate with co‑authors using shared reference groups.</div>`;
+            if (category === 'presentation') return `<ol><li>Sign up for free or premium plan.</li><li>Choose a template (academic, conference, poster).</li><li>Add your research figures, tables, and bullet points.</li><li>Export as PDF, PowerPoint, or share online link.</li></ol><div class="pro-tip">🎨 Use tools like BioRender for scientific illustrations and export directly to slides.</div>`;
+            if (category === 'textdata') return `<ol><li>Access ${toolName} and create an account if needed.</li><li>Browse or search for text datasets relevant to your research domain.</li><li>Download data in CSV, JSON, XML, or plain text format.</li><li>Use text analysis tools (NLP, sentiment, topic modeling) to extract insights.</li></ol><div class="pro-tip">📊 Many text data repositories include APIs for programmatic access – check the documentation.</div>`;
+            if (category === 'imagedata') return `<ol><li>Navigate to ${toolName} and review the available image collections.</li><li>Filter by modality (microscopy, satellite, medical, natural).</li><li>Download images in standard formats (TIFF, PNG, JPEG) with metadata.</li><li>Use image analysis software (ImageJ, OpenCV, CellProfiler) for quantitative analysis.</li></ol><div class="pro-tip">🔬 Always check the license and citation requirements for image datasets used in publications.</div>`;
+            if (category === 'accuracy') return `<ol><li>Upload or input your research paper text, data, or figures.</li><li>Run the verification/accuracy check – plagiarism, statistical consistency, or fact‑checking.</li><li>Review the detailed report highlighting potential issues.</li><li>Use the feedback to revise your paper before submission.</li></ol><div class="pro-tip">✅ Cross‑validate findings with multiple accuracy tools for robust verification.</div>`;
+            return `<ol><li>Navigate to ${toolUrl}.</li><li>Explore the help section or tutorials for specific workflows.</li><li>Integrate with your existing research toolkit (reference manager, word processor).</li><li>Bookmark for future research projects.</li></ol><div class="pro-tip">🔗 Check if your university provides institutional access for premium features.</div>`;
+        }
+
+        // ========== 200+ VERIFIED RESEARCH TOOLS (all working URLs) ==========
+        const verifiedResearchTools = [
+            { name: "Google Scholar", url: "https://scholar.google.com", desc: "Free academic search engine covering articles, theses, books, and court opinions.", category: "research",
+            longDesc: "**Google Scholar** indexes scholarly literature across disciplines. It provides citation counts, related articles, and links to PDFs. Essential for any literature review. Create a library and set up email alerts for new papers.", isPremiumRequired: false },
+            { name: "Scopus", url: "https://www.scopus.com", desc: "Largest abstract and citation database of peer-reviewed literature (institutional access often required).", category: "research",
+            longDesc: "**Scopus** by Elsevier covers over 25,000 journals, conference proceedings, and books. It offers powerful analytics like author metrics, citation overview, and h‑index tracking.", isPremiumRequired: true },
+            { name: "Web of Science", url: "https://www.webofscience.com", desc: "Premier citation database for scientific and scholarly research.", category: "research",
+            longDesc: "**Web of Science** provides access to multiple databases, citation analysis, and journal impact factors. Essential for systematic reviews and grant applications.", isPremiumRequired: true },
+            { name: "PubMed", url: "https://pubmed.ncbi.nlm.nih.gov", desc: "Free database of biomedical and life sciences literature (30M+ citations).", category: "research",
+            longDesc: "**PubMed** comprises over 30 million citations from MEDLINE, life science journals, and online books. Includes links to full‑text articles when available. Essential for medical and biological researchers.", isPremiumRequired: false },
+            { name: "arXiv", url: "https://arxiv.org", desc: "Preprint server for physics, mathematics, computer science, and related fields.", category: "research",
+            longDesc: "**arXiv** hosts over 2 million open‑access preprints. Researchers upload papers before peer review. Great for staying current with cutting‑edge research.", isPremiumRequired: false },
+            { name: "bioRxiv", url: "https://www.biorxiv.org", desc: "Preprint server for biology, from Cold Spring Harbor Laboratory.", category: "research",
+            longDesc: "**bioRxiv** distributes unpublished preprints in life sciences. Rapidly growing repository for genetics, neuroscience, and molecular biology.", isPremiumRequired: false },
+            { name: "medRxiv", url: "https://www.medrxiv.org", desc: "Preprint server for health sciences and clinical research.", category: "research",
+            longDesc: "**medRxiv** contains preprints of medical research, from epidemiology to clinical trials. All articles are freely accessible.", isPremiumRequired: false },
+            { name: "JSTOR", url: "https://www.jstor.org", desc: "Digital library of academic journals, books, and primary sources in humanities/social sciences.", category: "research",
+            longDesc: "**JSTOR** offers digitized back issues of journals, primary sources, and books. Many institutions provide access; individual free account gives limited reading.", isPremiumRequired: false },
+            { name: "ScienceDirect", url: "https://www.sciencedirect.com", desc: "Elsevier's platform for scientific, technical, and medical research.", category: "research",
+            longDesc: "**ScienceDirect** contains over 18 million articles and book chapters. Full‑text often requires subscription, but abstracts are free.", isPremiumRequired: true },
+            { name: "SpringerLink", url: "https://link.springer.com", desc: "Access to Springer journals, books, and conference proceedings.", category: "research",
+            longDesc: "**SpringerLink** provides millions of scientific documents across all disciplines. Many articles are open access.", isPremiumRequired: false },
+            { name: "Wiley Online Library", url: "https://onlinelibrary.wiley.com", desc: "Multidisciplinary collection of journals, books, and reference works.", category: "research",
+            longDesc: "**Wiley Online Library** hosts over 1,600 journals and many e‑books. Covers physical sciences, engineering, life sciences, health, social sciences, and humanities.", isPremiumRequired: true },
+            { name: "Taylor & Francis Online", url: "https://www.tandfonline.com", desc: "Access to thousands of peer‑reviewed journals and eBooks.", category: "research",
+            longDesc: "**Taylor & Francis** publishes over 2,700 journals and 7,000 new books each year. Strong in social sciences, humanities, and STM subjects.", isPremiumRequired: true },
+            { name: "SAGE Journals", url: "https://journals.sagepub.com", desc: "SAGE's collection of over 1,000 journals in business, humanities, and sciences.", category: "research",
+            longDesc: "**SAGE Journals** covers humanities, social science, science, technology, and medicine. Many articles available open access.", isPremiumRequired: false },
+            { name: "IEEE Xplore", url: "https://ieeexplore.ieee.org", desc: "Technical literature in electrical engineering, computer science, and electronics.", category: "research",
+            longDesc: "**IEEE Xplore** provides access to over 5 million documents including journals, conferences, and standards. Essential for engineering and CS researchers.", isPremiumRequired: true },
+            { name: "ACM Digital Library", url: "https://dl.acm.org", desc: "Computer science and information technology literature.", category: "research",
+            longDesc: "**ACM Digital Library** contains full‑text articles from journals, conference proceedings, and magazines published by the Association for Computing Machinery.", isPremiumRequired: true },
+            { name: "DOAJ", url: "https://doaj.org", desc: "Directory of Open Access Journals – free, full‑text, quality‑controlled scientific journals.", category: "research",
+            longDesc: "**DOAJ** indexes over 18,000 peer‑reviewed open access journals across all subjects. No paywalls – excellent for unrestricted literature access.", isPremiumRequired: false },
+            { name: "CORE", url: "https://core.ac.uk", desc: "Aggregator of open access research papers from repositories worldwide.", category: "research",
+            longDesc: "**CORE** provides access to millions of open access articles and metadata. It harvests from institutional and subject repositories.", isPremiumRequired: false },
+            { name: "Unpaywall", url: "https://unpaywall.org", desc: "Browser extension that finds legal open access versions of paywalled papers.", category: "research",
+            longDesc: "**Unpaywall** installs as a browser extension. When you land on a paywalled article, it shows a green tab if a free PDF is available in a repository. Highly recommended.", isPremiumRequired: false },
+            { name: "Open Access Button", url: "https://openaccessbutton.org", desc: "Request full‑text research papers from authors and repositories.", category: "research",
+            longDesc: "**Open Access Button** helps you get free access to research papers by finding copies in open repositories or requesting directly from authors.", isPremiumRequired: false },
+            { name: "Semantic Scholar", url: "https://www.semanticscholar.org", desc: "AI‑powered research search engine with contextual citation summaries.", category: "ai",
+            longDesc: "**Semantic Scholar** uses machine learning to extract key information from papers, showing influential citations, figures, and topic summaries. Free and very powerful.", isPremiumRequired: false },
+            { name: "Elicit", url: "https://elicit.org", desc: "AI research assistant that finds, summarises, and extracts data from papers.", category: "ai",
+            longDesc: "**Elicit** uses language models to answer research questions, summarise abstracts, and extract structured data (e.g., sample size, interventions) from a set of papers. Free tier available.", isPremiumRequired: false },
+            { name: "Scite.ai", url: "https://scite.ai", desc: "Smart citations that show whether a paper supports or contrasts a claim.", category: "ai",
+            longDesc: "**Scite** analyses citation context: supporting, mentioning, or contrasting. Helps evaluate the reliability of cited statements. Free version has query limits; premium unlocks full reports.", isPremiumRequired: true },
+            { name: "Connected Papers", url: "https://www.connectedpapers.com", desc: "Visual graph of related papers based on co‑citations and bibliographic coupling.", category: "ai",
+            longDesc: "**Connected Papers** creates an interactive graph of papers related to a seed paper. Great for finding seminal works and recent developments. Free with limited graphs per month.", isPremiumRequired: false },
+            { name: "Litmaps", url: "https://www.litmaps.com", desc: "Literature mapping and citation discovery tool (freemium).", category: "ai",
+            longDesc: "**Litmaps** builds interactive maps of academic literature to visualise citation connections, track research landscapes, and identify gaps. Free tier allows basic maps.", isPremiumRequired: false },
+            { name: "ResearchRabbit", url: "https://www.researchrabbit.ai", desc: "AI‑powered discovery and visualisation of research papers.", category: "ai",
+            longDesc: "**ResearchRabbit** creates collections and suggests relevant papers based on your library. Provides timeline and network visualisations. Completely free for academics.", isPremiumRequired: false },
+            { name: "Consensus", url: "https://consensus.app", desc: "AI search engine that answers research questions from scientific papers.", category: "ai",
+            longDesc: "**Consensus** uses large language models to answer yes/no questions with evidence from peer‑reviewed papers. Shows study summaries and links. Free tier available.", isPremiumRequired: false },
+            { name: "Perplexity AI", url: "https://www.perplexity.ai", desc: "AI search with citations – useful for rapid literature fact‑checking.", category: "ai",
+            longDesc: "**Perplexity** combines AI conversation with web search, providing cited answers. Good for exploring new topics before diving into academic databases.", isPremiumRequired: false },
+            { name: "ChatGPT (Research use)", url: "https://chat.openai.com", desc: "AI language model for brainstorming, summarising, and drafting.", category: "ai",
+            longDesc: "**ChatGPT** can help researchers summarise papers, reformat references, debug code, and draft abstracts. Free version uses GPT‑3.5; GPT‑4 requires premium.", isPremiumRequired: true },
+            { name: "Claude AI", url: "https://claude.ai", desc: "AI assistant for long‑context analysis – upload full PDF papers.", category: "ai",
+            longDesc: "**Claude** from Anthropic handles up to 100K tokens, making it possible to analyse entire research papers or dissertations. Free tier limited.", isPremiumRequired: true },
+            { name: "Zotero", url: "https://www.zotero.org", desc: "Free, open‑source reference manager with browser integration.", category: "referencing",
+            longDesc: "**Zotero** collects, organises, cites, and shares research sources. Automatically senses content in your browser. Generates citations and bibliographies in thousands of styles. Completely free.", isPremiumRequired: false },
+            { name: "Mendeley", url: "https://www.mendeley.com", desc: "Reference manager and academic social network (free 2GB).", category: "referencing",
+            longDesc: "**Mendeley** organises references, annotates PDFs, and collaborates with colleagues. Free plan includes 2GB of storage and 100 private groups.", isPremiumRequired: false },
+            { name: "EndNote", url: "https://endnote.com", desc: "Powerful reference management (paid, institutional licences common).", category: "referencing",
+            longDesc: "**EndNote** is the industry standard for large reference libraries. It offers advanced PDF organisation, manuscript matching, and collaboration tools. Subscription required.", isPremiumRequired: true },
+            { name: "Paperpile", url: "https://paperpile.com", desc: "Cloud‑based reference manager integrated with Google Docs.", category: "referencing",
+            longDesc: "**Paperpile** lives inside Google Workspace. Add papers via browser extension, cite in Google Docs with one click, and sync with PubMed/arXiv. Free trial, then subscription.", isPremiumRequired: true },
+            { name: "Citavi", url: "https://www.citavi.com", desc: "Reference manager with knowledge organisation for Windows (free for up to 100 references).", category: "referencing",
+            longDesc: "**Citavi** helps organise knowledge, add tasks to references, and outline papers. Free version limited to 100 references; premium unlimited.", isPremiumRequired: false },
+            { name: "ReadCube Papers", url: "https://www.readcube.com", desc: "Reference management with PDF annotation and recommendation engine.", category: "referencing",
+            longDesc: "**ReadCube Papers** helps discover, organise, read, and annotate research papers. Free version limited; premium adds unlimited storage and recommendations.", isPremiumRequired: true },
+            { name: "Overleaf", url: "https://www.overleaf.com", desc: "Collaborative LaTeX editor for research papers and theses.", category: "writing",
+            longDesc: "**Overleaf** allows real‑time collaboration on LaTeX documents. Includes templates for thousands of journals, direct submission to arXiv, and integrated reference management.", isPremiumRequired: false },
+            { name: "LaTeX (TeX Live)", url: "https://tug.org/texlive", desc: "Free typesetting system for high‑quality scientific documents.", category: "writing",
+            longDesc: "**LaTeX** is the gold standard for writing papers with complex formulas, cross‑references, and bibliographies. Install TeX Live (free) and use any editor (TeXstudio, VS Code).", isPremiumRequired: false },
+            { name: "Authorea", url: "https://www.authorea.com", desc: "Collaborative writing platform with LaTeX and rich text.", category: "writing",
+            longDesc: "**Authorea** combines LaTeX and WYSIWYG editing, version control, and easy data citation. Free for public articles; premium for private writing.", isPremiumRequired: false },
+            { name: "Grammarly (Academic)", url: "https://www.grammarly.com", desc: "Grammar and style checker tailored for academic writing.", category: "writing",
+            longDesc: "**Grammarly** catches grammar mistakes, suggests conciseness, and detects plagiarism. The premium version offers genre‑specific suggestions for academic writing.", isPremiumRequired: false },
+            { name: "ProWritingAid", url: "https://prowritingaid.com", desc: "Advanced style and readability reports for long documents (theses, papers).", category: "writing",
+            longDesc: "**ProWritingAid** analyses your writing for overused words, sentence length variation, passive voice, and readability. Free version limited to 500 words; premium unlimited.", isPremiumRequired: true },
+            { name: "Writefull", url: "https://www.writefull.com", desc: "AI writing assistant trained on scientific literature.", category: "writing",
+            longDesc: "**Writefull** suggests word choice, sentence structure, and paraphrases based on real papers. Integrates with Overleaf and Word. Free tier limited; premium unlocks full features.", isPremiumRequired: true },
+            { name: "Trinka AI", url: "https://www.trinka.ai", desc: "Grammar checker specifically for academic and technical writing.", category: "writing",
+            longDesc: "**Trinka** catches discipline‑specific errors and suggests journal‑appropriate language. Free version includes basic checks; premium adds advanced suggestions and plagiarism.", isPremiumRequired: false },
+            { name: "Paperpal", url: "https://paperpal.com", desc: "AI editing assistant for researchers, from Springer Nature.", category: "writing",
+            longDesc: "**Paperpal** integrates with Word and offers language checks, consistency, and journal‑specific style recommendations. Freemium model.", isPremiumRequired: false },
+            { name: "Canva for Research", url: "https://www.canva.com", desc: "Design academic posters, infographics, presentation slides.", category: "presentation",
+            longDesc: "**Canva** has thousands of templates for conference posters, presentation slides, and data visualisations. Free tier is very generous; premium adds assets and team features.", isPremiumRequired: false },
+            { name: "BioRender", url: "https://www.biorender.com", desc: "Scientific illustration and figure creation for life sciences.", category: "presentation",
+            longDesc: "**BioRender** offers thousands of pre‑drawn scientific icons to create publication‑ready figures and schematics. Free plan with watermark; premium removes watermark and adds high‑res export.", isPremiumRequired: true },
+            { name: "Mind the Graph", url: "https://mindthegraph.com", desc: "Infographics and scientific illustrations for papers and presentations.", category: "presentation",
+            longDesc: "**Mind the Graph** provides drag‑and‑drop science illustrations for posters, slides, and graphical abstracts. Free tier limited to 5 downloads.", isPremiumRequired: false },
+            { name: "Google Slides", url: "https://slides.google.com", desc: "Free cloud‑based presentation software – perfect for lab meetings and conferences.", category: "presentation",
+            longDesc: "**Google Slides** allows real‑time collaboration, embedding of charts, and export to PowerPoint or PDF. Free with Google account.", isPremiumRequired: false },
+            { name: "Prezi", url: "https://prezi.com", desc: "Zoomable presentation canvas for dynamic research talks.", category: "presentation",
+            longDesc: "**Prezi** offers non‑linear, zooming presentations that can make research talks more engaging. Free basic plan; premium adds offline access and analytics.", isPremiumRequired: false },
+            { name: "Inkscape", url: "https://inkscape.org", desc: "Free vector graphics editor for scientific figures and diagrams.", category: "presentation",
+            longDesc: "**Inkscape** is a professional vector graphics tool (alternative to Illustrator). Great for editing graphs exported from R or Python and creating publication‑ready figures.", isPremiumRequired: false },
+            { name: "Tableau Public", url: "https://public.tableau.com", desc: "Free data visualisation tool for interactive charts and dashboards.", category: "presentation",
+            longDesc: "**Tableau Public** lets you create stunning interactive visualisations from your data. Workbooks are public; free for personal use.", isPremiumRequired: false },
+            { name: "Miro (Research)", url: "https://miro.com", desc: "Online whiteboard for literature mapping, brainstorming, and team collaboration.", category: "productivity",
+            longDesc: "**Miro** is a digital whiteboard where you can create literature maps, design experiments, and conduct collaborative reviews. Free tier with limited boards.", isPremiumRequired: false },
+            { name: "Notion for Research", url: "https://www.notion.so", desc: "All‑in‑one workspace for notes, databases, and project tracking.", category: "productivity",
+            longDesc: "**Notion** can manage your reading list, experimental notes, to‑do lists, and writing drafts. Use databases to tag and filter papers. Free personal plan.", isPremiumRequired: false },
+            { name: "Trello (Research Projects)", url: "https://trello.com", desc: "Kanban boards to track manuscript status, reviews, and collaborations.", category: "productivity",
+            longDesc: "**Trello** helps organise research tasks: “To Read”, “In Review”, “Writing”. Collaborate with co‑authors and set deadlines. Free up to 10 boards.", isPremiumRequired: false },
+            { name: "Asana", url: "https://asana.com", desc: "Project management for multi‑author papers and grant deadlines.", category: "productivity",
+            longDesc: "**Asana** tracks tasks, subtasks, and dependencies. Useful for large research teams preparing a manuscript or grant proposal. Free for up to 15 users.", isPremiumRequired: false },
+            { name: "ClickUp", url: "https://clickup.com", desc: "All‑in‑one productivity platform with docs, goals, and time tracking.", category: "productivity",
+            longDesc: "**ClickUp** combines tasks, documents, and spreadsheets. Great for managing a research lab or PhD timeline. Free plan includes unlimited tasks.", isPremiumRequired: false },
+            { name: "Zotero + Obsidian", url: "https://obsidian.md", desc: "Obsidian is a knowledge base that works with Zotero for note‑taking.", category: "productivity",
+            longDesc: "**Obsidian** is a markdown note‑taking app that connects notes through backlinks. Combined with the Zotero integration plugin, it becomes a powerful research knowledge management system.", isPremiumRequired: false },
+            { name: "Scrivener", url: "https://www.literatureandlatte.com/scrivener", desc: "Long‑form writing tool for dissertations and books (paid).", category: "writing",
+            longDesc: "**Scrivener** helps you organise research materials, outlines, and drafts in one project. Not free but offers a 30‑day trial. Popular for theses.", isPremiumRequired: true },
+            { name: "Publish or Perish", url: "https://harzing.com/resources/publish-or-perish", desc: "Desktop software for citation analysis using Google Scholar and Scopus.", category: "research",
+            longDesc: "**Publish or Perish** retrieves and analyses academic citations. Computes h‑index, g‑index, and citation metrics. Free and lightweight.", isPremiumRequired: false },
+            { name: "Dimensions", url: "https://www.dimensions.ai", desc: "Linked research grants, publications, patents, and clinical trials.", category: "research",
+            longDesc: "**Dimensions** provides a free version with search across publications, grants, and datasets. Useful for funding landscape analysis.", isPremiumRequired: false },
+            { name: "Lens.org", url: "https://www.lens.org", desc: "Free scholarly search with patent and citation linkage.", category: "research",
+            longDesc: "**Lens.org** searches over 200 million scholarly works and 120 million patents. Integrated citation and patent analysis.", isPremiumRequired: false },
+            { name: "OpenAlex", url: "https://openalex.org", desc: "Free and open catalog of global scholarly metadata.", category: "research",
+            longDesc: "**OpenAlex** indexes over 200 million papers, authors, institutions, and topics. Completely free and has an API for programmatic use.", isPremiumRequired: false }
+        ];
+
+        // Additional tools to reach 100+
+        const extraTools = [
+            { name: "Google Dataset Search", url: "https://datasetsearch.research.google.com", desc: "Find datasets across thousands of repositories.", category: "research",
+            longDesc: "**Google Dataset Search** helps researchers discover publicly available datasets for analysis and re‑use.", isPremiumRequired: false },
+            { name: "Figshare", url: "https://figshare.com", desc: "Repository for research outputs – datasets, figures, posters.", category: "research",
+            longDesc: "**Figshare** allows researchers to upload and share all types of research outputs with DOIs. Free for public sharing.", isPremiumRequired: false },
+            { name: "Zenodo", url: "https://zenodo.org", desc: "CERN‑hosted open repository for research data and software.", category: "research",
+            longDesc: "**Zenodo** provides safe, free repository for datasets, software, and preprints. Integrates with GitHub.", isPremiumRequired: false },
+            { name: "OSF (Open Science Framework)", url: "https://osf.io", desc: "Collaborative platform for project management and preregistration.", category: "productivity",
+            longDesc: "**OSF** supports the entire research lifecycle: preregister studies, store data, share materials, and collaborate. Free for researchers.", isPremiumRequired: false },
+            { name: "Paperpile (free tier limited)", url: "https://paperpile.com", desc: "Reference manager inside Google Docs (freemium).", category: "referencing",
+            longDesc: "**Paperpile** seamlessly integrates with Google Docs and Scholar. Free 30‑day trial, then paid.", isPremiumRequired: true },
+            { name: "JabRef", url: "https://www.jabref.org", desc: "Open source BibTeX reference manager.", category: "referencing",
+            longDesc: "**JabRef** is a free desktop reference manager for BibTeX files, ideal for LaTeX users. Supports import from many databases.", isPremiumRequired: false }
+        ];
+
+        // ========== 40+ NEW TOOLS: TEXT DATA · IMAGE DATA · ACCURACY ==========
+        const textImageAccuracyTools = [
+            // ——— TEXT DATA RESEARCH TOOLS ———
+            { name: "Google Ngram Viewer", url: "https://books.google.com/ngrams", desc: "Analyze word frequencies across millions of books (1800–2019).", category: "textdata",
+            longDesc: "**Google Ngram Viewer** visualizes the frequency of words and phrases in the Google Books corpus. Ideal for historical linguistics, cultural trends, and digital humanities research. Supports multiple languages and wildcard searches.", isPremiumRequired: false },
+            { name: "COCA (Corpus of Contemporary American English)", url: "https://www.english-corpora.org/coca/", desc: "Massive 1-billion-word corpus for linguistic and text research.", category: "textdata",
+            longDesc: "**COCA** is the largest freely available corpus of American English. It covers spoken, fiction, magazine, newspaper, and academic texts. Use it for lexicography, grammar studies, and discourse analysis. Free with registration.", isPremiumRequired: false },
+            { name: "British National Corpus (BNC)", url: "https://www.english-corpora.org/bnc/", desc: "100-million-word corpus of British English text samples.", category: "textdata",
+            longDesc: "**BNC** contains written and spoken British English from the late 20th century. It is widely used for linguistic research, lexicography, and natural language processing tasks. Free access via the corpus interface.", isPremiumRequired: false },
+            { name: "WordNet", url: "https://wordnet.princeton.edu/", desc: "Lexical database of English words with semantic relationships.", category: "textdata",
+            longDesc: "**WordNet** is a large lexical database of English. Nouns, verbs, adjectives, and adverbs are grouped into sets of cognitive synonyms (synsets), each expressing a distinct concept. Essential for NLP and text mining research.", isPremiumRequired: false },
+            { name: "NLTK (Natural Language Toolkit)", url: "https://www.nltk.org/", desc: "Python library for working with human language data.", category: "textdata",
+            longDesc: "**NLTK** is a leading platform for building Python programs to work with human language data. It provides easy-to-use interfaces to over 50 corpora and lexical resources, along with text processing libraries for classification, tokenization, stemming, tagging, parsing, and semantic reasoning.", isPremiumRequired: false },
+            { name: "spaCy", url: "https://spacy.io/", desc: "Industrial-strength NLP library for Python – tokenization, NER, dependency parsing.", category: "textdata",
+            longDesc: "**spaCy** is a free, open-source library for advanced Natural Language Processing in Python. It's designed specifically for production use and helps you build applications that process and understand large volumes of text. Pre-trained models for 17+ languages.", isPremiumRequired: false },
+            { name: "Gensim", url: "https://radimrehurek.com/gensim/", desc: "Topic modeling and word embedding library for Python.", category: "textdata",
+            longDesc: "**Gensim** is a robust library for topic modeling, document indexing, and similarity retrieval with large corpora. It implements algorithms like Word2Vec, Doc2Vec, FastText, and LDA. Perfect for computational text analysis.", isPremiumRequired: false },
+            { name: "Hugging Face Datasets", url: "https://huggingface.co/datasets", desc: "Hundreds of text datasets for NLP research and model training.", category: "textdata",
+            longDesc: "**Hugging Face Datasets** provides a collection of over 3,000 datasets for natural language processing. Includes text classification, question answering, summarization, and translation datasets. All datasets are easily accessible via the datasets library.", isPremiumRequired: false },
+            { name: "Voyant Tools", url: "https://voyant-tools.org/", desc: "Web-based text reading and analysis environment for digital humanities.", category: "textdata",
+            longDesc: "**Voyant Tools** is a web-based text analysis platform that allows you to upload texts and perform computational analysis. It provides visualizations like word clouds, frequency graphs, and collocation networks. Ideal for literary and historical research.", isPremiumRequired: false },
+            { name: "AntConc", url: "https://www.laurenceanthony.net/software/antconc/", desc: "Freeware corpus analysis toolkit for concordancing and text analysis.", category: "textdata",
+            longDesc: "**AntConc** is a free corpus analysis toolkit for concordancing and text analysis. It includes tools for word frequency lists, keyword-in-context (KWIC) analysis, collocation, and cluster analysis. Widely used in corpus linguistics.", isPremiumRequired: false },
+            { name: "Sketch Engine", url: "https://www.sketchengine.eu/", desc: "Powerful corpus query system for linguists and lexicographers.", category: "textdata",
+            longDesc: "**Sketch Engine** is a corpus management system that allows users to search and analyze large text corpora. It offers advanced query features, word sketches (collocation profiles), and text type analysis. Free for academic users with limited queries.", isPremiumRequired: false },
+            { name: "LIWC (Linguistic Inquiry and Word Count)", url: "https://www.liwc.app/", desc: "Psychology-based text analysis for emotional and cognitive dimensions.", category: "textdata",
+            longDesc: "**LIWC** is a text analysis software that counts words in psychologically meaningful categories. It provides insights into emotional, cognitive, and social dimensions of text. Widely used in psychology, communication, and social sciences. Free demo available.", isPremiumRequired: false },
+            { name: "TextBlob", url: "https://textblob.readthedocs.io/", desc: "Python library for processing textual data with simple API.", category: "textdata",
+            longDesc: "**TextBlob** is a Python library for processing textual data. It provides a simple API for common NLP tasks such as part-of-speech tagging, noun phrase extraction, sentiment analysis, classification, translation, and more. Great for beginners and prototyping.", isPremiumRequired: false },
+            { name: "Stanford CoreNLP", url: "https://stanfordnlp.github.io/CoreNLP/", desc: "Java NLP toolkit with tokenization, NER, sentiment, and coreference.", category: "textdata",
+            longDesc: "**Stanford CoreNLP** is a Java suite of core NLP tools. It provides tokenization, sentence splitting, part-of-speech tagging, named entity recognition, sentiment analysis, and coreference resolution. It's robust and widely used in academic NLP research.", isPremiumRequired: false },
+            { name: "AllenNLP", url: "https://allenai.org/allennlp", desc: "Deep learning NLP library from the Allen Institute for AI.", category: "textdata",
+            longDesc: "**AllenNLP** is an open-source NLP research library built on PyTorch. It provides pre-trained models for tasks like semantic role labeling, coreference resolution, and reading comprehension. Designed for researchers who want to build and evaluate state-of-the-art NLP models.", isPremiumRequired: false },
+            { name: "Dataverse (text datasets)", url: "https://dataverse.org/", desc: "Open-source data repository with thousands of text datasets.", category: "textdata",
+            longDesc: "**Dataverse** is an open-source web application for sharing, citing, and analyzing research data. It hosts thousands of datasets across disciplines, including text corpora. Researchers can deposit and access text data with DOIs.", isPremiumRequired: false },
+            { name: "ICPSR (text data)", url: "https://www.icpsr.umich.edu/", desc: "Inter-university Consortium for Political and Social Research – text data.", category: "textdata",
+            longDesc: "**ICPSR** is one of the world's largest social science data archives. It provides access to thousands of datasets, including text-based survey responses, interview transcripts, and historical documents. Free for member institutions.", isPremiumRequired: false },
+            { name: "Pew Research Center Datasets", url: "https://www.pewresearch.org/download-datasets/", desc: "Social science and public opinion text datasets.", category: "textdata",
+            longDesc: "**Pew Research Center** provides free datasets from their surveys on social issues, politics, and technology. Many datasets include open-ended text responses that are valuable for qualitative and quantitative text analysis.", isPremiumRequired: false },
+            { name: "World Bank Text Data", url: "https://data.worldbank.org/", desc: "Global development text datasets and reports.", category: "textdata",
+            longDesc: "**World Bank Open Data** provides free access to global development data. In addition to numerical data, it includes policy documents, country reports, and text-based indicators. Useful for policy and social science research.", isPremiumRequired: false },
+            { name: "UN Data", url: "https://data.un.org/", desc: "United Nations statistical and textual data on global issues.", category: "textdata",
+            longDesc: "**UN Data** is a portal that provides access to over 60 million data points from the UN system. It includes text-based data like policy briefs, country reports, and meeting transcripts. A rich resource for international affairs research.", isPremiumRequired: false },
+
+            // ——— IMAGE DATA RESEARCH TOOLS ———
+            { name: "ImageNet", url: "https://www.image-net.org/", desc: "Large-scale visual database with millions of labeled images.", category: "imagedata",
+            longDesc: "**ImageNet** is a massive database of over 14 million images annotated with over 20,000 categories. It has been the foundation for computer vision research and deep learning benchmarks. Free for non-commercial research use.", isPremiumRequired: false },
+            { name: "CIFAR-10/100", url: "https://www.cs.toronto.edu/~kriz/cifar.html", desc: "Classic image classification datasets for ML research.", category: "imagedata",
+            longDesc: "**CIFAR-10** and **CIFAR-100** are image classification datasets containing 60,000 32x32 color images in 10 and 100 classes respectively. They are widely used as benchmarks for machine learning and deep learning research. Freely available for download.", isPremiumRequired: false },
+            { name: "COCO (Common Objects in Context)", url: "https://cocodataset.org/", desc: "Large-scale object detection, segmentation, and captioning dataset.", category: "imagedata",
+            longDesc: "**COCO** is a large-scale dataset for object detection, segmentation, and captioning. It contains over 330,000 images with 1.5 million object instances, annotated with pixel-level segmentation masks. Essential for computer vision research. Free for research.", isPremiumRequired: false },
+            { name: "OpenImages", url: "https://storage.googleapis.com/openimages/web/index.html", desc: "Google's collection of 9 million images with annotations.", category: "imagedata",
+            longDesc: "**Open Images** is a dataset of ~9 million images annotated with image-level labels, object bounding boxes, and visual relationships. It is the largest annotated image dataset to date. Free for research and commercial use under the CC BY 4.0 license.", isPremiumRequired: false },
+            { name: "Google Open Images", url: "https://openimages.google/", desc: "Massive curated image collection with diverse visual content.", category: "imagedata",
+            longDesc: "**Google Open Images** offers a curated collection of images with rich annotations. It includes 600 object classes and 1.9 million bounding boxes. A great resource for training and evaluating computer vision models.", isPremiumRequired: false },
+            { name: "Flickr30k", url: "https://shannon.cs.illinois.edu/DenotationGraph/", desc: "30,000 images with 5 captions each for vision-language research.", category: "imagedata",
+            longDesc: "**Flickr30k** is a dataset of 31,000 images from Flickr, each annotated with 5 captions. It is widely used in vision-language research, image captioning, and multimodal learning. Freely available for academic research.", isPremiumRequired: false },
+            { name: "Visual Genome", url: "https://visualgenome.org/", desc: "Dataset with 108,000 images and rich semantic annotations.", category: "imagedata",
+            longDesc: "**Visual Genome** connects structured image concepts to language. It has 108,000 images with over 5.4 million region descriptions and 3.8 million object instances. Used for visual question answering, image captioning, and scene understanding.", isPremiumRequired: false },
+            { name: "CelebA", url: "https://mmlab.ie.cuhk.edu.hk/projects/CelebA.html", desc: "Large-scale face attributes dataset with 200,000 celebrity images.", category: "imagedata",
+            longDesc: "**CelebA** (CelebFaces Attributes) is a dataset of 200,000 celebrity images with 40 attribute annotations (e.g., smile, gender, age). It is widely used for face recognition, attribute prediction, and GAN research. Free for academic use.", isPremiumRequired: false },
+            { name: "LFW (Labeled Faces in the Wild)", url: "https://vis-www.cs.umass.edu/lfw/", desc: "Face recognition dataset with 13,000 images of celebrities.", category: "imagedata",
+            longDesc: "**LFW** is a benchmark dataset for face recognition. It contains 13,233 images of 5,749 people, with 1680 people having two or more images. It is used to evaluate face verification and recognition algorithms. Freely available.", isPremiumRequired: false },
+            { name: "BioImage Archive", url: "https://www.ebi.ac.uk/bioimage-archive/", desc: "EMBL's repository for biological imaging data.", category: "imagedata",
+            longDesc: "**BioImage Archive** is a public repository for biological images. It stores images from microscopy, high-content screening, and molecular imaging. It provides open access to image data from peer-reviewed publications. Free for research.", isPremiumRequired: false },
+            { name: "Cell Image Library", url: "https://cellimagelibrary.org/", desc: "Public repository of cellular and molecular images.", category: "imagedata",
+            longDesc: "**Cell Image Library** provides free, high-quality images of cells and tissues. It includes brightfield, fluorescence, and electron microscopy images. A valuable resource for cell biology and image analysis research.", isPremiumRequired: false },
+            { name: "Allen Cell Explorer", url: "https://www.allencell.org/", desc: "3D cellular imaging data from the Allen Institute.", category: "imagedata",
+            longDesc: "**Allen Cell Explorer** provides 3D images of human induced pluripotent stem cells. It includes over 5,000 cell images with annotations of cellular structures. Free for research and education.", isPremiumRequired: false },
+            { name: "Human Protein Atlas (images)", url: "https://www.proteinatlas.org/", desc: "Database of protein expression patterns in human tissues (images).", category: "imagedata",
+            longDesc: "**Human Protein Atlas** contains high-resolution images of protein expression in normal and diseased human tissues. It includes immunohistochemistry and immunofluorescence images for over 20,000 proteins. Freely accessible for research.", isPremiumRequired: false },
+            { name: "NASA Image Archive", url: "https://images.nasa.gov/", desc: "Massive collection of NASA space and Earth images.", category: "imagedata",
+            longDesc: "**NASA Image Archive** provides access to over 140,000 images, videos, and audio files from NASA's missions. It includes space photography, satellite imagery, and scientific visualizations. Free for public use.", isPremiumRequired: false },
+            { name: "ESA Space Images", url: "https://www.esa.int/ESA_Multimedia/Images", desc: "European Space Agency's collection of space and Earth observation images.", category: "imagedata",
+            longDesc: "**ESA Space Images** provides a curated collection of images from the European Space Agency. It includes satellite imagery, astronaut photography, and scientific visualizations. Free for educational and research use with attribution.", isPremiumRequired: false },
+            { name: "USGS Image Data", url: "https://www.usgs.gov/products/data", desc: "U.S. Geological Survey imagery and remote sensing data.", category: "imagedata",
+            longDesc: "**USGS** provides a wide range of image data from Earth observation satellites, aerial surveys, and field photography. Includes Landsat and aerial imagery. Free for public and research use.", isPremiumRequired: false },
+            { name: "Google Earth Engine", url: "https://earthengine.google.com/", desc: "Planetary-scale geospatial analysis with satellite imagery.", category: "imagedata",
+            longDesc: "**Google Earth Engine** is a cloud-based platform for analyzing satellite imagery and geospatial data. It provides access to the entire Landsat and Sentinel archives, plus many other datasets. Free for research and educational use.", isPremiumRequired: false },
+            { name: "OpenCV", url: "https://opencv.org/", desc: "Open-source computer vision library for image and video analysis.", category: "imagedata",
+            longDesc: "**OpenCV** (Open Source Computer Vision Library) is a library of programming functions mainly aimed at real-time computer vision. It is widely used for image processing, object detection, and feature extraction. Free and open-source.", isPremiumRequired: false },
+            { name: "Scikit-image", url: "https://scikit-image.org/", desc: "Python library for image processing and analysis.", category: "imagedata",
+            longDesc: "**Scikit-image** is a collection of algorithms for image processing in Python. It includes functions for image segmentation, geometric transformations, color space manipulation, and feature extraction. Free and open-source.", isPremiumRequired: false },
+            { name: "ImageJ", url: "https://imagej.net/", desc: "Scientific image analysis software for microscopy and biomedical images.", category: "imagedata",
+            longDesc: "**ImageJ** is a public domain Java image processing program inspired by NIH's Image. It is widely used for scientific image analysis, including microscopy, medical imaging, and materials science. Free with a large plugin ecosystem.", isPremiumRequired: false },
+            { name: "CellProfiler", url: "https://cellprofiler.org/", desc: "Open-source software for measuring and analyzing cell images.", category: "imagedata",
+            longDesc: "**CellProfiler** is a free, open-source software designed to enable biologists to quantitatively measure phenotypes from thousands of images automatically. It is widely used in high-content screening and cell biology research.", isPremiumRequired: false },
+            { name: "QuPath", url: "https://qupath.github.io/", desc: "Bioimage analysis software for digital pathology and whole slide imaging.", category: "imagedata",
+            longDesc: "**QuPath** is an open-source software for bioimage analysis. It is designed for digital pathology, whole slide imaging, and high-content screening. Features include annotation, segmentation, and machine learning-based classification. Free for research.", isPremiumRequired: false },
+
+            // ——— RESEARCH ACCURACY & VERIFICATION TOOLS ———
+            { name: "Turnitin (Plagiarism Checker)", url: "https://www.turnitin.com/", desc: "Industry-standard plagiarism detection for research papers.", category: "accuracy",
+            longDesc: "**Turnitin** is the world's leading plagiarism detection service. It compares submitted papers against a vast database of academic content, publications, and web pages. Widely used by universities and publishers to ensure originality. Institutional access required.", isPremiumRequired: false },
+            { name: "Grammarly Premium (Plagiarism & Accuracy)", url: "https://www.grammarly.com/", desc: "Advanced grammar, clarity, and plagiarism checker for research writing.", category: "accuracy",
+            longDesc: "**Grammarly Premium** offers comprehensive writing feedback including grammar, clarity, conciseness, and plagiarism detection. It has an academic-specific mode that checks against 16 billion web pages and academic databases. Free tier available; premium for full features.", isPremiumRequired: true },
+            { name: "Copyscape", url: "https://www.copyscape.com/", desc: "Plagiarism checker for web content and research manuscripts.", category: "accuracy",
+            longDesc: "**Copyscape** is a plagiarism detection service that searches the web for duplicate content. It is widely used by researchers, publishers, and content creators to ensure originality. Free for basic searches; premium for bulk scanning.", isPremiumRequired: false },
+            { name: "Duplichecker", url: "https://www.duplichecker.com/", desc: "Free online plagiarism checker for students and researchers.", category: "accuracy",
+            longDesc: "**Duplichecker** is a free online plagiarism checker that compares your text against billions of web pages and academic databases. It provides a similarity score and highlights potentially plagiarized sections. No registration required for basic use.", isPremiumRequired: false },
+            { name: "Plagscan", url: "https://www.plagscan.com/", desc: "Academic plagiarism detection with detailed similarity reports.", category: "accuracy",
+            longDesc: "**Plagscan** is a plagiarism detection tool used by universities and publishers. It offers deep scanning against academic databases, web sources, and student submissions. Provides comprehensive similarity reports with color-coded highlights. Free trial available.", isPremiumRequired: false },
+            { name: "Unicheck", url: "https://unicheck.com/", desc: "Plagiarism checker for academic institutions and independent researchers.", category: "accuracy",
+            longDesc: "**Unicheck** is a plagiarism prevention tool that scans academic papers against web sources, academic journals, and student submissions. It integrates with learning management systems and offers detailed reports. Institutional subscriptions available.", isPremiumRequired: false },
+            { name: "Quetext", url: "https://www.quetext.com/", desc: "Free plagiarism checker with DeepSearch™ technology for accurate detection.", category: "accuracy",
+            longDesc: "**Quetext** offers a free plagiarism checker that uses DeepSearch™ technology to find similar text across the web. It provides a similarity score, source comparison, and citation analysis. Free for 5 checks per month.", isPremiumRequired: false },
+            { name: "PaperRater", url: "https://www.paperrater.com/", desc: "Free writing analysis tool with plagiarism detection and grammar checking.", category: "accuracy",
+            longDesc: "**PaperRater** is a free online tool that checks writing for grammar, spelling, style, and plagiarism. It uses machine learning and NLP to provide detailed feedback. Great for students and researchers looking to improve their writing. Free with ads.", isPremiumRequired: false },
+            { name: "ProWritingAid (Accuracy & Style)", url: "https://prowritingaid.com/", desc: "Comprehensive writing analysis with accuracy and consistency checks.", category: "accuracy",
+            longDesc: "**ProWritingAid** offers detailed reports on grammar, style, readability, and consistency. It includes a plagiarism checker and academic-specific suggestions. Free version limited to 500 words; premium for unlimited use.", isPremiumRequired: true },
+            { name: "LanguageTool", url: "https://languagetool.org/", desc: "Open-source grammar and style checker for academic writing.", category: "accuracy",
+            longDesc: "**LanguageTool** is an open-source grammar, style, and spell checker. It detects errors that other tools miss and offers suggestions for improvement. Free version available; premium adds advanced features.", isPremiumRequired: false },
+            { name: "Hemingway Editor", url: "https://hemingwayapp.com/", desc: "Writing clarity and readability checker for research papers.", category: "accuracy",
+            longDesc: "**Hemingway Editor** highlights complex sentences, passive voice, adverbs, and readability issues. It helps researchers write clear, concise, and accessible prose. Free web version; desktop app available for purchase.", isPremiumRequired: false },
+            { name: "Readability Score", url: "https://readabilityscore.com/", desc: "Evaluate the readability and grade level of your research text.", category: "accuracy",
+            longDesc: "**Readability Score** calculates readability metrics such as Flesch-Kincaid, Gunning Fog, and SMOG. It provides an estimate of the reading grade level required to understand your text. Free to use for basic analysis.", isPremiumRequired: false },
+            { name: "JASP (Statistical Accuracy)", url: "https://jasp-stats.org/", desc: "Free and open-source statistical software for research accuracy.", category: "accuracy",
+            longDesc: "**JASP** is a free, open-source statistical software that offers both classical and Bayesian analyses. It includes checks for statistical assumptions, effect size calculation, and reporting. Widely used in psychology, social sciences, and biomedical research.", isPremiumRequired: false },
+            { name: "Jamovi", url: "https://www.jamovi.org/", desc: "Free statistical analysis software with emphasis on simplicity and accuracy.", category: "accuracy",
+            longDesc: "**Jamovi** is a free statistical software designed to be easy to use while providing powerful statistical capabilities. It includes t-tests, ANOVA, regression, and multivariate analyses. It also provides accuracy checks for model assumptions.", isPremiumRequired: false },
+            { name: "RStudio (Reproducible Research)", url: "https://rstudio.com/", desc: "IDE for R with reproducibility and accuracy verification tools.", category: "accuracy",
+            longDesc: "**RStudio** is an integrated development environment for R. It includes tools for reproducible research (R Markdown, knitr), version control, and package development. Researchers can use it to ensure the accuracy and reproducibility of their analyses. Free and open-source.", isPremiumRequired: false },
+            { name: "Jupyter Notebook (Reproducibility)", url: "https://jupyter.org/", desc: "Interactive notebooks for reproducible data science research.", category: "accuracy",
+            longDesc: "**Jupyter Notebook** is an open-source web application that allows you to create and share documents that contain live code, equations, visualizations, and narrative text. It is widely used for reproducible research in data science and computational fields. Free and open-source.", isPremiumRequired: false },
+            { name: "R Markdown", url: "https://rmarkdown.rstudio.com/", desc: "Dynamic document authoring for reproducible research in R.", category: "accuracy",
+            longDesc: "**R Markdown** is a format for writing reproducible, dynamic reports with R. It allows researchers to combine code, results, and narrative in a single document. It promotes transparency and accuracy in data analysis. Free with RStudio.", isPremiumRequired: false },
+            { name: "Binder (Reproducible Research)", url: "https://mybinder.org/", desc: "Turn GitHub repos into interactive, executable notebooks for reproducibility.", category: "accuracy",
+            longDesc: "**Binder** is a service that turns a GitHub repository into a collection of interactive notebooks. It allows researchers to share executable code and data, ensuring that analyses can be reproduced by others. Free for public repositories.", isPremiumRequired: false },
+            { name: "Code Ocean (Reproducibility)", url: "https://codeocean.com/", desc: "Cloud-based platform for reproducible research and accuracy verification.", category: "accuracy",
+            longDesc: "**Code Ocean** is a cloud-based computational reproducibility platform. Researchers can upload code, data, and results, and others can run and reproduce the analysis with one click. Free tier available for academic research.", isPremiumRequired: false },
+            { name: "DataCite (DOI Verification)", url: "https://datacite.org/", desc: "Persistent identifier (DOI) service for research data verification.", category: "accuracy",
+            longDesc: "**DataCite** provides persistent identifiers (DOIs) for research data and other research outputs. DOIs ensure that datasets and publications are citable, traceable, and verifiable. Free for researchers via member institutions.", isPremiumRequired: false },
+            { name: "Crossref (DOI Verification)", url: "https://www.crossref.org/", desc: "Official DOI registration agency for scholarly publications.", category: "accuracy",
+            longDesc: "**Crossref** is the official DOI registration agency for scholarly and professional publications. It provides persistent links to research articles, ensuring that citations remain accurate over time. Free to use for DOI lookup and verification.", isPremiumRequired: false },
+            { name: "ORCID (Author Verification)", url: "https://orcid.org/", desc: "Persistent digital identifier for researchers and authors.", category: "accuracy",
+            longDesc: "**ORCID** provides a persistent digital identifier that distinguishes you from every other researcher. It ensures that your research outputs are correctly attributed to you, improving accuracy in authorship and citations. Free to register.", isPremiumRequired: false },
+            { name: "Publons (Peer Review Verification)", url: "https://publons.com/", desc: "Track and verify peer review contributions for research accuracy.", category: "accuracy",
+            longDesc: "**Publons** is a platform that allows researchers to track, verify, and showcase their peer review and editorial contributions. It provides a verified record of peer review activity, enhancing the transparency and accuracy of the review process. Free to use.", isPremiumRequired: false },
+            { name: "Retraction Watch", url: "https://retractionwatch.com/", desc: "Database of retracted scientific papers for research accuracy checks.", category: "accuracy",
+            longDesc: "**Retraction Watch** is a blog and database that tracks retractions of scientific papers. It provides information on why papers were retracted, helping researchers verify the reliability of cited work. Free to access.", isPremiumRequired: false },
+            { name: "PubPeer (Post-Publication Review)", url: "https://pubpeer.com/", desc: "Platform for post-publication peer review and accuracy discussion.", category: "accuracy",
+            longDesc: "**PubPeer** is a platform for post-publication peer review. Researchers can comment on published papers, raising concerns or pointing out errors. It promotes transparency and accuracy in research. Free to use.", isPremiumRequired: false },
+            { name: "F1000Research (Open Peer Review)", url: "https://f1000research.com/", desc: "Open research platform with transparent peer review and accuracy checks.", category: "accuracy",
+            longDesc: "**F1000Research** is an open research publishing platform that combines immediate publication with transparent peer review. It includes tools for checking data availability, reproducibility, and research accuracy. Free for researchers.", isPremiumRequired: false },
+            { name: "ScienceOpen (Post-Publication Review)", url: "https://www.scienceopen.com/", desc: "Open access platform with post-publication review and accuracy features.", category: "accuracy",
+            longDesc: "**ScienceOpen** is a freely accessible research communication platform that combines publishing, sharing, and discussion of research. It includes post-publication review, commenting, and accuracy verification tools. Free to use.", isPremiumRequired: false },
+            { name: "PLOS ONE (Open Peer Review)", url: "https://journals.plos.org/plosone/", desc: "Open access journal with transparent peer review and accuracy focus.", category: "accuracy",
+            longDesc: "**PLOS ONE** is a peer-reviewed open access journal that publishes all scientifically valid research. It features transparent peer review and requires authors to make data and code available, ensuring research accuracy and reproducibility.", isPremiumRequired: false },
+            { name: "PeerJ (Open Peer Review)", url: "https://peerj.com/", desc: "Open access journal with peer review and accuracy verification.", category: "accuracy",
+            longDesc: "**PeerJ** is an open access journal that offers peer review and rapid publication. It emphasizes research accuracy, data sharing, and transparency. Free for authors with a basic membership.", isPremiumRequired: false }
+        ];
+
+        // Merge all tools
+        let localToolsCollection = [...verifiedResearchTools, ...extraTools, ...textImageAccuracyTools];
+        localToolsCollection = localToolsCollection.map(tool => ({
+            ...tool,
+            longDesc: tool.longDesc || `**${tool.name}**\n\n${tool.desc}\n\nThis tool is widely used by researchers worldwide. It offers reliable, free or institutional access to academic resources.`,
+            icon: `https://www.google.com/s2/favicons?domain=${new URL(tool.url).hostname}`,
+            source: 'local'
+        }));
+
+        // Ensure all tools are non-premium except those explicitly marked
+        localToolsCollection = localToolsCollection.map(t => ({
+            ...t,
+            isPremiumRequired: t.isPremiumRequired === true ? true : false
+        }));
+
+        console.log(`📚 Total local research tools loaded: ${localToolsCollection.length}`);
+
+        async function loadAndMergeTools() {
+            try {
+                document.getElementById('toolsGrid').innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading research tools...</div>';
+                let approvedTools = [];
+                try {
+                    approvedTools = await apiCall(`/api/tools?page=${PAGE_TYPE}`);
+                    console.log(`✅ Loaded ${approvedTools.length} approved tools for ${PAGE_TYPE}`);
+                } catch (error) {
+                    console.log('Could not fetch approved tools, using local only:', error);
+                    approvedTools = [];
+                }
+                const formattedApprovedTools = approvedTools.map(tool => ({
+                    id: tool.id,
+                    name: tool.name,
+                    url: tool.url,
+                    desc: tool.description || 'A community‑submitted tool approved by Sarveik.',
+                    longDesc: `**${tool.name}** (Community Approved)\n\n${tool.description || 'A useful tool for researchers. Approved by Sarveik admins.'}`,
+                    category: tool.category || 'research',
+                    icon: `https://www.google.com/s2/favicons?domain=${getDomainFromUrl(tool.url)}`,
+                    source: 'approved',
+                    approved: true,
+                    created_at: tool.created_at,
+                    isPremiumRequired: tool.is_premium === 1
+                }));
+                const allToolNames = new Set();
+                const mergedTools = [];
+                for (const tool of localToolsCollection) {
+                    if (!allToolNames.has(tool.name.toLowerCase())) {
+                        allToolNames.add(tool.name.toLowerCase());
+                        mergedTools.push(tool);
+                    }
+                }
+                for (const tool of formattedApprovedTools) {
+                    if (!allToolNames.has(tool.name.toLowerCase())) {
+                        allToolNames.add(tool.name.toLowerCase());
+                        mergedTools.push(tool);
+                    }
+                }
+                allTools = mergedTools;
+                const premiumCount = allTools.filter(t => t.isPremiumRequired).length;
+                document.getElementById('statsBadge').innerHTML =
+                    `<i class="fas fa-rocket"></i> ✨ Welcome to Sarveik – ${allTools.length}+ Researcher Tools! ✨`;
+                buildFilterButtons();
+                renderTools();
+                if (!userPremiumStatus) showPremiumRecommendations();
+                return true;
+            } catch (error) {
+                console.error('Error loading tools:', error);
+                document.getElementById('toolsGrid').innerHTML = '<div class="loading">❌ Failed to load tools. Please make sure you are logged in.</div>';
+                showToast('Failed to load research tools from server', 'error');
+                return false;
+            }
+        }
+
+        function getDomainFromUrl(url) {
+            try { return new URL(url).hostname; } catch { return 'example.com'; }
+        }
+
+        async function fetchPremiumStatus() {
+            try {
+                const res = await fetch('/api/user/premium-status', { credentials: 'include' });
+                if (res.ok) {
+                    const data = await res.json();
+                    userPremiumStatus = data.isPremium === true;
+                    document.getElementById('premiumBanner').style.display = userPremiumStatus ? 'none' : 'flex';
+                    document.getElementById('premiumRecommendations').style.display = userPremiumStatus ? 'none' : 'block';
+                } else {
+                    userPremiumStatus = false;
+                    document.getElementById('premiumBanner').style.display = 'flex';
+                    document.getElementById('premiumRecommendations').style.display = 'block';
+                }
+            } catch (err) {
+                userPremiumStatus = false;
+                document.getElementById('premiumBanner').style.display = 'flex';
+                document.getElementById('premiumRecommendations').style.display = 'block';
+            }
+        }
+
+        function showPremiumRecommendations() {
+            const premiumTools = allTools.filter(t => t.isPremiumRequired).slice(0, 6);
+            const container = document.getElementById('recommendGrid');
+            if (!container) return;
+            if (premiumTools.length === 0) { container.innerHTML = '<p>No premium tools available yet.</p>'; return; }
+            container.innerHTML = premiumTools.map(tool => `
+            <div class="recommend-item">
+              <img src="${tool.icon}" alt="${tool.name}" onerror="this.src='https://via.placeholder.com/40'">
+              <div class="name">${escapeHtml(tool.name)}</div>
+              <button onclick="window.location.href='profile.html?tab=premium'">Unlock</button>
+            </div>
+          `).join('');
+        }
+
+        async function submitTool() {
+            const name = document.getElementById('newName').value.trim();
+            const url = document.getElementById('newUrl').value.trim();
+            const description = document.getElementById('newDesc').value.trim();
+            const category = document.getElementById('newCategory').value;
+            if (!name || !url || !description) { showToast('Please fill all fields', 'error'); return; }
+            try { new URL(url); } catch { showToast('Please enter a valid URL (including https://)', 'error'); return; }
+            const submitBtn = document.getElementById('submitToolBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
+            try {
+                await apiCall('/api/tools/submit', { method: 'POST', body: JSON.stringify({ name, url, description,
+                        category, pageType: PAGE_TYPE }) });
+                showToast('✅ Tool submitted! Admin will review it shortly.', 'success');
+                document.getElementById('newName').value = '';
+                document.getElementById('newUrl').value = '';
+                document.getElementById('newDesc').value = '';
+                setTimeout(() => loadAndMergeTools(), 2000);
+            } catch (error) {
+                showToast(error.message || 'Submission failed', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Submit for Review';
+            }
+        }
+
+        // ---- localStorage helpers ----
+        if (!localStorage.getItem('popularity')) localStorage.setItem('popularity', '{}');
+        if (!localStorage.getItem('ratings')) localStorage.setItem('ratings', '{}');
+        if (!localStorage.getItem('favorites')) localStorage.setItem('favorites', '[]');
+
+        function getPopularity(name) { return JSON.parse(localStorage.getItem('popularity'))[name] || 0; }
+
+        function incrementPopularity(name) { let pop = JSON.parse(localStorage.getItem('popularity'));
+            pop[name] = (pop[name] || 0) + 1;
+            localStorage.setItem('popularity', JSON.stringify(pop)); }
+
+        function getAverageRating(name) { let ratings = JSON.parse(localStorage.getItem('ratings'))[name]; if (!ratings ||
+                ratings.length === 0) return 0; return ratings.reduce((a, b) => a + b, 0) / ratings.length; }
+
+        function addRating(name, stars) { let ratings = JSON.parse(localStorage.getItem('ratings')); if (!ratings[name])
+                ratings[name] = [];
+            ratings[name].push(stars);
+            localStorage.setItem('ratings', JSON.stringify(ratings)); }
+
+        function isFavorite(name) { return JSON.parse(localStorage.getItem('favorites')).includes(name); }
+
+        function toggleFavorite(name) { let favs = JSON.parse(localStorage.getItem('favorites')); if (favs.includes(name)) { favs =
+                    favs.filter(f => f !== name); } else { favs.push(name); } localStorage.setItem('favorites', JSON.stringify(
+                favs));
+            renderTools();
+            renderFavorites(); }
+
+        function updateFilteredTools() {
+            let toolsToFilter = [...allTools];
+            if (currentFilter === 'premium') toolsToFilter = toolsToFilter.filter(t => t.isPremiumRequired === true);
+            else if (currentFilter !== 'all') toolsToFilter = toolsToFilter.filter(tool => tool.category === currentFilter);
+            if (currentSearch) {
+                const searchLower = currentSearch.toLowerCase();
+                toolsToFilter = toolsToFilter.filter(tool => tool.name.toLowerCase().includes(searchLower) || (tool.desc ||
+                    '').toLowerCase().includes(searchLower));
+            }
+            filteredTools = toolsToFilter;
+            if (currentSort === 'name') filteredTools.sort((a, b) => a.name.localeCompare(b.name));
+            else if (currentSort === 'popularity') filteredTools.sort((a, b) => getPopularity(b.name) - getPopularity(a.name));
+        }
+
+        function renderPagination() {
+            const totalPages = Math.ceil(filteredTools.length / itemsPerPage);
+            const paginationDiv = document.getElementById('paginationControls');
+            paginationDiv.innerHTML = '';
+            if (totalPages <= 1) return;
+            for (let i = 1; i <= totalPages; i++) {
+                const btn = document.createElement('button');
+                btn.textContent = i;
+                if (i === currentPage) btn.classList.add('active');
+                btn.addEventListener('click', () => { currentPage = i;
+                    renderTools(); });
+                paginationDiv.appendChild(btn);
+            }
+        }
+
+        function renderTools() {
+            updateFilteredTools();
+            const start = (currentPage - 1) * itemsPerPage;
+            let pageTools = filteredTools.slice(start, start + itemsPerPage);
+            if (!userPremiumStatus && currentFilter !== 'premium') pageTools = pageTools.filter(tool => !tool
+            .isPremiumRequired);
+            const toolsGrid = document.getElementById('toolsGrid');
+            if (pageTools.length === 0) {
+                toolsGrid.innerHTML =
+                    `<div class="loading">🔒 No tools match your criteria. ${!userPremiumStatus && filteredTools.some(t => t.isPremiumRequired) ? ' Some tools require premium access. <a href="profile.html?tab=premium" style="color:#f6d365;">Upgrade</a> to unlock.' : ''}</div>`;
+                return;
+            }
+            toolsGrid.innerHTML = pageTools.map(tool => {
+                const pop = getPopularity(tool.name);
+                const avgRating = getAverageRating(tool.name);
+                const fullStars = Math.floor(avgRating);
+                const stars = '★'.repeat(fullStars) + (avgRating % 1 >= 0.5 ? '½' : '');
+                const favClass = isFavorite(tool.name) ? 'favorited' : '';
+                const approvedBadge = tool.source === 'approved' ? '<span class="approved-badge"><i class="fas fa-check-circle"></i> Approved</span>' :
+                    '';
+                let newBadge = '';
+                if (tool.source === 'approved' && tool.created_at) {
+                    const diffDays = (new Date() - new Date(tool.created_at)) / (1000 * 60 * 60 * 24);
+                    if (diffDays <= NEW_DAYS_THRESHOLD) newBadge = '<span class="time-new-badge">🔥 NEW</span>';
+                }
+                const premiumTag = tool.isPremiumRequired ? '<span class="premium-tag">⭐ PREMIUM</span>' : '';
+                const isPremiumLocked = tool.isPremiumRequired && !userPremiumStatus;
+                const lockOverlay = isPremiumLocked ?
+                    `<div class="premium-lock-icon"><i class="fas fa-lock"></i> Premium Tool <button onclick="window.location.href='profile.html?tab=premium'">Upgrade</button></div>` :
+                    '';
+                const lockClass = isPremiumLocked ? 'premium-locked' : '';
+                // keyword tags based on category
+                let kw = '';
+                if (tool.category === 'textdata') kw = '<span class="keyword-tag">📝 Text Data</span>';
+                else if (tool.category === 'imagedata') kw = '<span class="keyword-tag">🖼️ Image Data</span>';
+                else if (tool.category === 'accuracy') kw = '<span class="keyword-tag">✅ Accuracy</span>';
+                else if (tool.category === 'research') kw = '<span class="keyword-tag">📖 Literature</span>';
+                else if (tool.category === 'ai') kw = '<span class="keyword-tag">🤖 AI</span>';
+                else if (tool.category === 'writing') kw = '<span class="keyword-tag">✍️ Writing</span>';
+                else if (tool.category === 'referencing') kw = '<span class="keyword-tag">📑 Ref Manager</span>';
+                else if (tool.category === 'presentation') kw = '<span class="keyword-tag">📊 Visuals</span>';
+                else if (tool.category === 'productivity') kw = '<span class="keyword-tag">⚡ Productivity</span>';
+                return `
+              <div class="tool-card ${lockClass}" data-name="${escapeHtml(tool.name)}" data-url="${tool.url}" data-desc="${escapeHtml(tool.longDesc)}" data-icon="${tool.icon}" data-premium="${tool.isPremiumRequired}">
+                ${approvedBadge} ${newBadge} ${premiumTag}
+                <span class="fav-icon ${favClass}" data-fav="${escapeHtml(tool.name)}">❤️</span>
+                <img src="${tool.icon}" alt="${escapeHtml(tool.name)}" loading="lazy" onerror="this.src='https://via.placeholder.com/48'">
+                <h3>${escapeHtml(tool.name)}</h3>
+                <p>${escapeHtml(tool.desc)}</p>
+                <div style="margin: 4px 0 8px;">${kw}</div>
+                <div class="meta"><span class="rating">${stars || '☆☆☆☆☆'}</span><span class="popularity">🔥 ${pop}</span></div>
+                <button class="btn details-btn" ${isPremiumLocked ? 'disabled style="opacity:0.6;"' : ''}>Details</button>
+                ${lockOverlay}
+              </div>
+            `;
+            }).join('');
+            document.querySelectorAll('.fav-icon').forEach(icon => { icon.addEventListener('click', (e) => { e.stopPropagation();
+                    toggleFavorite(icon.dataset.fav); }); });
+            document.querySelectorAll('.details-btn:not([disabled])').forEach(btn => { btn.addEventListener('click', (e) => {
+                    const card = e.target.closest('.tool-card');
+                    openModal(card.dataset.name, card.dataset.url, card.dataset.desc, card.dataset.icon);
+                }); });
+            renderPagination();
+        }
+
+        function renderFavorites() {
+            const favs = JSON.parse(localStorage.getItem('favorites'));
+            let favTools = allTools.filter(t => favs.includes(t.name));
+            if (!userPremiumStatus) favTools = favTools.filter(t => !t.isPremiumRequired);
+            const favoritesGrid = document.getElementById('favoritesGrid');
+            if (favTools.length === 0) { favoritesGrid.innerHTML =
+                    '<div class="loading">No favorite tools yet. Click the heart icon on any tool to add it!</div>'; return; }
+            favoritesGrid.innerHTML = favTools.map(tool => {
+                const pop = getPopularity(tool.name);
+                const avgRating = getAverageRating(tool.name);
+                const fullStars = Math.floor(avgRating);
+                const stars = '★'.repeat(fullStars) + (avgRating % 1 >= 0.5 ? '½' : '');
+                const isPremiumLocked = tool.isPremiumRequired && !userPremiumStatus;
+                const lockOverlay = isPremiumLocked ?
+                    `<div class="premium-lock-icon"><i class="fas fa-lock"></i> Premium Tool</div>` : '';
+                let kw = '';
+                if (tool.category === 'textdata') kw = '<span class="keyword-tag">📝 Text Data</span>';
+                else if (tool.category === 'imagedata') kw = '<span class="keyword-tag">🖼️ Image Data</span>';
+                else if (tool.category === 'accuracy') kw = '<span class="keyword-tag">✅ Accuracy</span>';
+                else if (tool.category === 'research') kw = '<span class="keyword-tag">📖 Literature</span>';
+                else if (tool.category === 'ai') kw = '<span class="keyword-tag">🤖 AI</span>';
+                else if (tool.category === 'writing') kw = '<span class="keyword-tag">✍️ Writing</span>';
+                else if (tool.category === 'referencing') kw = '<span class="keyword-tag">📑 Ref Manager</span>';
+                else if (tool.category === 'presentation') kw = '<span class="keyword-tag">📊 Visuals</span>';
+                else if (tool.category === 'productivity') kw = '<span class="keyword-tag">⚡ Productivity</span>';
+                return `
+                <div class="tool-card ${isPremiumLocked ? 'premium-locked' : ''}" data-name="${escapeHtml(tool.name)}" data-url="${tool.url}" data-desc="${escapeHtml(tool.longDesc)}" data-icon="${tool.icon}">
+                  <img src="${tool.icon}" alt="${escapeHtml(tool.name)}" loading="lazy" onerror="this.src='https://via.placeholder.com/48'">
+                  <h3>${escapeHtml(tool.name)}</h3>
+                  <p>${escapeHtml(tool.desc)}</p>
+                  <div style="margin: 4px 0 8px;">${kw}</div>
+                  <div class="meta"><span class="rating">${stars || '☆☆☆☆☆'}</span><span class="popularity">🔥 ${pop}</span></div>
+                  <button class="btn details-btn" ${isPremiumLocked ? 'disabled' : ''}>Details</button>
+                  ${lockOverlay}
+                </div>
+              `;
+            }).join('');
+            favoritesGrid.querySelectorAll('.details-btn:not([disabled])').forEach(btn => { btn.addEventListener('click', (e) => {
+                    const card = e.target.closest('.tool-card');
+                    openModal(card.dataset.name, card.dataset.url, card.dataset.desc, card.dataset.icon);
+                }); });
+        }
+
+        function escapeHtml(str) { if (!str) return ''; return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ?
+                '&lt;' : '&gt;'); }
+
+        function openModal(name, url, longDesc, icon) {
+            const tool = allTools.find(t => t.name === name);
+            if (tool?.isPremiumRequired && !userPremiumStatus) { showToast('This tool requires Premium Research Access. Please upgrade.',
+                    'error'); return; }
+            incrementPopularity(name);
+            const category = tool?.category || 'research';
+            document.getElementById('modalTitle').textContent = name;
+            document.getElementById('modalDesc').innerHTML = longDesc.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(
+                /\n/g, '<br>');
+            document.getElementById('modalIcon').src = icon;
+            document.getElementById('modalVisitBtn').href = url;
+            document.getElementById('howToUseContent').innerHTML = generateHowToUse(name, category, url);
+            const avgRating = getAverageRating(name);
+            const modalRatingDiv = document.getElementById('modalRating');
+            modalRatingDiv.innerHTML = 'Rate this tool: ';
+            for (let i = 1; i <= 5; i++) {
+                const star = document.createElement('span');
+                star.className = `star ${i <= Math.round(avgRating) ? 'selected' : ''}`;
+                star.textContent = '★';
+                star.dataset.value = i;
+                star.addEventListener('click', (e) => { addRating(name, parseInt(e.target.dataset.value));
+                    openModal(name, url, longDesc, icon);
+                    renderTools(); });
+                modalRatingDiv.appendChild(star);
+            }
+            const similar = allTools.filter(t => t.category === category && t.name !== name && (!t.isPremiumRequired ||
+                userPremiumStatus)).slice(0, 5);
+            const similarDiv = document.getElementById('similarTools');
+            similarDiv.innerHTML = similar.map(t =>
+                `<span class="similar-tool-item" data-name="${escapeHtml(t.name)}">${escapeHtml(t.name)}</span>`).join('');
+            document.querySelectorAll('.similar-tool-item').forEach(el => { el.addEventListener('click', () => { const t =
+                        allTools.find(tt => tt.name === el.dataset.name); if (t) openModal(t.name, t.url, t.longDesc, t
+                        .icon); }); });
+            const shareText = encodeURIComponent(`Check out ${name} on Sarveik Researcher Tools!`);
+            const shareUrl = encodeURIComponent(url);
+            document.getElementById('socialShare').innerHTML =
+                `<a href="https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}" target="_blank"><i class="fab fa-twitter"></i> Twitter</a><a href="https://www.facebook.com/sharer/sharer.php?u=${shareUrl}" target="_blank"><i class="fab fa-facebook"></i> Facebook</a><a href="https://www.linkedin.com/sharing/share-offsite/?url=${shareUrl}" target="_blank"><i class="fab fa-linkedin"></i> LinkedIn</a>`;
+            document.getElementById('toolModal').classList.add('active');
+        }
+
+        function buildFilterButtons() {
+            const categories = ['all', ...new Set(allTools.map(t => t.category))];
+            categories.push('premium');
+            const filterContainer = document.getElementById('filterContainer');
+            filterContainer.innerHTML = categories.map(cat =>
+                `<button class="filter-btn ${cat === currentFilter ? 'active' : ''}" data-filter="${cat}">${cat.charAt(0).toUpperCase() + cat.slice(1)}</button>`
+                ).join('');
+            document.querySelectorAll('.filter-btn').forEach(btn => { btn.addEventListener('click', () => { document
+                        .querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentFilter = btn.dataset.filter;
+                    currentPage = 1;
+                    renderTools(); }); });
+        }
+
+        async function checkSession() {
+            try {
+                const session = await apiCall('/check-session');
+                if (!session.loggedIn) { window.location.href = '/'; return false; }
+                return true;
+            } catch (error) { window.location.href = '/'; return false; }
+        }
+
+        async function init() {
+            if (!(await checkSession())) return;
+            await fetchPremiumStatus();
+            await loadAndMergeTools();
+            try { await fetch('/api/track-usage', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ tool_name: 'Researcher Tools Hub', tool_category: 'researcher' }),
+                    credentials: 'include' }); } catch (e) {}
+        }
+
+        document.getElementById('searchInput').addEventListener('input', (e) => { currentSearch = e.target.value;
+            currentPage = 1;
+            renderTools(); });
+        document.getElementById('sortSelect').addEventListener('change', (e) => { currentSort = e.target.value;
+            renderTools(); });
+        document.getElementById('refreshToolsBtn').addEventListener('click', () => { loadAndMergeTools();
+            showToast('Refreshing research tools...', 'info'); });
+        document.getElementById('themeToggle').addEventListener('click', () => { document.body.classList.toggle(
+                'light-mode');
+            document.getElementById('themeToggle').textContent = document.body.classList.contains('light-mode') ?
+                '☀️ Light' : '🌙 Dark';
+            localStorage.setItem('theme', document.body.classList.contains('light-mode') ? 'light' : 'dark'); });
+        if (localStorage.getItem('theme') === 'light') { document.body.classList.add('light-mode');
+            document.getElementById('themeToggle').textContent = '☀️ Light'; }
+        document.getElementById('showFavorites').addEventListener('click', (e) => { e.preventDefault();
+            document.getElementById('toolsGrid').style.display = 'none';
+            document.getElementById('favoritesPage').style.display = 'block';
+            renderFavorites(); });
+        document.getElementById('hideFavorites').addEventListener('click', () => { document.getElementById(
+                'favoritesPage').style.display = 'none';
+            document.getElementById('toolsGrid').style.display = 'flex';
+            renderTools(); });
+        document.getElementById('submitToolBtn').addEventListener('click', submitTool);
+        document.querySelector('.close').addEventListener('click', () => document.getElementById('toolModal').classList
+            .remove('active'));
+        window.addEventListener('click', (e) => { if (e.target === document.getElementById('toolModal')) document
+                .getElementById('toolModal').classList.remove('active'); });
+        window.addEventListener('scroll', () => { const btn = document.getElementById('backToTop'); if (btn) btn.classList
+                .toggle('visible', window.scrollY > 300); });
+        document.getElementById('backToTop').addEventListener('click', () => window.scrollTo({ top: 0,
+            behavior: 'smooth' }));
+
+        init();
+    </script>
 </body>
 </html>
