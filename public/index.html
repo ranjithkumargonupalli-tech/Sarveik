@@ -940,6 +940,23 @@
         }
         .logout-btn:hover { background: var(--toggle-hover, rgba(255,255,255,0.15)); }
 
+        .dashboard-link {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 40px;
+            background: rgba(124,58,237,0.2);
+            border: 1px solid rgba(124,58,237,0.4);
+            color: var(--hero-text, white);
+            font-size: 0.8rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .dashboard-link:hover {
+            background: rgba(124,58,237,0.3);
+            transform: translateY(-1px);
+        }
+
         .loading-spinner {
             display: inline-block; width: 14px; height: 14px;
             border: 2px solid rgba(255,255,255,0.2);
@@ -1597,7 +1614,7 @@
 
     <script>
         /* ============================================================
-           ALL SCRIPTS — Updated for Sarveik ecosystem
+           ALL SCRIPTS — ENHANCED AUTHENTICATION
            ============================================================ */
         let resetEmailGlobal = '';
         let usernameFormatOk = false;
@@ -1609,7 +1626,7 @@
             else { inp.type='password'; icon.classList.replace('fa-eye','fa-eye-slash'); }
         }
 
-        /* ── ENHANCED THEME TOGGLE ── */
+        /* ── ENHANCED THEME TOGGLE with ripple effect ── */
         function toggleTheme(event){
             const html = document.documentElement;
             const icon = document.querySelector('.theme-toggle i');
@@ -1679,7 +1696,7 @@
         window.onclick=function(e){ if(e.target===document.getElementById('authModal')) closeAuthModal(); };
 
         /* ================================================================
-           OTP TIMERS
+           OTP RESEND TIMER SYSTEM (unchanged)
            ================================================================ */
         const OTP_COOLDOWN_STEPS = [30, 60, 90, 120];
         const OTP_TIMER_STORE_KEY = 'sarveik_otp_timers';
@@ -1951,7 +1968,7 @@
             }finally{ btn.disabled=false; btn.innerHTML='Create Account'; }
         }
 
-        /* ── LOGIN (UPDATED: redirect to businessdirectory.html) ── */
+        /* ── LOGIN — ENHANCED ROLE-BASED REDIRECT ── */
         async function handleLogin(){
             const id = document.getElementById('login-username').value;
             const pwd = document.getElementById('login-password').value;
@@ -1965,9 +1982,16 @@
                 if(remember){ localStorage.setItem('nova_remember',JSON.stringify({username:id,role:profile.role})); }
                 else localStorage.removeItem('nova_remember');
                 localStorage.setItem('nova_auth',JSON.stringify({username:profile.username,role:profile.role,timestamp:Date.now()}));
-                // --- REDIRECT to the main directory (businessdirectory.html) ---
-                // All users go to the directory; role-specific dashboards are accessible via tabs/links there.
-                window.location.href = '/businessdirectory.html';
+
+                // Determine redirect URL based on role
+                let redirectUrl = '/businessdirectory.html';
+                if (profile.role === 'admin') redirectUrl = '/admin-dashboard.html';
+                else if (profile.role === 'moderator') redirectUrl = '/moderator-dashboard.html';
+                else if (profile.role === 'business_owner') redirectUrl = '/business-owner.html';
+                else if (profile.role === 'delivery_partner') redirectUrl = '/delivery-partner.html';
+                // else keep default (business directory)
+
+                window.location.href = redirectUrl;
             }catch(err){
                 showMessage(err.message);
                 btn.disabled=false; btn.innerHTML='Login';
@@ -1977,24 +2001,43 @@
         async function requestResetOtp(){ const email=document.getElementById('forgot-email').value; const btn=document.getElementById('request-otp-btn'); if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showMessage('Valid email required'); btn.disabled=true; btn.innerHTML='Sending...'; try{ await apiCall('/api/forgot-password',{method:'POST',body:JSON.stringify({email})}); resetEmailGlobal=email; showMessage('OTP sent!',false); document.getElementById('forgot-step1').style.display='none'; document.getElementById('forgot-step2').style.display='block'; resetOtpTimer.reset(); const store=loadOtpTimerStore(); store.reset={resendCount:1,cooldownUntil:Date.now()+30000}; saveOtpTimerStore(store); resetOtpTimer.init(); }catch(e){ showMessage(e.message); }finally{ btn.disabled=false; btn.innerHTML='Send Reset OTP'; } }
         async function resetPassword(){ const otp=document.getElementById('reset-otp').value; const newPwd=document.getElementById('new-password').value; const confirmPwd=document.getElementById('confirm-password').value; const btn=document.getElementById('reset-password-btn'); if(!otp||!newPwd||!confirmPwd) return showMessage('Fill all fields'); if(newPwd!==confirmPwd) return showMessage('Passwords mismatch'); if(newPwd.length<8) return showMessage('Min 8 chars'); btn.disabled=true; btn.innerHTML='Resetting...'; try{ await apiCall('/api/reset-password',{method:'POST',body:JSON.stringify({email:resetEmailGlobal,otp,newPassword:newPwd})}); showMessage('Password reset! Please login.',false); resetOtpTimer.reset(); setTimeout(()=>{ switchAuthTab('login'); },2000); }catch(e){ showMessage(e.message); }finally{ btn.disabled=false; btn.innerHTML='Reset Password'; } }
 
-        /* ── SESSION & HEADER ── */
-        async function checkSessionAndRedirect(){
-            // We only check session, no redirect – we just update UI
+        /* ── SESSION CHECK — NO REDIRECT, JUST UPDATE UI ── */
+        async function checkSession(){
             try{
-                await apiCall('/profile');
-                return true;
+                const profile = await apiCall('/profile');
+                if (profile && profile.id) {
+                    localStorage.setItem('nova_auth', JSON.stringify({username:profile.username,role:profile.role,timestamp:Date.now()}));
+                    updateHeaderUI();
+                    return true;
+                }
+                return false;
             }catch(e){
                 localStorage.removeItem('nova_auth');
                 return false;
             }
         }
 
+        /* ── UPDATE HEADER UI WITH DASHBOARD LINK ── */
         function updateHeaderUI(){
             const authBtnDiv=document.getElementById('authHeaderBtn');
             const stored=localStorage.getItem('nova_auth');
             if(stored){
                 const data=JSON.parse(stored);
-                authBtnDiv.innerHTML=`<div class="user-greeting"><span>👋 ${data.username}</span><button class="logout-btn" onclick="logoutUser()"><i class="fas fa-sign-out-alt"></i> Logout</button></div>`;
+                let dashboardLink = '';
+                // Determine the correct dashboard link based on role
+                if (data.role === 'admin') dashboardLink = '/admin-dashboard.html';
+                else if (data.role === 'moderator') dashboardLink = '/moderator-dashboard.html';
+                else if (data.role === 'business_owner') dashboardLink = '/business-owner.html';
+                else if (data.role === 'delivery_partner') dashboardLink = '/delivery-partner.html';
+                else dashboardLink = '/businessdirectory.html';
+
+                authBtnDiv.innerHTML = `
+                    <div class="user-greeting">
+                        <span>👋 ${data.username}</span>
+                        <a href="${dashboardLink}" class="dashboard-link"><i class="fas fa-th-large"></i> Dashboard</a>
+                        <button class="logout-btn" onclick="logoutUser()"><i class="fas fa-sign-out-alt"></i> Logout</button>
+                    </div>
+                `;
             } else {
                 authBtnDiv.innerHTML=`<button class="btn-primary-hero" style="padding:10px 22px;font-size:14px;" onclick="openAuthModal()"><i class="fas fa-sign-in-alt"></i> Get Started</button>`;
             }
@@ -2004,10 +2047,10 @@
             try{ await apiCall('/logout',{method:'POST'}); }catch(e){}
             localStorage.removeItem('nova_auth');
             localStorage.removeItem('nova_remember');
+            // Reload to show logged-out state
             window.location.reload();
         }
 
-        /* ── TOP USERS ── */
         function loadTopUsers(){
             const container=document.getElementById('topUsersContainer');
             const CACHE_KEY='nova_top_level_rank'; const EXPIRY=48*60*60*1000;
@@ -2037,7 +2080,7 @@
         }
         function escapeHtml(str){ if(!str) return ''; return str.replace(/[&<>]/g,function(m){ if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m; }); }
 
-        /* ── SCROLL REVEAL ── */
+        /* scroll reveal */
         document.querySelectorAll('.feature-card,.tool-card').forEach((el,i)=>{
             el.style.transitionDelay=(i%3)*0.08+'s';
         });
@@ -2048,7 +2091,7 @@
         },{threshold:0.12});
         document.querySelectorAll('.reveal-up').forEach(el=>revealObserver.observe(el));
 
-        /* ── 3D TILT ── */
+        /* 3D tilt */
         document.querySelectorAll('.feature-card').forEach(card=>{
             card.addEventListener('mousemove', e=>{
                 const rect = card.getBoundingClientRect();
@@ -2059,7 +2102,7 @@
             });
         });
 
-        /* ── STAT COUNTERS ── */
+        /* animate counters */
         function animateCounters(){
             document.querySelectorAll('.stat-number[data-count]').forEach(el=>{
                 const target = parseFloat(el.getAttribute('data-count'));
@@ -2085,7 +2128,7 @@
             animateCounters();
         });
 
-        /* ── MAINTENANCE ── */
+        /* maintenance mode */
         const MAINT_KEY='nova_maintenance_mode';
         const MAINT_META_KEY='nova_maintenance_meta';
         const POLL_INTERVAL=5000;
@@ -2097,9 +2140,7 @@
         function startPoll(){ if(_maintPollTimer) clearInterval(_maintPollTimer); _maintPollTimer=setInterval(checkMaintenance,POLL_INTERVAL); }
         window.addEventListener('resize',()=>{ const banner=document.getElementById('maintenanceWarning'); const spacer=document.getElementById('maintSpacer'); if(banner.classList.contains('visible')){ spacer.style.height=banner.offsetHeight+'px'; } });
 
-        /* ================================================================
-           3D SCENE — hero + ambient starfield
-           ================================================================ */
+        /* 3D scene */
         function initSarveik3D(){
             if(typeof THREE === 'undefined'){
                 document.getElementById('hero-canvas-wrap').innerHTML = `
@@ -2255,7 +2296,7 @@
             }
             window.addEventListener('resize', resizeHero);
 
-            /* ambient starfield */
+            /* starfield background */
             const bgCanvas = document.getElementById('webgl-bg-canvas');
             const bgScene = new THREE.Scene();
             const bgCamera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
@@ -2348,16 +2389,11 @@
                 document.querySelector('.theme-toggle i').className='fas fa-sun';
                 updateParticleColors(false);
             }
-            updateHeaderUI();
+            // Check session and update UI – no redirect
+            await checkSession();
+            // Start maintenance polling
             checkMaintenance();
             startPoll();
-
-            // Check session to update UI but do NOT redirect
-            const isValid = await checkSessionAndRedirect();
-            if(isValid){
-                // User is logged in – header already updated in updateHeaderUI()
-                // No redirect – stay on landing page
-            }
 
             loadTopUsers();
 
