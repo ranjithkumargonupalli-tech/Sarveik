@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Business Owner Dashboard – Sarveik</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+      --bg:#07070e; --bg2:#0f0f1a; --bg3:#161625; --bg4:#1c1c2e;
+      --card:rgba(255,255,255,0.035); --card-hover:rgba(255,255,255,0.065);
+      --border:rgba(255,255,255,0.07); --border-active:rgba(255,255,255,0.18);
+      --text:#eeeef5; --text2:#8888a8; --text3:#4a4a6a;
+      --accent:#7c6cf0; --accent2:#f06c8a; --accent3:#6cf0b8; --accent4:#f0c84a;
+      --gold:#f0c84a; --red:#ef4444; --green:#22c55e; --blue:#3b82f6; --orange:#f97316;
+      --grad1:linear-gradient(135deg,#7c6cf0 0%,#f06c8a 100%);
+      --grad2:linear-gradient(135deg,#6cf0b8 0%,#3b82f6 100%);
+      --grad3:linear-gradient(135deg,#f0c84a 0%,#f97316 100%);
+      --shadow:0 24px 80px rgba(0,0,0,0.6); --shadow-md:0 12px 40px rgba(0,0,0,0.4);
+      --r:18px; --r-sm:10px;
+      --transition:all 0.28s cubic-bezier(0.4,0,0.2,1);
+    }
+    body.light-mode {
+      --bg:#f0f0f8; --bg2:#e8e8f4; --bg3:#ffffff; --bg4:#f8f8fc;
+      --card:rgba(255,255,255,0.85); --card-hover:rgba(255,255,255,1);
+      --border:rgba(0,0,0,0.07); --border-active:rgba(124,108,240,0.35);
+      --text:#0a0a18; --text2:#444466; --text3:#9090b0;
+      --shadow:0 24px 80px rgba(0,0,0,0.1);
+    }
+    body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; transition:background 0.3s,color 0.3s; }
+    .container { max-width:1200px; margin:0 auto; padding:20px; }
+
+    /* Header */
+    .header {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:16px 0; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:12px;
+    }
+    .logo { font-family:'Syne',sans-serif; font-size:1.4rem; font-weight:800; background:var(--grad1); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .header-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+
+    /* Buttons */
+    .btn {
+      padding:6px 16px; border-radius:50px; border:1px solid var(--border);
+      background:var(--card); color:var(--text2); cursor:pointer;
+      font-family:'DM Sans',sans-serif; font-size:0.8rem; font-weight:500;
+      transition:var(--transition); display:inline-flex; align-items:center; gap:6px; text-decoration:none;
+    }
+    .btn:hover { border-color:var(--border-active); color:var(--text); background:var(--card-hover); }
+    .btn-primary { background:var(--grad1); border-color:transparent; color:#fff; font-weight:600; box-shadow:0 4px 18px rgba(124,108,240,0.3); }
+    .btn-primary:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(124,108,240,0.45); color:#fff; }
+    .btn-success { background:var(--green); border-color:transparent; color:#fff; }
+    .btn-success:hover { transform:translateY(-2px); color:#fff; }
+    .btn-danger { background:var(--red); border-color:transparent; color:#fff; }
+    .btn-danger:hover { transform:translateY(-2px); color:#fff; }
+    .btn-gold { background:var(--grad3); border-color:transparent; color:#000; }
+    .btn-gold:hover { transform:translateY(-2px); color:#000; }
+    .btn-sm { padding:4px 12px; font-size:0.7rem; }
+    .btn-outline { background:transparent; border:1px solid var(--border); }
+    .btn-icon { width:34px; height:34px; border-radius:50%; border:1px solid var(--border); background:var(--card); color:var(--text2); cursor:pointer; display:inline-flex; align-items:center; justify-content:center; transition:var(--transition); }
+    .btn-icon:hover { border-color:var(--border-active); color:var(--text); background:var(--card-hover); }
+
+    /* Business selector */
+    .biz-selector { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin:16px 0; padding:12px 16px; background:var(--card); border-radius:var(--r-sm); border:1px solid var(--border); }
+    .biz-selector select { padding:8px 14px; border-radius:50px; border:1px solid var(--border); background:var(--card); color:var(--text); font-family:'DM Sans',sans-serif; outline:none; }
+    .biz-selector .status-badge { font-size:0.7rem; padding:2px 12px; border-radius:20px; }
+    .biz-selector .status-badge.approved { background:rgba(34,197,94,0.15); color:var(--green); }
+    .biz-selector .status-badge.pending { background:rgba(240,200,74,0.15); color:var(--gold); }
+    .biz-selector .status-badge.rejected { background:rgba(239,68,68,0.15); color:var(--red); }
+
+    /* Dashboard layout */
+    .dashboard-grid { display:grid; grid-template-columns:240px 1fr; gap:24px; margin-top:16px; }
+    @media(max-width:860px){ .dashboard-grid{ grid-template-columns:1fr; } }
+
+    /* Sidebar */
+    .sidebar { background:var(--card); border:1px solid var(--border); border-radius:var(--r); padding:18px; position:sticky; top:20px; align-self:start; }
+    .sidebar-nav { display:flex; flex-direction:column; gap:4px; }
+    .sidebar-nav a { padding:10px 14px; border-radius:10px; color:var(--text2); text-decoration:none; transition:var(--transition); display:flex; align-items:center; gap:10px; font-size:0.85rem; font-weight:500; }
+    .sidebar-nav a:hover { background:var(--card-hover); color:var(--text); }
+    .sidebar-nav a.active { background:rgba(124,108,240,0.12); color:var(--accent); }
+    .sidebar-nav a i { width:20px; text-align:center; }
+
+    /* Panels */
+    .panel { display:none; animation:fadeUp 0.3s ease; }
+    .panel.active { display:block; }
+    .panel-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; flex-wrap:wrap; gap:10px; }
+    .panel-title { font-family:'Syne',sans-serif; font-size:1.3rem; font-weight:800; }
+
+    /* Cards */
+    .card { background:var(--card); border:1px solid var(--border); border-radius:var(--r-sm); padding:18px; margin-bottom:16px; transition:var(--transition); }
+    .card:hover { border-color:var(--border-active); }
+    .card-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px; }
+    .card-title { font-weight:600; font-size:1rem; }
+
+    /* Forms */
+    .form-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+    .form-grid .full { grid-column:1/-1; }
+    .form-group { display:flex; flex-direction:column; gap:4px; }
+    .form-group label { font-size:0.75rem; font-weight:600; color:var(--text2); text-transform:uppercase; letter-spacing:0.5px; }
+    .form-control { padding:9px 12px; border-radius:8px; border:1px solid var(--border); background:var(--card); color:var(--text); font-family:'DM Sans',sans-serif; font-size:0.85rem; outline:none; transition:var(--transition); }
+    .form-control:focus { border-color:rgba(124,108,240,0.5); box-shadow:0 0 0 3px rgba(124,108,240,0.1); }
+    .form-control::placeholder { color:var(--text3); }
+    textarea.form-control { resize:vertical; min-height:60px; }
+    .form-hint { font-size:0.7rem; color:var(--text3); margin-top:3px; }
+
+    /* Stats cards */
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:12px; margin-bottom:18px; }
+    .stat-card { background:var(--card); border:1px solid var(--border); border-radius:var(--r-sm); padding:14px; text-align:center; transition:var(--transition); }
+    .stat-card:hover { border-color:var(--border-active); }
+    .stat-card .stat-num { font-family:'Syne',sans-serif; font-size:1.6rem; font-weight:800; color:var(--accent); }
+    .stat-card .stat-label { font-size:0.65rem; color:var(--text3); text-transform:uppercase; letter-spacing:0.5px; }
+
+    /* Product grid */
+    .product-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:14px; }
+    .product-card { background:var(--card); border:1px solid var(--border); border-radius:var(--r-sm); padding:14px; transition:var(--transition); position:relative; }
+    .product-card:hover { border-color:var(--border-active); transform:translateY(-3px); }
+    .product-card .prod-img { width:100%; height:120px; object-fit:cover; border-radius:6px; background:var(--bg3); }
+    .product-card .prod-name { font-weight:600; margin:6px 0 2px; }
+    .product-card .prod-price { font-weight:700; color:var(--accent); font-size:1.05rem; }
+    .product-card .prod-stock { font-size:0.7rem; color:var(--text3); }
+    .product-card .prod-actions { display:flex; gap:5px; margin-top:8px; flex-wrap:wrap; }
+
+    /* Order list */
+    .order-item { border-bottom:1px solid var(--border); padding:12px 0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; }
+    .order-item:last-child { border-bottom:none; }
+    .order-status { font-weight:600; padding:2px 12px; border-radius:20px; font-size:0.7rem; }
+    .order-status.pending_confirmation { background:rgba(240,200,74,0.15); color:var(--gold); }
+    .order-status.confirmed { background:rgba(124,108,240,0.15); color:var(--accent); }
+    .order-status.preparing { background:rgba(59,130,246,0.15); color:var(--blue); }
+    .order-status.ready { background:rgba(108,240,184,0.15); color:var(--accent3); }
+    .order-status.picked_up { background:rgba(240,200,74,0.15); color:var(--orange); }
+    .order-status.delivered { background:rgba(34,197,94,0.15); color:var(--green); }
+    .order-status.cancelled { background:rgba(239,68,68,0.15); color:var(--red); }
+
+    /* Modal */
+    .modal-backdrop { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); backdrop-filter:blur(8px); z-index:1000; align-items:center; justify-content:center; padding:18px; }
+    .modal-backdrop.open { display:flex; }
+    .modal { background:var(--bg2); border:1px solid var(--border); border-radius:var(--r); max-width:600px; width:100%; max-height:90vh; overflow-y:auto; padding:24px; animation:fadeUp 0.25s ease; }
+    .modal-close { float:right; background:transparent; border:none; color:var(--text2); font-size:1.4rem; cursor:pointer; transition:var(--transition); }
+    .modal-close:hover { color:var(--red); transform:rotate(90deg); }
+    .modal h2 { font-family:'Syne',sans-serif; margin-bottom:16px; }
+
+    /* Toast */
+    #toastContainer { position:fixed; bottom:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:6px; }
+    .toast { background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:10px 16px; font-size:0.85rem; display:flex; align-items:center; gap:9px; animation:slideToast 0.28s ease; max-width:320px; box-shadow:var(--shadow-md); color:var(--text); }
+    .toast.success { border-color:rgba(34,197,94,0.28); }
+    .toast.success i { color:var(--green); }
+    .toast.error { border-color:rgba(239,68,68,0.28); }
+    .toast.error i { color:var(--red); }
+    .toast.info { border-color:rgba(124,108,240,0.28); }
+    .toast.info i { color:var(--accent); }
+
+    /* Empty state */
+    .empty-state { text-align:center; padding:48px 20px; color:var(--text3); }
+    .empty-state i { font-size:2.8rem; margin-bottom:14px; display:block; opacity:0.3; }
+    .empty-state h3 { color:var(--text2); margin-bottom:6px; }
+
+    /* Animations */
+    @keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideToast { from { transform:translateX(110%); opacity:0; } to { transform:translateX(0); opacity:1; } }
+
+    /* Responsive */
+    @media(max-width:600px){ .form-grid{ grid-template-columns:1fr; } .product-grid{ grid-template-columns:1fr; } .header-actions .btn span{ display:none; } }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="logo">🏢 Sarveik <span style="font-size:0.7rem;color:var(--text3);-webkit-text-fill-color:var(--text3);">Business Owner</span></div>
+    <div class="header-actions">
+      <span id="userName" style="font-size:0.85rem;color:var(--text2);"></span>
+      <button class="btn-icon" id="themeToggle"><i class="fas fa-moon"></i></button>
+      <button class="btn btn-sm" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></button>
+      <a href="/businessdirectory.html" class="btn btn-sm btn-primary" target="_blank"><i class="fas fa-external-link-alt"></i> <span>View Directory</span></a>
+    </div>
+  </header>
+
+  <!-- Business Selector -->
+  <div class="biz-selector" id="bizSelector">
+    <label style="font-weight:600;color:var(--text2);font-size:0.85rem;"><i class="fas fa-store"></i> Business:</label>
+    <select id="businessSelect" style="flex:1;min-width:150px;"></select>
+    <span id="bizStatusBadge" class="status-badge">—</span>
+    <button class="btn btn-sm btn-outline" id="refreshBizBtn"><i class="fas fa-sync"></i></button>
+  </div>
+
+  <!-- Dashboard -->
+  <div class="dashboard-grid">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <nav class="sidebar-nav">
+        <a href="#" class="active" data-panel="dashboard"><i class="fas fa-chart-pie"></i> Dashboard</a>
+        <a href="#" data-panel="business"><i class="fas fa-building"></i> Business Details</a>
+        <a href="#" data-panel="products"><i class="fas fa-boxes"></i> Products</a>
+        <a href="#" data-panel="orders"><i class="fas fa-truck"></i> Orders</a>
+        <a href="#" data-panel="analytics"><i class="fas fa-chart-line"></i> Analytics</a>
+      </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+
+      <!-- ===== DASHBOARD PANEL ===== -->
+      <div class="panel active" id="panel-dashboard">
+        <div class="panel-header">
+          <h2 class="panel-title">📊 Dashboard</h2>
+          <span id="lastUpdate" style="font-size:0.7rem;color:var(--text3);"></span>
+        </div>
+        <div class="stats-grid" id="dashboardStats">
+          <div class="stat-card"><div class="stat-num" id="statOrders">0</div><div class="stat-label">Total Orders</div></div>
+          <div class="stat-card"><div class="stat-num" id="statRevenue">₹0</div><div class="stat-label">Revenue</div></div>
+          <div class="stat-card"><div class="stat-num" id="statProducts">0</div><div class="stat-label">Products</div></div>
+          <div class="stat-card"><div class="stat-num" id="statPending">0</div><div class="stat-label">Pending Orders</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">📦 Recent Orders</span><a href="#" onclick="switchPanel('orders')" style="font-size:0.8rem;color:var(--accent);">View All →</a></div>
+          <div id="recentOrders"></div>
+        </div>
+      </div>
+
+      <!-- ===== BUSINESS DETAILS PANEL ===== -->
+      <div class="panel" id="panel-business">
+        <div class="panel-header">
+          <h2 class="panel-title">🏢 Business Details</h2>
+          <button class="btn btn-primary btn-sm" id="saveBizBtn"><i class="fas fa-save"></i> Save Changes</button>
+        </div>
+        <div class="card">
+          <div class="form-grid" id="bizForm">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+        <div style="font-size:0.75rem;color:var(--text3);margin-top:-10px;padding:0 4px;">
+          <i class="fas fa-info-circle"></i> Fields marked <span style="color:var(--red);">*</span> are required.
+        </div>
+      </div>
+
+      <!-- ===== PRODUCTS PANEL ===== -->
+      <div class="panel" id="panel-products">
+        <div class="panel-header">
+          <h2 class="panel-title">📦 Products</h2>
+          <button class="btn btn-primary btn-sm" id="addProductBtn"><i class="fas fa-plus"></i> Add Product</button>
+        </div>
+        <div id="productList"><div class="empty-state"><i class="fas fa-box-open"></i><h3>No products yet</h3><p>Add your first product to start selling.</p></div></div>
+      </div>
+
+      <!-- ===== ORDERS PANEL ===== -->
+      <div class="panel" id="panel-orders">
+        <div class="panel-header">
+          <h2 class="panel-title">🚚 Orders</h2>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <select id="orderStatusFilter" class="form-control" style="width:auto;padding:6px 12px;">
+              <option value="all">All Status</option>
+              <option value="pending_confirmation">Pending Confirmation</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="preparing">Preparing</option>
+              <option value="ready">Ready</option>
+              <option value="picked_up">Picked Up</option>
+              <option value="delivered">Delivered</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+            <button class="btn btn-sm btn-outline" id="refreshOrdersBtn"><i class="fas fa-sync"></i></button>
+          </div>
+        </div>
+        <div id="ordersList"><div class="empty-state"><i class="fas fa-truck"></i><h3>No orders yet</h3><p>Orders will appear here when customers place them.</p></div></div>
+        <div id="ordersPagination" style="display:flex;gap:5px;justify-content:center;margin-top:14px;flex-wrap:wrap;"></div>
+      </div>
+
+      <!-- ===== ANALYTICS PANEL ===== -->
+      <div class="panel" id="panel-analytics">
+        <div class="panel-header">
+          <h2 class="panel-title">📈 Analytics</h2>
+          <button class="btn btn-sm btn-outline" id="refreshAnalyticsBtn"><i class="fas fa-sync"></i> Refresh</button>
+        </div>
+        <div class="stats-grid" id="analyticsStats">
+          <div class="stat-card"><div class="stat-num" id="anaOrders">0</div><div class="stat-label">Total Orders</div></div>
+          <div class="stat-card"><div class="stat-num" id="anaRevenue">₹0</div><div class="stat-label">Revenue</div></div>
+          <div class="stat-card"><div class="stat-num" id="anaAvg">₹0</div><div class="stat-label">Avg Order Value</div></div>
+          <div class="stat-card"><div class="stat-num" id="anaCompleted">0</div><div class="stat-label">Completed</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">🏆 Top Products</span></div>
+          <div id="topProductsList"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">📊 Order Status Breakdown</span></div>
+          <div id="statusBreakdown"></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ===== PRODUCT MODAL ===== -->
+<div class="modal-backdrop" id="productModal">
+  <div class="modal">
+    <button class="modal-close" id="closeProductModal"><i class="fas fa-times"></i></button>
+    <h2 id="productModalTitle">Add Product</h2>
+    <div class="form-grid" id="productForm">
+      <!-- Dynamically populated -->
+    </div>
+  </div>
+</div>
+
+<!-- ===== TOAST ===== -->
+<div id="toastContainer"></div>
+
+<script>
+/* ================================================================
+   BUSINESS OWNER DASHBOARD – Full Client
+================================================================ */
+
+// ---- Helpers ----
+function escHtml(str){ if(!str) return ''; return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+function showToast(msg, type='success') {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  const icons = { success:'fa-check-circle', error:'fa-exclamation-circle', info:'fa-info-circle' };
+  t.innerHTML = `<i class="fas ${icons[type]||'fa-info-circle'}"></i> ${escHtml(msg)}`;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(40px)'; setTimeout(() => t.remove(), 300); }, 3800);
+}
+
+async function apiCall(url, opts={}) {
+  const fetchOpts = { ...opts, credentials: 'include' };
+  if (opts.body && typeof opts.body === 'object') {
+    fetchOpts.body = JSON.stringify(opts.body);
+    fetchOpts.headers = { 'Content-Type': 'application/json', ...(opts.headers||{}) };
+  }
+  const res = await fetch('/api' + url, fetchOpts);
+  if (!res.ok) throw new Error(await res.text() || `HTTP ${res.status}`);
+  const ct = res.headers.get('content-type');
+  return ct?.includes('application/json') ? res.json() : res.text();
+}
+
+function formatCurrency(amount) { return '₹' + parseFloat(amount || 0).toFixed(0); }
+function formatDate(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+// ---- State ----
+let state = {
+  businesses: [],
+  currentBizId: null,
+  currentBiz: null,
+  products: [],
+  orders: [],
+  orderPage: 1,
+  orderLimit: 20,
+  orderTotal: 0,
+  analytics: null,
+  editingProductId: null,
+  currentTab: 'dashboard',
+};
+
+// ---- DOM refs ----
+const $ = id => document.getElementById(id);
+
+// ---- Auth check ----
+async function checkAuth() {
+  try {
+    const profile = await apiCall('/profile');
+    if (!profile || !profile.id) {
+      window.location.href = '/login.html';
+      return null;
+    }
+    $('userName').textContent = `👋 ${escHtml(profile.username)}`;
+    return profile;
+  } catch {
+    window.location.href = '/login.html';
+    return null;
+  }
+}
+
+// ---- Load businesses ----
+async function loadBusinesses() {
+  try {
+    const res = await apiCall('/user/businesses');
+    state.businesses = res.businesses || [];
+    populateBusinessSelect();
+    if (state.businesses.length === 0) {
+      // No business yet – show empty state in main area
+      document.querySelector('.dashboard-grid').style.display = 'none';
+      document.querySelector('.biz-selector').style.display = 'none';
+      document.querySelector('.main-content').innerHTML = `
+        <div class="empty-state" style="padding:80px 20px;">
+          <i class="fas fa-store-alt-slash"></i>
+          <h3>You haven't added a business yet</h3>
+          <p>Go to the directory and click "Add Business" to get started.</p>
+          <button class="btn btn-primary" onclick="window.location.href='/businessdirectory.html'" style="margin-top:16px;padding:10px 28px;">
+            <i class="fas fa-plus"></i> Add Your Business
+          </button>
+        </div>
+      `;
+      return;
+    }
+    document.querySelector('.dashboard-grid').style.display = 'grid';
+    document.querySelector('.biz-selector').style.display = 'flex';
+
+    // Auto-select first business if none selected
+    if (!state.currentBizId || !state.businesses.find(b => b.id == state.currentBizId)) {
+      state.currentBizId = state.businesses[0].id;
+    }
+    $('businessSelect').value = state.currentBizId;
+    await loadBusinessDetails();
+  } catch(e) {
+    showToast('Failed to load businesses: ' + e.message, 'error');
+  }
+}
+
+function populateBusinessSelect() {
+  const sel = $('businessSelect');
+  sel.innerHTML = state.businesses.map(b => `
+    <option value="${b.id}">${escHtml(b.name)}${b.approved ? ' ✅' : ' ⏳'}</option>
+  `).join('');
+}
+
+$('businessSelect').addEventListener('change', async () => {
+  state.currentBizId = parseInt($('businessSelect').value);
+  await loadBusinessDetails();
+});
+
+$('refreshBizBtn').addEventListener('click', loadBusinesses);
+
+// ---- Load business details ----
+async function loadBusinessDetails() {
+  if (!state.currentBizId) return;
+  try {
+    const biz = state.businesses.find(b => b.id == state.currentBizId);
+    state.currentBiz = biz;
+    // Update status badge
+    const badge = $('bizStatusBadge');
+    if (biz.approved) {
+      badge.textContent = '✓ Approved';
+      badge.className = 'status-badge approved';
+    } else if (biz.approved === false) {
+      badge.textContent = '✗ Rejected';
+      badge.className = 'status-badge rejected';
+    } else {
+      badge.textContent = '⏳ Pending Approval';
+      badge.className = 'status-badge pending';
+    }
+    renderBusinessForm(biz);
+    // Load products, orders, analytics
+    await loadProducts();
+    await loadOrders(1);
+    await loadAnalytics();
+    await loadDashboardStats();
+    // Switch to dashboard
+    switchPanel('dashboard');
+  } catch(e) {
+    showToast('Failed to load business details: ' + e.message, 'error');
+  }
+}
+
+// ---- Render business form ----
+function renderBusinessForm(biz) {
+  const container = $('bizForm');
+  container.innerHTML = `
+    <div class="form-group full">
+      <label>Business Name <span style="color:var(--red);">*</span></label>
+      <input type="text" class="form-control" id="biz_name" value="${escHtml(biz.name || '')}" placeholder="Business name">
+    </div>
+    <div class="form-group">
+      <label>Type</label>
+      <select class="form-control" id="biz_type">
+        ${['company','shop','restaurant','hotel','hospital','school','bank','salon','gym','pharmacy','garage','tech','service','market','other'].map(t =>
+          `<option value="${t}" ${biz.type === t ? 'selected' : ''}>${t.replace('_',' ').toUpperCase()}</option>`
+        ).join('')}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Category</label>
+      <select class="form-control" id="biz_category">
+        ${['retail','food','health','education','finance','technology','real_estate','automotive','beauty','entertainment','services','other'].map(c =>
+          `<option value="${c}" ${biz.category === c ? 'selected' : ''}>${c.replace('_',' ').toUpperCase()}</option>`
+        ).join('')}
+      </select>
+    </div>
+    <div class="form-group full">
+      <label>Description</label>
+      <textarea class="form-control" id="biz_desc" rows="3" placeholder="Describe your business…">${escHtml(biz.description || '')}</textarea>
+    </div>
+    <div class="form-group full">
+      <label>Address <span style="color:var(--red);">*</span></label>
+      <input type="text" class="form-control" id="biz_address" value="${escHtml(biz.address || '')}" placeholder="Full address">
+    </div>
+    <div class="form-group">
+      <label>City <span style="color:var(--red);">*</span></label>
+      <input type="text" class="form-control" id="biz_city" value="${escHtml(biz.city || '')}" placeholder="City">
+    </div>
+    <div class="form-group">
+      <label>State</label>
+      <input type="text" class="form-control" id="biz_state" value="${escHtml(biz.state || '')}" placeholder="State">
+    </div>
+    <div class="form-group">
+      <label>Phone <span style="color:var(--red);">*</span></label>
+      <input type="tel" class="form-control" id="biz_phone" value="${escHtml(biz.phone || '')}" placeholder="+91 9876543210">
+    </div>
+    <div class="form-group">
+      <label>Email <span style="color:var(--red);">*</span></label>
+      <input type="email" class="form-control" id="biz_email" value="${escHtml(biz.email || '')}" placeholder="contact@business.com">
+    </div>
+    <div class="form-group">
+      <label>Website</label>
+      <input type="url" class="form-control" id="biz_website" value="${escHtml(biz.website || '')}" placeholder="https://…">
+    </div>
+    <div class="form-group">
+      <label>WhatsApp</label>
+      <input type="tel" class="form-control" id="biz_whatsapp" value="${escHtml(biz.whatsapp || '')}" placeholder="+91 9876543210">
+    </div>
+    <div class="form-group">
+      <label>Google Place ID</label>
+      <input type="text" class="form-control" id="biz_place_id" value="${escHtml(biz.place_id || '')}" placeholder="ChIJ…">
+    </div>
+    <div class="form-group">
+      <label>Latitude</label>
+      <input type="text" class="form-control" id="biz_lat" value="${escHtml(biz.lat || '')}" placeholder="13.0827">
+    </div>
+    <div class="form-group">
+      <label>Longitude</label>
+      <input type="text" class="form-control" id="biz_lng" value="${escHtml(biz.lng || '')}" placeholder="80.2707">
+    </div>
+    <div class="form-group">
+      <label>Delivery Radius (km)</label>
+      <input type="number" class="form-control" id="biz_delivery_radius" value="${biz.delivery_radius || 10}" min="1" max="50">
+    </div>
+    <div class="form-group" style="flex-direction:row;align-items:center;gap:8px;">
+      <input type="checkbox" id="biz_delivery_enabled" ${biz.is_delivery_enabled !== false ? 'checked' : ''} style="width:18px;height:18px;">
+      <label for="biz_delivery_enabled" style="text-transform:none;font-weight:400;color:var(--text);">Delivery Enabled</label>
+    </div>
+    <div class="form-group">
+      <label>Instagram</label>
+      <input type="url" class="form-control" id="biz_instagram" value="${escHtml(biz.instagram || '')}" placeholder="https://instagram.com/…">
+    </div>
+    <div class="form-group">
+      <label>Facebook</label>
+      <input type="url" class="form-control" id="biz_facebook" value="${escHtml(biz.facebook || '')}" placeholder="https://facebook.com/…">
+    </div>
+    <div class="form-group full">
+      <label>Image URLs (comma separated)</label>
+      <input type="text" class="form-control" id="biz_images" value="${escHtml(Array.isArray(biz.image_urls) ? biz.image_urls.join(', ') : biz.image_urls || '')}" placeholder="https://example.com/img1.jpg, https://…">
+    </div>
+  `;
+}
+
+// ---- Save business details ----
+$('saveBizBtn').addEventListener('click', async () => {
+  const data = {
+    name: $('biz_name').value.trim(),
+    type: $('biz_type').value,
+    category: $('biz_category').value,
+    description: $('biz_desc').value.trim(),
+    address: $('biz_address').value.trim(),
+    city: $('biz_city').value.trim(),
+    state: $('biz_state').value.trim(),
+    phone: $('biz_phone').value.trim(),
+    email: $('biz_email').value.trim(),
+    website: $('biz_website').value.trim(),
+    whatsapp: $('biz_whatsapp').value.trim(),
+    place_id: $('biz_place_id').value.trim(),
+    lat: parseFloat($('biz_lat').value) || null,
+    lng: parseFloat($('biz_lng').value) || null,
+    delivery_radius: parseInt($('biz_delivery_radius').value) || 10,
+    is_delivery_enabled: $('biz_delivery_enabled').checked,
+    instagram: $('biz_instagram').value.trim(),
+    facebook: $('biz_facebook').value.trim(),
+    image_urls: $('biz_images').value.split(',').map(s=>s.trim()).filter(Boolean),
+    hours: state.currentBiz.hours || null,
+    amenities: state.currentBiz.amenities || null,
+  };
+  if (!data.name || !data.address || !data.city || !data.phone || !data.email) {
+    showToast('Please fill all required fields (*)', 'error');
+    return;
+  }
+  try {
+    await apiCall(`/admin/businesses/${state.currentBizId}`, { method: 'PUT', body: data });
+    showToast('Business details saved!', 'success');
+    await loadBusinesses(); // refresh list
+  } catch(e) {
+    showToast('Failed to save: ' + e.message, 'error');
+  }
+});
+
+// ---- Load products ----
+async function loadProducts() {
+  if (!state.currentBizId) return;
+  try {
+    const products = await apiCall(`/business/${state.currentBizId}/products`);
+    state.products = products || [];
+    renderProducts();
+  } catch(e) {
+    showToast('Failed to load products: ' + e.message, 'error');
+  }
+}
+
+function renderProducts() {
+  const container = $('productList');
+  if (!state.products.length) {
+    container.innerHTML = `<div class="empty-state"><i class="fas fa-box-open"></i><h3>No products yet</h3><p>Add your first product to start selling.</p></div>`;
+    return;
+  }
+  container.innerHTML = `<div class="product-grid">${state.products.map(p => `
+    <div class="product-card" data-id="${p.id}">
+      ${p.image_url ? `<img class="prod-img" src="${escHtml(p.image_url)}" alt="${escHtml(p.name)}" onerror="this.style.display='none'">` : `<div class="prod-img" style="display:flex;align-items:center;justify-content:center;background:var(--bg3);color:var(--text3);font-size:2rem;">📦</div>`}
+      <div class="prod-name">${escHtml(p.name)}</div>
+      <div class="prod-price">${formatCurrency(p.price)}</div>
+      <div class="prod-stock">${p.is_available ? '✅ In Stock' : '❌ Out of Stock'} · ${p.stock_quantity || 0} units</div>
+      <div class="prod-actions">
+        <button class="btn btn-primary btn-sm edit-product" data-id="${p.id}"><i class="fas fa-edit"></i></button>
+        <button class="btn btn-danger btn-sm delete-product" data-id="${p.id}"><i class="fas fa-trash"></i></button>
+        <button class="btn btn-sm toggle-product" data-id="${p.id}" style="${p.is_available ? 'border-color:var(--green);color:var(--green);' : 'border-color:var(--red);color:var(--red);'}">
+          ${p.is_available ? 'Hide' : 'Show'}
+        </button>
+      </div>
+    </div>
+  `).join('')}</div>`;
+
+  container.querySelectorAll('.edit-product').forEach(btn => {
+    btn.addEventListener('click', () => openProductModal(btn.dataset.id));
+  });
+  container.querySelectorAll('.delete-product').forEach(btn => {
+    btn.addEventListener('click', () => deleteProduct(btn.dataset.id));
+  });
+  container.querySelectorAll('.toggle-product').forEach(btn => {
+    btn.addEventListener('click', () => toggleProduct(btn.dataset.id));
+  });
+}
+
+// ---- Product CRUD ----
+function openProductModal(productId = null) {
+  state.editingProductId = productId;
+  const modal = $('productModal');
+  const form = $('productForm');
+  const title = $('productModalTitle');
+
+  if (productId) {
+    const p = state.products.find(x => x.id == productId);
+    if (!p) return showToast('Product not found', 'error');
+    title.textContent = '✏️ Edit Product';
+    form.innerHTML = `
+      <div class="form-group full">
+        <label>Product Name <span style="color:var(--red);">*</span></label>
+        <input type="text" class="form-control" id="prod_name" value="${escHtml(p.name || '')}" placeholder="Product name">
+      </div>
+      <div class="form-group full">
+        <label>Description</label>
+        <textarea class="form-control" id="prod_desc" rows="2" placeholder="Describe the product…">${escHtml(p.description || '')}</textarea>
+      </div>
+      <div class="form-group">
+        <label>Price (₹) <span style="color:var(--red);">*</span></label>
+        <input type="number" class="form-control" id="prod_price" value="${p.price || ''}" step="0.01" min="0" placeholder="0.00">
+      </div>
+      <div class="form-group">
+        <label>Category</label>
+        <select class="form-control" id="prod_category">
+          ${['food','beverages','medicine','electronics','clothing','groceries','home','beauty','toys','books','other'].map(c =>
+            `<option value="${c}" ${p.category === c ? 'selected' : ''}>${c}</option>`
+          ).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Stock Quantity</label>
+        <input type="number" class="form-control" id="prod_stock" value="${p.stock_quantity || 0}" min="0">
+      </div>
+      <div class="form-group full">
+        <label>Image URL</label>
+        <input type="url" class="form-control" id="prod_image" value="${escHtml(p.image_url || '')}" placeholder="https://example.com/image.jpg">
+        <div class="form-hint">Or upload a file below (will override URL)</div>
+        <input type="file" id="prod_image_file" accept="image/*" style="margin-top:6px;">
+      </div>
+      <div class="form-group full" style="display:flex;gap:6px;margin-top:8px;">
+        <button class="btn btn-primary" id="saveProductBtn" style="flex:1;justify-content:center;"><i class="fas fa-save"></i> Save Product</button>
+        <button class="btn btn-outline" id="cancelProductBtn">Cancel</button>
+      </div>
+    `;
+  } else {
+    title.textContent = '➕ Add Product';
+    form.innerHTML = `
+      <div class="form-group full">
+        <label>Product Name <span style="color:var(--red);">*</span></label>
+        <input type="text" class="form-control" id="prod_name" placeholder="Product name">
+      </div>
+      <div class="form-group full">
+        <label>Description</label>
+        <textarea class="form-control" id="prod_desc" rows="2" placeholder="Describe the product…"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Price (₹) <span style="color:var(--red);">*</span></label>
+        <input type="number" class="form-control" id="prod_price" step="0.01" min="0" placeholder="0.00">
+      </div>
+      <div class="form-group">
+        <label>Category</label>
+        <select class="form-control" id="prod_category">
+          ${['food','beverages','medicine','electronics','clothing','groceries','home','beauty','toys','books','other'].map(c =>
+            `<option value="${c}">${c}</option>`
+          ).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Stock Quantity</label>
+        <input type="number" class="form-control" id="prod_stock" value="10" min="0">
+      </div>
+      <div class="form-group full">
+        <label>Image URL</label>
+        <input type="url" class="form-control" id="prod_image" placeholder="https://example.com/image.jpg">
+        <div class="form-hint">Or upload a file below (will override URL)</div>
+        <input type="file" id="prod_image_file" accept="image/*" style="margin-top:6px;">
+      </div>
+      <div class="form-group full" style="display:flex;gap:6px;margin-top:8px;">
+        <button class="btn btn-primary" id="saveProductBtn" style="flex:1;justify-content:center;"><i class="fas fa-save"></i> Save Product</button>
+        <button class="btn btn-outline" id="cancelProductBtn">Cancel</button>
+      </div>
+    `;
+  }
+
+  // Attach event listeners
+  form.querySelector('#saveProductBtn').addEventListener('click', () => saveProduct());
+  form.querySelector('#cancelProductBtn').addEventListener('click', () => $('productModal').classList.remove('open'));
+  modal.classList.add('open');
+}
+
+async function saveProduct() {
+  const name = $('prod_name').value.trim();
+  const price = parseFloat($('prod_price').value);
+  if (!name || isNaN(price) || price < 0) {
+    showToast('Name and valid price are required', 'error');
+    return;
+  }
+  const data = {
+    business_id: state.currentBizId,
+    name,
+    description: $('prod_desc').value.trim(),
+    price,
+    category: $('prod_category').value,
+    stock_quantity: parseInt($('prod_stock').value) || 0,
+    image_url: $('prod_image').value.trim() || null,
+  };
+
+  try {
+    let productId = state.editingProductId;
+    if (productId) {
+      await apiCall(`/products/${productId}`, { method: 'PUT', body: data });
+    } else {
+      const res = await apiCall('/products', { method: 'POST', body: data });
+      productId = res.id;
+    }
+    // Handle image upload
+    const fileInput = $('prod_image_file');
+    if (fileInput && fileInput.files.length > 0) {
+      const formData = new FormData();
+      formData.append('image', fileInput.files[0]);
+      const uploadRes = await fetch(`/api/products/${productId}/image`, {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      if (!uploadRes.ok) {
+        const err = await uploadRes.text();
+        throw new Error(err || 'Image upload failed');
+      }
+    }
+    showToast(productId ? 'Product updated!' : 'Product added!', 'success');
+    $('productModal').classList.remove('open');
+    await loadProducts();
+    await loadDashboardStats();
+  } catch(e) {
+    showToast('Failed: ' + e.message, 'error');
+  }
+}
+
+async function deleteProduct(id) {
+  if (!confirm('Delete this product?')) return;
+  try {
+    await apiCall(`/products/${id}`, { method: 'DELETE' });
+    showToast('Deleted', 'info');
+    await loadProducts();
+    await loadDashboardStats();
+  } catch(e) { showToast('Failed: ' + e.message, 'error'); }
+}
+
+async function toggleProduct(id) {
+  const p = state.products.find(x => x.id == id);
+  if (!p) return;
+  try {
+    await apiCall(`/products/${id}`, { method: 'PUT', body: { ...p, is_available: !p.is_available } });
+    await loadProducts();
+  } catch(e) { showToast('Failed: ' + e.message, 'error'); }
+}
+
+$('addProductBtn').addEventListener('click', () => openProductModal(null));
+$('closeProductModal').addEventListener('click', () => $('productModal').classList.remove('open'));
+$('productModal').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.classList.remove('open'); });
+
+// ---- Load orders ----
+async function loadOrders(page = 1) {
+  if (!state.currentBizId) return;
+  state.orderPage = page;
+  const statusFilter = $('orderStatusFilter').value;
+  try {
+    const params = new URLSearchParams({
+      business_id: state.currentBizId,
+      limit: state.orderLimit,
+      offset: (page - 1) * state.orderLimit,
+    });
+    if (statusFilter !== 'all') params.set('status', statusFilter);
+    const data = await apiCall(`/business/orders?${params.toString()}`);
+    state.orders = data.orders || [];
+    state.orderTotal = data.total || 0;
+    renderOrders();
+    renderOrderPagination();
+  } catch(e) {
+    showToast('Failed to load orders: ' + e.message, 'error');
+  }
+}
+
+function renderOrders() {
+  const container = $('ordersList');
+  if (!state.orders.length) {
+    container.innerHTML = `<div class="empty-state"><i class="fas fa-truck"></i><h3>No orders found</h3><p>Orders will appear here when customers place them.</p></div>`;
+    return;
+  }
+  container.innerHTML = state.orders.map(o => `
+    <div class="order-item">
+      <div>
+        <div style="font-weight:600;">#${o.id} · ${escHtml(o.customer_name || 'Guest')}</div>
+        <div style="font-size:0.75rem;color:var(--text3);">${formatDate(o.placed_at)}</div>
+        <div style="font-size:0.8rem;">${o.items ? o.items.map(i => `${i.quantity}x ${escHtml(i.product_name || 'Item')}`).join(', ') : '—'}</div>
+        <div style="font-size:0.65rem;color:var(--text3);">${o.delivery_partner_id ? `Partner: #${o.delivery_partner_id}` : 'No partner assigned'}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-weight:700;font-size:1.05rem;">${formatCurrency(o.total_amount)}</div>
+        <div><span class="order-status ${o.status}">${o.status ? o.status.replace('_',' ').toUpperCase() : 'UNKNOWN'}</span></div>
+        <div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap;justify-content:flex-end;">
+          ${o.status === 'pending_confirmation' ? `<button class="btn btn-primary btn-sm status-btn" data-id="${o.id}" data-status="confirmed">Confirm</button>` : ''}
+          ${o.status === 'confirmed' ? `<button class="btn btn-primary btn-sm status-btn" data-id="${o.id}" data-status="preparing">Prepare</button>` : ''}
+          ${o.status === 'preparing' ? `<button class="btn btn-gold btn-sm status-btn" data-id="${o.id}" data-status="ready">Ready</button>` : ''}
+          ${['pending_confirmation', 'confirmed', 'preparing'].includes(o.status) ? `<button class="btn btn-danger btn-sm status-btn" data-id="${o.id}" data-status="cancelled">Cancel</button>` : ''}
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  container.querySelectorAll('.status-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const orderId = btn.dataset.id;
+      const status = btn.dataset.status;
+      if (status === 'cancelled' && !confirm('Cancel this order?')) return;
+      try {
+        await apiCall(`/orders/${orderId}/status`, { method: 'PATCH', body: { status } });
+        showToast(`Order #${orderId} → ${status}`, 'success');
+        loadOrders(state.orderPage);
+        loadDashboardStats();
+        loadAnalytics();
+      } catch(e) { showToast('Failed: ' + e.message, 'error'); }
+    });
+  });
+}
+
+function renderOrderPagination() {
+  const container = $('ordersPagination');
+  const totalPages = Math.ceil(state.orderTotal / state.orderLimit);
+  if (totalPages <= 1) { container.innerHTML = ''; return; }
+  let html = '';
+  for (let i = 1; i <= totalPages; i++) {
+    html += `<button class="btn btn-sm ${i === state.orderPage ? 'btn-primary' : 'btn-outline'}" onclick="loadOrders(${i})">${i}</button>`;
+  }
+  container.innerHTML = html;
+}
+
+$('orderStatusFilter').addEventListener('change', () => loadOrders(1));
+$('refreshOrdersBtn').addEventListener('click', () => loadOrders(state.orderPage));
+
+// ---- Load analytics ----
+async function loadAnalytics() {
+  if (!state.currentBizId) return;
+  try {
+    const data = await apiCall(`/business/analytics?business_id=${state.currentBizId}`);
+    state.analytics = data;
+    renderAnalytics();
+  } catch(e) {
+    showToast('Failed to load analytics: ' + e.message, 'error');
+  }
+}
+
+function renderAnalytics() {
+  const a = state.analytics;
+  if (!a) return;
+  const stats = a.stats || {};
+  $('anaOrders').textContent = stats.total_orders || 0;
+  $('anaRevenue').textContent = formatCurrency(stats.total_revenue || 0);
+  $('anaAvg').textContent = formatCurrency(stats.avg_order_value || 0);
+  $('anaCompleted').textContent = stats.completed_orders || 0;
+
+  // Top products
+  const topProducts = a.topProducts || [];
+  const container = $('topProductsList');
+  if (!topProducts.length) {
+    container.innerHTML = '<div style="color:var(--text3);font-size:0.85rem;padding:8px;">No sales yet.</div>';
+  } else {
+    container.innerHTML = topProducts.map(p => `
+      <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+        <span>${escHtml(p.name)}</span>
+        <span style="font-weight:600;">${p.total_sold || 0} sold · ${formatCurrency(p.revenue || 0)}</span>
+      </div>
+    `).join('');
+  }
+
+  // Status breakdown
+  const statuses = ['pending_confirmation', 'confirmed', 'preparing', 'ready', 'picked_up', 'delivered', 'cancelled'];
+  const labels = { pending_confirmation:'Pending Confirm', confirmed:'Confirmed', preparing:'Preparing', ready:'Ready', picked_up:'Picked Up', delivered:'Delivered', cancelled:'Cancelled' };
+  const breakdown = $('statusBreakdown');
+  breakdown.innerHTML = '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">' + statuses.map(s => `
+    <div style="display:flex;justify-content:space-between;padding:6px 10px;background:var(--card);border-radius:6px;">
+      <span style="color:var(--text3);font-size:0.8rem;">${labels[s] || s}</span>
+      <span style="font-weight:600;">${stats[s] || 0}</span>
+    </div>
+  `).join('') + '</div>';
+}
+
+$('refreshAnalyticsBtn').addEventListener('click', loadAnalytics);
+
+// ---- Load dashboard stats ----
+async function loadDashboardStats() {
+  if (!state.currentBizId) return;
+  try {
+    const data = await apiCall(`/business/analytics?business_id=${state.currentBizId}`);
+    const stats = data.stats || {};
+    $('statOrders').textContent = stats.total_orders || 0;
+    $('statRevenue').textContent = formatCurrency(stats.total_revenue || 0);
+    $('statProducts').textContent = state.products.length || 0;
+    const pending = (stats.pending_confirmation || 0) + (stats.confirmed || 0) + (stats.preparing || 0) + (stats.ready || 0) + (stats.picked_up || 0);
+    $('statPending').textContent = pending;
+
+    // Recent orders (last 3)
+    const recent = state.orders.slice(0, 3);
+    const container = $('recentOrders');
+    if (!recent.length) {
+      container.innerHTML = '<div style="color:var(--text3);font-size:0.85rem;padding:8px;">No recent orders.</div>';
+    } else {
+      container.innerHTML = recent.map(o => `
+        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:0.85rem;">
+          <span>#${o.id} · ${escHtml(o.customer_name || 'Guest')}</span>
+          <span style="font-weight:600;">${formatCurrency(o.total_amount)}</span>
+          <span class="order-status ${o.status}" style="font-size:0.6rem;">${o.status ? o.status.replace('_',' ').toUpperCase() : ''}</span>
+        </div>
+      `).join('');
+    }
+    $('lastUpdate').textContent = `Updated: ${new Date().toLocaleTimeString()}`;
+  } catch(e) {
+    console.error('Dashboard stats error:', e);
+  }
+}
+
+// ---- Theme ----
+function initTheme() {
+  const saved = localStorage.getItem('sarveik_theme');
+  if (saved === 'light') { document.body.classList.add('light-mode'); updateThemeUI(true); }
+}
+function updateThemeUI(isLight) {
+  const btn = document.getElementById('themeToggle');
+  if (btn) btn.innerHTML = isLight ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>';
+}
+function toggleTheme() {
+  const isLight = document.body.classList.toggle('light-mode');
+  localStorage.setItem('sarveik_theme', isLight ? 'light' : 'dark');
+  updateThemeUI(isLight);
+}
+document.getElementById('themeToggle').addEventListener('click', toggleTheme);
+
+// ---- Sidebar navigation ----
+document.querySelectorAll('.sidebar-nav a').forEach(link => {
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    const panel = link.dataset.panel;
+    switchPanel(panel);
+  });
+});
+
+function switchPanel(panel) {
+  state.currentTab = panel;
+  document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
+  document.querySelector(`.sidebar-nav a[data-panel="${panel}"]`)?.classList.add('active');
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  const target = document.getElementById(`panel-${panel}`);
+  if (target) target.classList.add('active');
+  // Reload data if needed
+  if (panel === 'orders') loadOrders(1);
+  else if (panel === 'analytics') loadAnalytics();
+  else if (panel === 'dashboard') { loadDashboardStats(); }
+  else if (panel === 'products') loadProducts();
+}
+
+// ---- Logout ----
+document.getElementById('logoutBtn').addEventListener('click', async () => {
+  try {
+    await apiCall('/logout', { method: 'POST' });
+    window.location.href = '/login.html';
+  } catch { window.location.href = '/login.html'; }
+});
+
+// ---- Socket.IO ----
+const socket = io();
+socket.on('new_order', (data) => {
+  if (data.business_id == state.currentBizId) {
+    showToast(`📦 New order #${data.orderId} from ${data.user}`, 'info');
+    loadDashboardStats();
+    if (state.currentTab === 'orders') loadOrders(state.orderPage);
+    if (state.currentTab === 'analytics') loadAnalytics();
+  }
+});
+socket.on('order_status_update', (data) => {
+  showToast(`Order #${data.orderId}: ${data.message}`, 'info');
+  if (state.currentTab === 'orders') loadOrders(state.orderPage);
+  if (state.currentTab === 'dashboard') loadDashboardStats();
+  if (state.currentTab === 'analytics') loadAnalytics();
+});
+
+// ---- Init ----
+(async function init() {
+  initTheme();
+  const profile = await checkAuth();
+  if (!profile) return;
+  await loadBusinesses();
+})();
+
+// Make loadOrders globally accessible for pagination
+window.loadOrders = loadOrders;
+window.switchPanel = switchPanel;
+
+console.log('🚀 Business Owner Dashboard loaded.');
+</script>
+</body>
+</html>

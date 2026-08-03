@@ -791,7 +791,7 @@ passport.use(new GoogleStrategy({
   }
 ));
 
-// ==================== FILE UPLOAD ====================
+// ==================== FILE UPLOAD (Avatars) ====================
 const avatarStorage = multer.diskStorage({
     destination: (req, file, cb) => {
         const dir = './private_uploads/avatars';
@@ -810,6 +810,32 @@ const upload = multer({
     limits: { fileSize: 2 * 1024 * 1024 },
     fileFilter: (req, file, cb) => {
         const allowedTypes = /jpeg|jpg|png|gif/;
+        const ext = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+        const mime = allowedTypes.test(file.mimetype);
+        if (ext && mime) return cb(null, true);
+        cb(new Error('Only images are allowed'));
+    }
+});
+
+// ==================== FILE UPLOAD (Product Images) ====================
+const productImageStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        const dir = './private_uploads/products';
+        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+        cb(null, dir);
+    },
+    filename: (req, file, cb) => {
+        const unique = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const ext = path.extname(file.originalname);
+        cb(null, 'product-' + req.params.id + '-' + unique + ext);
+    }
+});
+
+const uploadProductImage = multer({
+    storage: productImageStorage,
+    limits: { fileSize: 5 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = /jpeg|jpg|png|gif|webp/;
         const ext = allowedTypes.test(path.extname(file.originalname).toLowerCase());
         const mime = allowedTypes.test(file.mimetype);
         if (ext && mime) return cb(null, true);
@@ -877,12 +903,38 @@ const isAdminOrModerator = async (req, res, next) => {
     }
 };
 
+const isDeliveryPartner = async (req, res, next) => {
+    if (!req.session.userId) return res.status(401).json({ error: 'Not authenticated' });
+    try {
+        const result = await pool.query(
+            'SELECT role FROM users WHERE id = $1',
+            [req.session.userId]
+        );
+        if (result.rows.length === 0 || result.rows[0].role !== 'delivery_partner') {
+            return res.status(403).json({ error: 'Only delivery partners can access this endpoint' });
+        }
+        next();
+    } catch (err) {
+        res.status(500).json({ error: 'Server error' });
+    }
+};
+
+// ==================== STATIC ROUTES ====================
 app.get('/uploads/avatars/:filename', isAuthenticated, (req, res) => {
     const filepath = path.join(__dirname, 'private_uploads', 'avatars', req.params.filename);
     if (fs.existsSync(filepath)) {
         res.sendFile(filepath);
     } else {
         res.status(404).send('Avatar not found');
+    }
+});
+
+app.get('/uploads/products/:filename', isAuthenticated, (req, res) => {
+    const filepath = path.join(__dirname, 'private_uploads', 'products', req.params.filename);
+    if (fs.existsSync(filepath)) {
+        res.sendFile(filepath);
+    } else {
+        res.status(404).send('Image not found');
     }
 });
 
@@ -1358,6 +1410,21 @@ io.on('connection', (socket) => {
             console.error('Group message error:', err);
         }
     });
+
+    socket.on('partner_location_update', async (data) => {
+        const { lat, lng } = data;
+        if (!lat || !lng) return;
+        try {
+            await pool.query(
+                `UPDATE users SET last_latitude = $1, last_longitude = $2, updated_at = NOW()
+                 WHERE id = $3`,
+                [lat, lng, userId]
+            );
+        } catch (err) {
+            console.error('Error updating partner location:', err);
+        }
+    });
+
     socket.on('disconnect', () => {
         const userEntry = onlineUsers.get(userId);
         if (userEntry) {
@@ -2115,6 +2182,13 @@ app.post('/profile/avatar', isAuthenticated, upload.single('avatar'), async (req
             'UPDATE users SET avatar_url = $1 WHERE id = $2',
             [avatarUrl, req.session.userId]
         );
+        
+        // Also update avatar_style to 'uploaded' when user uploads
+        await pool.query(
+            'UPDATE users SET avatar_style = $1 WHERE id = $2',
+            ['uploaded', req.session.userId]
+        );
+        
         res.send('Avatar uploaded successfully');
     } catch (err) {
         console.error(err);
@@ -2824,37 +2898,6 @@ app.delete('/api/admin/tools/:id', isAdmin, async (req, res) => {
 
 // ==================== BUSINESS DIRECTORY ENDPOINTS ====================
 
-async function awardCreditsForBusinessApproval(userId, businessName) {
-    const approvalBonus = 15;
-    try {
-        const checkCredits = await pool.query('SELECT id FROM user_credits WHERE user_id = $1', [userId]);
-        if (checkCredits.rows.length === 0) {
-            await pool.query(
-                `INSERT INTO user_credits (user_id, balance, lifetime_earned) VALUES ($1, $2, $2)`,
-                [userId, approvalBonus]
-            );
-        } else {
-            await pool.query(
-                `UPDATE user_credits 
-                 SET balance = balance + $1, lifetime_earned = lifetime_earned + $1
-                 WHERE user_id = $2`,
-                [approvalBonus, userId]
-            );
-        }
-        
-        await pool.query(
-            `INSERT INTO credit_transactions (user_id, amount, type, description)
-             VALUES ($1, $2, 'earn', $3)`,
-            [userId, approvalBonus, `Business approved: ${businessName} - Earned ${approvalBonus} credits`]
-        );
-        console.log(`✅ Awarded ${approvalBonus} credits to user ${userId} for business approval: ${businessName}`);
-        return true;
-    } catch (err) {
-        console.error('Error awarding credits:', err);
-        return false;
-    }
-}
-
 app.get('/api/businesses', async (req, res) => {
     const { category, city, search, verifiedOnly, featured, limit = 50, offset = 0 } = req.query;
 
@@ -2864,7 +2907,8 @@ app.get('/api/businesses', async (req, res) => {
                hours, amenities, verified, featured, created_at,
                COALESCE(views, 0) as views, 
                COALESCE(avg_rating, 0) as avg_rating,
-               COALESCE(total_reviews, 0) as total_reviews
+               COALESCE(total_reviews, 0) as total_reviews,
+               lat, lng, delivery_radius, is_delivery_enabled
         FROM businesses
         WHERE approved = true
     `;
@@ -3015,16 +3059,32 @@ app.get('/api/businesses/:id/ratings', async (req, res) => {
     }
 });
 
-app.get('/api/businesses/cities', async (req, res) => {
+app.get('/api/businesses/states', async (req, res) => {
     try {
         const result = await pool.query(`
-            SELECT DISTINCT city FROM businesses 
-            WHERE approved = true AND city IS NOT NULL AND city != ''
-            ORDER BY city
+            SELECT DISTINCT state FROM businesses 
+            WHERE approved = true AND state IS NOT NULL AND state != ''
+            ORDER BY state
         `);
-        res.json(result.rows.map(r => r.city));
+        res.json(result.rows.map(r => r.state));
     } catch (err) {
-        console.error('Error fetching cities:', err);
+        console.error('Error fetching states:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.get('/api/businesses/districts', async (req, res) => {
+    const { state } = req.query;
+    if (!state) return res.status(400).json({ error: 'State parameter is required' });
+    try {
+        const result = await pool.query(`
+            SELECT DISTINCT district FROM businesses 
+            WHERE approved = true AND state = $1 AND district IS NOT NULL AND district != ''
+            ORDER BY district
+        `, [state]);
+        res.json(result.rows.map(r => r.district));
+    } catch (err) {
+        console.error('Error fetching districts:', err);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -3048,7 +3108,8 @@ app.get('/api/businesses/categories', async (req, res) => {
 app.post('/api/businesses/submit', isAuthenticated, async (req, res) => {
     const {
         name, type, category, description, address, city, state, phone, email,
-        website, whatsapp, maps, instagram, facebook, hours, amenities
+        website, whatsapp, maps, instagram, facebook, hours, amenities,
+        lat, lng, delivery_radius
     } = req.body;
 
     if (!name || !type || !address || !city || !phone || !email) {
@@ -3061,13 +3122,14 @@ app.post('/api/businesses/submit', isAuthenticated, async (req, res) => {
         `);
         const existingColumns = columnsCheck.rows.map(c => c.column_name);
         
-        const insertColumns = ['name', 'type', 'category', 'description', 'address', 'city', 'state', 'phone', 'email', 'website', 'whatsapp', 'hours', 'amenities', 'user_id', 'approved', 'created_at', 'updated_at'];
+        const insertColumns = ['name', 'type', 'category', 'description', 'address', 'city', 'state', 'phone', 'email', 'website', 'whatsapp', 'hours', 'amenities', 'user_id', 'approved', 'created_at', 'updated_at', 'lat', 'lng', 'delivery_radius', 'is_delivery_enabled'];
         const insertValues = [
             name, type, category || 'other', description || '', address, city, state || null, phone, email,
             website || null, whatsapp || null,
             hours ? JSON.stringify(hours) : null,
             amenities ? JSON.stringify(amenities) : null,
-            req.session.userId, false, new Date(), new Date()
+            req.session.userId, false, new Date(), new Date(),
+            lat || null, lng || null, delivery_radius || 10, true
         ];
         
         let colIndex = insertColumns.length;
@@ -6268,10 +6330,14 @@ server.listen(PORT, HOST, () => {
     console.log(`✅ Account deletion fully fixed with cascade deletion of all related data`);
     console.log(`✅ CSRF token endpoint added for state‑changing requests`);
     console.log(`🏢 Business directory management endpoints active`);
-    console.log(`💰 NEW: Sponsored Ads System (Method 1) - Businesses pay to appear at top`);
-    console.log(`💰 NEW: Affiliate Commission System (Method 2) - Earn 5-8% on every sale`);
-    console.log(`💰 NEW: Users earn 15 CREDITS when their submitted business gets approved`);
+    console.log(`💰 Sponsored Ads System active`);
+    console.log(`💰 Affiliate Commission System active`);
+    console.log(`💰 Users earn 15 CREDITS when their submitted business gets approved`);
     console.log(`👤 Avatar gallery system active with 100+ themed avatars`);
+    console.log(`🌍 Business states & districts endpoints added`);
+    console.log(`🛵 DELIVERY SYSTEM FULLY INTEGRATED with COD and email confirmation`);
+    console.log(`📦 Product image upload active`);
+    console.log(`👔 Business Owner Dashboard endpoints active (update, orders, analytics)`);
 });
 
 // ==================== GRACEFUL SHUTDOWN ====================
@@ -6317,3 +6383,1428 @@ cron.schedule('0 9 * * 1', async () => {
         console.error('❌ Error in weekly digest cron job:', err);
     }
 });
+
+// ============================================================================
+// NEW DELIVERY SYSTEM – PRODUCTS, ORDERS, PARTNERS, PROMOS, RATINGS, ETC.
+// ============================================================================
+
+// ------------------------ DATABASE SETUP (new tables) ------------------------
+async function setupDeliveryTables() {
+    const client = await pool.connect();
+    try {
+        // Products table
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS products (
+                id SERIAL PRIMARY KEY,
+                business_id INT REFERENCES businesses(id) ON DELETE CASCADE NOT NULL,
+                name VARCHAR(200) NOT NULL,
+                description TEXT,
+                price DECIMAL(10,2) NOT NULL,
+                category VARCHAR(100),
+                image_url VARCHAR(500),
+                stock_quantity INT DEFAULT 0,
+                is_available BOOLEAN DEFAULT true,
+                created_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP,
+                delivery_radius INT DEFAULT 10
+            )
+        `);
+
+        // User addresses
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS user_addresses (
+                id SERIAL PRIMARY KEY,
+                user_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+                label VARCHAR(50) DEFAULT 'Home',
+                address TEXT NOT NULL,
+                latitude DECIMAL(10,8),
+                longitude DECIMAL(11,8),
+                instructions TEXT,
+                is_default BOOLEAN DEFAULT false,
+                created_at TIMESTAMP DEFAULT NOW()
+            )
+        `);
+
+        // Orders
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS orders (
+                id SERIAL PRIMARY KEY,
+                user_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+                business_id INT REFERENCES businesses(id) ON DELETE CASCADE NOT NULL,
+                delivery_partner_id INT REFERENCES users(id) NULL,
+                total_amount DECIMAL(10,2) NOT NULL,
+                delivery_address TEXT NOT NULL,
+                delivery_instructions TEXT,
+                latitude DECIMAL(10,8),
+                longitude DECIMAL(11,8),
+                status VARCHAR(50) DEFAULT 'pending',
+                placed_at TIMESTAMP DEFAULT NOW(),
+                updated_at TIMESTAMP,
+                estimated_delivery_minutes INT,
+                actual_delivery_minutes INT,
+                scheduled_at TIMESTAMP NULL,
+                promo_code VARCHAR(50),
+                discount_amount DECIMAL(10,2) DEFAULT 0,
+                delivery_fee DECIMAL(10,2) DEFAULT 0,
+                paid_with_credits BOOLEAN DEFAULT false,
+                paid_amount DECIMAL(10,2) NOT NULL,
+                payment_method VARCHAR(20) DEFAULT 'cod',
+                confirmation_token VARCHAR(64) UNIQUE,
+                confirmed_at TIMESTAMP
+            )
+        `);
+
+        // Order items
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS order_items (
+                id SERIAL PRIMARY KEY,
+                order_id INT REFERENCES orders(id) ON DELETE CASCADE NOT NULL,
+                product_id INT REFERENCES products(id) ON DELETE CASCADE NOT NULL,
+                quantity INT NOT NULL,
+                price_at_time DECIMAL(10,2) NOT NULL
+            )
+        `);
+
+        // Delivery requests
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS delivery_requests (
+                id SERIAL PRIMARY KEY,
+                order_id INT REFERENCES orders(id) ON DELETE CASCADE NOT NULL,
+                partner_id INT REFERENCES users(id) NULL,
+                status VARCHAR(20) DEFAULT 'pending',
+                created_at TIMESTAMP DEFAULT NOW(),
+                expires_at TIMESTAMP
+            )
+        `);
+
+        // Promo codes
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS promo_codes (
+                id SERIAL PRIMARY KEY,
+                code VARCHAR(50) UNIQUE NOT NULL,
+                description TEXT,
+                discount_type VARCHAR(20) DEFAULT 'percentage',
+                discount_value DECIMAL(10,2) NOT NULL,
+                min_order_value DECIMAL(10,2) DEFAULT 0,
+                max_discount DECIMAL(10,2) DEFAULT NULL,
+                usage_limit INT DEFAULT 1,
+                used_count INT DEFAULT 0,
+                valid_from TIMESTAMP DEFAULT NOW(),
+                valid_until TIMESTAMP,
+                created_by INT REFERENCES users(id),
+                is_active BOOLEAN DEFAULT true
+            )
+        `);
+
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS promo_usage (
+                id SERIAL PRIMARY KEY,
+                promo_code_id INT REFERENCES promo_codes(id),
+                user_id INT REFERENCES users(id),
+                order_id INT REFERENCES orders(id),
+                used_at TIMESTAMP DEFAULT NOW()
+            )
+        `);
+
+        // Order ratings
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS order_ratings (
+                id SERIAL PRIMARY KEY,
+                order_id INT REFERENCES orders(id) ON DELETE CASCADE NOT NULL,
+                rating INT CHECK (rating BETWEEN 1 AND 5),
+                comment TEXT,
+                created_at TIMESTAMP DEFAULT NOW()
+            )
+        `);
+
+        // Partner reviews
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS partner_reviews (
+                id SERIAL PRIMARY KEY,
+                order_id INT REFERENCES orders(id) ON DELETE CASCADE NOT NULL,
+                partner_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+                rating INT CHECK (rating BETWEEN 1 AND 5),
+                comment TEXT,
+                created_at TIMESTAMP DEFAULT NOW()
+            )
+        `);
+
+        // Partner earnings
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS partner_earnings (
+                id SERIAL PRIMARY KEY,
+                partner_id INT REFERENCES users(id) ON DELETE CASCADE NOT NULL,
+                order_id INT REFERENCES orders(id) ON DELETE CASCADE NOT NULL,
+                amount DECIMAL(10,2) NOT NULL,
+                status VARCHAR(20) DEFAULT 'pending',
+                created_at TIMESTAMP DEFAULT NOW(),
+                paid_at TIMESTAMP
+            )
+        `);
+
+        // Disputes
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS disputes (
+                id SERIAL PRIMARY KEY,
+                order_id INT REFERENCES orders(id) ON DELETE CASCADE NOT NULL,
+                user_id INT REFERENCES users(id),
+                partner_id INT REFERENCES users(id),
+                reason TEXT NOT NULL,
+                status VARCHAR(20) DEFAULT 'open',
+                created_at TIMESTAMP DEFAULT NOW(),
+                resolved_at TIMESTAMP,
+                resolution TEXT
+            )
+        `);
+
+        // Add columns to businesses if not exist
+        await client.query(`
+            ALTER TABLE businesses 
+            ADD COLUMN IF NOT EXISTS delivery_radius INT DEFAULT 10,
+            ADD COLUMN IF NOT EXISTS is_delivery_enabled BOOLEAN DEFAULT true,
+            ADD COLUMN IF NOT EXISTS delivery_slots JSONB DEFAULT '{"start": "09:00", "end": "21:00"}'::jsonb
+        `);
+
+        // Add columns to users if not exist
+        await client.query(`
+            ALTER TABLE users 
+            ADD COLUMN IF NOT EXISTS last_latitude DECIMAL(10,8),
+            ADD COLUMN IF NOT EXISTS last_longitude DECIMAL(11,8),
+            ADD COLUMN IF NOT EXISTS is_online BOOLEAN DEFAULT false,
+            ADD COLUMN IF NOT EXISTS total_deliveries INT DEFAULT 0,
+            ADD COLUMN IF NOT EXISTS earnings DECIMAL(10,2) DEFAULT 0
+        `);
+
+        console.log('✅ Delivery tables setup complete');
+    } catch (err) {
+        console.error('Error setting up delivery tables:', err);
+    } finally {
+        client.release();
+    }
+}
+
+// Call setup
+setupDeliveryTables();
+
+// ------------------------ HELPER: Distance calculation (Haversine) ------------------------
+function haversineDistance(lat1, lon1, lat2, lon2) {
+    if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) return null;
+    const R = 6371; // km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+              Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+              Math.sin(dLon/2) * Math.sin(dLon/2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// ------------------------ PRODUCTS ENDPOINTS ------------------------
+app.get('/api/products', async (req, res) => {
+    const { lat, lng, radius = 10, category, search, business_id } = req.query;
+    try {
+        let query = `
+            SELECT p.*, b.id as business_id, b.name as business_name, b.lat, b.lng,
+                   b.address, b.city, b.state, b.phone as business_phone,
+                   b.avg_rating as business_rating, b.verified as business_verified
+            FROM products p
+            JOIN businesses b ON p.business_id = b.id
+            WHERE p.is_available = true AND b.approved = true AND b.is_delivery_enabled = true
+        `;
+        const params = [];
+        let paramCount = 1;
+
+        if (business_id) {
+            query += ` AND p.business_id = $${paramCount}`;
+            params.push(business_id);
+            paramCount++;
+        }
+        if (category) {
+            query += ` AND p.category = $${paramCount}`;
+            params.push(category);
+            paramCount++;
+        }
+        if (search) {
+            query += ` AND (p.name ILIKE $${paramCount} OR p.description ILIKE $${paramCount})`;
+            params.push(`%${search}%`);
+            paramCount++;
+        }
+
+        query += ` ORDER BY p.created_at DESC`;
+        const result = await pool.query(query, params);
+
+        let products = result.rows;
+        if (lat && lng) {
+            const rad = parseFloat(radius) || 10;
+            products = products.filter(p => {
+                if (p.lat == null || p.lng == null) return false;
+                const dist = haversineDistance(parseFloat(lat), parseFloat(lng), parseFloat(p.lat), parseFloat(p.lng));
+                return dist !== null && dist <= rad;
+            });
+            products = products.map(p => ({
+                ...p,
+                distance: haversineDistance(parseFloat(lat), parseFloat(lng), parseFloat(p.lat), parseFloat(p.lng))
+            }));
+        }
+
+        res.json(products);
+    } catch (err) {
+        console.error('Error fetching products:', err);
+        res.status(500).json({ error: 'Failed to fetch products' });
+    }
+});
+
+app.post('/api/products', isAuthenticated, async (req, res) => {
+    const { business_id, name, description, price, category, image_url, stock_quantity, delivery_radius } = req.body;
+    if (!business_id || !name || price == null) {
+        return res.status(400).json({ error: 'Business ID, name, and price are required' });
+    }
+    try {
+        const biz = await pool.query('SELECT id FROM businesses WHERE id = $1 AND user_id = $2', [business_id, req.session.userId]);
+        if (biz.rows.length === 0) {
+            return res.status(403).json({ error: 'You do not own this business' });
+        }
+        const result = await pool.query(
+            `INSERT INTO products (business_id, name, description, price, category, image_url, stock_quantity, delivery_radius, created_at)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,NOW()) RETURNING id`,
+            [business_id, name, description || '', price, category || 'other', image_url || null, stock_quantity || 0, delivery_radius || 10]
+        );
+        res.status(201).json({ success: true, id: result.rows[0].id });
+    } catch (err) {
+        console.error('Product creation error:', err);
+        res.status(500).json({ error: 'Failed to create product' });
+    }
+});
+
+app.put('/api/products/:id', isAuthenticated, async (req, res) => {
+    const productId = req.params.id;
+    const { name, description, price, category, image_url, stock_quantity, is_available, delivery_radius } = req.body;
+    try {
+        const prod = await pool.query(`
+            SELECT p.id, b.user_id FROM products p
+            JOIN businesses b ON p.business_id = b.id
+            WHERE p.id = $1
+        `, [productId]);
+        if (prod.rows.length === 0) return res.status(404).json({ error: 'Product not found' });
+        if (prod.rows[0].user_id !== req.session.userId) {
+            return res.status(403).json({ error: 'Not your product' });
+        }
+        await pool.query(
+            `UPDATE products SET
+                name = COALESCE($1, name),
+                description = COALESCE($2, description),
+                price = COALESCE($3, price),
+                category = COALESCE($4, category),
+                image_url = COALESCE($5, image_url),
+                stock_quantity = COALESCE($6, stock_quantity),
+                is_available = COALESCE($7, is_available),
+                delivery_radius = COALESCE($8, delivery_radius),
+                updated_at = NOW()
+             WHERE id = $9`,
+            [name, description, price, category, image_url, stock_quantity, is_available, delivery_radius, productId]
+        );
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to update product' });
+    }
+});
+
+app.delete('/api/products/:id', isAuthenticated, async (req, res) => {
+    const productId = req.params.id;
+    try {
+        const prod = await pool.query(`
+            SELECT p.id, b.user_id FROM products p
+            JOIN businesses b ON p.business_id = b.id
+            WHERE p.id = $1
+        `, [productId]);
+        if (prod.rows.length === 0) return res.status(404).json({ error: 'Product not found' });
+        if (prod.rows[0].user_id !== req.session.userId) {
+            return res.status(403).json({ error: 'Not your product' });
+        }
+        await pool.query('DELETE FROM products WHERE id = $1', [productId]);
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to delete product' });
+    }
+});
+
+// ------------------------ PRODUCT IMAGE UPLOAD ------------------------
+app.post('/api/products/:id/image', isAuthenticated, uploadProductImage.single('image'), async (req, res) => {
+    const productId = req.params.id;
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+    try {
+        const prod = await pool.query(`
+            SELECT p.id, b.user_id FROM products p
+            JOIN businesses b ON p.business_id = b.id
+            WHERE p.id = $1
+        `, [productId]);
+        if (prod.rows.length === 0) {
+            if (req.file) fs.unlinkSync(req.file.path);
+            return res.status(404).json({ error: 'Product not found' });
+        }
+        if (prod.rows[0].user_id !== req.session.userId) {
+            if (req.file) fs.unlinkSync(req.file.path);
+            return res.status(403).json({ error: 'Not your product' });
+        }
+
+        const imageUrl = '/uploads/products/' + req.file.filename;
+        await pool.query(
+            'UPDATE products SET image_url = $1, updated_at = NOW() WHERE id = $2',
+            [imageUrl, productId]
+        );
+
+        res.json({ success: true, imageUrl });
+    } catch (err) {
+        console.error(err);
+        if (req.file) fs.unlinkSync(req.file.path);
+        res.status(500).json({ error: 'Failed to upload image' });
+    }
+});
+
+// Get products for a business (for owner dashboard)
+app.get('/api/business/:id/products', isAuthenticated, async (req, res) => {
+    const businessId = req.params.id;
+    try {
+        const biz = await pool.query('SELECT user_id FROM businesses WHERE id = $1', [businessId]);
+        if (biz.rows.length === 0) return res.status(404).json({ error: 'Business not found' });
+        if (biz.rows[0].user_id !== req.session.userId) {
+            return res.status(403).json({ error: 'Not your business' });
+        }
+        const result = await pool.query(
+            'SELECT * FROM products WHERE business_id = $1 ORDER BY created_at DESC',
+            [businessId]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to fetch products' });
+    }
+});
+
+// ------------------------ USER ADDRESSES ------------------------
+app.get('/api/user/addresses', isAuthenticated, async (req, res) => {
+    try {
+        const result = await pool.query(
+            'SELECT * FROM user_addresses WHERE user_id = $1 ORDER BY is_default DESC, created_at DESC',
+            [req.session.userId]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to fetch addresses' });
+    }
+});
+
+app.post('/api/user/addresses', isAuthenticated, async (req, res) => {
+    const { label, address, latitude, longitude, instructions, is_default } = req.body;
+    if (!address) return res.status(400).json({ error: 'Address is required' });
+    try {
+        if (is_default) {
+            await pool.query('UPDATE user_addresses SET is_default = false WHERE user_id = $1', [req.session.userId]);
+        }
+        const result = await pool.query(
+            `INSERT INTO user_addresses (user_id, label, address, latitude, longitude, instructions, is_default)
+             VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+            [req.session.userId, label || 'Home', address, latitude || null, longitude || null, instructions || null, is_default || false]
+        );
+        res.status(201).json({ success: true, id: result.rows[0].id });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to add address' });
+    }
+});
+
+app.delete('/api/user/addresses/:id', isAuthenticated, async (req, res) => {
+    const addrId = req.params.id;
+    try {
+        const addr = await pool.query('SELECT id FROM user_addresses WHERE id = $1 AND user_id = $2', [addrId, req.session.userId]);
+        if (addr.rows.length === 0) return res.status(404).json({ error: 'Address not found' });
+        await pool.query('DELETE FROM user_addresses WHERE id = $1', [addrId]);
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to delete address' });
+    }
+});
+
+app.put('/api/user/addresses/:id/default', isAuthenticated, async (req, res) => {
+    const addrId = req.params.id;
+    try {
+        const addr = await pool.query('SELECT id FROM user_addresses WHERE id = $1 AND user_id = $2', [addrId, req.session.userId]);
+        if (addr.rows.length === 0) return res.status(404).json({ error: 'Address not found' });
+        await pool.query('UPDATE user_addresses SET is_default = false WHERE user_id = $1', [req.session.userId]);
+        await pool.query('UPDATE user_addresses SET is_default = true WHERE id = $1', [addrId]);
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to set default' });
+    }
+});
+
+// ------------------------ PROMO CODES ------------------------
+app.get('/api/promos/validate', isAuthenticated, async (req, res) => {
+    const { code, order_total } = req.query;
+    if (!code || !order_total) return res.status(400).json({ error: 'Code and order total required' });
+    try {
+        const promo = await pool.query(`
+            SELECT * FROM promo_codes
+            WHERE code = $1 AND is_active = true
+              AND (valid_from IS NULL OR valid_from <= NOW())
+              AND (valid_until IS NULL OR valid_until >= NOW())
+              AND (usage_limit IS NULL OR used_count < usage_limit)
+        `, [code.toUpperCase()]);
+        if (promo.rows.length === 0) {
+            return res.status(404).json({ error: 'Invalid or expired promo code' });
+        }
+        const p = promo.rows[0];
+        const total = parseFloat(order_total);
+        if (total < p.min_order_value) {
+            return res.status(400).json({ error: `Minimum order value ₹${p.min_order_value} required` });
+        }
+        let discount = 0;
+        if (p.discount_type === 'percentage') {
+            discount = total * (p.discount_value / 100);
+            if (p.max_discount && discount > p.max_discount) discount = p.max_discount;
+        } else {
+            discount = p.discount_value;
+        }
+        discount = Math.min(discount, total);
+        res.json({
+            code: p.code,
+            discount: Math.round(discount * 100) / 100,
+            description: p.description
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to validate promo' });
+    }
+});
+
+// Admin: create promo
+app.post('/api/admin/promos', isAdmin, async (req, res) => {
+    const { code, description, discount_type, discount_value, min_order_value, max_discount, usage_limit, valid_until } = req.body;
+    if (!code || !discount_value) return res.status(400).json({ error: 'Code and value required' });
+    try {
+        await pool.query(
+            `INSERT INTO promo_codes (code, description, discount_type, discount_value, min_order_value, max_discount, usage_limit, valid_until, created_by)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+            [code.toUpperCase(), description || '', discount_type || 'percentage', discount_value, min_order_value || 0, max_discount || null, usage_limit || null, valid_until || null, req.session.userId]
+        );
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to create promo' });
+    }
+});
+
+// ------------------------ ORDER PLACEMENT (with COD + confirmation) ------------------------
+app.post('/api/orders/place', isAuthenticated, async (req, res) => {
+    const { 
+        business_id, 
+        items,
+        address, 
+        instructions, 
+        latitude, 
+        longitude, 
+        promo_code, 
+        scheduled_at,
+        paid_with_credits,
+        payment_method = 'cod'
+    } = req.body;
+
+    if (!business_id || !items || !items.length || !address) {
+        return res.status(400).json({ error: 'Business, items, and address are required' });
+    }
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        const bizResult = await client.query(
+            'SELECT id, name, delivery_radius FROM businesses WHERE id = $1 AND approved = true AND is_delivery_enabled = true',
+            [business_id]
+        );
+        if (bizResult.rows.length === 0) {
+            throw new Error('Business not found or delivery not enabled');
+        }
+        const business = bizResult.rows[0];
+
+        let total = 0;
+        const orderItems = [];
+        for (const item of items) {
+            const prod = await client.query(
+                'SELECT * FROM products WHERE id = $1 AND business_id = $2 AND is_available = true',
+                [item.product_id, business_id]
+            );
+            if (prod.rows.length === 0) {
+                throw new Error(`Product ${item.product_id} not available`);
+            }
+            const p = prod.rows[0];
+            if (p.stock_quantity < item.quantity) {
+                throw new Error(`Insufficient stock for ${p.name}`);
+            }
+            const subtotal = p.price * item.quantity;
+            total += subtotal;
+            orderItems.push({
+                product_id: p.id,
+                quantity: item.quantity,
+                price_at_time: p.price
+            });
+        }
+
+        if (total < 199) {
+            throw new Error('Minimum order value is ₹199');
+        }
+
+        let discount = 0;
+        let promoId = null;
+        if (promo_code) {
+            const promoRes = await client.query(
+                'SELECT * FROM promo_codes WHERE code = $1 AND is_active = true AND (valid_until IS NULL OR valid_until >= NOW()) AND (usage_limit IS NULL OR used_count < usage_limit)',
+                [promo_code.toUpperCase()]
+            );
+            if (promoRes.rows.length > 0) {
+                const p = promoRes.rows[0];
+                if (total >= p.min_order_value) {
+                    if (p.discount_type === 'percentage') {
+                        discount = total * (p.discount_value / 100);
+                        if (p.max_discount && discount > p.max_discount) discount = p.max_discount;
+                    } else {
+                        discount = p.discount_value;
+                    }
+                    discount = Math.min(discount, total);
+                    promoId = p.id;
+                }
+            }
+        }
+
+        const finalTotal = Math.round((total - discount) * 100) / 100;
+
+        let paidWithCredits = paid_with_credits || false;
+        if (paidWithCredits) {
+            const credits = await client.query('SELECT balance FROM user_credits WHERE user_id = $1', [req.session.userId]);
+            if (credits.rows.length === 0 || credits.rows[0].balance < finalTotal) {
+                throw new Error('Insufficient credits to pay for this order');
+            }
+        }
+
+        const baseTime = 30;
+        let extraTime = 0;
+        if (latitude && longitude && business.lat && business.lng) {
+            const dist = haversineDistance(latitude, longitude, business.lat, business.lng);
+            if (dist !== null) {
+                extraTime = Math.floor(dist / 5) * 10;
+            }
+        }
+        const estimatedMinutes = Math.min(120, baseTime + extraTime);
+
+        const confirmationToken = crypto.randomBytes(32).toString('hex');
+
+        const orderResult = await client.query(
+            `INSERT INTO orders (
+                user_id, business_id, total_amount, delivery_address, delivery_instructions,
+                latitude, longitude, status, placed_at, estimated_delivery_minutes,
+                scheduled_at, promo_code, discount_amount, delivery_fee, paid_with_credits, paid_amount,
+                payment_method, confirmation_token
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, 'pending_confirmation', NOW(), $8, $9, $10, $11, $12, $13, $14, $15, $16)
+            RETURNING id`,
+            [req.session.userId, business_id, finalTotal, address, instructions || null,
+             latitude || null, longitude || null, estimatedMinutes,
+             scheduled_at || null, promo_code || null, discount, 0,
+             paidWithCredits, finalTotal, payment_method, confirmationToken]
+        );
+        const orderId = orderResult.rows[0].id;
+
+        for (const item of orderItems) {
+            await client.query(
+                `INSERT INTO order_items (order_id, product_id, quantity, price_at_time)
+                 VALUES ($1, $2, $3, $4)`,
+                [orderId, item.product_id, item.quantity, item.price_at_time]
+            );
+            await client.query(
+                'UPDATE products SET stock_quantity = stock_quantity - $1 WHERE id = $2',
+                [item.quantity, item.product_id]
+            );
+        }
+
+        if (promoId) {
+            await client.query('UPDATE promo_codes SET used_count = used_count + 1 WHERE id = $1', [promoId]);
+            await client.query(
+                'INSERT INTO promo_usage (promo_code_id, user_id, order_id) VALUES ($1, $2, $3)',
+                [promoId, req.session.userId, orderId]
+            );
+        }
+
+        if (paidWithCredits) {
+            await client.query(
+                'UPDATE user_credits SET balance = balance - $1 WHERE user_id = $2',
+                [finalTotal, req.session.userId]
+            );
+            await client.query(
+                `INSERT INTO credit_transactions (user_id, amount, type, description)
+                 VALUES ($1, $2, 'spend', $3)`,
+                [req.session.userId, finalTotal, `Order #${orderId} payment`]
+            );
+        }
+
+        await client.query('COMMIT');
+
+        const user = await client.query('SELECT email, username FROM users WHERE id = $1', [req.session.userId]);
+        const userEmail = user.rows[0]?.email;
+        const userName = user.rows[0]?.username || 'User';
+
+        if (userEmail) {
+            const confirmLink = `${process.env.FRONTEND_URL || 'http://localhost:3000'}/businessdirectory.html?token=${confirmationToken}`;
+            const subject = `Confirm your order #${orderId}`;
+            const html = `
+                <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;background:#f4f4f4;border-radius:10px;">
+                    <h2 style="color:#7c6cf0;">Order Confirmation</h2>
+                    <p>Hello ${userName},</p>
+                    <p>You placed an order #${orderId} on Sarveik for ₹${finalTotal}.</p>
+                    <p>Please confirm your order by clicking the button below:</p>
+                    <a href="${confirmLink}" style="display:inline-block;padding:12px 28px;background:#7c6cf0;color:#fff;text-decoration:none;border-radius:8px;margin:16px 0;">Confirm Order</a>
+                    <p>If you did not place this order, you can ignore this email.</p>
+                    <p style="font-size:0.8rem;color:#888;">This link expires in 24 hours.</p>
+                </div>
+            `;
+            await sendEmail(userEmail, subject, html);
+        }
+
+        const bizOwner = await client.query('SELECT user_id FROM businesses WHERE id = $1', [business_id]);
+        if (bizOwner.rows.length > 0) {
+            const ownerId = bizOwner.rows[0].user_id;
+            const ownerSocket = onlineUsers.get(ownerId);
+            if (ownerSocket && ownerSocket.socketId) {
+                io.to(ownerSocket.socketId).emit('new_order', {
+                    orderId,
+                    business_id,
+                    total: finalTotal,
+                    user: req.session.username,
+                    placed_at: new Date().toISOString()
+                });
+            }
+        }
+
+        res.status(201).json({
+            success: true,
+            orderId,
+            estimatedMinutes,
+            message: `Order placed! Please check your email to confirm.`
+        });
+
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('Order placement error:', err);
+        res.status(400).json({ error: err.message || 'Failed to place order' });
+    } finally {
+        client.release();
+    }
+});
+
+// ------------------------ ORDER CONFIRMATION (email link) ------------------------
+app.get('/api/orders/confirm', async (req, res) => {
+    const { token } = req.query;
+    if (!token) return res.status(400).json({ error: 'Missing token' });
+
+    try {
+        const order = await pool.query(
+            `SELECT id, user_id, status, confirmation_token FROM orders 
+             WHERE confirmation_token = $1 AND status = 'pending_confirmation'`,
+            [token]
+        );
+        if (order.rows.length === 0) {
+            return res.status(400).json({ error: 'Invalid or expired token' });
+        }
+        const orderData = order.rows[0];
+
+        await pool.query(
+            `UPDATE orders SET status = 'confirmed', confirmed_at = NOW(), updated_at = NOW()
+             WHERE id = $1`,
+            [orderData.id]
+        );
+
+        const userSocket = onlineUsers.get(orderData.user_id);
+        if (userSocket && userSocket.socketId) {
+            io.to(userSocket.socketId).emit('order_status_update', {
+                orderId: orderData.id,
+                status: 'confirmed',
+                message: 'Order confirmed by customer.'
+            });
+        }
+
+        res.json({ success: true, message: 'Order confirmed successfully.' });
+    } catch (err) {
+        console.error('Confirmation error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// ------------------------ ORDER CANCELLATION ------------------------
+app.post('/api/orders/:id/cancel', isAuthenticated, async (req, res) => {
+    const orderId = req.params.id;
+    try {
+        const order = await pool.query(
+            'SELECT id, status, user_id FROM orders WHERE id = $1',
+            [orderId]
+        );
+        if (order.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
+        if (order.rows[0].user_id !== req.session.userId) {
+            return res.status(403).json({ error: 'Not your order' });
+        }
+        if (!['pending_confirmation', 'confirmed'].includes(order.rows[0].status)) {
+            return res.status(400).json({ error: 'Cannot cancel at this stage' });
+        }
+        await pool.query(
+            'UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2',
+            ['cancelled', orderId]
+        );
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to cancel' });
+    }
+});
+
+// ------------------------ GET ORDER DETAILS ------------------------
+app.get('/api/orders/:id', isAuthenticated, async (req, res) => {
+    const orderId = req.params.id;
+    try {
+        const order = await pool.query(`
+            SELECT o.*, b.name as business_name, b.phone as business_phone,
+                   u.username as customer_name, u.phone as customer_phone,
+                   (SELECT json_agg(order_items) FROM order_items WHERE order_id = o.id) as items
+            FROM orders o
+            JOIN businesses b ON o.business_id = b.id
+            JOIN users u ON o.user_id = u.id
+            WHERE o.id = $1 AND (o.user_id = $2 OR $2 IN (SELECT user_id FROM businesses WHERE id = o.business_id))
+        `, [orderId, req.session.userId]);
+        if (order.rows.length === 0) {
+            return res.status(404).json({ error: 'Order not found or access denied' });
+        }
+        res.json(order.rows[0]);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to fetch order' });
+    }
+});
+
+// ------------------------ USER ORDERS ------------------------
+app.get('/api/orders/user', isAuthenticated, async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT o.*, b.name as business_name,
+                   (SELECT COUNT(*) FROM order_items WHERE order_id = o.id) as item_count
+            FROM orders o
+            JOIN businesses b ON o.business_id = b.id
+            WHERE o.user_id = $1
+            ORDER BY o.placed_at DESC
+        `, [req.session.userId]);
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to fetch orders' });
+    }
+});
+
+// ------------------------ ORDER RATINGS ------------------------
+app.post('/api/orders/:id/rate', isAuthenticated, async (req, res) => {
+    const orderId = req.params.id;
+    const { rating, comment } = req.body;
+    if (!rating || rating < 1 || rating > 5) {
+        return res.status(400).json({ error: 'Rating must be between 1 and 5' });
+    }
+    try {
+        const order = await pool.query(
+            'SELECT id, user_id, delivery_partner_id FROM orders WHERE id = $1 AND status = $2',
+            [orderId, 'delivered']
+        );
+        if (order.rows.length === 0 || order.rows[0].user_id !== req.session.userId) {
+            return res.status(403).json({ error: 'Not allowed' });
+        }
+        await pool.query(
+            `INSERT INTO order_ratings (order_id, rating, comment)
+             VALUES ($1, $2, $3)`,
+            [orderId, rating, comment || '']
+        );
+        if (order.rows[0].delivery_partner_id) {
+            await pool.query(
+                `INSERT INTO partner_reviews (order_id, partner_id, rating, comment)
+                 VALUES ($1, $2, $3, $4)`,
+                [orderId, order.rows[0].delivery_partner_id, rating, comment || '']
+            );
+        }
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to rate' });
+    }
+});
+
+// ------------------------ BUSINESS ORDERS (for owner) ------------------------
+app.get('/api/business/orders', isAuthenticated, async (req, res) => {
+    const { business_id, limit = 50, offset = 0, status } = req.query;
+    if (!business_id) return res.status(400).json({ error: 'business_id required' });
+
+    try {
+        const biz = await pool.query('SELECT user_id FROM businesses WHERE id = $1', [business_id]);
+        if (biz.rows.length === 0) return res.status(404).json({ error: 'Business not found' });
+        if (biz.rows[0].user_id !== req.session.userId && !['admin', 'moderator'].includes(req.session.role)) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        let query = `
+            SELECT o.*, u.username as customer_name, u.phone as customer_phone,
+                   (SELECT json_agg(row_to_json(oi)) FROM order_items oi WHERE oi.order_id = o.id) as items
+            FROM orders o
+            JOIN users u ON o.user_id = u.id
+            WHERE o.business_id = $1
+        `;
+        const params = [business_id];
+        let paramCount = 2;
+        if (status && status !== 'all') {
+            query += ` AND o.status = $${paramCount}`;
+            params.push(status);
+            paramCount++;
+        }
+        query += ` ORDER BY o.placed_at DESC LIMIT $${paramCount} OFFSET $${paramCount+1}`;
+        params.push(parseInt(limit), parseInt(offset));
+
+        const result = await pool.query(query, params);
+        const count = await pool.query('SELECT COUNT(*) as total FROM orders WHERE business_id = $1', [business_id]);
+
+        res.json({
+            orders: result.rows,
+            total: parseInt(count.rows[0].total),
+            limit: parseInt(limit),
+            offset: parseInt(offset)
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to fetch orders' });
+    }
+});
+
+// ------------------------ BUSINESS ANALYTICS ------------------------
+app.get('/api/business/analytics', isAuthenticated, async (req, res) => {
+    const { business_id } = req.query;
+    if (!business_id) return res.status(400).json({ error: 'business_id required' });
+
+    try {
+        const biz = await pool.query('SELECT user_id FROM businesses WHERE id = $1', [business_id]);
+        if (biz.rows.length === 0) return res.status(404).json({ error: 'Business not found' });
+        if (biz.rows[0].user_id !== req.session.userId && !['admin', 'moderator'].includes(req.session.role)) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        const stats = await pool.query(`
+            SELECT 
+                COUNT(*) as total_orders,
+                COALESCE(SUM(total_amount), 0) as total_revenue,
+                COALESCE(AVG(total_amount), 0) as avg_order_value,
+                COUNT(CASE WHEN status = 'delivered' THEN 1 END) as completed_orders,
+                COUNT(CASE WHEN status = 'pending_confirmation' THEN 1 END) as pending_confirmation,
+                COUNT(CASE WHEN status = 'confirmed' THEN 1 END) as confirmed,
+                COUNT(CASE WHEN status = 'preparing' THEN 1 END) as preparing,
+                COUNT(CASE WHEN status = 'ready' THEN 1 END) as ready,
+                COUNT(CASE WHEN status = 'picked_up' THEN 1 END) as picked_up,
+                COUNT(CASE WHEN status = 'cancelled' THEN 1 END) as cancelled
+            FROM orders
+            WHERE business_id = $1
+        `, [business_id]);
+
+        const topProducts = await pool.query(`
+            SELECT p.name, SUM(oi.quantity) as total_sold, SUM(oi.quantity * oi.price_at_time) as revenue
+            FROM order_items oi
+            JOIN products p ON oi.product_id = p.id
+            JOIN orders o ON oi.order_id = o.id
+            WHERE o.business_id = $1 AND o.status != 'cancelled'
+            GROUP BY p.id, p.name
+            ORDER BY total_sold DESC
+            LIMIT 10
+        `, [business_id]);
+
+        res.json({
+            stats: stats.rows[0] || { total_orders: 0, total_revenue: 0, avg_order_value: 0 },
+            topProducts: topProducts.rows
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to get analytics' });
+    }
+});
+
+// ------------------------ UPDATE BUSINESS (owner allowed) ------------------------
+app.put('/api/admin/businesses/:id', isAuthenticated, async (req, res) => {
+    const businessId = req.params.id;
+    const {
+        name, type, category, description, address, city, state, phone, email,
+        website, whatsapp, maps, instagram, facebook, hours, amenities,
+        lat, lng, delivery_radius, is_delivery_enabled
+    } = req.body;
+
+    try {
+        const biz = await pool.query('SELECT user_id FROM businesses WHERE id = $1', [businessId]);
+        if (biz.rows.length === 0) return res.status(404).json({ error: 'Business not found' });
+        
+        const isOwner = biz.rows[0].user_id === req.session.userId;
+        const isAdminMod = ['admin', 'moderator'].includes(req.session.role);
+        
+        if (!isOwner && !isAdminMod) {
+            return res.status(403).json({ error: 'Access denied' });
+        }
+
+        await pool.query(`
+            UPDATE businesses SET
+                name = $1, type = $2, category = $3, description = $4,
+                address = $5, city = $6, state = $7, phone = $8, email = $9,
+                website = $10, whatsapp = $11, maps = $12, instagram = $13, facebook = $14,
+                hours = $15, amenities = $16, lat = $17, lng = $18,
+                delivery_radius = $19, is_delivery_enabled = $20, updated_at = NOW()
+            WHERE id = $21
+        `, [
+            name, type, category, description, address, city, state, phone, email,
+            website, whatsapp, maps, instagram, facebook,
+            hours ? JSON.stringify(hours) : null,
+            amenities ? JSON.stringify(amenities) : null,
+            lat || null, lng || null,
+            delivery_radius || 10, is_delivery_enabled !== undefined ? is_delivery_enabled : true,
+            businessId
+        ]);
+
+        res.json({ success: true, message: 'Business updated' });
+    } catch (err) {
+        console.error('Business update error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// ------------------------ DELIVERY PARTNER ENDPOINTS ------------------------
+app.post('/api/delivery-partner/register', isAuthenticated, async (req, res) => {
+    try {
+        const user = await pool.query('SELECT role FROM users WHERE id = $1', [req.session.userId]);
+        if (user.rows[0].role === 'delivery_partner') {
+            return res.status(400).json({ error: 'Already a delivery partner' });
+        }
+        await pool.query('UPDATE users SET role = $1 WHERE id = $2', ['delivery_partner', req.session.userId]);
+        res.json({ success: true, message: 'Registered as delivery partner' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Registration failed' });
+    }
+});
+
+app.patch('/api/delivery-partner/status', isDeliveryPartner, async (req, res) => {
+    const { is_online, lat, lng } = req.body;
+    try {
+        await pool.query(
+            `UPDATE users SET is_online = $1, last_latitude = COALESCE($2, last_latitude), last_longitude = COALESCE($3, last_longitude)
+             WHERE id = $4`,
+            [is_online !== undefined ? is_online : true, lat || null, lng || null, req.session.userId]
+        );
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to update status' });
+    }
+});
+
+app.get('/api/delivery-partner/orders', isDeliveryPartner, async (req, res) => {
+    const partnerId = req.session.userId;
+    try {
+        const active = await pool.query(`
+            SELECT o.*, b.name as business_name, b.address as business_address,
+                   b.lat as business_lat, b.lng as business_lng,
+                   u.username as customer_name, u.phone as customer_phone
+            FROM orders o
+            JOIN businesses b ON o.business_id = b.id
+            JOIN users u ON o.user_id = u.id
+            WHERE o.delivery_partner_id = $1
+              AND o.status NOT IN ('delivered', 'cancelled')
+            ORDER BY o.placed_at DESC
+        `, [partnerId]);
+
+        const completed = await pool.query(`
+            SELECT o.*, b.name as business_name,
+                   u.username as customer_name,
+                   o.placed_at, o.updated_at
+            FROM orders o
+            JOIN businesses b ON o.business_id = b.id
+            JOIN users u ON o.user_id = u.id
+            WHERE o.delivery_partner_id = $1
+              AND o.status IN ('delivered', 'cancelled')
+            ORDER BY o.updated_at DESC
+            LIMIT 20
+        `, [partnerId]);
+
+        const requests = await pool.query(`
+            SELECT dr.*, o.*, b.name as business_name, b.address as business_address,
+                   b.lat as business_lat, b.lng as business_lng,
+                   u.username as customer_name
+            FROM delivery_requests dr
+            JOIN orders o ON dr.order_id = o.id
+            JOIN businesses b ON o.business_id = b.id
+            JOIN users u ON o.user_id = u.id
+            WHERE dr.partner_id = $1 AND dr.status = 'pending' AND dr.expires_at > NOW()
+        `, [partnerId]);
+
+        res.json({
+            active: active.rows,
+            completed: completed.rows,
+            requests: requests.rows
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to fetch orders' });
+    }
+});
+
+app.patch('/api/delivery-partner/order/:id/accept', isDeliveryPartner, async (req, res) => {
+    const orderId = req.params.id;
+    const partnerId = req.session.userId;
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        const reqResult = await client.query(`
+            SELECT id FROM delivery_requests
+            WHERE order_id = $1 AND partner_id = $2 AND status = 'pending' AND expires_at > NOW()
+        `, [orderId, partnerId]);
+        if (reqResult.rows.length === 0) {
+            throw new Error('No pending request found or expired');
+        }
+
+        await client.query(
+            'UPDATE delivery_requests SET status = $1 WHERE order_id = $2 AND partner_id = $3',
+            ['accepted', orderId, partnerId]
+        );
+
+        await client.query(
+            'UPDATE orders SET delivery_partner_id = $1, status = $2, updated_at = NOW() WHERE id = $3',
+            [partnerId, 'confirmed', orderId]
+        );
+
+        const others = await client.query(
+            'SELECT partner_id FROM delivery_requests WHERE order_id = $1 AND status = $2 AND partner_id != $3',
+            [orderId, 'pending', partnerId]
+        );
+        for (const row of others.rows) {
+            const socket = onlineUsers.get(row.partner_id);
+            if (socket && socket.socketId) {
+                io.to(socket.socketId).emit('delivery_request_taken', { orderId });
+            }
+        }
+
+        const order = await client.query('SELECT user_id FROM orders WHERE id = $1', [orderId]);
+        if (order.rows.length > 0) {
+            const userSocket = onlineUsers.get(order.rows[0].user_id);
+            if (userSocket && userSocket.socketId) {
+                io.to(userSocket.socketId).emit('order_status_update', {
+                    orderId,
+                    status: 'confirmed',
+                    message: 'A delivery partner has accepted your order!'
+                });
+            }
+        }
+
+        await client.query('COMMIT');
+        res.json({ success: true, message: 'Order accepted' });
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error(err);
+        res.status(400).json({ error: err.message || 'Failed to accept' });
+    } finally {
+        client.release();
+    }
+});
+
+app.patch('/api/delivery-partner/order/:id/pickup', isDeliveryPartner, async (req, res) => {
+    const orderId = req.params.id;
+    const partnerId = req.session.userId;
+    try {
+        const order = await pool.query(
+            'SELECT id FROM orders WHERE id = $1 AND delivery_partner_id = $2 AND status = $3',
+            [orderId, partnerId, 'ready']
+        );
+        if (order.rows.length === 0) {
+            return res.status(400).json({ error: 'Order not in ready state or not assigned' });
+        }
+        await pool.query(
+            'UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2',
+            ['picked_up', orderId]
+        );
+        const orderData = await pool.query('SELECT user_id FROM orders WHERE id = $1', [orderId]);
+        if (orderData.rows.length > 0) {
+            const userSocket = onlineUsers.get(orderData.rows[0].user_id);
+            if (userSocket && userSocket.socketId) {
+                io.to(userSocket.socketId).emit('order_status_update', {
+                    orderId,
+                    status: 'picked_up',
+                    message: 'Your order has been picked up and is on the way!'
+                });
+            }
+        }
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to update pickup' });
+    }
+});
+
+app.patch('/api/delivery-partner/order/:id/deliver', isDeliveryPartner, async (req, res) => {
+    const orderId = req.params.id;
+    const partnerId = req.session.userId;
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+        const order = await client.query(
+            'SELECT id, user_id, placed_at FROM orders WHERE id = $1 AND delivery_partner_id = $2 AND status = $3',
+            [orderId, partnerId, 'picked_up']
+        );
+        if (order.rows.length === 0) {
+            throw new Error('Order not in picked_up state or not assigned');
+        }
+        const now = new Date();
+        const placed = new Date(order.rows[0].placed_at);
+        const actualMinutes = Math.round((now - placed) / 60000);
+        await client.query(
+            'UPDATE orders SET status = $1, updated_at = NOW(), actual_delivery_minutes = $2 WHERE id = $3',
+            ['delivered', actualMinutes, orderId]
+        );
+
+        await client.query(
+            'UPDATE users SET total_deliveries = total_deliveries + 1, earnings = earnings + 50 WHERE id = $1',
+            [partnerId]
+        );
+
+        await client.query(
+            `INSERT INTO partner_earnings (partner_id, order_id, amount, status)
+             VALUES ($1, $2, 50, 'completed')`,
+            [partnerId, orderId]
+        );
+
+        const userSocket = onlineUsers.get(order.rows[0].user_id);
+        if (userSocket && userSocket.socketId) {
+            io.to(userSocket.socketId).emit('order_status_update', {
+                orderId,
+                status: 'delivered',
+                message: 'Your order has been delivered!'
+            });
+        }
+
+        await client.query('COMMIT');
+        res.json({ success: true });
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error(err);
+        res.status(400).json({ error: err.message || 'Failed to deliver' });
+    } finally {
+        client.release();
+    }
+});
+
+// ------------------------ ORDER STATUS UPDATE (Business side) ------------------------
+app.patch('/api/orders/:id/status', isAuthenticated, async (req, res) => {
+    const orderId = req.params.id;
+    const { status } = req.body;
+    const validStatuses = ['confirmed', 'preparing', 'ready', 'cancelled'];
+    if (!validStatuses.includes(status)) {
+        return res.status(400).json({ error: 'Invalid status' });
+    }
+    try {
+        const order = await pool.query(`
+            SELECT o.id, o.user_id, b.user_id as owner_id, o.status as current_status
+            FROM orders o
+            JOIN businesses b ON o.business_id = b.id
+            WHERE o.id = $1
+        `, [orderId]);
+        if (order.rows.length === 0) return res.status(404).json({ error: 'Order not found' });
+        if (order.rows[0].owner_id !== req.session.userId) {
+            return res.status(403).json({ error: 'Not your order' });
+        }
+        const current = order.rows[0].current_status;
+        if (status === 'confirmed' && current !== 'pending_confirmation') {
+            return res.status(400).json({ error: 'Can only confirm orders pending confirmation' });
+        }
+        if (status === 'preparing' && !['confirmed', 'preparing'].includes(current)) {
+            return res.status(400).json({ error: 'Can only prepare confirmed orders' });
+        }
+        if (status === 'ready' && current !== 'preparing') {
+            return res.status(400).json({ error: 'Can only mark ready after preparing' });
+        }
+        if (status === 'cancelled' && !['pending_confirmation', 'confirmed'].includes(current)) {
+            return res.status(400).json({ error: 'Can only cancel pending or confirmed orders' });
+        }
+
+        await pool.query(
+            'UPDATE orders SET status = $1, updated_at = NOW() WHERE id = $2',
+            [status, orderId]
+        );
+
+        const orderData = await pool.query('SELECT user_id, delivery_partner_id FROM orders WHERE id = $1', [orderId]);
+        if (orderData.rows.length > 0) {
+            const userId = orderData.rows[0].user_id;
+            const partnerId = orderData.rows[0].delivery_partner_id;
+            const userSocket = onlineUsers.get(userId);
+            if (userSocket && userSocket.socketId) {
+                io.to(userSocket.socketId).emit('order_status_update', {
+                    orderId,
+                    status,
+                    message: `Order status updated to ${status}`
+                });
+            }
+            if (partnerId) {
+                const partnerSocket = onlineUsers.get(partnerId);
+                if (partnerSocket && partnerSocket.socketId) {
+                    io.to(partnerSocket.socketId).emit('order_status_update', {
+                        orderId,
+                        status,
+                        message: `Order status updated to ${status}`
+                    });
+                }
+            }
+        }
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to update status' });
+    }
+});
+
+// ------------------------ DISPATCH HELPER (called after order placement) ------------------------
+async function createDeliveryRequest(orderId, businessId, userLat, userLng) {
+    try {
+        const business = await pool.query('SELECT delivery_radius, lat, lng FROM businesses WHERE id = $1', [businessId]);
+        if (business.rows.length === 0) return;
+        const radius = business.rows[0].delivery_radius || 10;
+        const bLat = business.rows[0].lat;
+        const bLng = business.rows[0].lng;
+
+        const partners = await pool.query(`
+            SELECT id, last_latitude, last_longitude FROM users
+            WHERE role = 'delivery_partner' AND is_online = true
+              AND last_latitude IS NOT NULL AND last_longitude IS NOT NULL
+        `);
+
+        const nearby = [];
+        for (const p of partners.rows) {
+            const dist = haversineDistance(bLat, bLng, p.last_latitude, p.last_longitude);
+            if (dist !== null && dist <= radius) {
+                nearby.push({ ...p, distance: dist });
+            }
+        }
+        nearby.sort((a,b) => a.distance - b.distance);
+
+        const limit = Math.min(nearby.length, 5);
+        for (let i = 0; i < limit; i++) {
+            const partner = nearby[i];
+            const expires = new Date(Date.now() + 5 * 60 * 1000);
+            const req = await pool.query(
+                `INSERT INTO delivery_requests (order_id, partner_id, status, expires_at)
+                 VALUES ($1, $2, 'pending', $3) RETURNING id`,
+                [orderId, partner.id, expires]
+            );
+            const partnerSocket = onlineUsers.get(partner.id);
+            if (partnerSocket && partnerSocket.socketId) {
+                const order = await pool.query('SELECT * FROM orders WHERE id = $1', [orderId]);
+                const orderData = order.rows[0];
+                io.to(partnerSocket.socketId).emit('new_delivery_request', {
+                    requestId: req.rows[0].id,
+                    orderId,
+                    businessId,
+                    distance: partner.distance,
+                    total: orderData.total_amount,
+                    address: orderData.delivery_address,
+                    estimatedMinutes: orderData.estimated_delivery_minutes,
+                    expiresAt: expires
+                });
+            }
+        }
+    } catch (err) {
+        console.error('Dispatch error:', err);
+    }
+}
+
+// ------------------------ PARTNER EARNINGS ------------------------
+app.get('/api/delivery-partner/earnings', isDeliveryPartner, async (req, res) => {
+    const partnerId = req.session.userId;
+    try {
+        const earnings = await pool.query(`
+            SELECT id, order_id, amount, status, created_at, paid_at
+            FROM partner_earnings
+            WHERE partner_id = $1
+            ORDER BY created_at DESC
+        `, [partnerId]);
+        const summary = await pool.query(`
+            SELECT 
+                COALESCE(SUM(amount), 0) as total_earned,
+                COALESCE(SUM(CASE WHEN status = 'pending' THEN amount ELSE 0 END), 0) as pending,
+                COALESCE(SUM(CASE WHEN status = 'completed' THEN amount ELSE 0 END), 0) as paid
+            FROM partner_earnings
+            WHERE partner_id = $1
+        `, [partnerId]);
+        res.json({
+            earnings: earnings.rows,
+            summary: summary.rows[0] || { total_earned: 0, pending: 0, paid: 0 }
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to fetch earnings' });
+    }
+});
+
+// ------------------------ USER'S OWN BUSINESSES ------------------------
+app.get('/api/user/businesses', isAuthenticated, async (req, res) => {
+    try {
+        const result = await pool.query(
+            'SELECT id, name, city, state, approved FROM businesses WHERE user_id = $1 ORDER BY name',
+            [req.session.userId]
+        );
+        res.json({ businesses: result.rows });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to fetch businesses' });
+    }
+});
+
+// ------------------------ GOOGLE RATING PROXY ------------------------
+app.get('/api/google-rating', async (req, res) => {
+    const { place_id } = req.query;
+    if (!place_id) return res.status(400).json({ error: 'place_id required' });
+    try {
+        if (process.env.GOOGLE_PLACES_API_KEY) {
+            const url = `https://maps.googleapis.com/maps/api/place/details/json?place_id=${encodeURIComponent(place_id)}&fields=rating,user_ratings_total&key=${process.env.GOOGLE_PLACES_API_KEY}`;
+            const response = await fetch(url);
+            const data = await response.json();
+            if (data.status === 'OK' && data.result) {
+                return res.json({
+                    rating: data.result.rating || null,
+                    user_ratings_total: data.result.user_ratings_total || 0
+                });
+            }
+        }
+        res.json({ rating: null, user_ratings_total: 0 });
+    } catch (err) {
+        console.error('Google rating fetch error:', err);
+        res.json({ rating: null, user_ratings_total: 0 });
+    }
+});
+
+// ------------------------ AFFILIATE LINKS FOR BUSINESS (detail modal) ------------------------
+app.get('/api/affiliate/business/:businessId/links', isAuthenticated, async (req, res) => {
+    const businessId = req.params.businessId;
+    try {
+        const result = await pool.query(`
+            SELECT id, product_name, product_url, commission_rate, click_count, sale_count
+            FROM affiliate_links
+            WHERE business_id = $1 AND is_active = true
+        `, [businessId]);
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to fetch affiliate links' });
+    }
+});
+
+module.exports = app;

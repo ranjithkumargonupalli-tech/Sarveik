@@ -86,6 +86,10 @@
         .status-admin { background: #6366f1; color: white; }
         .status-user { background: #f59e0b; color: white; }
         .status-moderator { background: #3b82f6; color: white; }
+        /* NEW ROLE BADGES */
+        .status-business_owner { background: #8b5cf6; color: white; }
+        .status-delivery_partner { background: #06b6d4; color: white; }
+        .status-support_staff { background: #f472b6; color: white; }
         .status-pending { background: #f59e0b; color: white; }
         .bulk-actions { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; align-items: center; }
         .chart-container { height: 300px; margin-top: 1rem; }
@@ -383,7 +387,15 @@
         <div id="usersTab" class="tab-content">
             <div class="controls-bar">
                 <div class="search-box"><i class="fas fa-search"></i><input type="text" id="searchInput" placeholder="Search by username, email or ID..."></div>
-                <select id="roleFilter"><option value="">All Roles</option><option value="admin">Admin</option><option value="user">User</option><option value="moderator">Moderator</option></select>
+                <select id="roleFilter">
+                    <option value="">All Roles</option>
+                    <option value="admin">Admin</option>
+                    <option value="user">User</option>
+                    <option value="moderator">Moderator</option>
+                    <option value="business_owner">Business Owner</option>
+                    <option value="delivery_partner">Delivery Partner</option>
+                    <option value="support_staff">Support Staff</option>
+                </select>
                 <select id="statusFilter"><option value="">All Status</option><option value="active">Active</option><option value="suspended">Suspended</option></select>
                 <select id="sortUsers"><option value="id">Sort by ID</option><option value="username">Username A-Z</option><option value="created">Newest First</option></select>
                 <button id="refreshBtn" class="btn-primary"><i class="fas fa-sync-alt"></i> Refresh</button>
@@ -579,11 +591,11 @@
             </div>
         </div>
 
-        <!-- Permissions Tab -->
+        <!-- Permissions Tab (UPDATED with new roles) -->
         <div id="permissionsTab" class="tab-content">
             <div class="section-title"><i class="fas fa-lock"></i> Role Permissions Matrix</div>
             <div class="table-wrapper permissions-matrix">
-                <table><thead><tr><th>Permission</th><th>👤 User</th><th>🛡️ Moderator</th><th>👑 Admin</th></tr></thead><tbody id="permissionsMatrixBody"></tbody></table>
+                <table><thead><tr><th>Permission</th><th>👤 User</th><th>🛡️ Moderator</th><th>👑 Admin</th><th>🏢 Business Owner</th><th>🛵 Delivery Partner</th><th>🎧 Support Staff</th></tr></thead><tbody id="permissionsMatrixBody"></tbody></table>
             </div>
             <div style="margin-top:1rem;font-size:0.8rem;opacity:0.7;"><i class="fas fa-info-circle"></i> This matrix is read-only. To change permissions, update your backend role middleware.</div>
         </div>
@@ -632,7 +644,7 @@
             </div>
         </div>
 
-        <!-- ===== BUSINESSES TAB (FULLY FIXED) ===== -->
+        <!-- ===== BUSINESSES TAB ===== -->
         <div id="businessesTab" class="tab-content">
             <div class="section-title"><i class="fas fa-store"></i> Business Directory Management</div>
 
@@ -718,7 +730,7 @@
     </div>
 
     <!-- ===== ALL MODALS ===== -->
-    <div id="userModal" class="modal"><div class="modal-content"><h3><i class="fas fa-user-edit"></i> Edit User</h3><input type="hidden" id="editUserId"><label>Username</label><input type="text" id="editUsername"><label>Email</label><input type="email" id="editEmail"><label>Role</label><select id="editRole"><option value="user">User</option><option value="moderator">Moderator</option><option value="admin">Admin</option></select><label>Status</label><select id="editStatus"><option value="active">Active</option><option value="suspended">Suspended</option></select><div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;"><button id="closeModal" class="btn-small">Cancel</button><button id="saveUserChanges" class="btn-primary btn-small">Save Changes</button></div></div></div>
+    <div id="userModal" class="modal"><div class="modal-content"><h3><i class="fas fa-user-edit"></i> Edit User</h3><input type="hidden" id="editUserId"><label>Username</label><input type="text" id="editUsername"><label>Email</label><input type="email" id="editEmail"><label>Role</label><select id="editRole"><option value="user">User</option><option value="moderator">Moderator</option><option value="admin">Admin</option><option value="business_owner">Business Owner</option><option value="delivery_partner">Delivery Partner</option><option value="support_staff">Support Staff</option></select><label>Status</label><select id="editStatus"><option value="active">Active</option><option value="suspended">Suspended</option></select><div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;"><button id="closeModal" class="btn-small">Cancel</button><button id="saveUserChanges" class="btn-primary btn-small">Save Changes</button></div></div></div>
     <div id="creditsModal" class="modal"><div class="modal-content"><h3><i class="fas fa-coins"></i> Give Credits</h3><input type="hidden" id="creditUserId"><label>Amount (credits)</label><input type="number" id="creditAmount" min="1" step="1" placeholder="Enter credit amount" required><label>Reason (optional)</label><input type="text" id="creditReason" placeholder="e.g., Reward, Compensation, Bonus"><div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;"><button id="closeCreditsModal" class="btn-small">Cancel</button><button id="giveCreditsBtn" class="btn-primary btn-small">Give Credits</button></div></div></div>
     <div id="transactionModal" class="modal"><div class="modal-content"><h3><i class="fas fa-history"></i> Credit Transactions</h3><div id="transactionList" style="max-height: 400px; overflow-y: auto;"></div><div id="transactionPagination" style="margin-top: 1rem; text-align: center;"></div><button id="closeTransactionModal" class="btn-small btn-primary" style="margin-top: 1rem;">Close</button></div></div>
     <div id="bulkEmailModal" class="modal"><div class="modal-content"><h3><i class="fas fa-envelope"></i> Send Email to Selected Users</h3><label>Subject</label><input type="text" id="bulkEmailSubject" placeholder="Email subject"><label>Content (HTML supported)</label><textarea id="bulkEmailContent" rows="6" placeholder="Write your message here..."></textarea><div style="display:flex; gap:10px; justify-content:flex-end; margin-top:20px;"><button id="closeBulkEmailModal" class="btn-small">Cancel</button><button id="sendBulkEmailBtn" class="btn-primary btn-small">Send</button></div></div></div>
@@ -728,7 +740,7 @@
     <div id="userNotesModal" class="modal"><div class="modal-content" style="max-width:520px;"><h3><i class="fas fa-sticky-note"></i> User Notes & Tags</h3><input type="hidden" id="noteUserId"><p id="noteUserLabel" style="margin-bottom:1rem;font-size:0.9rem;color:#00d4ff;"></p><label>Add Note / Tag</label><div style="display:flex;gap:0.5rem;margin-bottom:1rem;"><input type="text" id="noteInput" placeholder="e.g. VIP, Spam Risk, Beta Tester..." style="flex:1;padding:8px 14px;border-radius:30px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.3);color:white;"><button class="btn-primary btn-small" onclick="window.adminDashboard.addUserNote()"><i class="fas fa-plus"></i> Add</button></div><div id="currentNotesList" style="margin-bottom:1rem;"></div><div style="display:flex;justify-content:flex-end;"><button class="btn-small" onclick="document.getElementById('userNotesModal').classList.remove('active')">Close</button></div></div></div>
     <div id="impersonateModal" class="modal"><div class="modal-content" style="max-width:480px;"><h3><i class="fas fa-user-secret"></i> Impersonate User</h3><p id="impersonateLabel" style="margin-bottom:1rem;font-size:0.9rem;"></p><p style="font-size:0.82rem;color:#fca5a5;margin-bottom:1.5rem;"><i class="fas fa-exclamation-triangle"></i> You will be logged in as this user. All actions will be performed as them. Your admin session will be saved and can be restored.</p><div style="display:flex;gap:10px;justify-content:flex-end;"><button class="btn-small" onclick="document.getElementById('impersonateModal').classList.remove('active')">Cancel</button><button class="btn-warning btn-small" id="confirmImpersonateBtn"><i class="fas fa-sign-in-alt"></i> Confirm Impersonate</button></div></div></div>
 
-    <!-- Business Edit Modal (FIXED) -->
+    <!-- Business Edit Modal -->
     <div id="businessEditModal" class="modal">
         <div class="modal-content" style="max-width: 700px;">
             <h3><i class="fas fa-edit"></i> Edit Business</h3>
@@ -798,7 +810,6 @@
     <script>
     // ==================== HELPER FUNCTIONS ====================
     function showToast(msg, type = 'success') {
-        // Remove existing toasts of same type to avoid stack
         document.querySelectorAll('.toast').forEach(t => t.remove());
         const t = document.createElement('div');
         t.className = `toast ${type}`;
@@ -811,7 +822,6 @@
     async function apiCall(url, options = {}) {
         try {
             const fetchOptions = { ...options, credentials: 'include' };
-            // Always stringify body if it's an object
             if (options.body && typeof options.body === 'object' && !(options.body instanceof FormData)) {
                 fetchOptions.body = JSON.stringify(options.body);
                 fetchOptions.headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
@@ -1626,15 +1636,36 @@
             document.getElementById('activityLeaderboardList').innerHTML = [...this.allUsers].sort((a, b) => b.id - a.id).slice(0, 10).map((u, i) => `<div class="leaderboard-item"><div class="leaderboard-rank rank-${i + 1}">${rank(i)}</div><div><strong>${escapeHtml(u.username)}</strong></div><div style="margin-left:auto;font-size:0.8rem;color:#00d4ff;">${Math.floor(Math.random() * 300 + 50)} actions</div></div>`).join('');
         }
 
+        // ===== PERMISSIONS MATRIX (UPDATED WITH NEW ROLES) =====
         renderPermissionsMatrix() {
             const perms = [
-                ['View public tools', true, true, true], ['Submit tools', true, true, true], ['Approve/reject tools', false, true, true],
-                ['Delete tools', false, false, true], ['View all users', false, true, true], ['Edit user roles', false, false, true],
-                ['Ban/suspend users', false, true, true], ['Give credits', false, false, true], ['Post announcements', false, true, true],
-                ['View audit log', false, false, true], ['Manage API keys', false, false, true], ['Toggle maintenance mode', false, false, true],
-                ['Purge data', false, false, true], ['Access staff lounge', false, true, true], ['Ban IP addresses', false, false, true]
+                ['View public tools', true, true, true, true, true, true],
+                ['Submit tools', true, true, true, true, false, false],
+                ['Approve/reject tools', false, true, true, false, false, false],
+                ['Delete tools', false, false, true, false, false, false],
+                ['View all users', false, true, true, false, false, true],
+                ['Edit user roles', false, false, true, false, false, false],
+                ['Ban/suspend users', false, true, true, false, false, false],
+                ['Give credits', false, false, true, false, false, false],
+                ['Post announcements', false, true, true, false, false, true],
+                ['View audit log', false, false, true, false, false, false],
+                ['Manage API keys', false, false, true, false, false, false],
+                ['Toggle maintenance mode', false, false, true, false, false, false],
+                ['Purge data', false, false, true, false, false, false],
+                ['Access staff lounge', false, true, true, false, false, true],
+                ['Ban IP addresses', false, false, true, false, false, false]
             ];
-            document.getElementById('permissionsMatrixBody').innerHTML = perms.map(p => `<tr><td>${p[0]}</td><td class="${p[1] ? 'perm-yes' : 'perm-no'}">${p[1] ? '✓' : '✗'}</td><td class="${p[2] ? 'perm-yes' : 'perm-no'}">${p[2] ? '✓' : '✗'}</td><td class="${p[3] ? 'perm-yes' : 'perm-no'}">${p[3] ? '✓' : '✗'}</td></tr>`).join('');
+            document.getElementById('permissionsMatrixBody').innerHTML = perms.map(p =>
+                `<tr>
+                    <td>${p[0]}</td>
+                    <td class="${p[1] ? 'perm-yes' : 'perm-no'}">${p[1] ? '✓' : '✗'}</td>
+                    <td class="${p[2] ? 'perm-yes' : 'perm-no'}">${p[2] ? '✓' : '✗'}</td>
+                    <td class="${p[3] ? 'perm-yes' : 'perm-no'}">${p[3] ? '✓' : '✗'}</td>
+                    <td class="${p[4] ? 'perm-yes' : 'perm-no'}">${p[4] ? '✓' : '✗'}</td>
+                    <td class="${p[5] ? 'perm-yes' : 'perm-no'}">${p[5] ? '✓' : '✗'}</td>
+                    <td class="${p[6] ? 'perm-yes' : 'perm-no'}">${p[6] ? '✓' : '✗'}</td>
+                </tr>`
+            ).join('');
         }
 
         loadRateLimits() {
@@ -1684,11 +1715,8 @@
         openImpersonateModal(userId, username) { document.getElementById('impersonateLabel').innerHTML = `Impersonate <strong style="color:#fbbf24;">${escapeHtml(username)}</strong> (ID: ${userId}).`; document.getElementById('confirmImpersonateBtn').onclick = () => this.impersonateUser(userId, username); document.getElementById('impersonateModal').classList.add('active'); }
         async impersonateUser(userId, username) { document.getElementById('impersonateModal').classList.remove('active'); try { await apiCall(`/api/admin/impersonate/${userId}`, { method: 'POST' }); showToast(`Now logged in as ${username}`, 'warning'); setTimeout(() => window.location.href = '/', 1500); } catch { showToast(`Demo: would redirect as ${username}`, 'info'); } this.addAuditLogEntry('login', this.currentUser?.username || 'admin', `Impersonated: ${username}`); }
 
-        // ==================== BUSINESS DIRECTORY — FULLY FIXED ====================
+        // ==================== BUSINESS DIRECTORY ====================
 
-        /**
-         * Find a business by ID from either list.
-         */
         _findBusiness(bizId) {
             const id = String(bizId);
             return this.pendingBusinesses.find(b => String(b.id) === id) ||
@@ -1699,7 +1727,6 @@
             if (this._bizLoading) return;
             this._bizLoading = true;
 
-            // Show loading state
             document.getElementById('pendingBusinessesBody').innerHTML = '<tr><td colspan="9" class="biz-loading"><span class="loading-spinner"></span> Loading...</td></tr>';
             document.getElementById('approvedBusinessesBody').innerHTML = '<tr><td colspan="11" class="biz-loading"><span class="loading-spinner"></span> Loading...</td></tr>';
 
@@ -1709,7 +1736,6 @@
                     apiCall('/api/admin/businesses/approved')
                 ]);
 
-                // Handle pending response
                 if (pendingRes.status === 'fulfilled') {
                     const data = pendingRes.value;
                     this.pendingBusinesses = (Array.isArray(data) ? data : (data.businesses || data.data || [])).map(b => ({ ...b, approved: false }));
@@ -1718,7 +1744,6 @@
                     this.pendingBusinesses = [];
                 }
 
-                // Handle approved response
                 if (approvedRes.status === 'fulfilled') {
                     const data = approvedRes.value;
                     this.approvedBusinesses = (Array.isArray(data) ? data : (data.businesses || data.data || [])).map(b => ({ ...b, approved: true }));
@@ -1925,7 +1950,6 @@
                     this._syncPendingCheckboxes();
                 });
             });
-            // Edit and View buttons in pending section
             document.querySelectorAll('#pendingBusinessesBody .biz-edit-btn').forEach(btn => btn.addEventListener('click', () => this.openBusinessEditModal(btn.dataset.id, 'pending')));
             document.querySelectorAll('#pendingBusinessesBody .biz-view-btn').forEach(btn => btn.addEventListener('click', () => this.viewBusinessDetail(btn.dataset.id)));
         }
@@ -1974,7 +1998,6 @@
                 console.warn('Approve API failed (demo mode):', err.message);
             }
 
-            // Move from pending to approved locally
             const idx = this.pendingBusinesses.findIndex(b => String(b.id) === String(bizId));
             if (idx !== -1) {
                 const [biz] = this.pendingBusinesses.splice(idx, 1);
@@ -1999,7 +2022,6 @@
                 console.warn('Reject API failed (demo mode):', err.message);
             }
 
-            // Remove from pending locally
             this.pendingBusinesses = this.pendingBusinesses.filter(b => String(b.id) !== String(bizId));
 
             this._updateBusinessStats();
@@ -2017,7 +2039,6 @@
                 console.warn('Delete API failed (demo mode):', err.message);
             }
 
-            // Remove from both lists locally
             this.pendingBusinesses = this.pendingBusinesses.filter(b => String(b.id) !== String(bizId));
             this.approvedBusinesses = this.approvedBusinesses.filter(b => String(b.id) !== String(bizId));
             this.selectedApprovedBusinesses.delete(String(bizId));
@@ -2062,7 +2083,7 @@
                 type: document.getElementById('editBusinessType').value,
                 category: document.getElementById('editBusinessCategory').value,
                 description: document.getElementById('editBusinessDesc').value.trim(),
-                desc: document.getElementById('editBusinessDesc').value.trim(), // alias
+                desc: document.getElementById('editBusinessDesc').value.trim(),
                 address: document.getElementById('editBusinessAddress').value.trim(),
                 city: document.getElementById('editBusinessCity').value.trim(),
                 phone: document.getElementById('editBusinessPhone').value.trim(),
@@ -2075,14 +2096,12 @@
                 is_featured: document.getElementById('editBusinessFeatured').value === 'true'
             };
 
-            // FIX: body must be passed as object, apiCall will JSON.stringify it
             try {
                 await apiCall(`/api/admin/businesses/${id}`, { method: 'PUT', body: updatedData });
             } catch (err) {
                 console.warn('Update API failed (demo mode):', err.message);
             }
 
-            // Update local state
             const biz = this._findBusiness(id);
             if (biz) Object.assign(biz, updatedData);
 
@@ -2206,25 +2225,35 @@
 
             document.getElementById('businessStatsContent').innerHTML = `
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;">
-                    ${[['📊 Total', total], ['✅ Approved', approved.length], ['⏳ Pending', this.pendingBusinesses.length], ['⭐ Featured', featured], ['🔒 Verified', verified], ['👁️ Total Views', totalViews.toLocaleString()], ['⭐ Avg Rating', avgRating.toFixed(1) + ' ★'], ['📂 Categories', cats.length], ['📍 Cities', cities.length], ['📈 Approval Rate', total ? Math.round(approved.length / total * 100) + '%' : '0%'], ['🎯 Feature Rate', approved.length ? Math.round(featured / approved.length * 100) + '%' : '0%'], ['✅ Verified Rate', approved.length ? Math.round(verified / approved.length * 100) + '%' : '0%']].map(([label, val]) => `<div style="background:rgba(255,255,255,0.05);padding:0.75rem;border-radius:10px;"><div style="font-size:0.75rem;color:#00d4ff;margin-bottom:0.25rem;">${label}</div><div style="font-size:1.1rem;font-weight:700;">${val}</div></div>`).join('')}
+                    ${[
+                        ['📊 Total', total],
+                        ['✅ Approved', approved.length],
+                        ['⏳ Pending', this.pendingBusinesses.length],
+                        ['⭐ Featured', featured],
+                        ['🔒 Verified', verified],
+                        ['👁️ Total Views', totalViews.toLocaleString()],
+                        ['⭐ Avg Rating', avgRating.toFixed(1) + ' ★'],
+                        ['📂 Categories', cats.length],
+                        ['📍 Cities', cities.length],
+                        ['📈 Approval Rate', total ? Math.round(approved.length / total * 100) + '%' : '0%'],
+                        ['🎯 Feature Rate', approved.length ? Math.round(featured / approved.length * 100) + '%' : '0%'],
+                        ['✅ Verified Rate', approved.length ? Math.round(verified / approved.length * 100) + '%' : '0%']
+                    ].map(([label, val]) => `<div style="background:rgba(255,255,255,0.05);padding:0.75rem;border-radius:10px;"><div style="font-size:0.75rem;color:#00d4ff;margin-bottom:0.25rem;">${label}</div><div style="font-size:1.1rem;font-weight:700;">${val}</div></div>`).join('')}
                 </div>
             `;
             document.getElementById('businessStatsModal').classList.add('active');
         }
 
         initBusinessEvents() {
-            // Search & filter
             const rerender = () => { this.renderPendingBusinesses(); this.renderApprovedBusinesses(); };
             document.getElementById('businessSearch')?.addEventListener('input', rerender);
             document.getElementById('businessStatusFilter')?.addEventListener('change', rerender);
             document.getElementById('businessCategoryFilter')?.addEventListener('change', rerender);
             document.getElementById('businessCityFilter')?.addEventListener('change', rerender);
 
-            // Refresh & Export
             document.getElementById('refreshBusinessesBtn')?.addEventListener('click', () => this.loadBusinesses());
             document.getElementById('exportBusinessDataBtn')?.addEventListener('click', () => this.exportBusinessData());
 
-            // View toggle
             document.getElementById('businessTableViewBtn')?.addEventListener('click', () => {
                 this.businessViewMode = 'table';
                 document.getElementById('businessTableViewBtn').classList.add('active');
@@ -2243,7 +2272,6 @@
                 this.renderApprovedBusinesses();
             });
 
-            // Select All — Pending
             const syncPendingAll = (checked) => {
                 document.querySelectorAll('.pending-business-checkbox').forEach(cb => {
                     cb.checked = checked;
@@ -2255,7 +2283,6 @@
             document.getElementById('selectAllPendingBusinesses')?.addEventListener('change', e => syncPendingAll(e.target.checked));
             document.getElementById('selectAllPendingBusinessesHeader')?.addEventListener('change', e => syncPendingAll(e.target.checked));
 
-            // Select All — Approved
             const syncApprovedAll = (checked) => {
                 document.querySelectorAll('.approved-business-checkbox').forEach(cb => {
                     cb.checked = checked;
@@ -2267,12 +2294,10 @@
             document.getElementById('selectAllApprovedBusinesses')?.addEventListener('change', e => syncApprovedAll(e.target.checked));
             document.getElementById('selectAllApprovedBusinessesHeader')?.addEventListener('change', e => syncApprovedAll(e.target.checked));
 
-            // Bulk actions
             document.getElementById('bulkApproveBusinesses')?.addEventListener('click', () => this.bulkApproveBusinesses());
             document.getElementById('bulkRejectBusinesses')?.addEventListener('click', () => this.bulkRejectBusinesses());
             document.getElementById('bulkDeleteApprovedBusinesses')?.addEventListener('click', () => this.bulkDeleteApprovedBusinesses());
 
-            // Business Edit Modal
             document.getElementById('closeBusinessModal')?.addEventListener('click', () => document.getElementById('businessEditModal').classList.remove('active'));
             document.getElementById('saveBusinessChanges')?.addEventListener('click', () => this.saveBusinessEdit());
         }
@@ -2308,7 +2333,6 @@
                 if (actions[id]) actions[id]();
             }));
 
-            // Nav links
             const navMap = { dashboardNav: 'dashboard', usersNav: 'users', toolsNav: 'tools', pendingToolsNav: 'pending', cardsNav: 'cards', staffConferenceNav: 'staffconference' };
             Object.entries(navMap).forEach(([navId, tabId]) => {
                 document.getElementById(navId)?.addEventListener('click', (e) => { e.preventDefault(); document.querySelector(`.tab-btn[data-tab="${tabId}"]`).click(); });
@@ -2317,7 +2341,6 @@
         }
 
         bindEvents() {
-            // Users
             document.getElementById('searchInput').addEventListener('input', () => this.filterUsers());
             document.getElementById('roleFilter').addEventListener('change', () => this.filterUsers());
             document.getElementById('statusFilter').addEventListener('change', () => this.filterUsers());
@@ -2336,7 +2359,6 @@
             document.getElementById('closeModal').addEventListener('click', () => document.getElementById('userModal').classList.remove('active'));
             document.getElementById('saveUserChanges').addEventListener('click', () => this.saveUserChanges());
 
-            // Tools
             document.getElementById('toolSearch').addEventListener('input', () => this.renderToolsTable());
             document.getElementById('toolCategoryFilter').addEventListener('change', () => this.renderToolsTable());
             document.getElementById('toolApprovalFilter').addEventListener('change', () => this.renderToolsTable());
@@ -2350,17 +2372,14 @@
             document.getElementById('bulkApprovePending').addEventListener('click', () => this.bulkApprovePending());
             document.getElementById('bulkRejectPending').addEventListener('click', () => this.bulkRejectPending());
 
-            // Credits
             document.getElementById('closeCreditsModal').addEventListener('click', () => document.getElementById('creditsModal').classList.remove('active'));
             document.getElementById('giveCreditsBtn').addEventListener('click', () => this.giveCredits());
             document.getElementById('closeTransactionModal').addEventListener('click', () => document.getElementById('transactionModal').classList.remove('active'));
 
-            // Feedback
             document.getElementById('feedbackSearch')?.addEventListener('input', () => this.filterFeedback());
             document.getElementById('ratingFilter')?.addEventListener('change', () => this.filterFeedback());
             document.getElementById('refreshFeedbackBtn')?.addEventListener('click', () => this.loadFeedback());
 
-            // Cards
             document.getElementById('cardSearch').addEventListener('input', () => this.filterCards());
             document.getElementById('cardCategoryFilter').addEventListener('change', () => this.filterCards());
             document.getElementById('addCardBtn').addEventListener('click', () => this.openCardModal());
@@ -2369,17 +2388,14 @@
             document.getElementById('saveCardChanges').addEventListener('click', () => this.saveCard());
             document.getElementById('cardIcon').addEventListener('input', e => this.updateCardIconPreview(e.target.value));
 
-            // Announcements
             document.getElementById('closeAnnounceModal').addEventListener('click', () => document.getElementById('announcementModal').classList.remove('active'));
             document.getElementById('postAnnounceBtn').addEventListener('click', () => this.postAnnouncement());
 
-            // Notifications
             const bell = document.getElementById('notificationBell');
             const dropdown = document.getElementById('notificationDropdown');
             bell.addEventListener('click', e => { e.stopPropagation(); dropdown.classList.toggle('show'); });
             document.addEventListener('click', () => dropdown.classList.remove('show'));
 
-            // Audit
             document.getElementById('auditSearch')?.addEventListener('input', () => this.renderAuditLog());
             document.getElementById('auditActionFilter')?.addEventListener('change', () => this.renderAuditLog());
             document.getElementById('sessionSearch')?.addEventListener('input', () => this.loadSessions());

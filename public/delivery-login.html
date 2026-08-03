@@ -1,0 +1,476 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+  <title>Delivery Partner Dashboard – Sarveik</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * { margin:0; padding:0; box-sizing:border-box; }
+    :root {
+      --bg:#07070e; --bg2:#0f0f1a; --bg3:#161625;
+      --card:rgba(255,255,255,0.035); --card-hover:rgba(255,255,255,0.065);
+      --border:rgba(255,255,255,0.07); --border-active:rgba(255,255,255,0.18);
+      --text:#eeeef5; --text2:#8888a8; --text3:#4a4a6a;
+      --accent:#7c6cf0; --accent2:#f06c8a; --accent3:#6cf0b8;
+      --gold:#f0c84a; --red:#ef4444; --green:#22c55e; --blue:#3b82f6; --orange:#f97316;
+      --grad1:linear-gradient(135deg,#7c6cf0 0%,#f06c8a 100%);
+      --shadow:0 24px 80px rgba(0,0,0,0.6); --shadow-md:0 12px 40px rgba(0,0,0,0.4);
+      --r:18px; --r-sm:10px;
+      --transition:all 0.28s cubic-bezier(0.4,0,0.2,1);
+    }
+    body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+    .container { max-width:1200px; margin:0 auto; padding:20px; }
+
+    /* ===== HEADER ===== */
+    .header {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:16px 0; border-bottom:1px solid var(--border); flex-wrap:wrap; gap:12px;
+    }
+    .logo { font-family:'Syne',sans-serif; font-size:1.4rem; font-weight:800; background:var(--grad1); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+    .logo span { font-size:0.7rem; color:var(--text3); -webkit-text-fill-color:var(--text3); }
+    .header-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+
+    /* ===== BUTTONS ===== */
+    .btn {
+      padding:6px 16px; border-radius:50px; border:1px solid var(--border);
+      background:var(--card); color:var(--text2); cursor:pointer;
+      font-family:'DM Sans',sans-serif; font-size:0.8rem; font-weight:500;
+      transition:var(--transition); display:inline-flex; align-items:center; gap:6px; text-decoration:none;
+    }
+    .btn:hover { border-color:var(--border-active); color:var(--text); background:var(--card-hover); }
+    .btn-primary { background:var(--grad1); border-color:transparent; color:#fff; font-weight:600; box-shadow:0 4px 18px rgba(124,108,240,0.3); }
+    .btn-primary:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(124,108,240,0.45); color:#fff; }
+    .btn-success { background:var(--green); border-color:transparent; color:#fff; }
+    .btn-success:hover { background:#16a34a; transform:translateY(-2px); color:#fff; }
+    .btn-danger { background:var(--red); border-color:transparent; color:#fff; }
+    .btn-danger:hover { background:#dc2626; transform:translateY(-2px); color:#fff; }
+    .btn-gold { background:var(--gold); border-color:transparent; color:#000; }
+    .btn-gold:hover { transform:translateY(-2px); color:#000; }
+    .btn-sm { padding:4px 12px; font-size:0.7rem; }
+
+    /* ===== BADGES ===== */
+    .badge { padding:2px 10px; border-radius:20px; font-size:0.65rem; font-weight:600; }
+    .badge-online { background:rgba(34,197,94,0.15); color:var(--green); }
+    .badge-offline { background:rgba(239,68,68,0.15); color:var(--red); }
+
+    /* ===== STATS ===== */
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; margin:18px 0; }
+    .stat-card { background:var(--card); border:1px solid var(--border); border-radius:var(--r-sm); padding:14px; text-align:center; transition:var(--transition); }
+    .stat-card:hover { border-color:var(--border-active); }
+    .stat-card .num { font-family:'Syne',sans-serif; font-size:1.6rem; font-weight:800; color:var(--accent); }
+    .stat-card .label { font-size:0.65rem; color:var(--text3); text-transform:uppercase; letter-spacing:0.5px; }
+
+    /* ===== CARDS ===== */
+    .section-title { font-family:'Syne',sans-serif; font-size:1.1rem; font-weight:700; margin:20px 0 12px; display:flex; align-items:center; gap:8px; }
+    .request-card, .order-card {
+      background:var(--card); border:1px solid var(--border); border-radius:var(--r-sm);
+      padding:14px; margin-bottom:10px; transition:var(--transition);
+    }
+    .request-card:hover, .order-card:hover { border-color:var(--border-active); background:var(--card-hover); }
+    .request-card .row, .order-card .row { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; }
+    .request-card .distance { font-size:0.7rem; color:var(--text3); }
+    .request-card .expires { font-size:0.65rem; color:var(--text3); }
+    .order-status { font-weight:600; font-size:0.7rem; padding:2px 10px; border-radius:20px; }
+    .order-status.confirmed { background:rgba(124,108,240,0.15); color:var(--accent); }
+    .order-status.preparing { background:rgba(59,130,246,0.15); color:var(--blue); }
+    .order-status.ready { background:rgba(108,240,184,0.15); color:var(--accent3); }
+    .order-status.picked_up { background:rgba(240,200,74,0.15); color:var(--gold); }
+    .order-status.delivered { background:rgba(34,197,94,0.15); color:var(--green); }
+    .order-status.cancelled { background:rgba(239,68,68,0.15); color:var(--red); }
+    .order-status.pending_confirmation { background:rgba(240,200,74,0.15); color:var(--gold); }
+
+    .empty-state { text-align:center; padding:32px 20px; color:var(--text3); }
+    .empty-state i { font-size:2rem; display:block; margin-bottom:8px; opacity:0.3; }
+
+    /* ===== TOAST ===== */
+    #toastContainer { position:fixed; bottom:20px; right:20px; z-index:9999; display:flex; flex-direction:column; gap:6px; }
+    .toast { background:var(--bg2); border:1px solid var(--border); border-radius:12px; padding:10px 16px; font-size:0.85rem; display:flex; align-items:center; gap:9px; animation:slideIn 0.28s ease; max-width:320px; box-shadow:var(--shadow-md); color:var(--text); }
+    .toast.success { border-color:rgba(34,197,94,0.28); }
+    .toast.success i { color:var(--green); }
+    .toast.error { border-color:rgba(239,68,68,0.28); }
+    .toast.error i { color:var(--red); }
+    .toast.info { border-color:rgba(124,108,240,0.28); }
+    .toast.info i { color:var(--accent); }
+    @keyframes slideIn { from { transform:translateX(110%); opacity:0; } to { transform:translateX(0); opacity:1; } }
+
+    /* ===== RESPONSIVE ===== */
+    @media(max-width:600px){ .stats-grid{ grid-template-columns:1fr 1fr; } .header-actions .btn span{ display:none; } }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo">🛵 Sarveik <span>Partner</span></div>
+    <div class="header-actions">
+      <span id="partnerName" style="font-size:0.85rem;color:var(--text2);"></span>
+      <span id="onlineBadge" class="badge badge-offline">Offline</span>
+      <button class="btn" id="toggleOnlineBtn"><i class="fas fa-toggle-off"></i> <span>Go Online</span></button>
+      <button class="btn btn-danger btn-sm" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> <span>Logout</span></button>
+    </div>
+  </header>
+
+  <!-- STATS -->
+  <div class="stats-grid">
+    <div class="stat-card"><div class="num" id="statRequests">0</div><div class="label">Available</div></div>
+    <div class="stat-card"><div class="num" id="statActive">0</div><div class="label">Active Orders</div></div>
+    <div class="stat-card"><div class="num" id="statEarnings">₹0</div><div class="label">Today's Earnings</div></div>
+    <div class="stat-card"><div class="num" id="statDeliveries">0</div><div class="label">Total Deliveries</div></div>
+  </div>
+
+  <!-- AVAILABLE REQUESTS -->
+  <div class="section-title"><i class="fas fa-bell" style="color:var(--gold);"></i> Available Requests</div>
+  <div id="requestsContainer"><div class="empty-state"><i class="fas fa-inbox"></i>No requests available.</div></div>
+
+  <!-- ACTIVE ORDERS -->
+  <div class="section-title"><i class="fas fa-truck" style="color:var(--accent);"></i> My Active Orders</div>
+  <div id="activeContainer"><div class="empty-state"><i class="fas fa-clipboard-list"></i>No active orders.</div></div>
+
+  <!-- HISTORY & EARNINGS -->
+  <div class="section-title"><i class="fas fa-history" style="color:var(--text3);"></i> History & Earnings</div>
+  <div id="historyContainer"><div class="empty-state"><i class="fas fa-calendar-alt"></i>No completed deliveries yet.</div></div>
+
+</div>
+
+<div id="toastContainer"></div>
+
+<script>
+/* ================================================================
+   DELIVERY PARTNER DASHBOARD – Full Client
+================================================================ */
+
+// ---- Helpers ----
+function escHtml(str){ if(!str) return ''; return String(str).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
+
+function showToast(msg, type='success') {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  const icons = { success:'fa-check-circle', error:'fa-exclamation-circle', info:'fa-info-circle' };
+  t.innerHTML = `<i class="fas ${icons[type]||'fa-info-circle'}"></i> ${escHtml(msg)}`;
+  c.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; t.style.transform = 'translateX(40px)'; setTimeout(() => t.remove(), 300); }, 3800);
+}
+
+async function apiCall(url, opts={}) {
+  const fetchOpts = { ...opts, credentials: 'include' };
+  if (opts.body && typeof opts.body === 'object') {
+    fetchOpts.body = JSON.stringify(opts.body);
+    fetchOpts.headers = { 'Content-Type': 'application/json', ...(opts.headers||{}) };
+  }
+  const res = await fetch('/api' + url, fetchOpts);
+  if (!res.ok) throw new Error(await res.text() || `HTTP ${res.status}`);
+  const ct = res.headers.get('content-type');
+  return ct?.includes('application/json') ? res.json() : res.text();
+}
+
+function formatDate(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('en-IN', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+}
+
+function formatCurrency(amount) {
+  return '₹' + parseFloat(amount || 0).toFixed(0);
+}
+
+// ---- State ----
+let state = {
+  user: null,
+  isOnline: false,
+  requests: [],
+  active: [],
+  history: [],
+  earnings: { total_earned: 0, pending: 0, paid: 0 },
+  location: null,
+};
+
+// ---- DOM refs ----
+const $ = id => document.getElementById(id);
+
+// ---- Auth check ----
+async function checkAuth() {
+  try {
+    const profile = await apiCall('/profile');
+    if (!profile || !profile.id) {
+      window.location.href = '/delivery-login.html';
+      return null;
+    }
+    if (profile.role !== 'delivery_partner') {
+      showToast('This account is not a delivery partner. Redirecting…', 'error');
+      setTimeout(() => { window.location.href = '/delivery-login.html'; }, 1500);
+      return null;
+    }
+    state.user = profile;
+    $('partnerName').textContent = `👋 ${escHtml(profile.username)}`;
+    return profile;
+  } catch {
+    window.location.href = '/delivery-login.html';
+    return null;
+  }
+}
+
+// ---- Load dashboard data ----
+async function loadDashboard() {
+  try {
+    const data = await apiCall('/delivery-partner/orders');
+    state.requests = data.requests || [];
+    state.active = data.active || [];
+    state.history = data.completed || [];
+    renderRequests();
+    renderActive();
+    renderHistory();
+    updateStats();
+
+    // Also load earnings
+    const earnings = await apiCall('/delivery-partner/earnings');
+    state.earnings = earnings.summary || { total_earned: 0, pending: 0, paid: 0 };
+    updateStats();
+
+    // Get online status
+    const status = await apiCall('/delivery-partner/status');
+    state.isOnline = status.is_online || false;
+    updateOnlineUI();
+  } catch(e) {
+    showToast('Failed to load dashboard: ' + e.message, 'error');
+  }
+}
+
+// ---- Render functions ----
+function renderRequests() {
+  const container = $('requestsContainer');
+  if (!state.requests.length) {
+    container.innerHTML = `<div class="empty-state"><i class="fas fa-inbox"></i>No requests available.</div>`;
+    return;
+  }
+  container.innerHTML = state.requests.map(r => `
+    <div class="request-card" data-order="${r.order_id}">
+      <div class="row">
+        <div>
+          <strong>#${r.order_id}</strong> – ${escHtml(r.business_name)}
+          <div class="distance"><i class="fas fa-location-dot"></i> ${r.distance ? r.distance.toFixed(1) : '?'} km away</div>
+          <div style="font-size:0.7rem;color:var(--text3);">${escHtml(r.delivery_address)}</div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-weight:700;font-size:1.1rem;color:var(--accent3);">${formatCurrency(r.total_amount)}</div>
+          <div class="expires"><i class="far fa-clock"></i> expires ${new Date(r.expires_at).toLocaleTimeString()}</div>
+          <button class="btn btn-success btn-sm accept-btn" data-order="${r.order_id}" data-request="${r.id}"><i class="fas fa-check"></i> Accept</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  container.querySelectorAll('.accept-btn').forEach(btn => {
+    btn.addEventListener('click', () => acceptDelivery(btn.dataset.order));
+  });
+}
+
+function renderActive() {
+  const container = $('activeContainer');
+  if (!state.active.length) {
+    container.innerHTML = `<div class="empty-state"><i class="fas fa-clipboard-list"></i>No active orders.</div>`;
+    return;
+  }
+  container.innerHTML = state.active.map(o => `
+    <div class="order-card">
+      <div class="row">
+        <div>
+          <strong>#${o.id}</strong> – ${escHtml(o.business_name)}
+          <div style="font-size:0.7rem;color:var(--text3);">${escHtml(o.delivery_address)}</div>
+          <div style="font-size:0.65rem;color:var(--text3);">${formatDate(o.placed_at)}</div>
+        </div>
+        <div style="text-align:right;">
+          <div><span class="order-status ${o.status}">${o.status ? o.status.replace('_',' ').toUpperCase() : ''}</span></div>
+          <div style="font-weight:700;">${formatCurrency(o.total_amount)}</div>
+          <div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap;justify-content:flex-end;">
+            ${o.status === 'ready' ? `<button class="btn btn-primary btn-sm pickup-btn" data-order="${o.id}"><i class="fas fa-hand"></i> Picked Up</button>` : ''}
+            ${o.status === 'picked_up' ? `<button class="btn btn-gold btn-sm deliver-btn" data-order="${o.id}"><i class="fas fa-check"></i> Delivered</button>` : ''}
+            ${['confirmed','preparing'].includes(o.status) ? `<span style="font-size:0.65rem;color:var(--text3);">⏳ Waiting for business</span>` : ''}
+            ${o.status === 'pending_confirmation' ? `<span style="font-size:0.65rem;color:var(--gold);">⏳ Awaiting customer confirmation</span>` : ''}
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+
+  container.querySelectorAll('.pickup-btn').forEach(btn => {
+    btn.addEventListener('click', () => pickupOrder(btn.dataset.order));
+  });
+  container.querySelectorAll('.deliver-btn').forEach(btn => {
+    btn.addEventListener('click', () => deliverOrder(btn.dataset.order));
+  });
+}
+
+function renderHistory() {
+  const container = $('historyContainer');
+  if (!state.history.length) {
+    container.innerHTML = `<div class="empty-state"><i class="fas fa-calendar-alt"></i>No completed deliveries yet.</div>`;
+    return;
+  }
+  container.innerHTML = state.history.map(o => `
+    <div class="order-card" style="opacity:0.7;">
+      <div class="row">
+        <div>
+          <strong>#${o.id}</strong> – ${escHtml(o.business_name)}
+          <div style="font-size:0.65rem;color:var(--text3);">${formatDate(o.updated_at)}</div>
+        </div>
+        <div style="text-align:right;">
+          <span class="order-status delivered">✅ DELIVERED</span>
+          <div style="font-weight:700;">${formatCurrency(o.total_amount)}</div>
+          ${o.actual_delivery_minutes ? `<div style="font-size:0.65rem;color:var(--text3);">⏱ ${o.actual_delivery_minutes} min</div>` : ''}
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function updateStats() {
+  $('statRequests').textContent = state.requests.length;
+  $('statActive').textContent = state.active.length;
+  $('statEarnings').textContent = formatCurrency(state.earnings.total_earned || 0);
+  $('statDeliveries').textContent = state.history.length;
+}
+
+// ---- Online toggle ----
+function updateOnlineUI() {
+  const btn = $('toggleOnlineBtn');
+  const badge = $('onlineBadge');
+  if (state.isOnline) {
+    btn.innerHTML = '<i class="fas fa-toggle-on"></i> <span>Go Offline</span>';
+    btn.className = 'btn btn-success';
+    badge.textContent = 'Online';
+    badge.className = 'badge badge-online';
+  } else {
+    btn.innerHTML = '<i class="fas fa-toggle-off"></i> <span>Go Online</span>';
+    btn.className = 'btn btn-danger';
+    badge.textContent = 'Offline';
+    badge.className = 'badge badge-offline';
+  }
+}
+
+$('toggleOnlineBtn').addEventListener('click', async () => {
+  const newStatus = !state.isOnline;
+  let loc = state.location;
+  if (newStatus && !loc) {
+    loc = await getLocation();
+    if (!loc) {
+      showToast('Please enable location to go online.', 'error');
+      return;
+    }
+    state.location = loc;
+  }
+  try {
+    await apiCall('/delivery-partner/status', {
+      method: 'PATCH',
+      body: { is_online: newStatus, lat: loc?.lat || null, lng: loc?.lng || null }
+    });
+    state.isOnline = newStatus;
+    updateOnlineUI();
+    showToast(newStatus ? 'You are now online!' : 'You are now offline.', newStatus ? 'success' : 'info');
+    if (newStatus) loadDashboard();
+  } catch(e) {
+    showToast('Failed to update status: ' + e.message, 'error');
+  }
+});
+
+// ---- Location ----
+function getLocation() {
+  return new Promise(resolve => {
+    if (!navigator.geolocation) resolve(null);
+    navigator.geolocation.getCurrentPosition(
+      pos => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
+      () => resolve(null),
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  });
+}
+
+// ---- Actions ----
+async function acceptDelivery(orderId) {
+  try {
+    await apiCall(`/delivery-partner/order/${orderId}/accept`, { method: 'PATCH' });
+    showToast('✅ Order accepted!', 'success');
+    loadDashboard();
+  } catch(e) {
+    showToast('Failed to accept: ' + e.message, 'error');
+  }
+}
+
+async function pickupOrder(orderId) {
+  try {
+    await apiCall(`/delivery-partner/order/${orderId}/pickup`, { method: 'PATCH' });
+    showToast('📦 Picked up!', 'success');
+    loadDashboard();
+  } catch(e) {
+    showToast('Failed: ' + e.message, 'error');
+  }
+}
+
+async function deliverOrder(orderId) {
+  try {
+    await apiCall(`/delivery-partner/order/${orderId}/deliver`, { method: 'PATCH' });
+    showToast('✅ Delivered!', 'success');
+    loadDashboard();
+  } catch(e) {
+    showToast('Failed: ' + e.message, 'error');
+  }
+}
+
+// ---- Logout ----
+$('logoutBtn').addEventListener('click', async () => {
+  try {
+    await apiCall('/logout', { method: 'POST' });
+    window.location.href = '/delivery-login.html';
+  } catch { window.location.href = '/delivery-login.html'; }
+});
+
+// ---- Socket.IO ----
+const socket = io();
+socket.on('new_delivery_request', (data) => {
+  showToast(`📦 New request #${data.orderId} from ${data.businessName || 'business'}`, 'info');
+  loadDashboard();
+});
+socket.on('delivery_request_taken', (data) => {
+  showToast(`Order #${data.orderId} was accepted by another partner.`, 'info');
+  loadDashboard();
+});
+socket.on('order_status_update', (data) => {
+  showToast(`Order #${data.orderId}: ${data.message}`, 'info');
+  loadDashboard();
+});
+
+// ---- Periodic location update ----
+setInterval(async () => {
+  if (state.isOnline) {
+    const loc = await getLocation();
+    if (loc) {
+      state.location = loc;
+      socket.emit('partner_location_update', { lat: loc.lat, lng: loc.lng });
+    }
+  }
+}, 30000);
+
+// ---- Init ----
+(async function init() {
+  const profile = await checkAuth();
+  if (!profile) return;
+
+  // Get initial location
+  const loc = await getLocation();
+  if (loc) state.location = loc;
+
+  await loadDashboard();
+
+  // If online, send location immediately
+  if (state.isOnline && state.location) {
+    socket.emit('partner_location_update', { lat: state.location.lat, lng: state.location.lng });
+  }
+})();
+
+console.log('🚀 Delivery Partner Dashboard loaded.');
+</script>
+</body>
+</html>

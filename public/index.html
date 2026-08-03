@@ -1597,7 +1597,7 @@
 
     <script>
         /* ============================================================
-           ALL EXISTING SCRIPTS — FULLY INTACT
+           ALL SCRIPTS — Updated for Sarveik ecosystem
            ============================================================ */
         let resetEmailGlobal = '';
         let usernameFormatOk = false;
@@ -1609,7 +1609,7 @@
             else { inp.type='password'; icon.classList.replace('fa-eye','fa-eye-slash'); }
         }
 
-        /* ── ENHANCED THEME TOGGLE with ripple effect ── */
+        /* ── ENHANCED THEME TOGGLE ── */
         function toggleTheme(event){
             const html = document.documentElement;
             const icon = document.querySelector('.theme-toggle i');
@@ -1679,14 +1679,9 @@
         window.onclick=function(e){ if(e.target===document.getElementById('authModal')) closeAuthModal(); };
 
         /* ================================================================
-           OTP RESEND TIMER SYSTEM
-           - Circular countdown ring rendered inline as SVG
-           - Separate cooldown timers for signup-OTP and reset-password-OTP
-           - Escalating cooldown after repeated resends (30s → 60s → 120s cap)
-           - Persists across modal close/reopen via sessionStorage so a user
-             can't dodge the cooldown by closing and reopening the modal
+           OTP TIMERS
            ================================================================ */
-        const OTP_COOLDOWN_STEPS = [30, 60, 90, 120]; // seconds, caps at last value
+        const OTP_COOLDOWN_STEPS = [30, 60, 90, 120];
         const OTP_TIMER_STORE_KEY = 'sarveik_otp_timers';
 
         function loadOtpTimerStore(){
@@ -1708,11 +1703,7 @@
 
         function makeOtpTimerController(config){
             const {
-                storeKey,          // key inside OTP_TIMER_STORE_KEY store, e.g. 'signup' / 'reset'
-                btnId,              // button element id
-                btnLabelId,         // inner label span id
-                helperId,           // helper text container id
-                onFire,             // async function() -> should send/resend the OTP; return true on success
+                storeKey, btnId, btnLabelId, helperId, onFire,
                 actionLabel = 'Send OTP',
                 resendLabel = 'Resend'
             } = config;
@@ -1799,7 +1790,7 @@
             async function trigger(){
                 const state = getState();
                 const now = Date.now();
-                if(state.cooldownUntil > now){ return; } // still cooling down, ignore
+                if(state.cooldownUntil > now){ return; }
                 const btn = document.getElementById(btnId);
                 const label = document.getElementById(btnLabelId);
                 if(btn){ btn.disabled = true; label.innerHTML = 'Sending... <span class="loading-spinner"></span>'; }
@@ -1879,7 +1870,7 @@
 
         function sendOTP(){ signupOtpTimer.trigger(); }
         function resendResetOtp(){ resetOtpTimer.trigger(); }
-        function onSignupEmailChange(){ /* no-op hook retained for future per-email cooldown keying */ }
+        function onSignupEmailChange(){ /* no-op */ }
 
         /* ── REFERRAL VALIDATION ── */
         let referralValidTimer = null;
@@ -1960,13 +1951,63 @@
             }finally{ btn.disabled=false; btn.innerHTML='Create Account'; }
         }
 
-        async function handleLogin(){ const id=document.getElementById('login-username').value; const pwd=document.getElementById('login-password').value; const remember=document.getElementById('rememberCheckbox').checked; const btn=document.getElementById('loginBtn'); if(!id||!pwd) return showMessage('Enter credentials'); btn.disabled=true; btn.innerHTML='Logging in... <span class="loading-spinner"></span>'; try{ await apiCall('/login',{method:'POST',body:JSON.stringify({username:id,password:pwd})}); const profile=await apiCall('/profile'); if(remember){ localStorage.setItem('nova_remember',JSON.stringify({username:id,role:profile.role})); } else localStorage.removeItem('nova_remember'); localStorage.setItem('nova_auth',JSON.stringify({username:profile.username,role:profile.role,timestamp:Date.now()})); if(profile.role==='admin') window.location.href='/admin-dashboard.html'; else if(profile.role==='moderator') window.location.href='/moderator-dashboard.html'; else window.location.href='/main.html'; }catch(err){ showMessage(err.message); btn.disabled=false; btn.innerHTML='Login'; } }
+        /* ── LOGIN (UPDATED: redirect to businessdirectory.html) ── */
+        async function handleLogin(){
+            const id = document.getElementById('login-username').value;
+            const pwd = document.getElementById('login-password').value;
+            const remember = document.getElementById('rememberCheckbox').checked;
+            const btn = document.getElementById('loginBtn');
+            if(!id||!pwd) return showMessage('Enter credentials');
+            btn.disabled=true; btn.innerHTML='Logging in... <span class="loading-spinner"></span>';
+            try{
+                await apiCall('/login',{method:'POST',body:JSON.stringify({username:id,password:pwd})});
+                const profile=await apiCall('/profile');
+                if(remember){ localStorage.setItem('nova_remember',JSON.stringify({username:id,role:profile.role})); }
+                else localStorage.removeItem('nova_remember');
+                localStorage.setItem('nova_auth',JSON.stringify({username:profile.username,role:profile.role,timestamp:Date.now()}));
+                // --- REDIRECT to the main directory (businessdirectory.html) ---
+                // All users go to the directory; role-specific dashboards are accessible via tabs/links there.
+                window.location.href = '/businessdirectory.html';
+            }catch(err){
+                showMessage(err.message);
+                btn.disabled=false; btn.innerHTML='Login';
+            }
+        }
+
         async function requestResetOtp(){ const email=document.getElementById('forgot-email').value; const btn=document.getElementById('request-otp-btn'); if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showMessage('Valid email required'); btn.disabled=true; btn.innerHTML='Sending...'; try{ await apiCall('/api/forgot-password',{method:'POST',body:JSON.stringify({email})}); resetEmailGlobal=email; showMessage('OTP sent!',false); document.getElementById('forgot-step1').style.display='none'; document.getElementById('forgot-step2').style.display='block'; resetOtpTimer.reset(); const store=loadOtpTimerStore(); store.reset={resendCount:1,cooldownUntil:Date.now()+30000}; saveOtpTimerStore(store); resetOtpTimer.init(); }catch(e){ showMessage(e.message); }finally{ btn.disabled=false; btn.innerHTML='Send Reset OTP'; } }
         async function resetPassword(){ const otp=document.getElementById('reset-otp').value; const newPwd=document.getElementById('new-password').value; const confirmPwd=document.getElementById('confirm-password').value; const btn=document.getElementById('reset-password-btn'); if(!otp||!newPwd||!confirmPwd) return showMessage('Fill all fields'); if(newPwd!==confirmPwd) return showMessage('Passwords mismatch'); if(newPwd.length<8) return showMessage('Min 8 chars'); btn.disabled=true; btn.innerHTML='Resetting...'; try{ await apiCall('/api/reset-password',{method:'POST',body:JSON.stringify({email:resetEmailGlobal,otp,newPassword:newPwd})}); showMessage('Password reset! Please login.',false); resetOtpTimer.reset(); setTimeout(()=>{ switchAuthTab('login'); },2000); }catch(e){ showMessage(e.message); }finally{ btn.disabled=false; btn.innerHTML='Reset Password'; } }
-        async function checkSessionAndRedirect(){ const stored=localStorage.getItem('nova_auth'); if(stored){ try{ await apiCall('/profile'); return true; }catch(e){ localStorage.removeItem('nova_auth'); return false; } } return false; }
-        function updateHeaderUI(){ const authBtnDiv=document.getElementById('authHeaderBtn'); const stored=localStorage.getItem('nova_auth'); if(stored){ const data=JSON.parse(stored); authBtnDiv.innerHTML=`<div class="user-greeting"><span>👋 ${data.username}</span><button class="logout-btn" onclick="logoutUser()"><i class="fas fa-sign-out-alt"></i> Logout</button></div>`; } else { authBtnDiv.innerHTML=`<button class="btn-primary-hero" style="padding:10px 22px;font-size:14px;" onclick="openAuthModal()"><i class="fas fa-sign-in-alt"></i> Get Started</button>`; } }
-        async function logoutUser(){ try{ await apiCall('/logout',{method:'POST'}); }catch(e){} localStorage.removeItem('nova_auth'); localStorage.removeItem('nova_remember'); window.location.reload(); }
 
+        /* ── SESSION & HEADER ── */
+        async function checkSessionAndRedirect(){
+            // We only check session, no redirect – we just update UI
+            try{
+                await apiCall('/profile');
+                return true;
+            }catch(e){
+                localStorage.removeItem('nova_auth');
+                return false;
+            }
+        }
+
+        function updateHeaderUI(){
+            const authBtnDiv=document.getElementById('authHeaderBtn');
+            const stored=localStorage.getItem('nova_auth');
+            if(stored){
+                const data=JSON.parse(stored);
+                authBtnDiv.innerHTML=`<div class="user-greeting"><span>👋 ${data.username}</span><button class="logout-btn" onclick="logoutUser()"><i class="fas fa-sign-out-alt"></i> Logout</button></div>`;
+            } else {
+                authBtnDiv.innerHTML=`<button class="btn-primary-hero" style="padding:10px 22px;font-size:14px;" onclick="openAuthModal()"><i class="fas fa-sign-in-alt"></i> Get Started</button>`;
+            }
+        }
+
+        async function logoutUser(){
+            try{ await apiCall('/logout',{method:'POST'}); }catch(e){}
+            localStorage.removeItem('nova_auth');
+            localStorage.removeItem('nova_remember');
+            window.location.reload();
+        }
+
+        /* ── TOP USERS ── */
         function loadTopUsers(){
             const container=document.getElementById('topUsersContainer');
             const CACHE_KEY='nova_top_level_rank'; const EXPIRY=48*60*60*1000;
@@ -1996,7 +2037,7 @@
         }
         function escapeHtml(str){ if(!str) return ''; return str.replace(/[&<>]/g,function(m){ if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m; }); }
 
-        /* scroll reveal (feature/tool cards use .reveal-up already applied via class in markup) */
+        /* ── SCROLL REVEAL ── */
         document.querySelectorAll('.feature-card,.tool-card').forEach((el,i)=>{
             el.style.transitionDelay=(i%3)*0.08+'s';
         });
@@ -2007,7 +2048,7 @@
         },{threshold:0.12});
         document.querySelectorAll('.reveal-up').forEach(el=>revealObserver.observe(el));
 
-        /* subtle 3D tilt highlight following pointer on feature cards */
+        /* ── 3D TILT ── */
         document.querySelectorAll('.feature-card').forEach(card=>{
             card.addEventListener('mousemove', e=>{
                 const rect = card.getBoundingClientRect();
@@ -2018,7 +2059,7 @@
             });
         });
 
-        /* animated counters for hero stats */
+        /* ── STAT COUNTERS ── */
         function animateCounters(){
             document.querySelectorAll('.stat-number[data-count]').forEach(el=>{
                 const target = parseFloat(el.getAttribute('data-count'));
@@ -2044,7 +2085,7 @@
             animateCounters();
         });
 
-        /* ── MAINTENANCE MODE ── */
+        /* ── MAINTENANCE ── */
         const MAINT_KEY='nova_maintenance_mode';
         const MAINT_META_KEY='nova_maintenance_meta';
         const POLL_INTERVAL=5000;
@@ -2057,9 +2098,7 @@
         window.addEventListener('resize',()=>{ const banner=document.getElementById('maintenanceWarning'); const spacer=document.getElementById('maintSpacer'); if(banner.classList.contains('visible')){ spacer.style.height=banner.offsetHeight+'px'; } });
 
         /* ================================================================
-           3D SCENE — futuristic hero object + ambient WebGL starfield
-           Built defensively: if Three.js fails to load (blocked CDN, etc.)
-           the whole hero degrades gracefully to the CSS ring version.
+           3D SCENE — hero + ambient starfield
            ================================================================ */
         function initSarveik3D(){
             if(typeof THREE === 'undefined'){
@@ -2072,7 +2111,6 @@
 
             const isDarkInitial = document.documentElement.getAttribute('data-theme') !== 'light';
 
-            /* ---------- Hero centerpiece: icosahedral wireframe core ---------- */
             const wrap = document.getElementById('hero-canvas-wrap');
             const heroW = wrap.clientWidth || 340, heroH = wrap.clientHeight || 340;
 
@@ -2096,7 +2134,6 @@
             }
             let palette = colorSetFor(isDarkInitial);
 
-            /* inner solid-ish icosahedron (low-poly, faceted, "gem" feel) */
             const gemGeo = new THREE.IcosahedronGeometry(1.15, 0);
             const gemMat = new THREE.MeshBasicMaterial({
                 color: palette.core, wireframe: true, transparent: true, opacity: 0.9
@@ -2104,7 +2141,6 @@
             const gemMesh = new THREE.Mesh(gemGeo, gemMat);
             coreGroup.add(gemMesh);
 
-            /* faint filled faces beneath the wireframe for depth */
             const gemFillMat = new THREE.MeshBasicMaterial({
                 color: palette.a, transparent: true, opacity: 0.06, side: THREE.DoubleSide
             });
@@ -2112,7 +2148,6 @@
             gemFillMesh.scale.setScalar(0.995);
             coreGroup.add(gemFillMesh);
 
-            /* three orbiting rings, each on a different rotation axis */
             const ringDefs = [
                 { radius: 1.9, tube: 0.012, color: palette.a, tilt: [0.3, 0, 0], speed: 0.006 },
                 { radius: 2.25, tube: 0.010, color: palette.b, tilt: [1.1, 0.4, 0], speed: -0.0045 },
@@ -2128,7 +2163,6 @@
                 return mesh;
             });
 
-            /* small orbiting node points along one ring, like satellites */
             const nodeGroup = new THREE.Group();
             const nodeCount = 6;
             const nodeGeo = new THREE.SphereGeometry(0.05, 12, 12);
@@ -2145,7 +2179,6 @@
             }
             coreGroup.add(nodeGroup);
 
-            /* ambient point sparkles around the core (small starfield sphere) */
             const sparkleCount = 90;
             const sparklePositions = new Float32Array(sparkleCount * 3);
             for(let i=0;i<sparkleCount;i++){
@@ -2162,7 +2195,6 @@
             const sparklePoints = new THREE.Points(sparkleGeo, sparkleMat);
             heroScene.add(sparklePoints);
 
-            /* pointer-driven parallax */
             let targetRotX = 0, targetRotY = 0;
             let pointerActive = false;
             function onPointerMove(clientX, clientY){
@@ -2205,7 +2237,6 @@
                 sparklePoints.rotation.y += dt * 0.02;
                 sparklePoints.rotation.x += dt * 0.008;
 
-                /* ease camera-facing group rotation toward pointer target, drift back to idle spin when idle */
                 const idleY = elapsed * 0.06;
                 const desiredY = pointerActive ? targetRotY : idleY;
                 const desiredX = pointerActive ? targetRotX : Math.sin(elapsed*0.4)*0.08;
@@ -2224,7 +2255,7 @@
             }
             window.addEventListener('resize', resizeHero);
 
-            /* ---------- Ambient full-page starfield (very subtle, low opacity) ---------- */
+            /* ambient starfield */
             const bgCanvas = document.getElementById('webgl-bg-canvas');
             const bgScene = new THREE.Scene();
             const bgCamera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
@@ -2276,7 +2307,6 @@
 
             requestAnimationFrame(()=>{ document.getElementById('webgl-bg').classList.add('ready'); });
 
-            /* expose theme switch hook */
             window.__sarveikScene = {
                 setTheme(mode){
                     const dark = mode === 'dark';
@@ -2293,7 +2323,6 @@
                 }
             };
 
-            /* pause rendering when tab is hidden (perf) */
             document.addEventListener('visibilitychange', ()=>{
                 if(document.hidden){
                     if(heroRAF) cancelAnimationFrame(heroRAF);
@@ -2306,7 +2335,6 @@
             });
         }
 
-        /* respect reduced motion: skip heavy 3D entirely */
         const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
         /* ── DOMContentLoaded ── */
@@ -2319,26 +2347,24 @@
                 document.documentElement.setAttribute('data-theme','light');
                 document.querySelector('.theme-toggle i').className='fas fa-sun';
                 updateParticleColors(false);
-            } else {
-                /* default: no data-theme = original dark body background */
             }
             updateHeaderUI();
             checkMaintenance();
             startPoll();
-            const isValid=await checkSessionAndRedirect();
+
+            // Check session to update UI but do NOT redirect
+            const isValid = await checkSessionAndRedirect();
             if(isValid){
-                const profile=await apiCall('/profile');
-                if(profile.role==='admin') window.location.href='/admin-dashboard.html';
-                else if(profile.role==='moderator') window.location.href='/moderator-dashboard.html';
-                else window.location.href='/main.html';
+                // User is logged in – header already updated in updateHeaderUI()
+                // No redirect – stay on landing page
             }
+
             loadTopUsers();
 
             if(!prefersReducedMotion){
                 initSarveik3D();
             }
 
-            /* init OTP resend timers (restores mid-cooldown state if modal reopened) */
             signupOtpTimer.init();
             resetOtpTimer.init();
 
