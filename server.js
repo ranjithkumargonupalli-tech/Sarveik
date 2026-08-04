@@ -41,6 +41,12 @@ const {
     sendAccountDeletionAlert 
 } = require('./utils/emailService');
 
+function parseIntSafe(value) {
+  if (value === undefined || value === null || value === '') return null;
+  const num = parseInt(value);
+  return isNaN(num) ? null : num;
+}
+
 // ==================== EMAIL CONFIGURATION ====================
 const transporter = nodemailer.createTransport({
     service: 'gmail',
