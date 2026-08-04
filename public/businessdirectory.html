@@ -632,12 +632,6 @@
     .order-card .header{display:flex;justify-content:space-between;flex-wrap:wrap;}
     .order-card .status{font-weight:600;}
 
-    /* ===== PARTNER ===== */
-    .request-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;margin-bottom:10px;}
-    .request-card .row{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;}
-    .btn-accept{background:var(--green);color:#fff;border:none;padding:4px 14px;border-radius:20px;cursor:pointer;}
-    .btn-accept:hover{opacity:0.8;}
-
     /* ===== RESPONSIVE ===== */
     @media(max-width:700px){.biz-grid,.prod-grid{grid-template-columns:1fr;} .tab-btn{flex:1;text-align:center;}}
     @media(max-width:768px){
@@ -711,7 +705,6 @@
       <p>Browse verified companies, local shops, markets, restaurants, and services. Community-submitted, admin-approved — with live Google ratings.</p>
       <div class="hero-actions">
         <button class="btn-primary" id="heroShopBtn"><i class="fas fa-shopping-bag"></i> Start Shopping</button>
-        <button class="btn-ghost" id="heroPartnerBtn"><i class="fas fa-bicycle"></i> Become Partner</button>
         <a href="/business-owner.html" class="btn-ghost"><i class="fas fa-store-alt"></i> My Business</a>
       </div>
       <div class="stats-bar">
@@ -794,8 +787,6 @@
       <button class="tab-btn active" data-tab="directory"><i class="fas fa-store"></i> Directory</button>
       <button class="tab-btn" data-tab="shop"><i class="fas fa-shopping-bag"></i> Shop</button>
       <button class="tab-btn" data-tab="orders"><i class="fas fa-truck"></i> My Orders</button>
-      <button class="tab-btn" data-tab="partner"><i class="fas fa-bicycle"></i> Partner</button>
-      <button class="tab-btn" data-tab="admin" style="display:none" id="adminTab"><i class="fas fa-shield-alt"></i> Admin</button>
     </div>
 
     <!-- ===== DIRECTORY TAB ===== -->
@@ -905,25 +896,6 @@
     <!-- ===== ORDERS TAB ===== -->
     <div class="tab-panel" id="tab-orders">
       <div id="ordersList"></div>
-    </div>
-
-    <!-- ===== PARTNER TAB ===== -->
-    <div class="tab-panel" id="tab-partner">
-      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
-        <button class="btn-primary" id="toggleOnline"><i class="fas fa-toggle-on"></i> Go Online</button>
-        <button class="btn-ghost" id="refreshPartner"><i class="fas fa-sync"></i> Refresh</button>
-      </div>
-      <div id="partnerRequests"><p style="color:var(--text3)">Loading requests…</p></div>
-      <div id="partnerActive"><p style="color:var(--text3)">No active deliveries.</p></div>
-      <div id="partnerHistory"><p style="color:var(--text3)">No completed deliveries.</p></div>
-    </div>
-
-    <!-- ===== ADMIN TAB ===== -->
-    <div class="tab-panel" id="tab-admin">
-      <h3>Admin Panel – Pending Businesses</h3>
-      <div id="pendingList"></div>
-      <h3 style="margin-top:20px;">Products Management</h3>
-      <div id="productList"></div>
     </div>
 
   </div>
@@ -1161,7 +1133,7 @@
       </div>
     </div>
     <div style="font-size:0.72rem;color:var(--text3);margin-bottom:8px">All listings are user-submitted and admin-approved. Google ratings are fetched live and cached for 15 days.</div>
-    <div class="footer-credits">✨ Cash on Delivery &nbsp;·&nbsp; Email confirmation required for orders &nbsp;·&nbsp; Real-time tracking</div>
+    <div class="footer-credits">✨ Cash on Delivery &nbsp;·&nbsp; Email confirmation required for orders</div>
   </div>
 </footer>
 
@@ -1307,7 +1279,6 @@ let state={
   userLocation:null,
   promoCode:null,
   promoDiscount:0,
-  partnerOnline:false,
 };
 let currentSponsorPackage={name:'Basic Spotlight',price:499};
 
@@ -1382,6 +1353,7 @@ async function getPendingBusinesses(){try{const d=await apiCall('/admin/business
 async function approveBusinessAPI(id){return apiCall(`/admin/businesses/${id}/approve`,{method:'PUT'});}
 async function rejectBusinessAPI(id,r){return apiCall(`/admin/businesses/${id}/reject`,{method:'DELETE',body:{reason:r}});}
 async function getCreditBalance(){try{const r=await apiCall('/credits/balance');return r.balance||0;}catch{return 0;}}
+async function getSponsoredList(limit){try{const r=await apiCall(`/sponsored/list?limit=${limit}`);return Array.isArray(r)?r:(r.sponsored||r.data||[]);}catch{return [];}}
 
 /* ================================================================
    BUSINESS DIRECTORY FUNCTIONS
@@ -1473,7 +1445,7 @@ async function renderBusinesses(){
   const cache=loadGoogleCache();
 
   let sponsoredIds=new Set();
-  try{const sr=await fetch('/api/sponsored/list?limit=20');if(sr.ok){const sp=await sr.json();sp.forEach(s=>sponsoredIds.add(String(s.business_id)));}}catch{}
+  try{(await getSponsoredList(20)).forEach(s=>sponsoredIds.add(String(s.business_id)));}catch{}
 
   grid.innerHTML=pageItems.map((biz,i)=>{
     const openStatus=isOpenNow(biz.hours);
@@ -1832,6 +1804,22 @@ document.getElementById('exportDataBtn').addEventListener('click',()=>{
   const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='sarveik_businesses.csv';a.click();
   showToast('CSV exported!','success');
 });
+async function loadReports(){
+  try{
+    const reports=await apiCall('/admin/reports');
+    const list=Array.isArray(reports)?reports:(reports.reports||reports.data||[]);
+    const c=document.getElementById('reportsList');
+    if(!list.length){c.innerHTML='<em style="color:var(--text3);font-size:0.84rem">No reports yet.</em>';return;}
+    c.innerHTML=list.map(r=>`
+      <div class="pending-item">
+        <div class="pending-info">
+          <div class="pending-name">${escHtml(r.business_name||('Business #'+r.business_id))} — ${escHtml(r.reason)}</div>
+          <div class="pending-meta">${escHtml(r.details||'')}</div>
+          <div class="pending-meta">${timeAgo(r.created_at)}</div>
+        </div>
+      </div>`).join('');
+  }catch{document.getElementById('reportsList').innerHTML='<em style="color:var(--text3);font-size:0.84rem">Failed to load reports.</em>';}
+}
 
 /* ================================================================
    FAVORITES
@@ -1917,9 +1905,7 @@ async function loadSponsoredListings(){
   grid.innerHTML='<div style="padding:24px;text-align:center;color:var(--text3)"><i class="fas fa-spinner fa-spin"></i> Loading sponsored listings…</div>';
   section.style.display='block';
   try{
-    const res=await fetch('/api/sponsored/list?limit=6');
-    if(!res.ok)throw new Error();
-    const sponsored=await res.json();
+    const sponsored=await getSponsoredList(6);
     if(!sponsored.length){
       grid.innerHTML='<div style="padding:24px;text-align:center;color:var(--text3)"><i class="fas fa-star"></i> No sponsored listings yet.</div>';
       return;
@@ -2294,7 +2280,6 @@ document.getElementById('closeConfirmModal').addEventListener('click', () => {
         showToast('✅ Order confirmed successfully!', 'success');
         window.history.replaceState({}, document.title, window.location.pathname);
         if (document.querySelector('[data-tab="orders"].active')) loadOrders();
-        if (document.querySelector('[data-tab="partner"].active')) loadPartnerDashboard();
       })
       .catch(err => {
         showToast('❌ Confirmation failed: ' + err.message, 'error');
@@ -2350,121 +2335,6 @@ window.rateOrder = async function(id) {
 };
 
 /* ================================================================
-   DELIVERY PARTNER
-================================================================ */
-async function loadPartnerDashboard() {
-  try {
-    const me = await apiCall('/profile');
-    if (me.role !== 'delivery_partner') {
-      document.getElementById('partnerRequests').innerHTML = `<p style="color:var(--text3);">You are not a delivery partner. <button class="btn-primary" id="registerPartnerBtn">Register as Partner</button></p>`;
-      document.getElementById('registerPartnerBtn')?.addEventListener('click', registerPartner);
-      return;
-    }
-    const data = await apiCall('/delivery-partner/orders');
-    renderPartnerRequests(data.requests || []);
-    renderPartnerActive(data.active || []);
-    renderPartnerHistory(data.completed || []);
-    const status = await apiCall('/delivery-partner/status');
-    state.partnerOnline = status.is_online || false;
-    document.getElementById('toggleOnline').innerHTML = state.partnerOnline ? '<i class="fas fa-toggle-on"></i> Go Offline' : '<i class="fas fa-toggle-off"></i> Go Online';
-  } catch(e) {
-    document.getElementById('partnerRequests').innerHTML = '<p style="color:var(--text3);">Error loading partner dashboard</p>';
-  }
-}
-
-async function registerPartner() {
-  try {
-    await apiCall('/delivery-partner/register', { method: 'POST', body: {} });
-    showToast('Registered as delivery partner!', 'success');
-    loadPartnerDashboard();
-  } catch(e) { showToast('Registration failed: ' + e.message, 'error'); }
-}
-
-function renderPartnerRequests(requests) {
-  const container = document.getElementById('partnerRequests');
-  if (!requests.length) { container.innerHTML = '<p style="color:var(--text3);">No pending delivery requests.</p>'; return; }
-  container.innerHTML = requests.map(r => `
-    <div class="request-card">
-      <div class="row">
-        <div><strong>Order #${r.order_id}</strong> – ${escHtml(r.business_name)}</div>
-        <div>₹${r.total_amount}</div>
-      </div>
-      <div style="font-size:0.75rem;color:var(--text3);">${escHtml(r.delivery_address)}</div>
-      <div style="margin-top:6px;">
-        <button class="btn-accept" data-id="${r.order_id}">Accept</button>
-        <span style="font-size:0.7rem;color:var(--text3);margin-left:10px;">expires ${new Date(r.expires_at).toLocaleTimeString()}</span>
-      </div>
-    </div>
-  `).join('');
-  container.querySelectorAll('.btn-accept').forEach(btn => btn.addEventListener('click', () => acceptDelivery(btn.dataset.id)));
-}
-
-function renderPartnerActive(active) {
-  const container = document.getElementById('partnerActive');
-  if (!active.length) { container.innerHTML = '<p style="color:var(--text3);">No active deliveries.</p>'; return; }
-  container.innerHTML = active.map(o => `
-    <div class="request-card">
-      <div><strong>Order #${o.id}</strong> – ${escHtml(o.business_name)}</div>
-      <div style="font-size:0.75rem;">Status: ${o.status.toUpperCase()}</div>
-      <div style="font-size:0.75rem;color:var(--text3);">${escHtml(o.delivery_address)}</div>
-      <div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap;">
-        ${o.status === 'ready' ? `<button class="btn-primary" onclick="pickupOrder(${o.id})" style="padding:4px 12px;font-size:0.75rem;">Picked Up</button>` : ''}
-        ${o.status === 'picked_up' ? `<button class="btn-primary" onclick="deliverOrder(${o.id})" style="padding:4px 12px;font-size:0.75rem;">Delivered</button>` : ''}
-        ${o.status === 'confirmed' || o.status === 'preparing' ? `<span style="font-size:0.75rem;color:var(--text3);">Waiting for business to mark ready</span>` : ''}
-      </div>
-    </div>
-  `).join('');
-}
-
-function renderPartnerHistory(completed) {
-  const container = document.getElementById('partnerHistory');
-  if (!completed.length) { container.innerHTML = '<p style="color:var(--text3);">No completed deliveries.</p>'; return; }
-  container.innerHTML = completed.map(o => `
-    <div class="request-card" style="opacity:0.7;">
-      <div><strong>#${o.id}</strong> – ${escHtml(o.business_name)} – ₹${o.total_amount}</div>
-      <div style="font-size:0.7rem;color:var(--text3);">${new Date(o.updated_at).toLocaleString()}</div>
-    </div>
-  `).join('');
-}
-
-window.acceptDelivery = async function(orderId) {
-  try {
-    await apiCall(`/delivery-partner/order/${orderId}/accept`, { method: 'PATCH' });
-    showToast('Order accepted!', 'success');
-    loadPartnerDashboard();
-  } catch(e) { showToast('Accept failed: ' + e.message, 'error'); }
-};
-
-window.pickupOrder = async function(orderId) {
-  try {
-    await apiCall(`/delivery-partner/order/${orderId}/pickup`, { method: 'PATCH' });
-    showToast('Picked up!', 'success');
-    loadPartnerDashboard();
-  } catch(e) { showToast('Failed: ' + e.message, 'error'); }
-};
-
-window.deliverOrder = async function(orderId) {
-  try {
-    await apiCall(`/delivery-partner/order/${orderId}/deliver`, { method: 'PATCH' });
-    showToast('Delivered!', 'success');
-    loadPartnerDashboard();
-  } catch(e) { showToast('Failed: ' + e.message, 'error'); }
-};
-
-document.getElementById('toggleOnline').addEventListener('click', async () => {
-  const newStatus = !state.partnerOnline;
-  const loc = state.userLocation || await getUserLocation();
-  try {
-    await apiCall('/delivery-partner/status', { method: 'PATCH', body: { is_online: newStatus, lat: loc?.lat, lng: loc?.lng } });
-    state.partnerOnline = newStatus;
-    showToast(newStatus ? 'You are now online' : 'You are now offline', 'info');
-    loadPartnerDashboard();
-  } catch(e) { showToast('Failed to update status', 'error'); }
-});
-
-document.getElementById('refreshPartner').addEventListener('click', loadPartnerDashboard);
-
-/* ================================================================
    SHOP FILTERS
 ================================================================ */
 document.getElementById('prodSearch').addEventListener('input', debounce(loadProducts, 300));
@@ -2489,7 +2359,6 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
     document.getElementById(`tab-${tab}`).classList.add('active');
     if (tab === 'shop') loadProducts();
     else if (tab === 'orders') loadOrders();
-    else if (tab === 'partner') loadPartnerDashboard();
     else if (tab === 'directory') loadBusinesses();
   });
 });
@@ -2500,9 +2369,6 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 document.getElementById('heroShopBtn').addEventListener('click', () => {
   document.querySelector('[data-tab="shop"]').click();
 });
-document.getElementById('heroPartnerBtn').addEventListener('click', () => {
-  document.querySelector('[data-tab="partner"]').click();
-});
 
 /* ================================================================
    ADMIN SECRET
@@ -2510,58 +2376,15 @@ document.getElementById('heroPartnerBtn').addEventListener('click', () => {
 let clickCount=0,clickTimeout;
 document.getElementById('secretAdminTrigger').addEventListener('click',e=>{
   e.preventDefault();clickCount++;clearTimeout(clickTimeout);clickTimeout=setTimeout(()=>clickCount=0,800);
-  if(clickCount>=5){document.getElementById('adminTab').style.display='block';document.getElementById('adminTab').click();loadAdminPanel();clickCount=0;showToast('🔐 Admin panel unlocked','info');}
+  if(clickCount>=5){
+    document.querySelector('[data-tab="directory"]').click();
+    document.getElementById('adminPanel').classList.add('visible');
+    loadPendingBusinesses();
+    document.getElementById('adminPanel').scrollIntoView({behavior:'smooth',block:'start'});
+    clickCount=0;
+    showToast('🔐 Admin panel unlocked','info');
+  }
 });
-
-async function loadAdminPanel() {
-  try {
-    const pending = await apiCall('/admin/businesses/pending');
-    const container = document.getElementById('pendingList');
-    if (!pending.businesses || !pending.businesses.length) { container.innerHTML = '<p>No pending businesses.</p>'; return; }
-    container.innerHTML = pending.businesses.map(b => `
-      <div style="display:flex;justify-content:space-between;align-items:center;padding:8px;border-bottom:1px solid var(--border);">
-        <div><strong>${escHtml(b.name)}</strong> (${escHtml(b.city)})</div>
-        <div>
-          <button class="btn-primary" onclick="approveBiz(${b.id})" style="padding:2px 10px;font-size:0.7rem;">Approve</button>
-          <button class="btn-ghost" onclick="rejectBiz(${b.id})" style="padding:2px 10px;font-size:0.7rem;color:var(--red);">Reject</button>
-        </div>
-      </div>
-    `).join('');
-    const userBiz = await apiCall('/user/businesses');
-    if (userBiz.businesses && userBiz.businesses.length) {
-      const prodContainer = document.getElementById('productList');
-      prodContainer.innerHTML = '<p>Select a business to manage products:</p>';
-      const sel = document.createElement('select');
-      sel.className = 'form-control';
-      sel.innerHTML = userBiz.businesses.map(b => `<option value="${b.id}">${escHtml(b.name)}</option>`).join('');
-      prodContainer.appendChild(sel);
-      const loadBtn = document.createElement('button');
-      loadBtn.textContent = 'Load Products';
-      loadBtn.className = 'btn-ghost';
-      loadBtn.onclick = async () => {
-        const bizId = sel.value;
-        const prods = await apiCall(`/business/${bizId}/products`);
-        let html = prods.map(p => `<div>${escHtml(p.name)} - ₹${p.price} <button onclick="deleteProduct(${p.id})" style="color:var(--red);border:none;background:transparent;cursor:pointer;">×</button></div>`).join('');
-        html += `<div><input id="newProdName" placeholder="Name"><input id="newProdPrice" placeholder="Price" type="number"><button onclick="addProduct(${bizId})">Add</button></div>`;
-        document.getElementById('productList').innerHTML = html;
-      };
-      prodContainer.appendChild(loadBtn);
-    }
-  } catch(e) { showToast('Admin load error', 'error'); }
-}
-
-window.approveBiz = async function(id){ try { await apiCall(`/admin/businesses/${id}/approve`, { method: 'PUT' }); showToast('Approved!', 'success'); loadAdminPanel(); } catch(e) { showToast('Failed', 'error'); } };
-window.rejectBiz = async function(id){ try { await apiCall(`/admin/businesses/${id}/reject`, { method: 'DELETE' }); showToast('Rejected', 'info'); loadAdminPanel(); } catch(e) { showToast('Failed', 'error'); } };
-window.addProduct = async function(bizId) {
-  const name = document.getElementById('newProdName').value;
-  const price = parseFloat(document.getElementById('newProdPrice').value);
-  if (!name || isNaN(price)) { showToast('Name and price required', 'error'); return; }
-  try { await apiCall('/products', { method: 'POST', body: { business_id: bizId, name, price } }); showToast('Product added', 'success'); loadAdminPanel(); } catch(e) { showToast('Failed', 'error'); }
-};
-window.deleteProduct = async function(id) {
-  if (!confirm('Delete product?')) return;
-  try { await apiCall(`/products/${id}`, { method: 'DELETE' }); showToast('Deleted', 'info'); loadAdminPanel(); } catch(e) { showToast('Failed', 'error'); }
-};
 
 /* ================================================================
    EVENTS (Directory)
@@ -2592,7 +2415,7 @@ document.getElementById('closeDetailModal').addEventListener('click',()=>documen
 document.getElementById('closeReportModal').addEventListener('click',()=>document.getElementById('reportModal').classList.remove('open'));
 document.getElementById('closeCompareModal').addEventListener('click',()=>document.getElementById('compareModal').classList.remove('open'));
 document.getElementById('closeAffiliateModal').addEventListener('click',()=>document.getElementById('affiliateModal').classList.remove('open'));
-document.getElementById('showReportsBtn').addEventListener('click',()=>document.getElementById('reportsPanel').style.display='block');
+document.getElementById('showReportsBtn').addEventListener('click',()=>{document.getElementById('reportsPanel').style.display='block';loadReports();});
 document.getElementById('closeReportsBtn').addEventListener('click',()=>document.getElementById('reportsPanel').style.display='none');
 document.getElementById('closeAdminBtn').addEventListener('click',()=>document.getElementById('adminPanel').classList.remove('visible'));
 
@@ -2629,14 +2452,9 @@ const socket = io();
 socket.on('order_status_update', (data) => {
   showToast(`Order #${data.orderId}: ${data.message}`, 'info');
   if (document.querySelector('[data-tab="orders"].active')) loadOrders();
-  if (document.querySelector('[data-tab="partner"].active')) loadPartnerDashboard();
 });
 socket.on('new_order', (data) => {
   showToast(`New order from ${data.user}`, 'info');
-});
-socket.on('new_delivery_request', (data) => {
-  showToast(`New delivery request #${data.orderId}`, 'info');
-  if (document.querySelector('[data-tab="partner"].active')) loadPartnerDashboard();
 });
 
 /* ================================================================
@@ -2649,9 +2467,8 @@ loadBusinesses();
 updateCreditBalance();
 loadProducts();
 loadOrders();
-loadPartnerDashboard();
 
-console.log('🚀 Sarveik Full Directory + Delivery loaded.');
+console.log('🚀 Sarveik Directory + Delivery loaded (delivery-partner module removed).');
 </script>
 </body>
 </html>
