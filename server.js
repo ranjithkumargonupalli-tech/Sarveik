@@ -2896,615 +2896,830 @@ app.delete('/api/admin/tools/:id', isAdmin, async (req, res) => {
     }
 });
 
-// ==================== BUSINESS DIRECTORY ENDPOINTS ====================
+// ==================== BUSINESS DIRECTORY ENDPOINTS (FIXED) ====================
 
+// Helper: Safe integer parser
+function parseIntSafe(value) {
+  if (value === undefined || value === null || value === '') return null;
+  const num = parseInt(value);
+  return isNaN(num) ? null : num;
+}
+
+// ================================================================
+// 1. GET /api/businesses – Public directory with filters
+// ================================================================
 app.get('/api/businesses', async (req, res) => {
-    const { category, city, search, verifiedOnly, featured, limit = 50, offset = 0 } = req.query;
+  const { 
+    category, 
+    city, 
+    search, 
+    verifiedOnly, 
+    featured, 
+    limit = 50, 
+    offset = 0,
+    user_id,      // <-- This was the culprit – ensure it's parsed safely
+    business_id,
+    lat, 
+    lng, 
+    radius 
+  } = req.query;
 
+  // ✅ Safe integer parsing for ALL numeric params
+  const safeLimit = parseIntSafe(limit) || 50;
+  const safeOffset = parseIntSafe(offset) || 0;
+  const safeUserId = parseIntSafe(user_id);
+  const safeBusinessId = parseIntSafe(business_id);
+  const safeLat = lat ? parseFloat(lat) : null;
+  const safeLng = lng ? parseFloat(lng) : null;
+  const safeRadius = radius ? parseFloat(radius) : 10;
+
+  // ✅ Validate – if user_id was provided but is not a number, return error
+  if (user_id !== undefined && user_id !== null && user_id !== '' && safeUserId === null) {
+    return res.status(400).json({ error: 'Invalid user_id: must be an integer' });
+  }
+
+  try {
     let query = `
-        SELECT id, name, type, category, description, address, city, state,
-               phone, email, website, whatsapp, maps, instagram, facebook,
-               hours, amenities, verified, featured, created_at,
-               COALESCE(views, 0) as views, 
-               COALESCE(avg_rating, 0) as avg_rating,
-               COALESCE(total_reviews, 0) as total_reviews,
-               lat, lng, delivery_radius, is_delivery_enabled
-        FROM businesses
-        WHERE approved = true
+      SELECT id, name, type, category, description, address, city, state,
+             phone, email, website, whatsapp, maps, instagram, facebook,
+             hours, amenities, verified, featured, created_at,
+             COALESCE(views, 0) as views, 
+             COALESCE(avg_rating, 0) as avg_rating,
+             COALESCE(total_reviews, 0) as total_reviews,
+             lat, lng
+      FROM businesses
+      WHERE approved = true
     `;
     const params = [];
     let paramIndex = 1;
 
     if (category && category !== 'all') {
-        query += ` AND category = $${paramIndex++}`;
-        params.push(category);
+      query += ` AND category = $${paramIndex++}`;
+      params.push(category);
     }
     if (city && city !== 'all') {
-        query += ` AND city = $${paramIndex++}`;
-        params.push(city);
+      query += ` AND city = $${paramIndex++}`;
+      params.push(city);
     }
     if (verifiedOnly === 'true') {
-        query += ` AND verified = true`;
+      query += ` AND verified = true`;
     }
     if (featured === 'true') {
-        query += ` AND featured = true`;
+      query += ` AND featured = true`;
+    }
+    // ✅ Only add user_id filter if it's a valid number
+    if (safeUserId !== null) {
+      query += ` AND user_id = $${paramIndex++}`;
+      params.push(safeUserId);
+    }
+    if (safeBusinessId !== null) {
+      query += ` AND id = $${paramIndex++}`;
+      params.push(safeBusinessId);
     }
     if (search) {
-        query += ` AND (name ILIKE $${paramIndex} OR description ILIKE $${paramIndex} OR address ILIKE $${paramIndex} OR city ILIKE $${paramIndex})`;
-        params.push(`%${search}%`);
-        paramIndex++;
+      query += ` AND (name ILIKE $${paramIndex} OR description ILIKE $${paramIndex} OR address ILIKE $${paramIndex} OR city ILIKE $${paramIndex})`;
+      params.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    // Location-based filtering (if lat/lng provided)
+    if (safeLat !== null && safeLng !== null) {
+      // Use PostgreSQL's earthdistance or simple distance formula
+      // For simplicity, we'll fetch all and filter in code, or use ST_Distance if PostGIS available
+      // We'll filter in JavaScript after fetching
     }
 
     query += ` ORDER BY featured DESC, created_at DESC LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
-    params.push(parseInt(limit), parseInt(offset));
+    params.push(safeLimit, safeOffset);
 
-    try {
-        const result = await pool.query(query, params);
-        
-        let countQuery = `SELECT COUNT(*) as total FROM businesses WHERE approved = true`;
-        const countParams = [];
-        let countIndex = 1;
-        if (category && category !== 'all') {
-            countQuery += ` AND category = $${countIndex++}`;
-            countParams.push(category);
-        }
-        if (city && city !== 'all') {
-            countQuery += ` AND city = $${countIndex++}`;
-            countParams.push(city);
-        }
-        if (verifiedOnly === 'true') {
-            countQuery += ` AND verified = true`;
-        }
-        if (search) {
-            countQuery += ` AND (name ILIKE $${countIndex} OR description ILIKE $${countIndex})`;
-            countParams.push(`%${search}%`);
-        }
-        
-        const countResult = await pool.query(countQuery, countParams);
-        const total = parseInt(countResult.rows[0]?.total || 0);
-        
-        console.log(`✅ Found ${result.rows.length} businesses (Total: ${total})`);
-        
-        res.json({
-            businesses: result.rows,
-            total: total,
-            limit: parseInt(limit),
-            offset: parseInt(offset)
-        });
-    } catch (err) {
-        console.error('Error fetching businesses:', err);
-        res.json({ businesses: [], total: 0, limit: parseInt(limit), offset: parseInt(offset) });
+    const result = await pool.query(query, params);
+    
+    // If lat/lng provided, filter by distance in JavaScript (fallback)
+    let businesses = result.rows;
+    if (safeLat !== null && safeLng !== null) {
+      const rad = safeRadius || 10;
+      businesses = businesses.filter(b => {
+        if (b.lat == null || b.lng == null) return false;
+        const dist = haversineDistance(safeLat, safeLng, parseFloat(b.lat), parseFloat(b.lng));
+        return dist !== null && dist <= rad;
+      });
+      businesses = businesses.map(b => ({
+        ...b,
+        distance: haversineDistance(safeLat, safeLng, parseFloat(b.lat), parseFloat(b.lng))
+      }));
     }
+
+    // Count query (with same filters)
+    let countQuery = `SELECT COUNT(*) as total FROM businesses WHERE approved = true`;
+    const countParams = [];
+    let countIndex = 1;
+    if (category && category !== 'all') {
+      countQuery += ` AND category = $${countIndex++}`;
+      countParams.push(category);
+    }
+    if (city && city !== 'all') {
+      countQuery += ` AND city = $${countIndex++}`;
+      countParams.push(city);
+    }
+    if (verifiedOnly === 'true') {
+      countQuery += ` AND verified = true`;
+    }
+    if (safeUserId !== null) {
+      countQuery += ` AND user_id = $${countIndex++}`;
+      countParams.push(safeUserId);
+    }
+    if (search) {
+      countQuery += ` AND (name ILIKE $${countIndex} OR description ILIKE $${countIndex})`;
+      countParams.push(`%${search}%`);
+    }
+
+    const countResult = await pool.query(countQuery, countParams);
+    const total = parseInt(countResult.rows[0]?.total || 0);
+
+    res.json({
+      businesses: businesses,
+      total: total,
+      limit: safeLimit,
+      offset: safeOffset
+    });
+  } catch (err) {
+    console.error('Error fetching businesses:', err);
+    res.status(500).json({ error: 'Server error: ' + err.message });
+  }
 });
 
+// ================================================================
+// 2. GET /api/businesses/:id – Single business
+// ================================================================
 app.get('/api/businesses/:id', async (req, res) => {
-    const businessId = req.params.id;
-    
-    if (isNaN(businessId) || businessId === 'cities' || businessId === 'categories') {
-        return res.status(400).json({ error: 'Invalid business ID format' });
+  const businessId = parseIntSafe(req.params.id);
+  if (businessId === null) {
+    return res.status(400).json({ error: 'Invalid business ID: must be an integer' });
+  }
+
+  try {
+    const result = await pool.query(
+      `SELECT b.*, u.username as owner_name, u.email as owner_email
+       FROM businesses b
+       LEFT JOIN users u ON b.user_id = u.id
+       WHERE b.id = $1 AND b.approved = true`,
+      [businessId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Business not found' });
     }
-    
-    try {
-        const result = await pool.query(
-            `SELECT b.*, u.username as owner_name, u.email as owner_email
-             FROM businesses b
-             LEFT JOIN users u ON b.user_id = u.id
-             WHERE b.id = $1 AND b.approved = true`,
-            [businessId]
-        );
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: 'Business not found' });
-        }
-        
-        await pool.query(
-            `UPDATE businesses SET views = COALESCE(views, 0) + 1 WHERE id = $1`,
-            [businessId]
-        );
-        
-        res.json(result.rows[0]);
-    } catch (err) {
-        console.error('Error fetching business:', err);
-        res.status(500).json({ error: 'Server error' });
-    }
+
+    // Increment view count
+    await pool.query(
+      `UPDATE businesses SET views = COALESCE(views, 0) + 1 WHERE id = $1`,
+      [businessId]
+    );
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error fetching business:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
-app.get('/api/businesses/:id/reviews', async (req, res) => {
-    const businessId = req.params.id;
-    const limit = parseInt(req.query.limit) || 20;
-    const offset = parseInt(req.query.offset) || 0;
-    
-    try {
-        const result = await pool.query(
-            `SELECT r.*, u.username, u.avatar_url
-             FROM business_reviews r
-             LEFT JOIN users u ON r.user_id = u.id
-             WHERE r.business_id = $1 AND (r.is_approved = true OR r.is_approved IS NULL)
-             ORDER BY r.created_at DESC
-             LIMIT $2 OFFSET $3`,
-            [businessId, limit, offset]
-        );
-        
-        const countResult = await pool.query(
-            `SELECT COUNT(*) FROM business_reviews WHERE business_id = $1 AND (is_approved = true OR is_approved IS NULL)`,
-            [businessId]
-        );
-        
-        res.json({
-            reviews: result.rows,
-            total: parseInt(countResult.rows[0].count),
-            limit,
-            offset
-        });
-    } catch (err) {
-        console.error('Error fetching business reviews:', err);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
-app.get('/api/businesses/:id/ratings', async (req, res) => {
-    const businessId = req.params.id;
-    try {
-        const result = await pool.query(
-            `SELECT 
-                COALESCE(AVG(rating), 0) as average_rating,
-                COUNT(*) as total_reviews
-             FROM business_reviews
-             WHERE business_id = $1 AND (is_approved = true OR is_approved IS NULL)`,
-            [businessId]
-        );
-        res.json(result.rows[0]);
-    } catch (err) {
-        console.error('Error fetching business ratings:', err);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-
+// ================================================================
+// 3. GET /api/businesses/states – Distinct states
+// ================================================================
 app.get('/api/businesses/states', async (req, res) => {
-    try {
-        const result = await pool.query(`
-            SELECT DISTINCT state FROM businesses 
-            WHERE approved = true AND state IS NOT NULL AND state != ''
-            ORDER BY state
-        `);
-        res.json(result.rows.map(r => r.state));
-    } catch (err) {
-        console.error('Error fetching states:', err);
-        res.status(500).json({ error: 'Server error' });
-    }
+  try {
+    const result = await pool.query(`
+      SELECT DISTINCT state FROM businesses 
+      WHERE approved = true AND state IS NOT NULL AND state != ''
+      ORDER BY state
+    `);
+    res.json(result.rows.map(r => r.state));
+  } catch (err) {
+    console.error('Error fetching states:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
+// ================================================================
+// 4. GET /api/businesses/districts – Districts by state
+// ================================================================
 app.get('/api/businesses/districts', async (req, res) => {
-    const { state } = req.query;
-    if (!state) return res.status(400).json({ error: 'State parameter is required' });
-    try {
-        const result = await pool.query(`
-            SELECT DISTINCT district FROM businesses 
-            WHERE approved = true AND state = $1 AND district IS NOT NULL AND district != ''
-            ORDER BY district
-        `, [state]);
-        res.json(result.rows.map(r => r.district));
-    } catch (err) {
-        console.error('Error fetching districts:', err);
-        res.status(500).json({ error: 'Server error' });
-    }
+  const { state } = req.query;
+  if (!state) return res.status(400).json({ error: 'State parameter is required' });
+  try {
+    const result = await pool.query(`
+      SELECT DISTINCT district FROM businesses 
+      WHERE approved = true AND state = $1 AND district IS NOT NULL AND district != ''
+      ORDER BY district
+    `, [state]);
+    res.json(result.rows.map(r => r.district));
+  } catch (err) {
+    console.error('Error fetching districts:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
+// ================================================================
+// 5. GET /api/businesses/categories – Category distribution
+// ================================================================
 app.get('/api/businesses/categories', async (req, res) => {
-    try {
-        const result = await pool.query(`
-            SELECT category, COUNT(*) as count 
-            FROM businesses 
-            WHERE approved = true AND category IS NOT NULL
-            GROUP BY category 
-            ORDER BY count DESC
-        `);
-        res.json(result.rows);
-    } catch (err) {
-        console.error('Error fetching categories:', err);
-        res.status(500).json({ error: 'Server error' });
-    }
+  try {
+    const result = await pool.query(`
+      SELECT category, COUNT(*) as count 
+      FROM businesses 
+      WHERE approved = true AND category IS NOT NULL
+      GROUP BY category 
+      ORDER BY count DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching categories:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
+// ================================================================
+// 6. POST /api/businesses/submit – Submit a new business
+// ================================================================
 app.post('/api/businesses/submit', isAuthenticated, async (req, res) => {
-    const {
-        name, type, category, description, address, city, state, phone, email,
-        website, whatsapp, maps, instagram, facebook, hours, amenities,
-        lat, lng, delivery_radius
-    } = req.body;
+  const {
+    name, type, category, description, address, city, state, phone, email,
+    website, whatsapp, maps, instagram, facebook, hours, amenities,
+    lat, lng, image_urls
+  } = req.body;
 
-    if (!name || !type || !address || !city || !phone || !email) {
-        return res.status(400).json({ error: 'Missing required fields: name, type, address, city, phone, email are required' });
-    }
+  if (!name || !type || !address || !city || !phone || !email) {
+    return res.status(400).json({ error: 'Missing required fields: name, type, address, city, phone, email are required' });
+  }
 
-    try {
-        const columnsCheck = await pool.query(`
-            SELECT column_name FROM information_schema.columns WHERE table_name = 'businesses'
-        `);
-        const existingColumns = columnsCheck.rows.map(c => c.column_name);
-        
-        const insertColumns = ['name', 'type', 'category', 'description', 'address', 'city', 'state', 'phone', 'email', 'website', 'whatsapp', 'hours', 'amenities', 'user_id', 'approved', 'created_at', 'updated_at', 'lat', 'lng', 'delivery_radius', 'is_delivery_enabled'];
-        const insertValues = [
-            name, type, category || 'other', description || '', address, city, state || null, phone, email,
-            website || null, whatsapp || null,
-            hours ? JSON.stringify(hours) : null,
-            amenities ? JSON.stringify(amenities) : null,
-            req.session.userId, false, new Date(), new Date(),
-            lat || null, lng || null, delivery_radius || 10, true
-        ];
-        
-        let colIndex = insertColumns.length;
-        if (existingColumns.includes('maps')) {
-            insertColumns.push('maps');
-            insertValues.push(maps || null);
-        }
-        if (existingColumns.includes('instagram')) {
-            insertColumns.push('instagram');
-            insertValues.push(instagram || null);
-        }
-        if (existingColumns.includes('facebook')) {
-            insertColumns.push('facebook');
-            insertValues.push(facebook || null);
-        }
-        
-        const placeholders = insertValues.map((_, i) => `$${i + 1}`).join(', ');
-        const query = `INSERT INTO businesses (${insertColumns.join(', ')}) VALUES (${placeholders}) RETURNING id`;
-        
-        const result = await pool.query(query, insertValues);
-        const businessId = result.rows[0].id;
+  try {
+    const result = await pool.query(`
+      INSERT INTO businesses (
+        name, type, category, description, address, city, state,
+        phone, email, website, whatsapp, maps, instagram, facebook,
+        hours, amenities, lat, lng, image_urls, user_id, approved, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, false, NOW(), NOW())
+      RETURNING id
+    `, [
+      name, type, category || 'other', description || '', address, city, state || null,
+      phone, email, website || null, whatsapp || null, maps || null,
+      instagram || null, facebook || null,
+      hours ? JSON.stringify(hours) : null,
+      amenities ? JSON.stringify(amenities) : null,
+      lat || null, lng || null,
+      image_urls ? JSON.stringify(image_urls) : null,
+      req.session.userId
+    ]);
 
-        io.to('admin_room').emit('new_business_pending', {
-            id: businessId,
-            name: name,
-            submittedBy: req.session.username
-        });
+    const businessId = result.rows[0].id;
 
-        res.status(201).json({
-            success: true,
-            message: 'Business submitted for review. You will earn 15 credits upon approval!',
-            id: businessId
-        });
-    } catch (err) {
-        console.error('Business submission error:', err);
-        res.status(500).json({ error: 'Server error: ' + err.message });
-    }
+    io.to('admin_room').emit('new_business_pending', {
+      id: businessId,
+      name: name,
+      submittedBy: req.session.username
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Business submitted for review. You will earn 15 credits upon approval!',
+      id: businessId
+    });
+  } catch (err) {
+    console.error('Business submission error:', err);
+    res.status(500).json({ error: 'Server error: ' + err.message });
+  }
 });
 
+// ================================================================
+// 7. POST /api/businesses/:id/reviews – Add a review
+// ================================================================
 app.post('/api/businesses/:id/reviews', isAuthenticated, async (req, res) => {
-    const businessId = req.params.id;
-    const { rating, comment, title } = req.body;
-    
-    if (!rating || rating < 1 || rating > 5) {
-        return res.status(400).json({ error: 'Rating must be between 1 and 5' });
+  const businessId = parseIntSafe(req.params.id);
+  if (businessId === null) {
+    return res.status(400).json({ error: 'Invalid business ID' });
+  }
+  const { rating, comment, title } = req.body;
+
+  if (!rating || rating < 1 || rating > 5) {
+    return res.status(400).json({ error: 'Rating must be between 1 and 5' });
+  }
+
+  try {
+    const business = await pool.query(
+      `SELECT id FROM businesses WHERE id = $1 AND approved = true`,
+      [businessId]
+    );
+    if (business.rows.length === 0) {
+      return res.status(404).json({ error: 'Business not found' });
     }
-    
-    try {
-        const business = await pool.query(
-            `SELECT id FROM businesses WHERE id = $1 AND approved = true`,
-            [businessId]
-        );
-        if (business.rows.length === 0) {
-            return res.status(404).json({ error: 'Business not found' });
-        }
-        
-        const existingReview = await pool.query(
-            `SELECT id FROM business_reviews WHERE business_id = $1 AND user_id = $2`,
-            [businessId, req.session.userId]
-        );
-        
-        if (existingReview.rows.length > 0) {
-            return res.status(400).json({ error: 'You have already reviewed this business' });
-        }
-        
-        await pool.query(`
-            INSERT INTO business_reviews (business_id, user_id, rating, comment, title, created_at)
-            VALUES ($1, $2, $3, $4, $5, NOW())
-        `, [businessId, req.session.userId, rating, comment || null, title || null]);
-        
-        await pool.query(`
-            UPDATE businesses 
-            SET avg_rating = (
-                SELECT COALESCE(AVG(rating), 0) FROM business_reviews 
-                WHERE business_id = $1 AND (is_approved = true OR is_approved IS NULL)
-            ),
-            total_reviews = (
-                SELECT COUNT(*) FROM business_reviews 
-                WHERE business_id = $1 AND (is_approved = true OR is_approved IS NULL)
-            )
-            WHERE id = $1
-        `, [businessId]);
-        
-        res.json({ success: true, message: 'Review submitted successfully!' });
-    } catch (err) {
-        console.error('Review submission error:', err);
-        res.status(500).json({ error: 'Server error' });
+
+    const existingReview = await pool.query(
+      `SELECT id FROM business_reviews WHERE business_id = $1 AND user_id = $2`,
+      [businessId, req.session.userId]
+    );
+
+    if (existingReview.rows.length > 0) {
+      return res.status(400).json({ error: 'You have already reviewed this business' });
     }
+
+    await pool.query(`
+      INSERT INTO business_reviews (business_id, user_id, rating, comment, title, created_at)
+      VALUES ($1, $2, $3, $4, $5, NOW())
+    `, [businessId, req.session.userId, rating, comment || null, title || null]);
+
+    await pool.query(`
+      UPDATE businesses 
+      SET avg_rating = (
+        SELECT COALESCE(AVG(rating), 0) FROM business_reviews 
+        WHERE business_id = $1 AND (is_approved = true OR is_approved IS NULL)
+      ),
+      total_reviews = (
+        SELECT COUNT(*) FROM business_reviews 
+        WHERE business_id = $1 AND (is_approved = true OR is_approved IS NULL)
+      )
+      WHERE id = $1
+    `, [businessId]);
+
+    res.json({ success: true, message: 'Review submitted successfully!' });
+  } catch (err) {
+    console.error('Review submission error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
+// ================================================================
+// 8. POST /api/businesses/:id/favorite – Toggle favorite
+// ================================================================
 app.post('/api/businesses/:id/favorite', isAuthenticated, async (req, res) => {
-    const businessId = req.params.id;
-    
-    try {
-        const existing = await pool.query(
-            `SELECT id FROM business_favorites WHERE business_id = $1 AND user_id = $2`,
-            [businessId, req.session.userId]
-        );
-        
-        if (existing.rows.length > 0) {
-            await pool.query(
-                `DELETE FROM business_favorites WHERE business_id = $1 AND user_id = $2`,
-                [businessId, req.session.userId]
-            );
-            res.json({ success: true, favorited: false });
-        } else {
-            await pool.query(
-                `INSERT INTO business_favorites (business_id, user_id, created_at)
-                 VALUES ($1, $2, NOW())`,
-                [businessId, req.session.userId]
-            );
-            res.json({ success: true, favorited: true });
-        }
-    } catch (err) {
-        console.error('Favorite toggle error:', err);
-        res.status(500).json({ error: 'Server error' });
+  const businessId = parseIntSafe(req.params.id);
+  if (businessId === null) {
+    return res.status(400).json({ error: 'Invalid business ID' });
+  }
+
+  try {
+    const existing = await pool.query(
+      `SELECT id FROM business_favorites WHERE business_id = $1 AND user_id = $2`,
+      [businessId, req.session.userId]
+    );
+
+    if (existing.rows.length > 0) {
+      await pool.query(
+        `DELETE FROM business_favorites WHERE business_id = $1 AND user_id = $2`,
+        [businessId, req.session.userId]
+      );
+      res.json({ success: true, favorited: false });
+    } else {
+      await pool.query(
+        `INSERT INTO business_favorites (business_id, user_id, created_at)
+         VALUES ($1, $2, NOW())`,
+        [businessId, req.session.userId]
+      );
+      res.json({ success: true, favorited: true });
     }
+  } catch (err) {
+    console.error('Favorite toggle error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
+// ================================================================
+// 9. GET /api/user/favorites – Get user's favorites
+// ================================================================
 app.get('/api/user/favorites', isAuthenticated, async (req, res) => {
-    try {
-        const result = await pool.query(`
-            SELECT b.* 
-            FROM businesses b
-            JOIN business_favorites f ON b.id = f.business_id
-            WHERE f.user_id = $1 AND b.approved = true
-            ORDER BY f.created_at DESC
-        `, [req.session.userId]);
-        
-        res.json(result.rows);
-    } catch (err) {
-        console.error('Fetch favorites error:', err);
-        res.status(500).json({ error: 'Server error' });
-    }
+  try {
+    const result = await pool.query(`
+      SELECT b.* 
+      FROM businesses b
+      JOIN business_favorites f ON b.id = f.business_id
+      WHERE f.user_id = $1 AND b.approved = true
+      ORDER BY f.created_at DESC
+    `, [req.session.userId]);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Fetch favorites error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
+// ================================================================
+// 10. GET /api/user/businesses – User's own businesses
+// ================================================================
+app.get('/api/user/businesses', isAuthenticated, async (req, res) => {
+  try {
+    const userId = parseIntSafe(req.session.userId);
+    if (userId === null) {
+      return res.status(401).json({ error: 'Invalid session' });
+    }
+
+    const result = await pool.query(
+      `SELECT id, name, city, state, approved, verified, featured, created_at, type, category
+       FROM businesses 
+       WHERE user_id = $1
+       ORDER BY name`,
+      [userId]
+    );
+
+    res.json({ businesses: result.rows });
+  } catch (err) {
+    console.error('Error fetching user businesses:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ================================================================
+// 11. GET /api/admin/businesses/pending – Admin only
+// ================================================================
 app.get('/api/admin/businesses/pending', isAdminOrModerator, async (req, res) => {
-    try {
-        const result = await pool.query(`
-            SELECT b.*, u.username as submitter_name, u.email as submitter_email
-            FROM businesses b
-            LEFT JOIN users u ON b.user_id = u.id
-            WHERE b.approved = false OR b.approved IS NULL
-            ORDER BY b.created_at DESC
-        `);
-        res.json({ businesses: result.rows });
-    } catch (err) {
-        console.error('Error fetching pending businesses:', err);
-        res.status(500).json({ error: err.message });
-    }
+  try {
+    const result = await pool.query(`
+      SELECT b.*, u.username as submitter_name, u.email as submitter_email
+      FROM businesses b
+      LEFT JOIN users u ON b.user_id = u.id
+      WHERE (b.approved = false OR b.approved IS NULL)
+      ORDER BY b.created_at DESC
+    `);
+    res.json({ businesses: result.rows });
+  } catch (err) {
+    console.error('Error fetching pending businesses:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
+// ================================================================
+// 12. GET /api/admin/businesses/approved – Admin only
+// ================================================================
 app.get('/api/admin/businesses/approved', isAdminOrModerator, async (req, res) => {
-    try {
-        const result = await pool.query(`
-            SELECT b.*, u.username as submitter_name, u.email as submitter_email
-            FROM businesses b
-            LEFT JOIN users u ON b.user_id = u.id
-            WHERE b.approved = true
-            ORDER BY b.created_at DESC
-        `);
-        res.json({ businesses: result.rows });
-    } catch (err) {
-        console.error('Error fetching approved businesses:', err);
-        res.status(500).json({ error: err.message });
-    }
+  try {
+    const result = await pool.query(`
+      SELECT b.*, u.username as submitter_name, u.email as submitter_email
+      FROM businesses b
+      LEFT JOIN users u ON b.user_id = u.id
+      WHERE b.approved = true
+      ORDER BY b.created_at DESC
+    `);
+    res.json({ businesses: result.rows });
+  } catch (err) {
+    console.error('Error fetching approved businesses:', err);
+    res.status(500).json({ error: err.message });
+  }
 });
 
+// ================================================================
+// 13. PUT /api/admin/businesses/:id/approve – Approve business
+// ================================================================
 app.put('/api/admin/businesses/:id/approve', isAdmin, async (req, res) => {
-    const businessId = req.params.id;
-    
-    try {
-        console.log(`📝 Approving business ID: ${businessId}`);
-        
-        const bizResult = await pool.query(
-            `SELECT b.*, u.email as submitter_email, u.username as submitter_name, u.id as user_id
-             FROM businesses b
-             LEFT JOIN users u ON b.user_id = u.id
-             WHERE b.id = $1`,
-            [businessId]
-        );
-        
-        if (bizResult.rows.length === 0) {
-            return res.status(404).json({ error: 'Business not found' });
-        }
-        
-        const biz = bizResult.rows[0];
-        
-        if (biz.approved === true) {
-            return res.status(400).json({ error: 'Business already approved' });
-        }
+  const businessId = parseIntSafe(req.params.id);
+  if (businessId === null) {
+    return res.status(400).json({ error: 'Invalid business ID' });
+  }
 
-        const updateResult = await pool.query(
-            `UPDATE businesses 
-             SET approved = true, 
-                 updated_at = NOW(),
-                 approved_at = NOW()
-             WHERE id = $1 
-             RETURNING id, approved`,
-            [businessId]
-        );
-        
-        if (updateResult.rowCount === 0) {
-            return res.status(500).json({ error: 'Failed to update business approval status' });
-        }
+  try {
+    const bizResult = await pool.query(
+      `SELECT b.*, u.email as submitter_email, u.username as submitter_name, u.id as user_id
+       FROM businesses b
+       LEFT JOIN users u ON b.user_id = u.id
+       WHERE b.id = $1`,
+      [businessId]
+    );
 
-        console.log(`✅ Business ${businessId} (${biz.name}) approved in database`);
+    if (bizResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Business not found' });
+    }
 
-        if (biz.user_id) {
-            await awardCreditsForBusinessApproval(biz.user_id, biz.name);
-            
-            if (biz.submitter_email) {
-                await sendBusinessApprovalEmail(biz.submitter_email, biz.submitter_name || biz.name, biz.name, 15);
-            }
-        }
+    const biz = bizResult.rows[0];
 
-        await pool.query(
-            `INSERT INTO moderator_activity (moderator_id, moderator_name, action, target, details, created_at)
-             VALUES ($1, $2, $3, $4, $5, NOW())`,
-            [req.session.userId, req.session.username, 'Approve business', `Business ID ${businessId}`, `Approved ${biz.name} - User earned 15 credits`]
-        );
+    if (biz.approved === true) {
+      return res.status(400).json({ error: 'Business already approved' });
+    }
 
-        if (biz.user_id) {
-            const userSocket = onlineUsers.get(biz.user_id);
-            if (userSocket && userSocket.socketId) {
-                io.to(userSocket.socketId).emit('business_approved', {
-                    id: businessId,
-                    name: biz.name,
-                    credits: 15
-                });
-            }
-        }
+    await pool.query(
+      `UPDATE businesses 
+       SET approved = true, updated_at = NOW(), approved_at = NOW()
+       WHERE id = $1`,
+      [businessId]
+    );
 
-        res.json({ 
-            success: true, 
-            message: 'Business approved and user awarded 15 credits.',
-            business: { id: businessId, name: biz.name, approved: true }
+    // Award credits to the owner
+    if (biz.user_id) {
+      await awardCreditsForBusinessApproval(biz.user_id, biz.name);
+
+      if (biz.submitter_email) {
+        await sendBusinessApprovalEmail(biz.submitter_email, biz.submitter_name || biz.name, biz.name, 15);
+      }
+    }
+
+    // Log activity
+    await pool.query(
+      `INSERT INTO moderator_activity (moderator_id, moderator_name, action, target, details, created_at)
+       VALUES ($1, $2, $3, $4, $5, NOW())`,
+      [req.session.userId, req.session.username, 'Approve business', `Business ID ${businessId}`, `Approved ${biz.name}`]
+    );
+
+    // Notify the owner via socket
+    if (biz.user_id) {
+      const userSocket = onlineUsers.get(biz.user_id);
+      if (userSocket && userSocket.socketId) {
+        io.to(userSocket.socketId).emit('business_approved', {
+          id: businessId,
+          name: biz.name,
+          credits: 15
         });
-        
-    } catch (err) {
-        console.error('Business approval error:', err);
-        res.status(500).json({ error: 'Server error: ' + err.message });
+      }
     }
+
+    res.json({
+      success: true,
+      message: 'Business approved and user awarded 15 credits.',
+      business: { id: businessId, name: biz.name, approved: true }
+    });
+  } catch (err) {
+    console.error('Business approval error:', err);
+    res.status(500).json({ error: 'Server error: ' + err.message });
+  }
 });
 
+// ================================================================
+// 14. DELETE /api/admin/businesses/:id/reject – Reject business
+// ================================================================
 app.delete('/api/admin/businesses/:id/reject', isAdmin, async (req, res) => {
-    const businessId = req.params.id;
-    const { reason } = req.body;
-    
-    try {
-        const bizResult = await pool.query(
-            `SELECT b.*, u.email as submitter_email, u.username as submitter_name
-             FROM businesses b
-             LEFT JOIN users u ON b.user_id = u.id
-             WHERE b.id = $1`,
-            [businessId]
-        );
-        
-        if (bizResult.rows.length === 0) {
-            return res.status(404).json({ error: 'Business not found' });
-        }
-        
-        const biz = bizResult.rows[0];
+  const businessId = parseIntSafe(req.params.id);
+  if (businessId === null) {
+    return res.status(400).json({ error: 'Invalid business ID' });
+  }
+  const { reason } = req.body;
 
-        if (biz.submitter_email) {
-            await sendBusinessRejectionEmail(biz.submitter_email, biz.submitter_name, biz.name, reason);
-        }
+  try {
+    const bizResult = await pool.query(
+      `SELECT b.*, u.email as submitter_email, u.username as submitter_name
+       FROM businesses b
+       LEFT JOIN users u ON b.user_id = u.id
+       WHERE b.id = $1`,
+      [businessId]
+    );
 
-        await pool.query(`DELETE FROM businesses WHERE id = $1`, [businessId]);
-
-        res.json({ success: true, message: 'Business rejected and removed.' });
-    } catch (err) {
-        console.error('Business rejection error:', err);
-        res.status(500).json({ error: 'Server error' });
+    if (bizResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Business not found' });
     }
+
+    const biz = bizResult.rows[0];
+
+    if (biz.submitter_email) {
+      await sendBusinessRejectionEmail(biz.submitter_email, biz.submitter_name, biz.name, reason);
+    }
+
+    await pool.query(`DELETE FROM businesses WHERE id = $1`, [businessId]);
+
+    res.json({ success: true, message: 'Business rejected and removed.' });
+  } catch (err) {
+    console.error('Business rejection error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
-app.put('/api/admin/businesses/:id', isAdminOrModerator, async (req, res) => {
-    const businessId = req.params.id;
-    const {
-        name, type, category, description, address, city, state, phone, email,
-        website, whatsapp, maps, instagram, facebook, verified, featured
-    } = req.body;
-    
-    try {
-        const existing = await pool.query('SELECT id FROM businesses WHERE id = $1', [businessId]);
-        if (existing.rows.length === 0) {
-            return res.status(404).json({ error: 'Business not found' });
-        }
+// ================================================================
+// 15. PUT /api/admin/businesses/:id – Update business (admin or owner)
+// ================================================================
+app.put('/api/admin/businesses/:id', isAuthenticated, async (req, res) => {
+  const businessId = parseIntSafe(req.params.id);
+  if (businessId === null) {
+    return res.status(400).json({ error: 'Invalid business ID' });
+  }
 
-        await pool.query(`
-            UPDATE businesses SET
-                name = $1, type = $2, category = $3, description = $4,
-                address = $5, city = $6, state = $7, phone = $8, email = $9,
-                website = $10, whatsapp = $11, maps = $12, instagram = $13, facebook = $14,
-                verified = $15, featured = $16, updated_at = NOW()
-            WHERE id = $17
-        `, [name, type, category, description, address, city, state, phone, email,
-            website, whatsapp, maps, instagram, facebook, 
-            verified === true || verified === 'true', 
-            featured === true || featured === 'true', 
-            businessId]);
+  const {
+    name, type, category, description, address, city, state, phone, email,
+    website, whatsapp, maps, instagram, facebook, hours, amenities,
+    lat, lng, delivery_radius, is_delivery_enabled, verified, featured,
+    image_urls
+  } = req.body;
 
-        res.json({ success: true, message: 'Business updated' });
-    } catch (err) {
-        console.error('Business update error:', err);
-        res.status(500).json({ error: 'Server error' });
+  try {
+    // Check ownership
+    const biz = await pool.query('SELECT user_id FROM businesses WHERE id = $1', [businessId]);
+    if (biz.rows.length === 0) {
+      return res.status(404).json({ error: 'Business not found' });
     }
+
+    const isOwner = biz.rows[0].user_id === req.session.userId;
+    const isAdminMod = ['admin', 'moderator'].includes(req.session.role);
+
+    if (!isOwner && !isAdminMod) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Only admins can change verified/featured status
+    let verifiedValue = verified;
+    let featuredValue = featured;
+    if (!isAdminMod) {
+      // Keep existing values if not admin
+      const existing = await pool.query('SELECT verified, featured FROM businesses WHERE id = $1', [businessId]);
+      verifiedValue = existing.rows[0].verified;
+      featuredValue = existing.rows[0].featured;
+    }
+
+    await pool.query(`
+      UPDATE businesses SET
+        name = $1, type = $2, category = $3, description = $4,
+        address = $5, city = $6, state = $7, phone = $8, email = $9,
+        website = $10, whatsapp = $11, maps = $12, instagram = $13, facebook = $14,
+        hours = $15, amenities = $16, lat = $17, lng = $18,
+        delivery_radius = $19, is_delivery_enabled = $20,
+        verified = $21, featured = $22, image_urls = $23, updated_at = NOW()
+      WHERE id = $24
+    `, [
+      name, type, category, description, address, city, state, phone, email,
+      website, whatsapp, maps, instagram, facebook,
+      hours ? JSON.stringify(hours) : null,
+      amenities ? JSON.stringify(amenities) : null,
+      lat || null, lng || null,
+      delivery_radius || 10,
+      is_delivery_enabled !== undefined ? is_delivery_enabled : true,
+      verifiedValue !== undefined ? verifiedValue : false,
+      featuredValue !== undefined ? featuredValue : false,
+      image_urls ? JSON.stringify(image_urls) : null,
+      businessId
+    ]);
+
+    res.json({ success: true, message: 'Business updated' });
+  } catch (err) {
+    console.error('Business update error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
+// ================================================================
+// 16. DELETE /api/admin/businesses/:id – Delete business (admin only)
+// ================================================================
 app.delete('/api/admin/businesses/:id', isAdmin, async (req, res) => {
-    const businessId = req.params.id;
-    try {
-        const biz = await pool.query('SELECT name FROM businesses WHERE id = $1', [businessId]);
-        if (biz.rows.length === 0) return res.status(404).json({ error: 'Business not found' });
+  const businessId = parseIntSafe(req.params.id);
+  if (businessId === null) {
+    return res.status(400).json({ error: 'Invalid business ID' });
+  }
 
-        await pool.query(`DELETE FROM businesses WHERE id = $1`, [businessId]);
-
-        res.json({ success: true });
-    } catch (err) {
-        console.error('Business delete error:', err);
-        res.status(500).json({ error: 'Server error' });
+  try {
+    const biz = await pool.query('SELECT name FROM businesses WHERE id = $1', [businessId]);
+    if (biz.rows.length === 0) {
+      return res.status(404).json({ error: 'Business not found' });
     }
+
+    await pool.query(`DELETE FROM businesses WHERE id = $1`, [businessId]);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('Business delete error:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
+// ================================================================
+// 17. PUT /api/admin/businesses/:id/toggle-verified – Toggle verified
+// ================================================================
 app.put('/api/admin/businesses/:id/toggle-verified', isAdminOrModerator, async (req, res) => {
-    const businessId = req.params.id;
-    try {
-        const result = await pool.query(
-            `UPDATE businesses SET verified = NOT verified, updated_at = NOW()
-             WHERE id = $1 RETURNING verified`,
-            [businessId]
-        );
-        if (result.rows.length === 0) return res.status(404).json({ error: 'Business not found' });
-        res.json({ success: true, verified: result.rows[0].verified });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
+  const businessId = parseIntSafe(req.params.id);
+  if (businessId === null) {
+    return res.status(400).json({ error: 'Invalid business ID' });
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE businesses SET verified = NOT verified, updated_at = NOW()
+       WHERE id = $1 RETURNING verified`,
+      [businessId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Business not found' });
     }
+    res.json({ success: true, verified: result.rows[0].verified });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
+// ================================================================
+// 18. PUT /api/admin/businesses/:id/toggle-featured – Toggle featured
+// ================================================================
 app.put('/api/admin/businesses/:id/toggle-featured', isAdminOrModerator, async (req, res) => {
-    const businessId = req.params.id;
-    try {
-        const result = await pool.query(
-            `UPDATE businesses SET featured = NOT featured, updated_at = NOW()
-             WHERE id = $1 RETURNING featured`,
-            [businessId]
-        );
-        if (result.rows.length === 0) return res.status(404).json({ error: 'Business not found' });
-        res.json({ success: true, featured: result.rows[0].featured });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
+  const businessId = parseIntSafe(req.params.id);
+  if (businessId === null) {
+    return res.status(400).json({ error: 'Invalid business ID' });
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE businesses SET featured = NOT featured, updated_at = NOW()
+       WHERE id = $1 RETURNING featured`,
+      [businessId]
+    );
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Business not found' });
     }
+    res.json({ success: true, featured: result.rows[0].featured });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
 
+// ================================================================
+// 19. GET /api/admin/businesses/stats – Business stats
+// ================================================================
 app.get('/api/admin/businesses/stats', isAdminOrModerator, async (req, res) => {
-    try {
-        const stats = await pool.query(`
-            SELECT 
-                COUNT(*) as total,
-                COUNT(CASE WHEN approved = true THEN 1 END) as approved,
-                COUNT(CASE WHEN approved = false THEN 1 END) as pending,
-                COUNT(CASE WHEN verified = true THEN 1 END) as verified,
-                COUNT(CASE WHEN featured = true THEN 1 END) as featured,
-                COALESCE(SUM(views), 0) as total_views
-            FROM businesses
-        `);
-        res.json(stats.rows[0]);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
-    }
+  try {
+    const stats = await pool.query(`
+      SELECT 
+        COUNT(*) as total,
+        COUNT(CASE WHEN approved = true THEN 1 END) as approved,
+        COUNT(CASE WHEN approved = false OR approved IS NULL THEN 1 END) as pending,
+        COUNT(CASE WHEN verified = true THEN 1 END) as verified,
+        COUNT(CASE WHEN featured = true THEN 1 END) as featured,
+        COALESCE(SUM(views), 0) as total_views,
+        COALESCE(AVG(avg_rating), 0) as avg_rating
+      FROM businesses
+    `);
+    res.json(stats.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server error' });
+  }
 });
+
+// ================================================================
+// 20. GET /api/businesses/:id/ratings – Get ratings for a business
+// ================================================================
+app.get('/api/businesses/:id/ratings', async (req, res) => {
+  const businessId = parseIntSafe(req.params.id);
+  if (businessId === null) {
+    return res.status(400).json({ error: 'Invalid business ID' });
+  }
+
+  try {
+    const result = await pool.query(
+      `SELECT 
+        COALESCE(AVG(rating), 0) as average_rating,
+        COUNT(*) as total_reviews
+       FROM business_reviews
+       WHERE business_id = $1 AND (is_approved = true OR is_approved IS NULL)`,
+      [businessId]
+    );
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Error fetching business ratings:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ================================================================
+// 21. GET /api/businesses/:id/reviews – Get reviews for a business
+// ================================================================
+app.get('/api/businesses/:id/reviews', async (req, res) => {
+  const businessId = parseIntSafe(req.params.id);
+  if (businessId === null) {
+    return res.status(400).json({ error: 'Invalid business ID' });
+  }
+  const limit = parseIntSafe(req.query.limit) || 20;
+  const offset = parseIntSafe(req.query.offset) || 0;
+
+  try {
+    const result = await pool.query(
+      `SELECT r.*, u.username, u.avatar_url
+       FROM business_reviews r
+       LEFT JOIN users u ON r.user_id = u.id
+       WHERE r.business_id = $1 AND (r.is_approved = true OR r.is_approved IS NULL)
+       ORDER BY r.created_at DESC
+       LIMIT $2 OFFSET $3`,
+      [businessId, limit, offset]
+    );
+
+    const countResult = await pool.query(
+      `SELECT COUNT(*) FROM business_reviews WHERE business_id = $1 AND (is_approved = true OR is_approved IS NULL)`,
+      [businessId]
+    );
+
+    res.json({
+      reviews: result.rows,
+      total: parseInt(countResult.rows[0].count),
+      limit: limit,
+      offset: offset
+    });
+  } catch (err) {
+    console.error('Error fetching business reviews:', err);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// ================================================================
+// HELPER: Haversine distance (for location-based filtering)
+// ================================================================
+function haversineDistance(lat1, lon1, lat2, lon2) {
+  if (lat1 == null || lon1 == null || lat2 == null || lon2 == null) return null;
+  const R = 6371; // km
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
 // ==================== SPONSORED ADS SYSTEM ====================
 
