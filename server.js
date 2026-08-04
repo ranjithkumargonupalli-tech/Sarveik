@@ -7393,25 +7393,30 @@ app.post('/api/orders/:id/cancel', isAuthenticated, async (req, res) => {
 
 // ------------------------ GET ORDER DETAILS ------------------------
 app.get('/api/orders/:id', isAuthenticated, async (req, res) => {
-    const orderId = req.params.id;
-    try {
-        const order = await pool.query(`
-            SELECT o.*, b.name as business_name, b.phone as business_phone,
-                   u.username as customer_name, u.phone as customer_phone,
-                   (SELECT json_agg(order_items) FROM order_items WHERE order_id = o.id) as items
-            FROM orders o
-            JOIN businesses b ON o.business_id = b.id
-            JOIN users u ON o.user_id = u.id
-            WHERE o.id = $1 AND (o.user_id = $2 OR $2 IN (SELECT user_id FROM businesses WHERE id = o.business_id))
-        `, [orderId, req.session.userId]);
-        if (order.rows.length === 0) {
-            return res.status(404).json({ error: 'Order not found or access denied' });
-        }
-        res.json(order.rows[0]);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Failed to fetch order' });
+  // ✅ Parse orderId to integer
+  const orderId = parseIntSafe(req.params.id);
+  if (orderId === null) {
+    return res.status(400).json({ error: 'Invalid order ID' });
+  }
+
+  try {
+    const order = await pool.query(`
+      SELECT o.*, b.name as business_name, b.phone as business_phone,
+             u.username as customer_name, u.phone as customer_phone,
+             (SELECT json_agg(order_items) FROM order_items WHERE order_id = o.id) as items
+      FROM orders o
+      JOIN businesses b ON o.business_id = b.id
+      JOIN users u ON o.user_id = u.id
+      WHERE o.id = $1 AND (o.user_id = $2 OR $2 IN (SELECT user_id FROM businesses WHERE id = o.business_id))
+    `, [orderId, req.session.userId]);
+    if (order.rows.length === 0) {
+      return res.status(404).json({ error: 'Order not found or access denied' });
     }
+    res.json(order.rows[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to fetch order' });
+  }
 });
 
 // ------------------------ USER ORDERS ------------------------
