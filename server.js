@@ -6192,7 +6192,10 @@ app.get('/api/gamification/leaderboard', async (req, res) => {
 });
 
 app.post('/api/quests/:questId/claim', isAuthenticated, async (req, res) => {
-    const userId = req.session.userId;
+    const userId = req.query.user_id ? parseInt(req.query.user_id) : null;
+    if (req.query.user_id && isNaN(userId)) {
+        return res.status(400).json({ error: 'Invalid user_id' });
+    }
     const questId = parseInt(req.params.questId);
     const today = new Date().toISOString().slice(0, 10);
     try {

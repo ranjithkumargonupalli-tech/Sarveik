@@ -1318,7 +1318,7 @@ async function fetchGoogleRating(placeId){
 }
 
 /* ================================================================
-   API
+   API (ENHANCED WITH SAFE ARRAY HANDLING)
 ================================================================ */
 async function apiCall(url,opts={}){
   const fetchOpts={...opts,credentials:'include'};
@@ -1341,19 +1341,86 @@ async function getBusinesses(){
     if(state.verifiedOnly)url+=`&verifiedOnly=true`;
     if(state.search)url+=`&search=${encodeURIComponent(state.search)}`;
     const data=await apiCall(url);
-    return data.businesses||data||[];
-  }catch{return [];}
+    // SAFE: ensure we return an array
+    return data.businesses || data || [];
+  }catch(e){
+    console.error('getBusinesses error:', e);
+    return [];
+  }
 }
 
-async function getFavorites(){try{return await apiCall('/user/favorites');}catch{return [];}}
-async function toggleFavoriteAPI(id){try{const r=await apiCall(`/businesses/${id}/favorite`,{method:'POST'});return r.favorited;}catch{return false;}}
-async function getStates(){try{return await apiCall('/businesses/states');}catch{return [];}}
-async function getDistrictsByState(s){try{return await apiCall(`/businesses/districts?state=${encodeURIComponent(s)}`);}catch{return [];}}
-async function getPendingBusinesses(){try{const d=await apiCall('/admin/businesses/pending');return d.businesses||d.data||[];}catch{return [];}}
-async function approveBusinessAPI(id){return apiCall(`/admin/businesses/${id}/approve`,{method:'PUT'});}
-async function rejectBusinessAPI(id,r){return apiCall(`/admin/businesses/${id}/reject`,{method:'DELETE',body:{reason:r}});}
-async function getCreditBalance(){try{const r=await apiCall('/credits/balance');return r.balance||0;}catch{return 0;}}
-async function getSponsoredList(limit){try{const r=await apiCall(`/sponsored/list?limit=${limit}`);return Array.isArray(r)?r:(r.sponsored||r.data||[]);}catch{return [];}}
+async function getFavorites(){
+  try{
+    const data=await apiCall('/user/favorites');
+    return Array.isArray(data) ? data : [];
+  }catch{
+    return [];
+  }
+}
+
+async function toggleFavoriteAPI(id){
+  try{
+    const r=await apiCall(`/businesses/${id}/favorite`,{method:'POST'});
+    return r.favorited || false;
+  }catch{
+    return false;
+  }
+}
+
+async function getStates(){
+  try{
+    const data=await apiCall('/businesses/states');
+    return Array.isArray(data) ? data : [];
+  }catch{
+    return [];
+  }
+}
+
+async function getDistrictsByState(s){
+  try{
+    const data=await apiCall(`/businesses/districts?state=${encodeURIComponent(s)}`);
+    return Array.isArray(data) ? data : [];
+  }catch{
+    return [];
+  }
+}
+
+async function getPendingBusinesses(){
+  try{
+    const d=await apiCall('/admin/businesses/pending');
+    return d.businesses || d.data || [];
+  }catch{
+    return [];
+  }
+}
+
+async function approveBusinessAPI(id){
+  return apiCall(`/admin/businesses/${id}/approve`,{method:'PUT'});
+}
+
+async function rejectBusinessAPI(id,r){
+  return apiCall(`/admin/businesses/${id}/reject`,{method:'DELETE',body:{reason:r}});
+}
+
+async function getCreditBalance(){
+  try{
+    const r=await apiCall('/credits/balance');
+    return r.balance || 0;
+  }catch{
+    return 0;
+  }
+}
+
+async function getSponsoredList(limit){
+  try{
+    const r=await apiCall(`/sponsored/list?limit=${limit}`);
+    if (Array.isArray(r)) return r;
+    if (r && typeof r === 'object') return r.sponsored || r.data || [];
+    return [];
+  }catch{
+    return [];
+  }
+}
 
 /* ================================================================
    BUSINESS DIRECTORY FUNCTIONS
@@ -1366,7 +1433,10 @@ async function loadBusinesses(){
     updateStats();
     await loadStatesFilter();
     await updateCreditBalance();
-  }catch{showToast('Failed to load businesses','error');}
+  }catch(e){
+    console.error('loadBusinesses error:', e);
+    showToast('Failed to load businesses. Check console.','error');
+  }
 }
 
 function showSkeletonLoader(){
@@ -1942,6 +2012,7 @@ async function loadSponsoredListings(){
     grid.querySelectorAll('.biz-card').forEach(card=>card.addEventListener('click',()=>openDetailModal(card.dataset.id)));
     section.scrollIntoView({behavior:'smooth',block:'start'});
   }catch(e){
+    console.error('loadSponsoredListings error:', e);
     grid.innerHTML='<div style="padding:24px;text-align:center;color:var(--text3)">No sponsored listings available right now.</div>';
   }
 }
@@ -1968,15 +2039,17 @@ async function loadAffiliateLinks(){
     const links=await apiCall('/affiliate/links');
     const c=document.getElementById('affiliateLinksList');
     if(!c)return;
-    if(!links.length){c.innerHTML='<p style="color:var(--text3);font-size:0.82rem;text-align:center;padding:16px">No affiliate links yet. Create your first below!</p>';return;}
-    const totalClicks=links.reduce((a,l)=>a+(l.click_count||0),0);
-    const totalEarned=links.reduce((a,l)=>a+(l.total_commission||0),0);
+    // SAFE: ensure links is an array
+    const safeLinks = Array.isArray(links) ? links : [];
+    if(!safeLinks.length){c.innerHTML='<p style="color:var(--text3);font-size:0.82rem;text-align:center;padding:16px">No affiliate links yet. Create your first below!</p>';return;}
+    const totalClicks=safeLinks.reduce((a,l)=>a+(l.click_count||0),0);
+    const totalEarned=safeLinks.reduce((a,l)=>a+(l.total_commission||0),0);
     const stats=document.getElementById('affiliateStats');
     if(stats)stats.innerHTML=`
-      <div class="affiliate-stat"><div class="aff-num">${links.length}</div><div class="aff-label">Links</div></div>
+      <div class="affiliate-stat"><div class="aff-num">${safeLinks.length}</div><div class="aff-label">Links</div></div>
       <div class="affiliate-stat"><div class="aff-num">${totalClicks}</div><div class="aff-label">Clicks</div></div>
       <div class="affiliate-stat"><div class="aff-num">₹${totalEarned.toFixed(0)}</div><div class="aff-label">Earned</div></div>`;
-    c.innerHTML=`<div class="form-section-title" style="margin-bottom:12px">Your Links</div>`+links.map(link=>`
+    c.innerHTML=`<div class="form-section-title" style="margin-bottom:12px">Your Links</div>`+safeLinks.map(link=>`
       <div class="aff-link-item">
         <div class="aff-link-header"><div class="aff-link-name">${escHtml(link.product_name)}</div><div class="aff-link-earned">₹${(link.total_commission||0).toFixed(2)}</div></div>
         <div class="aff-link-stats">Clicks: ${link.click_count||0} · Sales: ${link.sale_count||0} · ${link.commission_rate}% commission</div>
@@ -1984,13 +2057,13 @@ async function loadAffiliateLinks(){
           <button onclick="copyToClipboard('${window.location.origin}/go/${link.id}')" style="background:none;border:none;cursor:pointer;color:var(--accent);padding:0;font-size:0.85rem" title="Copy"><i class="fas fa-copy"></i></button>
         </div>
       </div>`).join('');
-  }catch{}
+  }catch(e){console.error('loadAffiliateLinks error:', e);}
 }
 
 async function loadAffiliateProductsForBusiness(businessId){
   try{
     const links=await apiCall(`/affiliate/business/${businessId}/links`);
-    if(links?.length){
+    if(links && links.length){
       document.getElementById('affiliateSection').style.display='';
       document.getElementById('affiliateProducts').innerHTML=links.map(link=>`
         <div style="display:flex;align-items:center;justify-content:space-between;padding:11px;background:var(--card);border-radius:10px;margin-bottom:9px;gap:10px;border:1px solid var(--border)">
@@ -1998,7 +2071,7 @@ async function loadAffiliateProductsForBusiness(businessId){
           <button class="btn-primary" onclick="window.open('/go/${link.id}','_blank')" style="padding:6px 14px;font-size:0.78rem;white-space:nowrap"><i class="fas fa-external-link-alt"></i> Buy Now</button>
         </div>`).join('');
     }
-  }catch{}
+  }catch(e){console.error('loadAffiliateProductsForBusiness error:', e);}
 }
 
 function copyToClipboard(text){navigator.clipboard.writeText(text);showToast('Copied to clipboard!','success');}
@@ -2074,15 +2147,24 @@ async function loadProducts() {
     const cat = document.getElementById('prodCategory').value;
     if (cat) params.set('category', cat);
     const data = await apiCall(`/products?${params.toString()}`);
-    state.products = data;
-    renderProducts(data);
-    populateProductCategories(data);
-  } catch(e) { showToast('Failed to load products', 'error'); }
+    // SAFE: ensure products is an array
+    state.products = Array.isArray(data) ? data : [];
+    renderProducts(state.products);
+    populateProductCategories(state.products);
+  } catch(e) {
+    console.error('loadProducts error:', e);
+    state.products = [];
+    renderProducts(state.products);
+    showToast('Failed to load products. Check console.','error');
+  }
 }
 
 function renderProducts(products) {
   const grid = document.getElementById('prodGrid');
-  if (!products.length) { grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3)">No products found.</div>'; return; }
+  if (!products || !Array.isArray(products) || !products.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text3)">No products found. Try adjusting your filters or add some products as a business owner.</div>';
+    return;
+  }
   grid.innerHTML = products.map(p => `
     <div class="prod-card" data-id="${p.id}">
       ${p.image_url ? `<img class="prod-img" src="${escHtml(p.image_url)}" alt="${escHtml(p.name)}" onerror="this.style.display='none'">` : `<div class="prod-img" style="display:flex;align-items:center;justify-content:center;background:var(--bg3);color:var(--text3);font-size:2rem;">📦</div>`}
@@ -2178,10 +2260,10 @@ async function openCheckout() {
   if (!state.cart.length) { showToast('Cart is empty', 'error'); return; }
   try {
     const addrs = await apiCall('/user/addresses');
-    state.addresses = addrs;
+    state.addresses = Array.isArray(addrs) ? addrs : [];
     const sel = document.getElementById('addressSelect');
-    sel.innerHTML = addrs.map(a => `<option value="${a.id}" ${a.is_default ? 'selected' : ''}>${escHtml(a.label)}: ${escHtml(a.address)}</option>`).join('');
-    if (!addrs.length) sel.innerHTML = '<option value="">No address – add one</option>';
+    sel.innerHTML = state.addresses.map(a => `<option value="${a.id}" ${a.is_default ? 'selected' : ''}>${escHtml(a.label)}: ${escHtml(a.address)}</option>`).join('');
+    if (!state.addresses.length) sel.innerHTML = '<option value="">No address – add one</option>';
   } catch(e) { showToast('Failed to load addresses', 'error'); }
   const subtotal = state.cart.reduce((s,c) => s + c.price * c.quantity, 0);
   document.getElementById('checkoutSubtotal').textContent = `₹${subtotal}`;
@@ -2293,7 +2375,8 @@ document.getElementById('closeConfirmModal').addEventListener('click', () => {
 ================================================================ */
 async function loadOrders() {
   try {
-    const orders = await apiCall('/orders/user');
+    const data = await apiCall('/orders/user');
+    const orders = Array.isArray(data) ? data : [];
     const container = document.getElementById('ordersList');
     if (!orders.length) { container.innerHTML = '<p style="color:var(--text3)">No orders yet.</p>'; return; }
     container.innerHTML = orders.map(o => `
@@ -2312,7 +2395,10 @@ async function loadOrders() {
         ${['pending_confirmation','confirmed'].includes(o.status) ? `<button class="btn-ghost" onclick="cancelOrder(${o.id})" style="font-size:0.7rem;padding:4px 10px;color:var(--red);">Cancel</button>` : ''}
       </div>
     `).join('');
-  } catch(e) { showToast('Failed to load orders', 'error'); }
+  } catch(e) {
+    console.error('loadOrders error:', e);
+    document.getElementById('ordersList').innerHTML = '<p style="color:var(--red);">Failed to load orders. Please try again later.</p>';
+  }
 }
 
 window.cancelOrder = async function(id) {
