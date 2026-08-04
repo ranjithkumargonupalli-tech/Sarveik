@@ -8,6 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
+    /* ... (keep all existing styles exactly as they are) ... */
     *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
     :root{
       --bg:#07070e;--bg2:#0f0f1a;--bg3:#161625;--bg4:#1c1c2e;
@@ -1279,6 +1280,9 @@ let state={
   userLocation:null,
   promoCode:null,
   promoDiscount:0,
+  isLoggedIn: false,
+  username: null,
+  userId: null
 };
 let currentSponsorPackage={name:'Basic Spotlight',price:499};
 
@@ -1341,7 +1345,6 @@ async function getBusinesses(){
     if(state.verifiedOnly)url+=`&verifiedOnly=true`;
     if(state.search)url+=`&search=${encodeURIComponent(state.search)}`;
     const data=await apiCall(url);
-    // SAFE: ensure we return an array
     return data.businesses || data || [];
   }catch(e){
     console.error('getBusinesses error:', e);
@@ -1419,6 +1422,33 @@ async function getSponsoredList(limit){
     return [];
   }catch{
     return [];
+  }
+}
+
+/* ================================================================
+   AUTHENTICATION CHECK
+================================================================ */
+async function checkAuth() {
+  try {
+    const response = await fetch('/check-session', { credentials: 'include' });
+    const data = await response.json();
+    if (data.loggedIn) {
+      state.isLoggedIn = true;
+      state.username = data.username;
+      state.userId = data.userId;
+      console.log('✅ User logged in:', state.username);
+      return true;
+    } else {
+      state.isLoggedIn = false;
+      state.username = null;
+      state.userId = null;
+      console.log('ℹ️ User not logged in');
+      return false;
+    }
+  } catch (e) {
+    console.error('Auth check failed:', e);
+    state.isLoggedIn = false;
+    return false;
   }
 }
 
@@ -2039,7 +2069,6 @@ async function loadAffiliateLinks(){
     const links=await apiCall('/affiliate/links');
     const c=document.getElementById('affiliateLinksList');
     if(!c)return;
-    // SAFE: ensure links is an array
     const safeLinks = Array.isArray(links) ? links : [];
     if(!safeLinks.length){c.innerHTML='<p style="color:var(--text3);font-size:0.82rem;text-align:center;padding:16px">No affiliate links yet. Create your first below!</p>';return;}
     const totalClicks=safeLinks.reduce((a,l)=>a+(l.click_count||0),0);
@@ -2147,7 +2176,6 @@ async function loadProducts() {
     const cat = document.getElementById('prodCategory').value;
     if (cat) params.set('category', cat);
     const data = await apiCall(`/products?${params.toString()}`);
-    // SAFE: ensure products is an array
     state.products = Array.isArray(data) ? data : [];
     renderProducts(state.products);
     populateProductCategories(state.products);
@@ -2258,6 +2286,13 @@ document.getElementById('closeCheckout').addEventListener('click', () => documen
 
 async function openCheckout() {
   if (!state.cart.length) { showToast('Cart is empty', 'error'); return; }
+  
+  // Check if user is logged in
+  if (!state.isLoggedIn) {
+    showToast('Please login to checkout', 'info');
+    return;
+  }
+  
   try {
     const addrs = await apiCall('/user/addresses');
     state.addresses = Array.isArray(addrs) ? addrs : [];
@@ -2307,6 +2342,12 @@ document.getElementById('applyPromoBtn').addEventListener('click', async () => {
 });
 
 document.getElementById('placeOrderBtn').addEventListener('click', async () => {
+  // Check if user is logged in
+  if (!state.isLoggedIn) {
+    showToast('Please login to place an order', 'info');
+    return;
+  }
+  
   const addrId = document.getElementById('addressSelect').value;
   if (!addrId) { showToast('Please select an address', 'error'); return; }
   const addr = state.addresses.find(a => a.id == addrId);
@@ -2371,14 +2412,37 @@ document.getElementById('closeConfirmModal').addEventListener('click', () => {
 })();
 
 /* ================================================================
-   ORDERS
+   ORDERS - FIXED WITH AUTH CHECK
 ================================================================ */
 async function loadOrders() {
+  // First check if user is logged in
+  await checkAuth();
+  
+  if (!state.isLoggedIn) {
+    document.getElementById('ordersList').innerHTML = `
+      <div style="text-align:center;padding:40px 20px;color:var(--text3);">
+        <i class="fas fa-lock" style="font-size:2rem;display:block;margin-bottom:16px;opacity:0.5;"></i>
+        <h3 style="font-family:'Syne',sans-serif;font-size:1.1rem;color:var(--text2);margin-bottom:8px;">Please Login</h3>
+        <p style="font-size:0.85rem;">Login to view your orders</p>
+      </div>
+    `;
+    return;
+  }
+  
   try {
     const data = await apiCall('/orders/user');
     const orders = Array.isArray(data) ? data : [];
     const container = document.getElementById('ordersList');
-    if (!orders.length) { container.innerHTML = '<p style="color:var(--text3)">No orders yet.</p>'; return; }
+    if (!orders.length) { 
+      container.innerHTML = `
+        <div style="text-align:center;padding:40px 20px;color:var(--text3);">
+          <i class="fas fa-shopping-bag" style="font-size:2rem;display:block;margin-bottom:16px;opacity:0.5;"></i>
+          <h3 style="font-family:'Syne',sans-serif;font-size:1.1rem;color:var(--text2);margin-bottom:8px;">No Orders Yet</h3>
+          <p style="font-size:0.85rem;">Start shopping to see your orders here</p>
+        </div>
+      `; 
+      return; 
+    }
     container.innerHTML = orders.map(o => `
       <div class="order-card">
         <div class="header">
@@ -2552,9 +2616,12 @@ getUserLocation();
 loadBusinesses();
 updateCreditBalance();
 loadProducts();
-loadOrders();
+// Load orders after checking auth
+checkAuth().then(() => {
+  loadOrders();
+});
 
-console.log('🚀 Sarveik Directory + Delivery loaded (delivery-partner module removed).');
+console.log('🚀 Sarveik Directory + Delivery loaded (orders fixed with auth check).');
 </script>
 </body>
 </html>
