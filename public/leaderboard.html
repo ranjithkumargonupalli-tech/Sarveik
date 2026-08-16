@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 /* ════════════════════════════════════════
-   ROOT & RESET
+   ROOT & RESET — futuristic 3D edition
 ════════════════════════════════════════ */
 :root {
   --bg:       #060610;
@@ -63,15 +63,23 @@ body {
 /* ── CANVAS STARS LAYER ── */
 #starfield { position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.6; }
 
-/* ── GRID ── */
-.grid-bg {
-  position:fixed; inset:0; z-index:0; pointer-events:none;
-  background-image:
-    linear-gradient(rgba(129,140,248,.025) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(129,140,248,.025) 1px, transparent 1px);
-  background-size: 64px 64px;
-  mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 30%, transparent 100%);
+/* ── GRID FLOOR (3D depth) ── */
+.grid-scene {
+  position:fixed; inset:0; z-index:0; pointer-events:none; perspective:500px; overflow:hidden;
 }
+.grid-floor {
+  position:absolute; left:50%; bottom:-10%; width:250vw; height:140vh;
+  background-image:
+    linear-gradient(rgba(129,140,248,.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(129,140,248,.06) 1px, transparent 1px);
+  background-size: 56px 56px;
+  transform: translateX(-50%) rotateX(82deg);
+  transform-origin: bottom center;
+  -webkit-mask-image: linear-gradient(to top, black 0%, black 35%, transparent 85%);
+  mask-image: linear-gradient(to top, black 0%, black 35%, transparent 85%);
+  animation: grid-drift 7s linear infinite;
+}
+@keyframes grid-drift { from { background-position: 0 0, 0 0; } to { background-position: 0 56px, 56px 0; } }
 
 /* ── BLOBS ── */
 .blob { position:fixed; border-radius:50%; filter:blur(140px); pointer-events:none; z-index:0; }
@@ -418,7 +426,6 @@ body {
 
 /* ════════════════════════════════════════
    AVATAR COMPONENT (shared)
-   ─ Handles: image URL, fallback initials, color-coded bg
 ════════════════════════════════════════ */
 .av-img-wrap {
   position:relative; border-radius:50%; overflow:hidden;
@@ -854,8 +861,9 @@ body {
 </head>
 <body>
 
+<!-- Background layers -->
 <canvas id="starfield"></canvas>
-<div class="grid-bg"></div>
+<div class="grid-scene"><div class="grid-floor"></div></div>
 <div class="blob blob1"></div>
 <div class="blob blob2"></div>
 <div class="blob blob3"></div>
@@ -1180,11 +1188,9 @@ function buildAv(u, size, extraClass='', extraStyle='') {
   const initial = (u.username||'?')[0].toUpperCase();
   const [bg1, bg2] = avatarBg(u.username);
   const fontSize = Math.max(size * 0.38, 10);
-  const borderRadius = '50%';
   
   let imgHtml = '';
   if (u.avatar_url) {
-    // Use the dedicated avatar loader function
     imgHtml = `<img src="${esc(u.avatar_url)}" alt="${esc(u.username)}" 
       style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:50%;opacity:0;transition:opacity .3s ease;"
       onload="this.style.opacity=1;this.nextElementSibling.style.opacity=0;"
@@ -1192,7 +1198,7 @@ function buildAv(u, size, extraClass='', extraStyle='') {
   }
 
   return `<div class="av-img-wrap ${extraClass}" style="
-    width:${size}px;height:${size}px;border-radius:${borderRadius};
+    width:${size}px;height:${size}px;border-radius:50%;
     background:linear-gradient(135deg,${bg1},${bg2});
     position:relative;overflow:hidden;flex-shrink:0;
     ${extraStyle}
