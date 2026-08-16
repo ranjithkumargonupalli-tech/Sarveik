@@ -417,6 +417,348 @@ async function ensureStaffLoungeGroup() {
     }
 }
 
+// ==================== GAMIFICATION TABLES SETUP ====================
+async function setupGamificationTables() {
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // Users table – add missing columns (level, xp, etc.)
+        await client.query(`
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='level') THEN
+                    ALTER TABLE users ADD COLUMN level INT DEFAULT 1;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='xp') THEN
+                    ALTER TABLE users ADD COLUMN xp INT DEFAULT 0;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='total_xp_earned') THEN
+                    ALTER TABLE users ADD COLUMN total_xp_earned INT DEFAULT 0;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='premium_until') THEN
+                    ALTER TABLE users ADD COLUMN premium_until TIMESTAMP;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='analytics_until') THEN
+                    ALTER TABLE users ADD COLUMN analytics_until TIMESTAMP;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='featured_until') THEN
+                    ALTER TABLE users ADD COLUMN featured_until TIMESTAMP;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='priority_support_until') THEN
+                    ALTER TABLE users ADD COLUMN priority_support_until TIMESTAMP;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='message_boosts_remaining') THEN
+                    ALTER TABLE users ADD COLUMN message_boosts_remaining INT DEFAULT 0;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='has_custom_badge') THEN
+                    ALTER TABLE users ADD COLUMN has_custom_badge BOOLEAN DEFAULT false;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='selected_badge') THEN
+                    ALTER TABLE users ADD COLUMN selected_badge VARCHAR(50);
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='avatar_style') THEN
+                    ALTER TABLE users ADD COLUMN avatar_style VARCHAR(50) DEFAULT 'default';
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='is_banned') THEN
+                    ALTER TABLE users ADD COLUMN is_banned BOOLEAN DEFAULT false;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='referrer_id') THEN
+                    ALTER TABLE users ADD COLUMN referrer_id INT REFERENCES users(id);
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='login_attempts') THEN
+                    ALTER TABLE users ADD COLUMN login_attempts INT DEFAULT 0;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='lock_until') THEN
+                    ALTER TABLE users ADD COLUMN lock_until TIMESTAMP;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='status') THEN
+                    ALTER TABLE users ADD COLUMN status VARCHAR(20) DEFAULT 'online';
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='display_name') THEN
+                    ALTER TABLE users ADD COLUMN display_name VARCHAR(100);
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='bio') THEN
+                    ALTER TABLE users ADD COLUMN bio TEXT;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='phone') THEN
+                    ALTER TABLE users ADD COLUMN phone VARCHAR(20);
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='github') THEN
+                    ALTER TABLE users ADD COLUMN github VARCHAR(200);
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='twitter') THEN
+                    ALTER TABLE users ADD COLUMN twitter VARCHAR(200);
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='linkedin') THEN
+                    ALTER TABLE users ADD COLUMN linkedin VARCHAR(200);
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='email_verified') THEN
+                    ALTER TABLE users ADD COLUMN email_verified BOOLEAN DEFAULT false;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='two_factor_enabled') THEN
+                    ALTER TABLE users ADD COLUMN two_factor_enabled BOOLEAN DEFAULT false;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='avatar_url') THEN
+                    ALTER TABLE users ADD COLUMN avatar_url VARCHAR(500);
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='google_id') THEN
+                    ALTER TABLE users ADD COLUMN google_id VARCHAR(100);
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='last_latitude') THEN
+                    ALTER TABLE users ADD COLUMN last_latitude DECIMAL(10,8);
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='last_longitude') THEN
+                    ALTER TABLE users ADD COLUMN last_longitude DECIMAL(11,8);
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='is_online') THEN
+                    ALTER TABLE users ADD COLUMN is_online BOOLEAN DEFAULT false;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='total_deliveries') THEN
+                    ALTER TABLE users ADD COLUMN total_deliveries INT DEFAULT 0;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='earnings') THEN
+                    ALTER TABLE users ADD COLUMN earnings DECIMAL(10,2) DEFAULT 0;
+                END IF;
+            END $$;
+        `);
+
+        // Tools table – add missing columns
+        await client.query(`
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='tools' AND column_name='is_premium') THEN
+                    ALTER TABLE tools ADD COLUMN is_premium BOOLEAN DEFAULT false;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='tools' AND column_name='is_featured') THEN
+                    ALTER TABLE tools ADD COLUMN is_featured BOOLEAN DEFAULT false;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='tools' AND column_name='page_type') THEN
+                    ALTER TABLE tools ADD COLUMN page_type VARCHAR(50) DEFAULT 'student';
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='tools' AND column_name='approved') THEN
+                    ALTER TABLE tools ADD COLUMN approved BOOLEAN DEFAULT false;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='tools' AND column_name='submitted_at') THEN
+                    ALTER TABLE tools ADD COLUMN submitted_at TIMESTAMP DEFAULT NOW();
+                END IF;
+            END $$;
+        `);
+
+        // Businesses table – add missing columns
+        await client.query(`
+            DO $$
+            BEGIN
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='businesses' AND column_name='avg_rating') THEN
+                    ALTER TABLE businesses ADD COLUMN avg_rating DECIMAL(3,2) DEFAULT 0;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='businesses' AND column_name='total_reviews') THEN
+                    ALTER TABLE businesses ADD COLUMN total_reviews INT DEFAULT 0;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='businesses' AND column_name='views') THEN
+                    ALTER TABLE businesses ADD COLUMN views INT DEFAULT 0;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='businesses' AND column_name='featured') THEN
+                    ALTER TABLE businesses ADD COLUMN featured BOOLEAN DEFAULT false;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='businesses' AND column_name='verified') THEN
+                    ALTER TABLE businesses ADD COLUMN verified BOOLEAN DEFAULT false;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='businesses' AND column_name='approved') THEN
+                    ALTER TABLE businesses ADD COLUMN approved BOOLEAN DEFAULT false;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='businesses' AND column_name='user_id') THEN
+                    ALTER TABLE businesses ADD COLUMN user_id INT REFERENCES users(id);
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='businesses' AND column_name='delivery_radius') THEN
+                    ALTER TABLE businesses ADD COLUMN delivery_radius INT DEFAULT 10;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='businesses' AND column_name='is_delivery_enabled') THEN
+                    ALTER TABLE businesses ADD COLUMN is_delivery_enabled BOOLEAN DEFAULT true;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='businesses' AND column_name='delivery_slots') THEN
+                    ALTER TABLE businesses ADD COLUMN delivery_slots JSONB DEFAULT '{"start": "09:00", "end": "21:00"}'::jsonb;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='businesses' AND column_name='approved_at') THEN
+                    ALTER TABLE businesses ADD COLUMN approved_at TIMESTAMP;
+                END IF;
+                IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='businesses' AND column_name='image_urls') THEN
+                    ALTER TABLE businesses ADD COLUMN image_urls JSONB;
+                END IF;
+            END $$;
+        `);
+
+        // Gamification tables
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS daily_quests (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(100) NOT NULL,
+                description TEXT,
+                target_action VARCHAR(50) NOT NULL,
+                target_count INT NOT NULL,
+                xp_reward INT NOT NULL,
+                credits_reward INT NOT NULL,
+                created_at TIMESTAMP DEFAULT NOW()
+            )
+        `);
+
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS user_daily_quests (
+                id SERIAL PRIMARY KEY,
+                user_id INT REFERENCES users(id) ON DELETE CASCADE,
+                quest_id INT REFERENCES daily_quests(id) ON DELETE CASCADE,
+                date DATE NOT NULL,
+                progress INT DEFAULT 0,
+                completed BOOLEAN DEFAULT false,
+                claimed BOOLEAN DEFAULT false,
+                UNIQUE(user_id, quest_id, date)
+            )
+        `);
+
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS achievements (
+                id SERIAL PRIMARY KEY,
+                name VARCHAR(100) NOT NULL,
+                description TEXT,
+                icon VARCHAR(50),
+                condition_type VARCHAR(50) NOT NULL,
+                condition_value INT NOT NULL,
+                xp_reward INT NOT NULL,
+                created_at TIMESTAMP DEFAULT NOW()
+            )
+        `);
+
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS user_achievements (
+                id SERIAL PRIMARY KEY,
+                user_id INT REFERENCES users(id) ON DELETE CASCADE,
+                achievement_id INT REFERENCES achievements(id) ON DELETE CASCADE,
+                earned_at TIMESTAMP DEFAULT NOW(),
+                UNIQUE(user_id, achievement_id)
+            )
+        `);
+
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS level_rewards (
+                id SERIAL PRIMARY KEY,
+                level INT NOT NULL UNIQUE,
+                reward_type VARCHAR(50) NOT NULL,
+                reward_value INT NOT NULL,
+                created_at TIMESTAMP DEFAULT NOW()
+            )
+        `);
+
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS user_streak (
+                id SERIAL PRIMARY KEY,
+                user_id INT REFERENCES users(id) ON DELETE CASCADE UNIQUE,
+                current_streak INT DEFAULT 0,
+                longest_streak INT DEFAULT 0,
+                last_login_date DATE,
+                multiplier DECIMAL(3,2) DEFAULT 1.0,
+                updated_at TIMESTAMP DEFAULT NOW()
+            )
+        `);
+
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS user_credits (
+                id SERIAL PRIMARY KEY,
+                user_id INT REFERENCES users(id) ON DELETE CASCADE UNIQUE,
+                balance DECIMAL(10,2) DEFAULT 0,
+                lifetime_earned DECIMAL(10,2) DEFAULT 0,
+                lifetime_spent DECIMAL(10,2) DEFAULT 0,
+                last_updated TIMESTAMP DEFAULT NOW()
+            )
+        `);
+
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS credit_transactions (
+                id SERIAL PRIMARY KEY,
+                user_id INT REFERENCES users(id) ON DELETE CASCADE,
+                amount DECIMAL(10,2) NOT NULL,
+                type VARCHAR(20) NOT NULL,
+                description TEXT,
+                created_at TIMESTAMP DEFAULT NOW()
+            )
+        `);
+
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS moderator_status (
+                user_id INT REFERENCES users(id) PRIMARY KEY,
+                current_tickets INT DEFAULT 0,
+                is_online BOOLEAN DEFAULT true,
+                last_active TIMESTAMP DEFAULT NOW()
+            )
+        `);
+
+        await client.query(`
+            CREATE TABLE IF NOT EXISTS user_notes (
+                id SERIAL PRIMARY KEY,
+                user_id INT REFERENCES users(id) UNIQUE,
+                notes TEXT,
+                updated_by INT REFERENCES users(id),
+                updated_at TIMESTAMP DEFAULT NOW()
+            )
+        `);
+
+        // Seed daily quests if empty
+        const questCheck = await client.query('SELECT COUNT(*) FROM daily_quests');
+        if (parseInt(questCheck.rows[0].count) === 0) {
+            await client.query(`
+                INSERT INTO daily_quests (name, description, target_action, target_count, xp_reward, credits_reward) VALUES
+                ('Daily Login', 'Log in to the platform', 'login', 1, 10, 5),
+                ('Use a Tool', 'Use any tool on the platform', 'use_tool', 3, 15, 8),
+                ('Send a Friend Request', 'Send a friend request to someone', 'friend_request', 1, 5, 2),
+                ('Refer a Friend', 'Refer a friend who signs up', 'referral', 1, 20, 50),
+                ('Write a Review', 'Write a review for a tool or business', 'review', 1, 10, 5)
+            `);
+            console.log('✅ Daily quests seeded');
+        }
+
+        // Seed achievements if empty
+        const achCheck = await client.query('SELECT COUNT(*) FROM achievements');
+        if (parseInt(achCheck.rows[0].count) === 0) {
+            await client.query(`
+                INSERT INTO achievements (name, description, icon, condition_type, condition_value, xp_reward) VALUES
+                ('Tool Explorer', 'Used 5 different tools', '🔧', 'tool_uses', 5, 25),
+                ('Friend Maker', 'Connected with 5 friends', '🤝', 'friends', 5, 30),
+                ('Influencer', 'Referred 3 users', '📣', 'referrals', 3, 40),
+                ('Tool Contributor', 'Got a tool approved', '🛠️', 'tool_approved', 1, 50),
+                ('Review Writer', 'Written 5 reviews', '✍️', 'reviews', 5, 20),
+                ('Dedicated User', 'Logged in for 7 days in a row', '🔥', 'login_streak', 7, 60)
+            `);
+            console.log('✅ Achievements seeded');
+        }
+
+        // Seed level rewards if empty
+        const levelCheck = await client.query('SELECT COUNT(*) FROM level_rewards');
+        if (parseInt(levelCheck.rows[0].count) === 0) {
+            await client.query(`
+                INSERT INTO level_rewards (level, reward_type, reward_value) VALUES
+                (5, 'credits', 50),
+                (10, 'credits', 100),
+                (15, 'credits', 150),
+                (20, 'badge', 1),      -- achievement id 1
+                (25, 'credits', 200),
+                (30, 'premium_days', 3),
+                (35, 'credits', 250),
+                (40, 'badge', 2),
+                (45, 'credits', 300),
+                (50, 'custom_badge', 1)
+            `);
+            console.log('✅ Level rewards seeded');
+        }
+
+        await client.query('COMMIT');
+        console.log('✅ Gamification tables and seed data ready');
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('Error setting up gamification tables:', err);
+    } finally {
+        client.release();
+    }
+}
+
 // ==================== GAMIFICATION HELPER FUNCTIONS ====================
 const xpCache = new Map();
 function xpForLevel(level) {
@@ -5380,7 +5722,7 @@ app.delete('/api/network/:friendId', isAuthenticated, async (req, res) => {
     try {
         const result = await pool.query(
             `DELETE FROM friendships
-             WHERE (user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1)`,
+             WHERE (user_id = $1 OR friend_id = $2) OR (user_id = $2 OR friend_id = $1)`,
             [req.session.userId, friendId]
         );
         if (result.rowCount === 0) return res.status(404).send('Connection not found');
@@ -6413,10 +6755,8 @@ app.get('/api/gamification/leaderboard', async (req, res) => {
 });
 
 app.post('/api/quests/:questId/claim', isAuthenticated, async (req, res) => {
-    const userId = req.query.user_id ? parseInt(req.query.user_id) : null;
-    if (req.query.user_id && isNaN(userId)) {
-        return res.status(400).json({ error: 'Invalid user_id' });
-    }
+    // FIX: Use the authenticated user's ID, not a query parameter.
+    const userId = req.session.userId;
     const questId = parseInt(req.params.questId);
     const today = new Date().toISOString().slice(0, 10);
     try {
@@ -6522,6 +6862,7 @@ app.get('/api/csrf-token', (req, res) => {
         await pool.query('SELECT NOW()');
         console.log('✅ Database connection verified');
         await ensureStaffLoungeGroup();
+        await setupGamificationTables(); // <-- NEW: Creates all gamification tables and seeds data
     } catch (err) {
         console.error('❌ Database connection failed:', err.message);
         process.exit(1);

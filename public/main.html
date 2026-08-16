@@ -351,6 +351,10 @@
     }
     .theme-toggle:hover { background: var(--gradient-main); color: white; border-color: transparent; transform: rotate(20deg); }
 
+    /* Voice-intro button: same look as theme-toggle, plus a soft pulse so first-time users notice it */
+    #voiceIntroBtn.speaking { animation: voice-btn-pulse 1s ease-in-out infinite; color: var(--cyan); border-color: var(--border-bright); }
+    @keyframes voice-btn-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(0,240,255,0.35); } 50% { box-shadow: 0 0 0 6px rgba(0,240,255,0); } }
+
     .hamburger {
       display: none;
       width: 38px;
@@ -1188,6 +1192,9 @@
       <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
     </ul>
     <div class="nav-right">
+      <button class="theme-toggle" id="voiceIntroBtn" title="Play 5-second voice welcome" aria-label="Play voice welcome">
+        <i class="fas fa-volume-up"></i>
+      </button>
       <button class="theme-toggle" id="themeToggle" title="Toggle theme"><i class="fas fa-moon"></i></button>
       <div class="hamburger" id="hamburgerBtn">
         <span></span><span></span><span></span>
@@ -1212,6 +1219,7 @@
       <li><a href="friends.html"><i class="fas fa-users"></i> Friends</a></li>
     </ul>
     <div class="drawer-actions">
+      <button class="drawer-btn" id="mobileVoiceIntroBtn"><i class="fas fa-volume-up"></i> Play Welcome</button>
       <button class="drawer-btn" id="mobileThemeBtn"><i class="fas fa-moon"></i> Dark Mode</button>
       <button class="drawer-btn" id="mobileLogoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
     </div>
@@ -1582,7 +1590,17 @@
     window.addEventListener('load', async () => {
       const isLoggedIn = await checkSession();
       if (!isLoggedIn) return;
-      setTimeout(() => document.getElementById('loadingScreen').classList.add('hidden'), 1100);
+      setTimeout(() => {
+        document.getElementById('loadingScreen').classList.add('hidden');
+        // Auto-play the 5-second voice welcome once the loading screen is gone,
+        // but only on this browser's very first visit (see playVoiceIntro below).
+        setTimeout(() => {
+          if (!localStorage.getItem('sarveik_voice_intro_played')) {
+            playVoiceIntro();
+            localStorage.setItem('sarveik_voice_intro_played', '1');
+          }
+        }, 500);
+      }, 1100);
     });
 
     // ── THEME ──
@@ -1641,6 +1659,35 @@
         setTimeout(() => el.remove(), 400);
       }, 5000);
     }
+
+    // ── VOICE WELCOME INTRO (~5 seconds, browser Text-to-Speech, no API needed) ──
+    // Plays once automatically on a visitor's first-ever visit (see the LOADING
+    // block above) and can be replayed anytime via the 🔊 button in the navbar
+    // and mobile drawer.
+    const VOICE_INTRO_TEXT = "Welcome to Sarveik, your A.I. portal for students, teachers, developers and more!";
+
+    function playVoiceIntro() {
+      if (!('speechSynthesis' in window)) {
+        showToast('Voice welcome isn\'t supported in this browser.', 'warning');
+        return;
+      }
+      window.speechSynthesis.cancel(); // stop anything already speaking
+      const utterance = new SpeechSynthesisUtterance(VOICE_INTRO_TEXT);
+      utterance.lang = 'en-US';
+      utterance.rate = 1;
+      utterance.pitch = 1;
+      utterance.volume = 1;
+
+      const voiceBtnEl = document.getElementById('voiceIntroBtn');
+      utterance.onstart = () => voiceBtnEl?.classList.add('speaking');
+      utterance.onend = () => voiceBtnEl?.classList.remove('speaking');
+      utterance.onerror = () => voiceBtnEl?.classList.remove('speaking');
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    document.getElementById('voiceIntroBtn')?.addEventListener('click', playVoiceIntro);
+    document.getElementById('mobileVoiceIntroBtn')?.addEventListener('click', () => { playVoiceIntro(); closeDrawer(); });
 
     // ── STATS COUNTER ──
     function animateCount(el, target, duration = 1800) {
