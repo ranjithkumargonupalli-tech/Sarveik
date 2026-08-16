@@ -355,6 +355,241 @@
     #voiceIntroBtn.speaking { animation: voice-btn-pulse 1s ease-in-out infinite; color: var(--cyan); border-color: var(--border-bright); }
     @keyframes voice-btn-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(0,240,255,0.35); } 50% { box-shadow: 0 0 0 6px rgba(0,240,255,0); } }
 
+    /* ───── VOICE UPDATE BANNER ───── */
+    .vu-banner {
+      position: relative;
+      max-width: 1000px;
+      margin: 0 auto 3rem;
+      background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-base) 55%, var(--bg-secondary) 100%);
+      border: 1px solid var(--border-bright);
+      border-radius: 22px;
+      overflow: hidden;
+      padding: 60px 40px 40px;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 60px var(--glow-cyan);
+    }
+    .vu-banner::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(120deg, transparent 40%, rgba(0,240,255,0.08) 55%, transparent 70%),
+        linear-gradient(60deg, transparent 60%, rgba(139,63,251,0.10) 75%, transparent 90%);
+      pointer-events: none;
+    }
+    .vu-ribbon {
+      position: absolute;
+      top: 22px;
+      left: -8px;
+      background: var(--gradient-main);
+      color: var(--bg-base);
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 0.85rem;
+      letter-spacing: 1px;
+      padding: 10px 28px 10px 22px;
+      border-radius: 0 8px 8px 0;
+      box-shadow: 0 6px 18px var(--glow-cyan);
+      z-index: 3;
+    }
+    .vu-ribbon::after {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: -8px;
+      border-left: 8px solid rgba(0,100,120,0.9);
+      border-bottom: 8px solid transparent;
+    }
+    .vu-logo {
+      position: absolute;
+      top: 22px;
+      right: 28px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      z-index: 3;
+    }
+    .vu-logo-icon {
+      width: 34px;
+      height: 34px;
+      border-radius: 9px;
+      background: var(--gradient-main);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 0.9rem;
+      box-shadow: 0 0 14px var(--glow-cyan);
+    }
+    .vu-logo-text {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1.05rem;
+      background: var(--gradient-main);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      letter-spacing: -0.02em;
+    }
+    .vu-content {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+      margin-top: 26px;
+      position: relative;
+      z-index: 2;
+    }
+    .vu-rules-box {
+      flex: 1;
+      min-width: 0;
+      background: var(--bg-card);
+      border: 1px solid var(--border-bright);
+      border-radius: 16px;
+      padding: 22px 26px;
+      backdrop-filter: blur(6px);
+    }
+    .vu-rules-box ul { list-style: none; }
+    .vu-rules-box li {
+      display: flex;
+      gap: 10px;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      line-height: 1.55;
+      margin-bottom: 14px;
+    }
+    .vu-rules-box li:last-child { margin-bottom: 0; }
+    .vu-rules-box li .num {
+      flex-shrink: 0;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: var(--gradient-main);
+      color: var(--bg-base);
+      font-weight: 800;
+      font-size: 0.72rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 1px;
+    }
+    .vu-rules-box li b { color: var(--text-primary); }
+    .vu-sound-wrap {
+      flex-shrink: 0;
+      width: 170px;
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+    .vu-sound-ring {
+      position: absolute;
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      background: radial-gradient(circle, var(--glow-cyan), transparent 70%);
+      animation: vuPulse 2.4s ease-in-out infinite;
+    }
+    .vu-sound-ring.speaking { animation: vuPulse 0.9s ease-in-out infinite; }
+    @keyframes vuPulse {
+      0%, 100% { transform: scale(0.9); opacity: 0.6; }
+      50% { transform: scale(1.08); opacity: 1; }
+    }
+    .vu-mic-circle {
+      position: relative;
+      width: 92px;
+      height: 92px;
+      border-radius: 50%;
+      background: var(--gradient-main);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 40px var(--glow-cyan);
+      z-index: 2;
+      transition: transform 0.25s ease;
+    }
+    .vu-mic-circle:hover { transform: scale(1.06); }
+    .vu-mic-circle:active { transform: scale(0.96); }
+    .vu-mic-circle i { font-size: 1.7rem; color: var(--bg-base); }
+    .vu-bars {
+      position: absolute;
+      bottom: -6px;
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      z-index: 2;
+    }
+    .vu-bars span {
+      width: 4px;
+      border-radius: 2px;
+      background: var(--gradient-main);
+      opacity: 0.35;
+    }
+    .vu-bars.speaking span { animation: vuBar 1s ease-in-out infinite; opacity: 1; }
+    .vu-bars span:nth-child(1) { height: 10px; animation-delay: 0s; }
+    .vu-bars span:nth-child(2) { height: 20px; animation-delay: 0.15s; }
+    .vu-bars span:nth-child(3) { height: 30px; animation-delay: 0.3s; }
+    .vu-bars span:nth-child(4) { height: 18px; animation-delay: 0.45s; }
+    .vu-bars span:nth-child(5) { height: 12px; animation-delay: 0.6s; }
+    @keyframes vuBar {
+      0%, 100% { transform: scaleY(0.5); }
+      50% { transform: scaleY(1.3); }
+    }
+    .vu-title {
+      margin-top: 30px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: clamp(1.7rem, 5vw, 2.6rem);
+      letter-spacing: 0.3px;
+      background: var(--gradient-main);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      position: relative;
+      z-index: 2;
+      text-transform: uppercase;
+    }
+    .vu-subtitle {
+      margin-top: 4px;
+      color: var(--text-secondary);
+      font-size: 0.75rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 600;
+      position: relative;
+      z-index: 2;
+    }
+    .vu-stop-btn {
+      position: relative;
+      z-index: 2;
+      margin-top: 22px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 22px;
+      border-radius: 40px;
+      border: 1px solid rgba(255, 46, 136, 0.4);
+      background: rgba(255, 46, 136, 0.08);
+      color: var(--pink);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      opacity: 0.55;
+      pointer-events: none;
+    }
+    .vu-stop-btn.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .vu-stop-btn:hover { background: rgba(255, 46, 136, 0.18); border-color: rgba(255, 46, 136, 0.7); transform: translateY(-2px); }
+
+    @media (max-width: 700px) {
+      .vu-banner { padding: 56px 20px 30px; }
+      .vu-content { flex-direction: column; }
+      .vu-sound-wrap { width: 130px; height: 150px; }
+    }
+
     .hamburger {
       display: none;
       width: 38px;
@@ -1262,6 +1497,45 @@
       </div>
     </div>
 
+    <!-- ───── VOICE UPDATE BANNER ───── -->
+    <div class="vu-banner" id="voiceUpdateBanner">
+      <div class="vu-ribbon">VOICE UPDATE</div>
+      <div class="vu-logo">
+        <div class="vu-logo-icon"><i class="fas fa-shield-alt"></i></div>
+        <div class="vu-logo-text">Sarveik</div>
+      </div>
+
+      <div class="vu-content">
+        <div class="vu-rules-box">
+          <ul>
+            <li><span class="num">1</span><span><b>Auto-welcome</b> — plays once, only on your very first visit to Sarveik.</span></li>
+            <li><span class="num">2</span><span><b>Replay anytime</b> — tap the 🔊 speaker icon in the navbar to hear it again.</span></li>
+            <li><span class="num">3</span><span><b>No install needed</b> — runs entirely in your browser, no app or plugin required.</span></li>
+            <li><span class="num">4</span><span><b>Per-tool guides</b> — open any tool card, then tap "Listen" to hear the how-to-use steps.</span></li>
+            <li><span class="num">5</span><span><b>Voice search</b> — tap the mic to jump straight to a tool hub by speaking its name.</span></li>
+          </ul>
+        </div>
+
+        <div class="vu-sound-wrap">
+          <div class="vu-sound-ring" id="vuSoundRing"></div>
+          <button class="vu-mic-circle" id="vuMicBtn" title="Play the welcome voice" aria-label="Play the welcome voice">
+            <i class="fas fa-microphone"></i>
+          </button>
+          <div class="vu-bars" id="vuBars">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="vu-title">Voice Features</div>
+      <div class="vu-subtitle">Now live on Sarveik</div>
+
+      <!-- Stop button — cancels the welcome voice mid-speech -->
+      <button class="vu-stop-btn" id="vuStopBtn" title="Stop the welcome voice" aria-label="Stop the welcome voice">
+        <i class="fas fa-stop"></i> Stop voice
+      </button>
+    </div>
+
     <!-- Section Header -->
     <div class="section-header">
       <div class="section-label"><i class="fas fa-grid-2"></i> &nbsp;Explore</div>
@@ -1666,6 +1940,13 @@
     // and mobile drawer.
     const VOICE_INTRO_TEXT = "Welcome to Sarveik, your A.I. portal for students, teachers, developers and more!";
 
+    function setVoiceSpeakingState(isSpeaking) {
+      document.getElementById('voiceIntroBtn')?.classList.toggle('speaking', isSpeaking);
+      document.getElementById('vuSoundRing')?.classList.toggle('speaking', isSpeaking);
+      document.getElementById('vuBars')?.classList.toggle('speaking', isSpeaking);
+      document.getElementById('vuStopBtn')?.classList.toggle('active', isSpeaking);
+    }
+
     function playVoiceIntro() {
       if (!('speechSynthesis' in window)) {
         showToast('Voice welcome isn\'t supported in this browser.', 'warning');
@@ -1678,16 +1959,24 @@
       utterance.pitch = 1;
       utterance.volume = 1;
 
-      const voiceBtnEl = document.getElementById('voiceIntroBtn');
-      utterance.onstart = () => voiceBtnEl?.classList.add('speaking');
-      utterance.onend = () => voiceBtnEl?.classList.remove('speaking');
-      utterance.onerror = () => voiceBtnEl?.classList.remove('speaking');
+      utterance.onstart = () => setVoiceSpeakingState(true);
+      utterance.onend = () => setVoiceSpeakingState(false);
+      utterance.onerror = () => setVoiceSpeakingState(false);
 
       window.speechSynthesis.speak(utterance);
     }
 
+    function stopVoiceIntro() {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+      setVoiceSpeakingState(false);
+    }
+
     document.getElementById('voiceIntroBtn')?.addEventListener('click', playVoiceIntro);
     document.getElementById('mobileVoiceIntroBtn')?.addEventListener('click', () => { playVoiceIntro(); closeDrawer(); });
+    document.getElementById('vuMicBtn')?.addEventListener('click', playVoiceIntro);
+    document.getElementById('vuStopBtn')?.addEventListener('click', stopVoiceIntro);
 
     // ── STATS COUNTER ──
     function animateCount(el, target, duration = 1800) {
