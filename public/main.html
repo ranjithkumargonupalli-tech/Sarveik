@@ -1571,7 +1571,7 @@
       <div class="vu-content">
         <div class="vu-rules-box">
           <ul>
-            <li><span class="num">1</span><span><b>Auto-welcome</b> — plays once, only on your very first visit to Sarveik.</span></li>
+            <li><span class="num">1</span><span><b>Auto-welcome</b> — plays automatically every time you open Sarveik.</span></li>
             <li><span class="num">2</span><span><b>Replay anytime</b> — tap the 🔊 speaker icon in the navbar to hear it again.</span></li>
             <li><span class="num">3</span><span><b>No install needed</b> — runs entirely in your browser, no app or plugin required.</span></li>
             <li><span class="num">4</span><span><b>Per-tool guides</b> — open any tool card, then tap "Listen" to hear the how-to-use steps.</span></li>
@@ -1932,13 +1932,10 @@
       if (!isLoggedIn) return;
       setTimeout(() => {
         document.getElementById('loadingScreen').classList.add('hidden');
-        // Auto-play the 5-second voice welcome once the loading screen is gone,
-        // but only on this browser's very first visit (see playVoiceIntro below).
+        // Auto-play the ~5-second voice welcome every time the page loads,
+        // timed with the intro banner appearing (see playVoiceIntro below).
         setTimeout(() => {
-          if (!localStorage.getItem('sarveik_voice_intro_played')) {
-            playVoiceIntro();
-            localStorage.setItem('sarveik_voice_intro_played', '1');
-          }
+          playVoiceIntro();
         }, 500);
         // Kick off the temporary-intro banner countdown once the loading
         // screen is out of the way, so the ~10s timer reflects what the
@@ -2005,8 +2002,8 @@
     }
 
     // ── VOICE WELCOME INTRO (~5 seconds, browser Text-to-Speech, no API needed) ──
-    // Plays once automatically on a visitor's first-ever visit (see the LOADING
-    // block above) and can be replayed anytime via the 🔊 button in the navbar
+    // Plays automatically every time the page loads (see the LOADING block
+    // above) and can be replayed anytime via the 🔊 button in the navbar
     // and mobile drawer.
     const VOICE_INTRO_TEXT = "Welcome to Sarveik, your A.I. portal for students, teachers, developers and more!";
 
