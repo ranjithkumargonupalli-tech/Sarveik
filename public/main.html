@@ -512,7 +512,7 @@
     .vu-sound-wrap {
       flex-shrink: 0;
       width: 170px;
-      height: 200px;
+      height: 220px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -573,6 +573,23 @@
       0%, 100% { transform: scaleY(0.5); }
       50% { transform: scaleY(1.3); }
     }
+    .vu-caption {
+      position: absolute;
+      bottom: -30px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 180px;
+      max-width: 220px;
+      text-align: center;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      line-height: 1.4;
+      color: var(--text-secondary);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+    .vu-caption.show { opacity: 1; }
     .vu-title {
       margin-top: 30px;
       font-family: 'Syne', sans-serif;
@@ -1572,10 +1589,10 @@
         <div class="vu-rules-box">
           <ul>
             <li><span class="num">1</span><span><b>Auto-welcome</b> — plays automatically every time you open Sarveik.</span></li>
-            <li><span class="num">2</span><span><b>Replay anytime</b> — tap the 🔊 speaker icon in the navbar to hear it again.</span></li>
-            <li><span class="num">3</span><span><b>No install needed</b> — runs entirely in your browser, no app or plugin required.</span></li>
-            <li><span class="num">4</span><span><b>Per-tool guides</b> — open any tool card, then tap "Listen" to hear the how-to-use steps.</span></li>
-            <li><span class="num">5</span><span><b>Voice search</b> — tap the mic to jump straight to a tool hub by speaking its name.</span></li>
+            <li><span class="num">2</span><span><b>Replay anytime</b> — tap 🔊 in the navbar, or press <b>V</b> on your keyboard.</span></li>
+            <li><span class="num">3</span><span><b>Mute it</b> — double-click the 🔊 icon to turn off auto-welcome on future visits.</span></li>
+            <li><span class="num">4</span><span><b>Live captions</b> — the words appear under the mic while it's speaking.</span></li>
+            <li><span class="num">5</span><span><b>Voice search</b> — tap the mic FAB to jump straight to a tool hub by speaking its name.</span></li>
           </ul>
         </div>
 
@@ -1587,6 +1604,7 @@
           <div class="vu-bars" id="vuBars">
             <span></span><span></span><span></span><span></span><span></span>
           </div>
+          <div class="vu-caption" id="vuCaption"></div>
         </div>
       </div>
 
@@ -1934,8 +1952,10 @@
         document.getElementById('loadingScreen').classList.add('hidden');
         // Auto-play the ~5-second voice welcome every time the page loads,
         // timed with the intro banner appearing (see playVoiceIntro below).
+        // Passing `true` marks this as an autoplay attempt so we can detect
+        // if the browser silently blocks it and recover on first interaction.
         setTimeout(() => {
-          playVoiceIntro();
+          playVoiceIntro(true);
         }, 500);
         // Kick off the temporary-intro banner countdown once the loading
         // screen is out of the way, so the ~10s timer reflects what the
@@ -2003,47 +2023,143 @@
 
     // ── VOICE WELCOME INTRO (~5 seconds, browser Text-to-Speech, no API needed) ──
     // Plays automatically every time the page loads (see the LOADING block
-    // above) and can be replayed anytime via the 🔊 button in the navbar
-    // and mobile drawer.
+    // above) and can be replayed anytime via the 🔊 button in the navbar,
+    // the mobile drawer, the mic in the banner, or the "V" keyboard shortcut.
     const VOICE_INTRO_TEXT = "Welcome to Sarveik, your A.I. portal for students, teachers, developers and more!";
+    const VOICE_MUTE_KEY = 'sarveik_voice_muted';
+    let voicesReady = false;
+    let voiceAutoplayPending = false; // true once we've tried the auto-intro and are waiting to confirm it actually played
 
-    function setVoiceSpeakingState(isSpeaking) {
+    // Some browsers (notably Chrome) report an empty voice list until the
+    // async 'voiceschanged' event fires, which can silently swallow the very
+    // first speak() call on page load. Cache readiness so we don't fire too early.
+    function primeVoices() {
+      if (!('speechSynthesis' in window)) return;
+      const v = window.speechSynthesis.getVoices();
+      if (v && v.length) voicesReady = true;
+    }
+    primeVoices();
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.addEventListener('voiceschanged', primeVoices);
+    }
+
+    function isVoiceMuted() { return localStorage.getItem(VOICE_MUTE_KEY) === '1'; }
+
+    function updateMuteIcon() {
+      const muted = isVoiceMuted();
+      const icon = muted ? 'fa-volume-mute' : 'fa-volume-up';
+      const btn = document.getElementById('voiceIntroBtn');
+      if (btn) { btn.innerHTML = `<i class="fas ${icon}"></i>`; btn.title = muted ? 'Voice welcome muted — click to unmute & play' : 'Play voice welcome (double-click to mute)'; }
+      const mBtn = document.getElementById('mobileVoiceIntroBtn');
+      if (mBtn) mBtn.innerHTML = `<i class="fas ${icon}"></i> ${muted ? 'Unmute Voice' : 'Play Welcome'}`;
+    }
+    updateMuteIcon();
+
+    function setVoiceSpeakingState(isSpeaking, captionText) {
       document.getElementById('voiceIntroBtn')?.classList.toggle('speaking', isSpeaking);
       document.getElementById('vuSoundRing')?.classList.toggle('speaking', isSpeaking);
       document.getElementById('vuBars')?.classList.toggle('speaking', isSpeaking);
       document.getElementById('vuStopBtn')?.classList.toggle('active', isSpeaking);
+      const caption = document.getElementById('vuCaption');
+      if (caption) {
+        caption.textContent = isSpeaking ? (captionText || '') : '';
+        caption.classList.toggle('show', !!isSpeaking);
+      }
     }
 
-    function playVoiceIntro() {
+    // Plays the welcome voice. `isAutoplay` marks calls fired without a direct
+    // user click, so we can gracefully detect & recover if the browser blocks it.
+    function playVoiceIntro(isAutoplay) {
+      if (isAutoplay && isVoiceMuted()) return; // respect the mute toggle for auto-plays only
       if (!('speechSynthesis' in window)) {
         showToast('Voice welcome isn\'t supported in this browser.', 'warning');
         return;
       }
       window.speechSynthesis.cancel(); // stop anything already speaking
-      const utterance = new SpeechSynthesisUtterance(VOICE_INTRO_TEXT);
-      utterance.lang = 'en-US';
-      utterance.rate = 1;
-      utterance.pitch = 1;
-      utterance.volume = 1;
 
-      utterance.onstart = () => setVoiceSpeakingState(true);
-      utterance.onend = () => setVoiceSpeakingState(false);
-      utterance.onerror = () => setVoiceSpeakingState(false);
+      const speakNow = () => {
+        const utterance = new SpeechSynthesisUtterance(VOICE_INTRO_TEXT);
+        utterance.lang = 'en-US';
+        utterance.rate = 1;
+        utterance.pitch = 1;
+        utterance.volume = 1;
 
-      window.speechSynthesis.speak(utterance);
+        let started = false;
+        utterance.onstart = () => { started = true; voiceAutoplayPending = false; setVoiceSpeakingState(true, VOICE_INTRO_TEXT); };
+        utterance.onend = () => setVoiceSpeakingState(false);
+        utterance.onerror = () => setVoiceSpeakingState(false);
+
+        window.speechSynthesis.speak(utterance);
+
+        // Autoplay-block detector: if the browser silently refuses to start
+        // speaking within ~700ms, fall back to "tap anywhere to hear it".
+        if (isAutoplay) {
+          voiceAutoplayPending = true;
+          setTimeout(() => {
+            if (!started && voiceAutoplayPending) {
+              voiceAutoplayPending = false;
+              armVoiceUnlockOnFirstInteraction();
+            }
+          }, 700);
+        }
+      };
+
+      // Give the voice list a brief head-start if it hasn't reported in yet.
+      if (voicesReady || !isAutoplay) speakNow();
+      else setTimeout(speakNow, 150);
+    }
+
+    let voiceUnlockArmed = false;
+    function armVoiceUnlockOnFirstInteraction() {
+      if (voiceUnlockArmed || isVoiceMuted()) return;
+      voiceUnlockArmed = true;
+      showToast('🔊 Tap anywhere to hear the welcome message.', 'info');
+      const unlock = () => {
+        voiceUnlockArmed = false;
+        document.removeEventListener('click', unlock);
+        document.removeEventListener('touchstart', unlock);
+        document.removeEventListener('keydown', unlock);
+        playVoiceIntro(false);
+      };
+      document.addEventListener('click', unlock, { once: true });
+      document.addEventListener('touchstart', unlock, { once: true });
+      document.addEventListener('keydown', unlock, { once: true });
     }
 
     function stopVoiceIntro() {
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
       }
+      voiceAutoplayPending = false;
       setVoiceSpeakingState(false);
     }
 
-    document.getElementById('voiceIntroBtn')?.addEventListener('click', playVoiceIntro);
-    document.getElementById('mobileVoiceIntroBtn')?.addEventListener('click', () => { playVoiceIntro(); closeDrawer(); });
-    document.getElementById('vuMicBtn')?.addEventListener('click', playVoiceIntro);
+    function toggleVoiceMute() {
+      const nowMuted = !isVoiceMuted();
+      localStorage.setItem(VOICE_MUTE_KEY, nowMuted ? '1' : '0');
+      updateMuteIcon();
+      if (nowMuted) { stopVoiceIntro(); showToast('Voice welcome muted for future visits.', 'info'); }
+      else showToast('Voice welcome unmuted.', 'success');
+    }
+
+    // Track click timing manually so a single click plays and a fast double-click mutes.
+    let voiceBtnClickTimer = null;
+    function handleVoiceIntroBtnClick() {
+      if (voiceBtnClickTimer) { clearTimeout(voiceBtnClickTimer); voiceBtnClickTimer = null; toggleVoiceMute(); return; }
+      voiceBtnClickTimer = setTimeout(() => { voiceBtnClickTimer = null; if (!isVoiceMuted()) playVoiceIntro(false); }, 260);
+    }
+
+    document.getElementById('voiceIntroBtn')?.addEventListener('click', handleVoiceIntroBtnClick);
+    document.getElementById('mobileVoiceIntroBtn')?.addEventListener('click', () => { if (isVoiceMuted()) toggleVoiceMute(); else playVoiceIntro(false); closeDrawer(); });
+    document.getElementById('vuMicBtn')?.addEventListener('click', () => playVoiceIntro(false));
     document.getElementById('vuStopBtn')?.addEventListener('click', stopVoiceIntro);
+
+    // Keyboard shortcut: "V" replays the welcome voice (ignored while typing).
+    document.addEventListener('keydown', e => {
+      if ((e.key === 'v' || e.key === 'V') && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+        playVoiceIntro(false);
+      }
+    });
 
     // ── TEMPORARY VOICE-UPDATE BANNER (shows like a ~10s intro, then tucks away) ──
     // Auto-dismisses itself 10 seconds after it becomes visible, with a visible
