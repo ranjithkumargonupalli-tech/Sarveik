@@ -8,7 +8,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
 /* ════════════════════════════════════════
-   ROOT & RESET — futuristic 3D edition
+   ROOT & RESET
 ════════════════════════════════════════ */
 :root {
   --bg:       #060610;
@@ -58,31 +58,66 @@ body {
   min-height: 100vh;
   overflow-x: hidden;
   cursor: default;
+  transition: background .35s ease, color .35s ease;
+}
+
+/* ════════════════════════════════════════
+   LIGHT THEME
+   Redefining the CSS variables is enough since
+   nearly every component references var(--x).
+════════════════════════════════════════ */
+body.light {
+  --bg:       #f4f5fb;
+  --bg2:      #ffffff;
+  --bg3:      #f8f9ff;
+  --bg4:      #eef0fb;
+  --bg5:      #e4e7fa;
+  --s1:       rgba(20,20,50,.03);
+  --s2:       rgba(20,20,50,.06);
+  --s3:       rgba(20,20,50,.10);
+  --b1:       rgba(30,30,70,.08);
+  --b2:       rgba(30,30,70,.15);
+  --b3:       rgba(30,30,70,.25);
+  --a:        #6d5ff0;
+  --a2:       #5b4fd1;
+  --a3:       #4338ca;
+  --vi:       #7c3aed;
+  --cy:       #0891b2;
+  --cy2:      #0e7490;
+  --em:       #059669;
+  --am:       #d97706;
+  --ro:       #e11d48;
+  --txt:      #14152b;
+  --txt2:     #565a80;
+  --txt3:     #9598bd;
+}
+body.light .blob { opacity:.4; }
+body.light .grid-bg { opacity:.5; }
+body.light #starfield { opacity:.15; }
+body.light .lb-table tbody tr:hover { background:rgba(109,95,240,.05); }
+body.light .modal-overlay { background:rgba(20,20,40,.5); }
+body.light ::-webkit-scrollbar-thumb { background:var(--b2); }
+
+@media (prefers-reduced-motion: reduce) {
+  *,*::before,*::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; scroll-behavior:auto !important; }
 }
 
 /* ── CANVAS STARS LAYER ── */
-#starfield { position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.6; }
+#starfield { position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.6; transition:opacity .35s ease; }
 
-/* ── GRID FLOOR (3D depth) ── */
-.grid-scene {
-  position:fixed; inset:0; z-index:0; pointer-events:none; perspective:500px; overflow:hidden;
-}
-.grid-floor {
-  position:absolute; left:50%; bottom:-10%; width:250vw; height:140vh;
+/* ── GRID ── */
+.grid-bg {
+  position:fixed; inset:0; z-index:0; pointer-events:none;
   background-image:
-    linear-gradient(rgba(129,140,248,.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(129,140,248,.06) 1px, transparent 1px);
-  background-size: 56px 56px;
-  transform: translateX(-50%) rotateX(82deg);
-  transform-origin: bottom center;
-  -webkit-mask-image: linear-gradient(to top, black 0%, black 35%, transparent 85%);
-  mask-image: linear-gradient(to top, black 0%, black 35%, transparent 85%);
-  animation: grid-drift 7s linear infinite;
+    linear-gradient(rgba(129,140,248,.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(129,140,248,.025) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: radial-gradient(ellipse 90% 90% at 50% 50%, black 30%, transparent 100%);
+  transition: opacity .35s ease;
 }
-@keyframes grid-drift { from { background-position: 0 0, 0 0; } to { background-position: 0 56px, 56px 0; } }
 
 /* ── BLOBS ── */
-.blob { position:fixed; border-radius:50%; filter:blur(140px); pointer-events:none; z-index:0; }
+.blob { position:fixed; border-radius:50%; filter:blur(140px); pointer-events:none; z-index:0; transition:opacity .35s ease; }
 .blob1 { width:700px; height:700px; background:radial-gradient(circle,rgba(124,58,237,.14),transparent 65%); top:-250px; left:-200px; animation:blobDrift 20s ease-in-out infinite alternate; }
 .blob2 { width:550px; height:550px; background:radial-gradient(circle,rgba(6,182,212,.1),transparent 65%); bottom:-150px; right:-100px; animation:blobDrift 26s ease-in-out infinite alternate-reverse; }
 .blob3 { width:400px; height:400px; background:radial-gradient(circle,rgba(244,63,94,.07),transparent 65%); top:38%; left:48%; animation:blobDrift 18s ease-in-out infinite alternate; }
@@ -98,7 +133,9 @@ body {
   background:rgba(6,6,16,.85);
   backdrop-filter:blur(28px) saturate(200%);
   border-bottom:1px solid var(--b1);
+  transition: background .35s ease, border-color .35s ease;
 }
+body.light .navbar { background:rgba(255,255,255,.85); }
 .navbar::after {
   content:''; position:absolute; bottom:-1px; left:10%; right:10%; height:1px;
   background:linear-gradient(90deg,transparent,rgba(129,140,248,.5),transparent);
@@ -138,7 +175,7 @@ body {
   position:fixed; top:0; right:-280px; width:260px; height:100%; z-index:1002;
   background:var(--bg2); border-left:1px solid var(--b1);
   padding:1.2rem; display:flex; flex-direction:column; gap:.4rem;
-  transition:right .3s cubic-bezier(.4,0,.2,1);
+  transition:right .3s cubic-bezier(.4,0,.2,1), background .35s ease;
 }
 .mob-drawer.open { right:0; }
 .mob-close {
@@ -168,6 +205,7 @@ body {
   margin-bottom:1.5rem; padding:1.75rem 2rem;
   background:var(--bg2); border:1px solid var(--b1); border-radius:var(--r3);
   position:relative; overflow:hidden;
+  transition: background .35s ease, border-color .35s ease;
 }
 .hero::before {
   content:''; position:absolute; inset:0;
@@ -204,7 +242,10 @@ body {
   color:var(--em); border-radius:20px; padding:.28rem .85rem;
   font-size:.68rem; font-weight:700; font-family:var(--mono); letter-spacing:1px; text-transform:uppercase;
 }
+.live-pill.paused { color:var(--am); background:rgba(245,158,11,.08); border-color:rgba(245,158,11,.22); cursor:pointer; }
+.live-pill.clickable { cursor:pointer; }
 .live-dot { width:5px; height:5px; background:var(--em); border-radius:50%; animation:livePulse 1.6s ease-in-out infinite; }
+.live-pill.paused .live-dot { background:var(--am); animation:none; }
 @keyframes livePulse { 0%,100%{opacity:1;box-shadow:0 0 0 0 rgba(16,185,129,.5);} 50%{opacity:.5;box-shadow:0 0 0 5px rgba(16,185,129,0);} }
 
 /* ── NEXT REFRESH INFO ── */
@@ -287,6 +328,7 @@ body {
 .main-card {
   background:var(--bg2); border:1px solid var(--b1); border-radius:var(--r3);
   overflow:hidden;
+  transition: background .35s ease, border-color .35s ease;
 }
 
 /* ── CARD HEADER ── */
@@ -307,6 +349,7 @@ body {
 .cache-dot.fresh { background:var(--em); box-shadow:0 0 8px rgba(16,185,129,.5); }
 .cache-dot.stale { background:var(--am); box-shadow:0 0 8px rgba(245,158,11,.5); }
 .cache-dot.loading { background:var(--a2); animation:livePulse 1s infinite; }
+.cache-dot.offline { background:var(--ro); box-shadow:0 0 8px rgba(244,63,94,.5); }
 .cache-text { font-size:.72rem; color:var(--txt2); flex:1; }
 .cache-text strong { color:var(--txt); }
 .cache-next { font-family:var(--mono); font-size:.68rem; color:var(--txt3); }
@@ -389,16 +432,25 @@ body {
   padding:.85rem 1.75rem; display:flex; align-items:center; gap:.6rem; flex-wrap:wrap;
   border-bottom:1px solid var(--b1); background:rgba(0,0,0,.12);
 }
+body.light .toolbar { background:rgba(20,20,50,.02); }
 @media(max-width:640px) { .toolbar { padding:.7rem; } }
 .search-wrap { position:relative; flex:1; min-width:180px; max-width:340px; }
 .search-ico { position:absolute; left:.72rem; top:50%; transform:translateY(-50%); color:var(--txt3); font-size:.78rem; pointer-events:none; }
 .search-input {
   width:100%; background:var(--bg3); border:1px solid var(--b1); color:var(--txt);
-  padding:.48rem .72rem .48rem 2.1rem; border-radius:var(--r); font-family:var(--font);
+  padding:.48rem 2.1rem .48rem 2.1rem; border-radius:var(--r); font-family:var(--font);
   font-size:.8rem; outline:none; transition:var(--trans);
 }
 .search-input::placeholder { color:var(--txt3); }
 .search-input:focus { border-color:rgba(129,140,248,.38); box-shadow:0 0 0 3px rgba(129,140,248,.09); }
+.search-clear {
+  position:absolute; right:.5rem; top:50%; transform:translateY(-50%);
+  background:none; border:none; color:var(--txt3); cursor:pointer; font-size:.72rem;
+  padding:.2rem .35rem; border-radius:6px; display:none; transition:var(--trans);
+}
+.search-clear:hover { color:var(--txt); background:var(--s2); }
+.search-clear.show { display:block; }
+.search-hit { background:rgba(245,158,11,.28); color:var(--txt); border-radius:3px; padding:0 1px; }
 .filter-sel {
   background:var(--bg3); border:1px solid var(--b1); color:var(--txt2);
   padding:.48rem .72rem; border-radius:var(--r); font-family:var(--font);
@@ -426,6 +478,7 @@ body {
 
 /* ════════════════════════════════════════
    AVATAR COMPONENT (shared)
+   ─ Handles: image URL, fallback initials, color-coded bg
 ════════════════════════════════════════ */
 .av-img-wrap {
   position:relative; border-radius:50%; overflow:hidden;
@@ -455,6 +508,7 @@ body {
   text-align:left; border-bottom:1px solid var(--b1); white-space:nowrap;
   background:rgba(0,0,0,.18);
 }
+body.light .lb-table thead th { background:rgba(20,20,50,.03); }
 .lb-table thead th:first-child { padding-left:1.75rem; }
 .lb-table thead th:last-child { padding-right:1.75rem; }
 .lb-table thead th.sortable { cursor:pointer; user-select:none; }
@@ -477,6 +531,7 @@ body {
   padding:.82rem 1rem; border-bottom:1px solid rgba(255,255,255,.03);
   vertical-align:middle; font-size:.82rem;
 }
+body.light .lb-table td { border-bottom:1px solid rgba(20,20,50,.04); }
 .lb-table td:first-child { padding-left:1.75rem; }
 .lb-table td:last-child { padding-right:1.75rem; }
 @media(max-width:640px) {
@@ -490,10 +545,11 @@ body {
 .rn.r1 { color:var(--gold); }
 .rn.r2 { color:var(--silver); }
 .rn.r3 { color:var(--bronze); }
-.rank-delta { font-size:.58rem; font-weight:700; }
+.rank-delta { font-size:.62rem; font-weight:700; display:inline-flex; align-items:center; gap:1px; font-family:var(--mono); }
 .rd-up { color:var(--em); }
 .rd-dn { color:var(--ro); }
 .rd-eq { color:var(--txt3); }
+.rd-new { color:var(--cy2); }
 
 /* player cell */
 .player-cell { display:flex; align-items:center; gap:.65rem; }
@@ -546,6 +602,13 @@ body {
 }
 .row-btn:hover { color:var(--a2); background:rgba(129,140,248,.1); }
 .row-btn.fav-active { color:var(--am); }
+
+/* ── SKELETON LOADER ── */
+.skel-row { display:flex; align-items:center; gap:.9rem; padding:.82rem 1.75rem; border-bottom:1px solid rgba(255,255,255,.03); }
+.skel-block { background:linear-gradient(90deg,var(--s1) 25%,var(--s2) 50%,var(--s1) 75%); background-size:200% 100%; animation:skelShimmer 1.4s ease-in-out infinite; border-radius:6px; }
+@keyframes skelShimmer { 0%{background-position:200% 0;} 100%{background-position:-200% 0;} }
+.skel-av { width:36px; height:36px; border-radius:50%; flex-shrink:0; }
+.skel-line { height:11px; border-radius:4px; }
 
 /* ════════════════════════════════════════
    CARDS GRID
@@ -643,7 +706,10 @@ body {
   background:var(--bg3); border:1px solid var(--b1); border-radius:var(--r2); padding:1.25rem;
   position:relative; overflow:hidden;
 }
+.cmp-card.leader { border-color:rgba(251,191,36,.35); }
 .cmp-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,var(--a),var(--cy)); }
+.cmp-card.leader::before { background:linear-gradient(90deg,var(--gold),var(--am)); }
+.cmp-leader-tag { position:absolute; top:.75rem; left:.9rem; font-size:.6rem; font-weight:800; color:var(--gold); letter-spacing:.5px; text-transform:uppercase; }
 .cmp-header { display:flex; align-items:center; gap:.75rem; margin-bottom:1rem; }
 .cmp-av-lg {
   width:52px; height:52px; border-radius:50%; flex-shrink:0;
@@ -666,6 +732,11 @@ body {
 /* ════════════════════════════════════════
    ACHIEVEMENTS VIEW
 ════════════════════════════════════════ */
+.ach-progress-hdr { padding:1.1rem 1.75rem 0; }
+.ach-progress-lbl { display:flex; justify-content:space-between; font-size:.75rem; font-weight:700; margin-bottom:.4rem; color:var(--txt2); }
+.ach-progress-lbl b { color:var(--txt); }
+.ach-progress-bar { height:6px; background:var(--b1); border-radius:3px; overflow:hidden; }
+.ach-progress-fill { height:100%; background:linear-gradient(90deg,var(--gold),var(--am)); border-radius:3px; transition:width .8s ease; }
 .ach-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(180px,1fr)); gap:.8rem; padding:1.4rem 1.75rem; }
 .ach-card {
   background:var(--bg3); border:1px solid var(--b1); border-radius:var(--r2); padding:1rem;
@@ -685,7 +756,8 @@ body {
 /* ════════════════════════════════════════
    ACTIVITY FEED VIEW
 ════════════════════════════════════════ */
-.activity-feed { padding:1.2rem 1.75rem; display:flex; flex-direction:column; gap:.5rem; max-height:480px; overflow-y:auto; }
+.activity-note { padding:.9rem 1.75rem 0; font-size:.68rem; color:var(--txt3); font-family:var(--mono); display:flex; align-items:center; gap:.4rem; }
+.activity-feed { padding:.8rem 1.75rem 1.2rem; display:flex; flex-direction:column; gap:.5rem; max-height:480px; overflow-y:auto; }
 .feed-item {
   display:flex; align-items:flex-start; gap:.75rem; padding:.75rem; border-radius:var(--r);
   background:var(--bg3); border:1px solid var(--b1); transition:var(--trans);
@@ -777,11 +849,13 @@ body {
   overflow:hidden;
   box-shadow:0 0 22px rgba(124,58,237,.28);
 }
-.modal-rank-badge {
+.modal-rank-badge { display:flex; flex-direction:column; align-items:flex-end; gap:.3rem; }
+.modal-rank-num {
   font-family:var(--mono); font-size:.72rem; font-weight:700; color:var(--a2);
   background:rgba(129,140,248,.12); border:1px solid rgba(129,140,248,.2);
   border-radius:20px; padding:.28rem .7rem;
 }
+.modal-rank-delta { font-size:.66rem; font-weight:700; font-family:var(--mono); }
 .modal-name { font-family:var(--disp); font-size:1.1rem; font-weight:800; margin-bottom:.18rem; }
 .modal-sub { font-size:.75rem; color:var(--txt2); margin-bottom:1.2rem; }
 .modal-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:.65rem; margin-bottom:1.2rem; }
@@ -792,11 +866,22 @@ body {
 .modal-prog-bar { height:7px; background:rgba(255,255,255,.06); border-radius:4px; overflow:hidden; margin-bottom:1.2rem; }
 .modal-prog-fill { height:100%; background:linear-gradient(90deg,var(--cy),var(--a2)); border-radius:4px; transition:width .9s ease; }
 .modal-badges { display:flex; gap:.38rem; flex-wrap:wrap; margin-bottom:1.2rem; }
-.modal-actions { display:flex; gap:.5rem; }
+.modal-actions { display:flex; gap:.5rem; flex-wrap:wrap; }
 .modal-mini-chart { margin-bottom:1.1rem; }
-.modal-mini-chart-lbl { font-size:.65rem; font-weight:700; color:var(--txt3); text-transform:uppercase; letter-spacing:.5px; margin-bottom:.45rem; }
+.modal-mini-chart-lbl { font-size:.65rem; font-weight:700; color:var(--txt3); text-transform:uppercase; letter-spacing:.5px; margin-bottom:.45rem; display:flex; align-items:center; gap:.35rem; }
+.sim-badge { font-size:.56rem; font-weight:700; color:var(--txt3); background:var(--s2); border:1px solid var(--b1); padding:.05rem .4rem; border-radius:10px; text-transform:none; letter-spacing:0; }
 .sparkline-bars { display:flex; gap:3px; align-items:flex-end; height:36px; }
 .sp-b { border-radius:2px; background:linear-gradient(180deg,var(--a2),rgba(129,140,248,.3)); transition:.3s; flex:1; min-width:8px; }
+
+/* ════════════════════════════════════════
+   KEYBOARD SHORTCUTS MODAL
+════════════════════════════════════════ */
+.kbd-modal .modal { max-width:400px; }
+.kbd-list { display:flex; flex-direction:column; gap:.5rem; padding:1.5rem 1.75rem 1.75rem; }
+.kbd-row { display:flex; align-items:center; justify-content:space-between; font-size:.8rem; color:var(--txt2); }
+.kbd-row b { color:var(--txt); font-weight:600; }
+.kbd-key { font-family:var(--mono); background:var(--bg4); border:1px solid var(--b2); border-radius:6px; padding:.15rem .5rem; font-size:.72rem; color:var(--a2); font-weight:700; min-width:24px; text-align:center; }
+.kbd-modal-hdr { padding:1.5rem 1.75rem 0; font-family:var(--disp); font-weight:800; font-size:1.05rem; }
 
 /* ════════════════════════════════════════
    TOAST
@@ -831,6 +916,16 @@ body {
 }
 .footer-brand { color:var(--a2); font-weight:700; }
 
+/* ── BACK TO TOP ── */
+#backToTop {
+  position:fixed; bottom:1.25rem; left:1.25rem; width:40px; height:40px; border-radius:50%;
+  background:var(--bg2); border:1px solid var(--b2); color:var(--txt2); font-size:1rem;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  opacity:0; pointer-events:none; transition:all .3s; z-index:500; box-shadow:0 8px 24px rgba(0,0,0,.3);
+}
+#backToTop.visible { opacity:1; pointer-events:auto; }
+#backToTop:hover { background:linear-gradient(135deg,var(--vi),var(--a)); color:#fff; border-color:transparent; transform:translateY(-3px); }
+
 /* ── RESPONSIVE HIDDEN COLS ── */
 @media(max-width:640px) { .col-lvl,.col-acts,.col-cmp { display:none; } }
 @media(max-width:460px) { .col-xpsub { display:none; } }
@@ -857,13 +952,18 @@ body {
 .rnb-1 { background:var(--gold); color:#000; }
 .rnb-2 { background:var(--silver); color:#000; }
 .rnb-3 { background:var(--bronze); color:#fff; }
+
+/* Keyboard focus visibility */
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 2px solid var(--a2);
+  outline-offset: 2px;
+}
 </style>
 </head>
 <body>
 
-<!-- Background layers -->
 <canvas id="starfield"></canvas>
-<div class="grid-scene"><div class="grid-floor"></div></div>
+<div class="grid-bg"></div>
 <div class="blob blob1"></div>
 <div class="blob blob2"></div>
 <div class="blob blob3"></div>
@@ -884,6 +984,7 @@ body {
     <li><a href="#" id="logoutBtn"><i class="fas fa-arrow-right-from-bracket"></i> Logout</a></li>
   </ul>
   <div class="nav-right">
+    <button class="nav-icon-btn" id="kbdBtn" data-tip="Keyboard shortcuts (?)"><i class="fas fa-keyboard"></i></button>
     <button class="nav-icon-btn" id="themeBtn" data-tip="Toggle theme"><i class="fas fa-moon"></i></button>
     <button class="nav-icon-btn hamburger" id="hamburgerBtn"><i class="fas fa-bars"></i></button>
   </div>
@@ -916,7 +1017,7 @@ body {
       <h1>🏆 <span class="grad">Leader</span>board</h1>
       <p class="hero-sub">Compete fiercely. Climb relentlessly. Own the summit.</p>
       <div class="hero-actions">
-        <div class="live-pill"><div class="live-dot"></div> LIVE</div>
+        <div class="live-pill clickable" id="autoRefreshToggle" data-tip="Click to pause/resume auto-refresh"><div class="live-dot"></div> <span id="autoRefreshLabel">LIVE</span></div>
         <button class="btn btn-primary btn-sm" id="refreshBtn"><i class="fas fa-rotate-right" id="refreshIcon"></i> Refresh Now</button>
         <button class="btn btn-ghost btn-sm" id="exportBtn"><i class="fas fa-download"></i> Export CSV</button>
         <button class="btn btn-cyan btn-sm" id="cmpBtn" data-tip="Compare up to 3 players"><i class="fas fa-code-compare"></i> Compare</button>
@@ -1063,7 +1164,8 @@ body {
     <div class="toolbar">
       <div class="search-wrap">
         <i class="fas fa-magnifying-glass search-ico"></i>
-        <input type="text" class="search-input" id="searchInput" placeholder="Search players…">
+        <input type="text" class="search-input" id="searchInput" placeholder="Search players… ( / )">
+        <button class="search-clear" id="searchClear" title="Clear search"><i class="fas fa-xmark"></i></button>
       </div>
       <select class="filter-sel" id="levelFilter">
         <option value="">All Levels</option>
@@ -1079,7 +1181,7 @@ body {
         <option value="favorites">⭐ Favorites</option>
       </select>
       <div class="toolbar-right">
-        <button class="btn btn-ghost btn-sm" id="jumpToMeBtn" data-tip="Jump to your rank"><i class="fas fa-crosshairs"></i> Find Me</button>
+        <button class="btn btn-ghost btn-sm" id="jumpToMeBtn" data-tip="Jump to your rank (F)"><i class="fas fa-crosshairs"></i> Find Me</button>
       </div>
     </div>
 
@@ -1099,6 +1201,8 @@ body {
   &copy; 2026 <span class="footer-brand">Sarveik</span> · All rights reserved · Top 100 players by level · Auto-refreshes every 24 hours
 </div>
 
+<button id="backToTop" title="Back to top"><i class="fas fa-chevron-up"></i></button>
+
 <!-- PROFILE MODAL -->
 <div class="modal-overlay" id="profileModal">
   <div class="modal">
@@ -1111,7 +1215,10 @@ body {
         <div class="modal-av av-img-wrap" id="modalAv" style="width:64px;height:64px;font-size:1.5rem;">
           <span class="av-init" id="modalAvInit"><i class="fas fa-user"></i></span>
         </div>
-        <div class="modal-rank-badge" id="modalRankBadge">#—</div>
+        <div class="modal-rank-badge">
+          <span class="modal-rank-num" id="modalRankBadge">#—</span>
+          <span class="modal-rank-delta" id="modalRankDelta"></span>
+        </div>
       </div>
       <div class="modal-name" id="modalName">—</div>
       <div class="modal-sub" id="modalSub">Level — · Joined —</div>
@@ -1123,14 +1230,39 @@ body {
       <div class="modal-prog-hdr"><span style="color:var(--txt2);">XP to next level</span><span id="m-prog-txt" style="color:var(--cy2);font-family:var(--mono);">—</span></div>
       <div class="modal-prog-bar"><div class="modal-prog-fill" id="m-prog-fill" style="width:0%"></div></div>
       <div class="modal-mini-chart">
-        <div class="modal-mini-chart-lbl">XP History (7d)</div>
+        <div class="modal-mini-chart-lbl">XP History (7d) <span class="sim-badge">simulated</span></div>
         <div class="sparkline-bars" id="modalSpark"></div>
       </div>
       <div class="modal-badges" id="m-badges"></div>
       <div class="modal-actions">
         <button class="btn btn-ghost btn-sm" id="modalFavBtn"><i class="fas fa-star"></i> Favorite</button>
         <button class="btn btn-cyan btn-sm" id="modalCmpBtn"><i class="fas fa-code-compare"></i> Compare</button>
+        <button class="btn btn-ghost btn-sm" id="modalShareBtn"><i class="fas fa-link"></i> Copy Link</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- KEYBOARD SHORTCUTS MODAL -->
+<div class="modal-overlay kbd-modal" id="kbdModal">
+  <div class="modal">
+    <button class="modal-close" id="kbdModalClose">&times;</button>
+    <div class="kbd-modal-hdr"><i class="fas fa-keyboard"></i> Keyboard Shortcuts</div>
+    <div class="kbd-list">
+      <div class="kbd-row"><b>Focus search</b><span class="kbd-key">/</span></div>
+      <div class="kbd-row"><b>Table view</b><span class="kbd-key">1</span></div>
+      <div class="kbd-row"><b>Cards view</b><span class="kbd-key">2</span></div>
+      <div class="kbd-row"><b>Podium view</b><span class="kbd-key">3</span></div>
+      <div class="kbd-row"><b>Compare view</b><span class="kbd-key">4</span></div>
+      <div class="kbd-row"><b>Achievements view</b><span class="kbd-key">5</span></div>
+      <div class="kbd-row"><b>Activity view</b><span class="kbd-key">6</span></div>
+      <div class="kbd-row"><b>Jump to my rank</b><span class="kbd-key">F</span></div>
+      <div class="kbd-row"><b>Refresh data</b><span class="kbd-key">R</span></div>
+      <div class="kbd-row"><b>Toggle theme</b><span class="kbd-key">T</span></div>
+      <div class="kbd-row"><b>Export CSV</b><span class="kbd-key">E</span></div>
+      <div class="kbd-row"><b>Prev / Next page</b><span class="kbd-key">← →</span></div>
+      <div class="kbd-row"><b>Close modal</b><span class="kbd-key">Esc</span></div>
+      <div class="kbd-row"><b>This help</b><span class="kbd-key">?</span></div>
     </div>
   </div>
 </div>
@@ -1144,6 +1276,9 @@ body {
 ════════════════════════════════════════ */
 const MAX_USERS = 100;
 const CACHE_KEY = 'sv_lb_cache';
+const RANK_HISTORY_KEY = 'sv_lb_prev_ranks';
+const AUTOREFRESH_KEY = 'sv_lb_autorefresh';
+const VIEW_KEY = 'sv_lb_view';
 const CACHE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 
 /* ════════════════════════════════════════
@@ -1152,7 +1287,7 @@ const CACHE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
 const S = {
   page:1, perPage:20, totalPages:1, totalItems:0,
   search:'', levelFilter:'', badgeFilter:'', sortBy:'level',
-  view:'table',
+  view: localStorage.getItem(VIEW_KEY) || 'table',
   allUsers:[], filteredUsers:[],
   myUserId:null, myUsername:null,
   favorites: new Set(JSON.parse(localStorage.getItem('sv_favs')||'[]')),
@@ -1160,35 +1295,47 @@ const S = {
   countdownInterval:null,
   openModalUserIdx:-1,
   cacheTimestamp: null,
+  prevRanks: JSON.parse(localStorage.getItem(RANK_HISTORY_KEY) || '{}'),
+  autoRefresh: localStorage.getItem(AUTOREFRESH_KEY) !== '0',
+  online: navigator.onLine,
 };
 
 /* ════════════════════════════════════════
-   AVATAR HELPER — FIX: proper image loading
+   AVATAR HELPER — proper image loading
    with graceful fallback to colored initials
 ════════════════════════════════════════ */
-// Generates a stable background color from a username
 function avatarBg(username) {
   const COLORS = [
-    ['#7c3aed','#c084fc'], // violet
-    ['#0891b2','#67e8f9'], // cyan
-    ['#059669','#6ee7b7'], // green
-    ['#d97706','#fcd34d'], // amber
-    ['#db2777','#f9a8d4'], // pink
-    ['#2563eb','#93c5fd'], // blue
-    ['#7c3aed','#818cf8'], // indigo
-    ['#0d9488','#5eead4'], // teal
+    ['#7c3aed','#c084fc'], ['#0891b2','#67e8f9'], ['#059669','#6ee7b7'],
+    ['#d97706','#fcd34d'], ['#db2777','#f9a8d4'], ['#2563eb','#93c5fd'],
+    ['#7c3aed','#818cf8'], ['#0d9488','#5eead4'],
   ];
   let hash = 0;
   for (let i = 0; i < (username||'').length; i++) hash = (hash * 31 + (username||'').charCodeAt(i)) & 0xffffff;
   return COLORS[Math.abs(hash) % COLORS.length];
 }
 
-// Build a self-contained avatar element (div string) with image + fallback
+// Simple deterministic seeded PRNG so "simulated" data (sparkline, activity
+// feed) is stable per-user instead of re-randomizing every render.
+function seededRandom(seedStr) {
+  let h = 1779033703 ^ seedStr.length;
+  for (let i = 0; i < seedStr.length; i++) {
+    h = Math.imul(h ^ seedStr.charCodeAt(i), 3432918353);
+    h = (h << 13) | (h >>> 19);
+  }
+  return function() {
+    h = Math.imul(h ^ (h >>> 16), 2246822507);
+    h = Math.imul(h ^ (h >>> 13), 3266489909);
+    h ^= h >>> 16;
+    return (h >>> 0) / 4294967296;
+  };
+}
+
 function buildAv(u, size, extraClass='', extraStyle='') {
   const initial = (u.username||'?')[0].toUpperCase();
   const [bg1, bg2] = avatarBg(u.username);
   const fontSize = Math.max(size * 0.38, 10);
-  
+
   let imgHtml = '';
   if (u.avatar_url) {
     imgHtml = `<img src="${esc(u.avatar_url)}" alt="${esc(u.username)}" 
@@ -1208,7 +1355,6 @@ function buildAv(u, size, extraClass='', extraStyle='') {
   </div>`;
 }
 
-// Sets avatar content in an existing .av-img-wrap element by ID
 function setAvatar(el, u) {
   if (!el) return;
   const size = el.offsetWidth || parseInt(el.style.width) || 36;
@@ -1260,7 +1406,7 @@ function setAvatar(el, u) {
 })();
 
 /* ════════════════════════════════════════
-   THEME
+   THEME (now with a real light-mode palette)
 ════════════════════════════════════════ */
 function initTheme(){
   const dark = localStorage.getItem('sv_theme') !== 'light';
@@ -1322,10 +1468,34 @@ function toast(msg,type='info'){
 }
 
 /* ════════════════════════════════════════
+   ONLINE / OFFLINE DETECTION
+════════════════════════════════════════ */
+window.addEventListener('online', ()=>{
+  S.online = true;
+  toast('Back online.','success');
+  updateCacheBar(S.cacheTimestamp ? 'cached' : 'loading', S.cacheTimestamp);
+});
+window.addEventListener('offline', ()=>{
+  S.online = false;
+  toast('You are offline — showing cached data.','error');
+  updateCacheBar('offline', S.cacheTimestamp);
+});
+
+/* ════════════════════════════════════════
    HELPERS
 ════════════════════════════════════════ */
 const esc=t=>{if(!t)return'';const d=document.createElement('div');d.textContent=t;return d.innerHTML;};
 const fmt=n=>(n||0).toLocaleString();
+
+// Wraps matches of the current search query in <span class="search-hit">
+function highlightMatch(text){
+  const q = S.search.trim();
+  const safe = esc(text||'');
+  if (!q) return safe;
+  const idx = safe.toLowerCase().indexOf(q.toLowerCase());
+  if (idx === -1) return safe;
+  return safe.slice(0,idx) + '<span class="search-hit">' + safe.slice(idx, idx+q.length) + '</span>' + safe.slice(idx+q.length);
+}
 
 function getUserBadges(u){
   const b=[];
@@ -1338,9 +1508,12 @@ function getUserBadges(u){
   return b;
 }
 
+// Deterministic per-user "simulated" 7-day XP history, seeded on username so
+// it stays consistent across repeated modal opens instead of reshuffling.
 function mockSpark(u){
+  const rnd = seededRandom('spark:'+(u.username||u.id||''));
   const base=u.xp||0;
-  return Array.from({length:7},(_,i)=>Math.max(0,base-(7-i)*Math.floor(Math.random()*600+100)));
+  return Array.from({length:7},(_,i)=>Math.max(0,base-(7-i)*Math.floor(rnd()*600+100)));
 }
 
 function isFav(u){ return S.favorites.has(u.id||u.username); }
@@ -1359,13 +1532,31 @@ function xpProgress(u){
   return {progress,needed,current:(u.xp||0)%needed};
 }
 
+// Rank-delta badge (▲2 / ▼1 / — / NEW) vs. the previously stored rank map.
+function rankDeltaHtml(u, currentRank){
+  const key = u.id || u.username;
+  const prev = S.prevRanks[key];
+  if (prev === undefined) return `<span class="rank-delta rd-new" data-tip="New on the board">NEW</span>`;
+  const diff = prev - currentRank; // positive = moved up
+  if (diff > 0) return `<span class="rank-delta rd-up" data-tip="Up ${diff} from #${prev}"><i class="fas fa-caret-up"></i>${diff}</span>`;
+  if (diff < 0) return `<span class="rank-delta rd-dn" data-tip="Down ${-diff} from #${prev}"><i class="fas fa-caret-down"></i>${-diff}</span>`;
+  return `<span class="rank-delta rd-eq" data-tip="Unchanged">—</span>`;
+}
+
 /* ════════════════════════════════════════
    24-HOUR COUNTDOWN
 ════════════════════════════════════════ */
 function startCountdown(){
   clearInterval(S.countdownInterval);
-  
+
   function tick(){
+    if (!S.autoRefresh) {
+      const cdEl = document.getElementById('refreshCountdown');
+      const fillEl = document.getElementById('refreshFill');
+      if (cdEl) cdEl.textContent = 'Paused';
+      if (fillEl) fillEl.style.width = '100%';
+      return;
+    }
     const now = Date.now();
     const nextRefresh = S.cacheTimestamp ? S.cacheTimestamp + CACHE_DURATION_MS : now + CACHE_DURATION_MS;
     const remaining = Math.max(0, nextRefresh - now);
@@ -1375,7 +1566,7 @@ function startCountdown(){
     const m = Math.floor((remaining % 3600000) / 60000);
     const s = Math.floor((remaining % 60000) / 1000);
     const label = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
-    
+
     const cdEl = document.getElementById('refreshCountdown');
     const fillEl = document.getElementById('refreshFill');
     if (cdEl) cdEl.textContent = remaining === 0 ? 'Refreshing…' : label;
@@ -1390,6 +1581,21 @@ function startCountdown(){
   tick();
   S.countdownInterval = setInterval(tick, 1000);
 }
+
+function updateAutoRefreshUI(){
+  const pill = document.getElementById('autoRefreshToggle');
+  const label = document.getElementById('autoRefreshLabel');
+  pill.classList.toggle('paused', !S.autoRefresh);
+  label.textContent = S.autoRefresh ? 'LIVE' : 'PAUSED';
+}
+document.getElementById('autoRefreshToggle').addEventListener('click', ()=>{
+  S.autoRefresh = !S.autoRefresh;
+  localStorage.setItem(AUTOREFRESH_KEY, S.autoRefresh ? '1':'0');
+  updateAutoRefreshUI();
+  toast(S.autoRefresh ? 'Auto-refresh resumed' : 'Auto-refresh paused','info');
+  startCountdown();
+});
+updateAutoRefreshUI();
 
 /* ════════════════════════════════════════
    CACHE STATUS BAR
@@ -1414,6 +1620,10 @@ function updateCacheBar(state, fetchedAt) {
     const age = fetchedAt ? Math.round((Date.now()-fetchedAt)/60000) : '?';
     text.innerHTML = `<strong>Cached data</strong> — loaded from ${ts} (${age}m ago)`;
     next.textContent = 'Refresh every 24h';
+  } else if (state === 'offline') {
+    dot.className = 'cache-dot offline';
+    text.innerHTML = `<strong>Offline</strong> — showing last cached data`;
+    next.textContent = '';
   }
 }
 
@@ -1428,12 +1638,13 @@ async function loadLeaderboard(forceRefresh = false) {
       if (cached && cached.ts && cached.data && (Date.now() - cached.ts < CACHE_DURATION_MS)) {
         S.cacheTimestamp = cached.ts;
         S.allUsers = cached.data;
-        updateCacheBar('cached', cached.ts);
+        updateCacheBar(S.online ? 'cached' : 'offline', cached.ts);
         applyFilters();
         fetchMyRank();
         updateTop3();
         updateStats();
         startCountdown();
+        maybeOpenSharedProfile();
         return; // serve from cache
       }
     } catch(e) { /* ignore cache errors */ }
@@ -1460,6 +1671,16 @@ async function loadLeaderboard(forceRefresh = false) {
 
     // Hard cap: top 100
     users = users.slice(0, MAX_USERS);
+
+    // Snapshot the ranks we're about to replace, so the NEW dataset can show
+    // "moved up/down N" deltas versus this previous state.
+    if (S.allUsers.length) {
+      const snapshot = {};
+      S.allUsers.forEach((u,i) => { snapshot[u.id||u.username] = i+1; });
+      S.prevRanks = snapshot;
+      try { localStorage.setItem(RANK_HISTORY_KEY, JSON.stringify(snapshot)); } catch(e){}
+    }
+
     S.allUsers = users;
 
     // Save to local cache
@@ -1475,6 +1696,7 @@ async function loadLeaderboard(forceRefresh = false) {
     updateTop3();
     updateStats();
     startCountdown();
+    maybeOpenSharedProfile();
 
   } catch(e) {
     console.error(e);
@@ -1484,7 +1706,7 @@ async function loadLeaderboard(forceRefresh = false) {
       if (stale && stale.data) {
         S.cacheTimestamp = stale.ts;
         S.allUsers = stale.data;
-        updateCacheBar('cached', stale.ts);
+        updateCacheBar(S.online ? 'cached' : 'offline', stale.ts);
         applyFilters();
         fetchMyRank();
         updateTop3();
@@ -1509,7 +1731,18 @@ async function loadLeaderboard(forceRefresh = false) {
 }
 
 function setLoading(){
-  document.getElementById('contentArea').innerHTML = `<div class="state-msg"><div class="loader"></div><div class="state-title">Loading…</div></div>`;
+  // Skeleton rows give a smoother perceived-loading feel than a bare spinner.
+  const rows = Array.from({length:8}).map((_,i)=>`
+    <div class="skel-row">
+      <div class="skel-block skel-line" style="width:26px;"></div>
+      <div class="skel-block skel-av"></div>
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px;">
+        <div class="skel-block skel-line" style="width:${120+ (i%3)*40}px;"></div>
+        <div class="skel-block skel-line" style="width:70px;height:8px;"></div>
+      </div>
+      <div class="skel-block skel-line" style="width:50px;"></div>
+    </div>`).join('');
+  document.getElementById('contentArea').innerHTML = rows;
   document.getElementById('paginationArea').style.display = 'none';
 }
 
@@ -1564,7 +1797,7 @@ function updateStats(){
 }
 
 /* ════════════════════════════════════════
-   TOP 3 HIGHLIGHT BAR — FIX: avatar loading
+   TOP 3 HIGHLIGHT BAR
 ════════════════════════════════════════ */
 function updateTop3(){
   for (let i = 0; i < 3; i++) {
@@ -1615,7 +1848,10 @@ function applyFilters(){
   document.getElementById('countLine').textContent =
     `${users.length} player${users.length!==1?'s':''} shown · top ${MAX_USERS} by level`;
 
+  document.getElementById('searchClear').classList.toggle('show', !!S.search);
+
   renderView();
+  syncUrl();
 }
 
 /* ════════════════════════════════════════
@@ -1637,7 +1873,7 @@ function pageSlice(){
 }
 
 /* ════════════════════════════════════════
-   TABLE VIEW — FIX: rank always shows correctly
+   TABLE VIEW
 ════════════════════════════════════════ */
 function renderTable(){
   const users = pageSlice();
@@ -1657,7 +1893,7 @@ function renderTable(){
 
   let html = `<div class="table-wrap"><table class="lb-table">
     <thead><tr>
-      <th style="width:64px;">Rank</th>
+      <th style="width:80px;">Rank</th>
       <th>Player</th>
       <th class="col-lvl">Level</th>
       ${sortIcon('xp')}
@@ -1666,7 +1902,7 @@ function renderTable(){
     </tr></thead><tbody>`;
 
   users.forEach((u, i) => {
-    // FIXED: global rank is the position in allUsers (original sorted order), not filteredUsers
+    // Global rank is the position in allUsers (original sorted order), not filteredUsers
     const globalRank = S.allUsers.findIndex(x => (x.id||x.username) === (u.id||u.username)) + 1;
     // rank within current filtered+sorted view (for display)
     const displayRank = S.filteredUsers.indexOf(u) + 1;
@@ -1682,10 +1918,8 @@ function renderTable(){
     const barW = Math.round(((u.xp||0)/maxXp)*100);
     const animDelay = `animation-delay:${i*0.04}s`;
 
-    // Build inline avatar (36px)
     const avHtml = buildAv(u, 36, avClass, `border:1.5px solid ${avClass==='g'?'rgba(251,191,36,.5)':avClass==='s'?'rgba(148,163,184,.4)':avClass==='b'?'rgba(194,121,74,.35)':'var(--b1)'};`);
 
-    // Rank badge overlay for top 3
     const rankOverlay = globalRank <= 3 ? `
       <div style="position:absolute;bottom:-4px;right:-4px;width:18px;height:18px;border-radius:50%;
         display:flex;align-items:center;justify-content:center;font-size:.52rem;font-weight:900;font-family:var(--mono);
@@ -1698,8 +1932,9 @@ function renderTable(){
       <td>
         <div class="rank-wrap">
           <span class="rn ${rnClass}">#${displayRank}</span>
-          ${globalRank !== displayRank && globalRank <= 10 ? `<span style="font-size:.6rem;color:var(--txt3);font-family:var(--mono);">(#${globalRank} global)</span>` : ''}
+          ${rankDeltaHtml(u, globalRank)}
         </div>
+        ${globalRank !== displayRank && globalRank <= 10 ? `<div style="font-size:.58rem;color:var(--txt3);font-family:var(--mono);margin-top:2px;">#${globalRank} global</div>` : ''}
       </td>
       <td>
         <div class="player-cell">
@@ -1708,7 +1943,7 @@ function renderTable(){
             ${rankOverlay}
           </div>
           <div>
-            <div class="p-uname">${esc(u.username||'Unknown')}${isMe?' <span style="color:var(--a2);font-size:.65rem;">(you)</span>':''}</div>
+            <div class="p-uname">${highlightMatch(u.username||'Unknown')}${isMe?' <span style="color:var(--a2);font-size:.65rem;">(you)</span>':''}</div>
             <div class="p-tags">${badges.map(b=>`<span class="chip ${b.cls}">${b.label}</span>`).join('')}</div>
           </div>
         </div>
@@ -1740,7 +1975,6 @@ function renderTable(){
   html += `</tbody></table></div>`;
   ca.innerHTML = html;
 
-  // Sort column headers
   ca.querySelectorAll('th[data-sort]').forEach(th => {
     th.addEventListener('click', () => {
       S.sortBy = th.dataset.sort;
@@ -1783,7 +2017,7 @@ function renderCards(){
       </button>
       <div class="pc-rank ${rnClass}">#${displayRank}${globalRank !== displayRank ? ` <span style="opacity:.5;font-size:.6rem;">(#${globalRank})</span>` : ''}</div>
       ${avHtml}
-      <div class="pc-name">${esc(u.username||'Unknown')}</div>
+      <div class="pc-name">${highlightMatch(u.username||'Unknown')}</div>
       <div class="pc-xp">${fmt(u.xp)} XP</div>
       <div class="pc-meta">Level ${u.level||1}</div>
       <div class="pc-bar"><div class="pc-fill" style="width:${barW}%"></div></div>
@@ -1796,7 +2030,7 @@ function renderCards(){
 }
 
 /* ════════════════════════════════════════
-   PODIUM VIEW — FIX: avatars + rest list rank
+   PODIUM VIEW
 ════════════════════════════════════════ */
 function renderPodium(){
   const ca = document.getElementById('contentArea');
@@ -1811,7 +2045,6 @@ function renderPodium(){
 
   const medals = ['🥇','🥈','🥉'];
   const stepCls = ['p1','p2','p3'];
-  const avCls = ['g','s','b'];
   const colCls = ['first','second','third'];
   const podBorderColors = [
     '3px solid var(--gold)',
@@ -1867,7 +2100,7 @@ function renderPodium(){
 }
 
 /* ════════════════════════════════════════
-   COMPARE VIEW — FIX: avatars
+   COMPARE VIEW
 ════════════════════════════════════════ */
 function renderCompare(){
   const ca = document.getElementById('contentArea');
@@ -1886,6 +2119,8 @@ function renderCompare(){
   const players = S.compareList.map(key=>S.allUsers.find(u=>(u.id||u.username)===key)).filter(Boolean);
   const maxXp = Math.max(...players.map(u=>u.xp||0))||1;
   const maxLvl = Math.max(...players.map(u=>u.level||1))||1;
+  const leaderKey = players.reduce((best,u)=>(!best||(u.xp||0)>(best.xp||0))?u:best, null);
+  const leader = leaderKey ? (leaderKey.id||leaderKey.username) : null;
 
   let html = `<div class="compare-view"><div class="cmp-grid">`;
   players.forEach(u => {
@@ -1894,10 +2129,12 @@ function renderCompare(){
     const lvlPct = Math.round(((u.level||1)/maxLvl)*100);
     const {progress} = xpProgress(u);
     const avHtml = buildAv(u, 52, '', 'border:2px solid var(--b2);');
+    const isLeader = players.length>1 && (u.id||u.username)===leader;
 
-    html += `<div class="cmp-card">
+    html += `<div class="cmp-card ${isLeader?'leader':''}">
+      ${isLeader ? `<span class="cmp-leader-tag"><i class="fas fa-crown"></i> Leading</span>` : ''}
       <button class="cmp-remove" onclick="removeCmp('${esc(u.id||u.username)}')"><i class="fas fa-xmark"></i></button>
-      <div class="cmp-header">
+      <div class="cmp-header" style="${isLeader?'margin-top:1.1rem;':''}">
         ${avHtml}
         <div>
           <div class="cmp-uname">${esc(u.username||'Unknown')}</div>
@@ -1936,7 +2173,6 @@ function renderCompare(){
   html += `</div></div>`;
   ca.innerHTML = html;
 
-  // Animate bars
   setTimeout(() => {
     ca.querySelectorAll('.cmp-bar-fill[data-target]').forEach(b => {
       b.style.width = b.dataset.target + '%';
@@ -1968,7 +2204,15 @@ function renderAchievements(){
   const refUser = meIdx > -1 ? S.allUsers[meIdx] : S.allUsers[0] || {level:1,xp:0};
   const myRank = meIdx + 1;
 
-  let html = `<div class="ach-grid">`;
+  const unlockedCount = ACHIEVEMENTS.filter(a=>a.req(refUser, myRank)).length;
+  const pct = Math.round((unlockedCount/ACHIEVEMENTS.length)*100);
+
+  let html = `<div class="ach-progress-hdr">
+    <div class="ach-progress-lbl"><span>Your progress</span><b>${unlockedCount} / ${ACHIEVEMENTS.length} unlocked</b></div>
+    <div class="ach-progress-bar"><div class="ach-progress-fill" style="width:${pct}%"></div></div>
+  </div>`;
+
+  html += `<div class="ach-grid">`;
   ACHIEVEMENTS.forEach(a => {
     const unlocked = a.req(refUser, myRank);
     html += `<div class="ach-card ${unlocked?'unlocked':'locked'}">
@@ -1976,7 +2220,7 @@ function renderAchievements(){
       <div class="ach-name">${a.name}</div>
       <div class="ach-desc">${a.desc}</div>
       <span class="ach-tag ${a.tag}">${a.tag.charAt(0).toUpperCase()+a.tag.slice(1)}</span>
-      ${unlocked?'<div style="font-size:.65rem;color:var(--em);margin-top:.35rem;"><i class="fas fa-circle-check"></i> Unlocked</div>':''}
+      ${unlocked?'<div style="font-size:.65rem;color:var(--em);margin-top:.35rem;"><i class="fas fa-circle-check"></i> Unlocked</div>':'<div style="font-size:.65rem;color:var(--txt3);margin-top:.35rem;"><i class="fas fa-lock"></i> Locked</div>'}
     </div>`;
   });
   html += `</div>`;
@@ -1985,12 +2229,14 @@ function renderAchievements(){
 
 /* ════════════════════════════════════════
    ACTIVITY FEED VIEW
+   Deterministic per-refresh (seeded on cacheTimestamp) so the same fetch
+   doesn't reshuffle events every time the tab is revisited.
 ════════════════════════════════════════ */
 const FEED_TYPES = [
   {icon:'🚀',tmpl:(u)=>`<strong>${esc(u.username)}</strong> leveled up to <span class="rank-gain">Lv.${u.level}</span>`},
-  {icon:'⚡',tmpl:(u)=>`<strong>${esc(u.username)}</strong> gained <span class="xp-gain">+${Math.floor(Math.random()*500+50)} XP</span> from a task`},
+  {icon:'⚡',tmpl:(u,rank,rnd)=>`<strong>${esc(u.username)}</strong> gained <span class="xp-gain">+${Math.floor(rnd()*500+50)} XP</span> from a task`},
   {icon:'🏅',tmpl:(u,rank)=>`<strong>${esc(u.username)}</strong> climbed to rank <span class="rank-gain">#${rank}</span>`},
-  {icon:'🔥',tmpl:(u)=>`<strong>${esc(u.username)}</strong> is on a <span class="xp-gain">${Math.floor(Math.random()*7+2)}-day</span> streak!`},
+  {icon:'🔥',tmpl:(u,rank,rnd)=>`<strong>${esc(u.username)}</strong> is on a <span class="xp-gain">${Math.floor(rnd()*7+2)}-day</span> streak!`},
 ];
 const TIME_AGO = ['just now','2m ago','5m ago','12m ago','23m ago','41m ago','1h ago','2h ago','3h ago','5h ago'];
 
@@ -2004,22 +2250,24 @@ function renderActivity(){
     return;
   }
 
+  const rnd = seededRandom('activity:'+(S.cacheTimestamp||0));
   const entries = [];
   for (let i = 0; i < 30; i++) {
-    const u = pool[Math.floor(Math.random()*pool.length)];
+    const u = pool[Math.floor(rnd()*pool.length)];
     const rank = S.allUsers.indexOf(u)+1;
-    const ft = FEED_TYPES[Math.floor(Math.random()*FEED_TYPES.length)];
-    entries.push({u, ft, rank, time: TIME_AGO[Math.min(i, TIME_AGO.length-1)]});
+    const ft = FEED_TYPES[Math.floor(rnd()*FEED_TYPES.length)];
+    entries.push({u, ft, rank, time: TIME_AGO[Math.min(i, TIME_AGO.length-1)], rnd});
   }
 
-  let html = `<div class="activity-feed">`;
+  let html = `<div class="activity-note"><i class="fas fa-circle-info"></i> Simulated recent activity based on current standings.</div>`;
+  html += `<div class="activity-feed">`;
   entries.forEach((e,i) => {
     const avHtml = buildAv(e.u, 32, '', '');
     html += `<div class="feed-item" style="animation-delay:${i*0.03}s">
       <div class="feed-type-icon">${e.ft.icon}</div>
       ${avHtml}
       <div class="feed-body">
-        <div class="feed-text">${e.ft.tmpl(e.u, e.rank)}</div>
+        <div class="feed-text">${e.ft.tmpl(e.u, e.rank, e.rnd)}</div>
         <div class="feed-time">${e.time}</div>
       </div>
     </div>`;
@@ -2071,22 +2319,21 @@ function gotoPage(p){
 }
 
 /* ════════════════════════════════════════
-   PROFILE MODAL — FIX: avatar + rank
+   PROFILE MODAL
 ════════════════════════════════════════ */
-function openModalIdx(idx){
+function openModalIdx(idx, skipUrlSync){
   const u = S.filteredUsers[idx];
   if (!u) return;
   S.openModalUserIdx = idx;
 
-  // FIXED: always use global rank from allUsers
   const globalRank = S.allUsers.findIndex(x=>(x.id||x.username)===(u.id||u.username)) + 1;
   const {progress, needed, current} = xpProgress(u);
 
-  // Avatar
   const modalAv = document.getElementById('modalAv');
   setAvatar(modalAv, u);
 
   document.getElementById('modalRankBadge').textContent = `Global #${globalRank}`;
+  document.getElementById('modalRankDelta').innerHTML = rankDeltaHtml(u, globalRank);
   document.getElementById('modalName').textContent = u.username || 'Unknown';
   document.getElementById('modalSub').textContent = `Level ${u.level||1} · ${u.joined ? new Date(u.joined).toLocaleDateString() : 'Unknown'}`;
   document.getElementById('m-xp').textContent = fmt(u.xp);
@@ -2098,16 +2345,13 @@ function openModalIdx(idx){
     document.getElementById('m-prog-fill').style.width = progress + '%';
   }, 100);
 
-  // Sparkline
   const spark = mockSpark(u);
   const maxS = Math.max(...spark)||1;
   document.getElementById('modalSpark').innerHTML = spark.map(v=>`<div class="sp-b" style="height:${Math.round((v/maxS)*100)+'%'}"></div>`).join('');
 
-  // Badges
   const badges = getUserBadges(u);
   document.getElementById('m-badges').innerHTML = badges.map(b=>`<span class="chip ${b.cls}">${b.label}</span>`).join('');
 
-  // Fav button
   const favBtn = document.getElementById('modalFavBtn');
   const fav = isFav(u);
   favBtn.innerHTML = `<i class="fas fa-star" style="color:${fav?'var(--am)':''}"></i> ${fav?'Unfavorite':'Favorite'}`;
@@ -2119,7 +2363,6 @@ function openModalIdx(idx){
     renderView();
   };
 
-  // Compare button
   const cmpBtn2 = document.getElementById('modalCmpBtn');
   const alreadyInCmp = S.compareList.includes(u.id||u.username);
   cmpBtn2.innerHTML = `<i class="fas fa-code-compare"></i> ${alreadyInCmp?'Remove from Compare':'Add to Compare'}`;
@@ -2131,16 +2374,55 @@ function openModalIdx(idx){
     renderView();
   };
 
+  const shareBtn = document.getElementById('modalShareBtn');
+  shareBtn.onclick = () => {
+    const url = new URL(window.location.href);
+    url.searchParams.set('u', u.username || u.id || '');
+    navigator.clipboard?.writeText(url.toString()).then(()=>{
+      toast('Profile link copied to clipboard','success');
+    }).catch(()=>{
+      toast(url.toString(),'info');
+    });
+  };
+
   document.getElementById('profileModal').classList.add('open');
+  if (!skipUrlSync) {
+    const url = new URL(window.location.href);
+    url.searchParams.set('u', u.username || u.id || '');
+    history.replaceState(null,'',url.toString());
+  }
 }
 
 function closeModal(){
   document.getElementById('profileModal').classList.remove('open');
+  const url = new URL(window.location.href);
+  if (url.searchParams.has('u')) { url.searchParams.delete('u'); history.replaceState(null,'',url.toString()); }
 }
 
 document.getElementById('modalClose').addEventListener('click', closeModal);
 document.getElementById('profileModal').addEventListener('click', e => {
   if (e.target === document.getElementById('profileModal')) closeModal();
+});
+
+// If the page was opened with ?u=username (e.g. via a shared "Copy Link"),
+// auto-open that player's profile once data has loaded.
+function maybeOpenSharedProfile(){
+  const params = new URLSearchParams(window.location.search);
+  const uname = params.get('u');
+  if (!uname || !S.filteredUsers.length) return;
+  const idx = S.filteredUsers.findIndex(x => (x.username||'') === uname || (x.id||'') === uname);
+  if (idx > -1) openModalIdx(idx, true);
+}
+
+/* ════════════════════════════════════════
+   KEYBOARD SHORTCUTS MODAL
+════════════════════════════════════════ */
+function openKbdModal(){ document.getElementById('kbdModal').classList.add('open'); }
+function closeKbdModal(){ document.getElementById('kbdModal').classList.remove('open'); }
+document.getElementById('kbdBtn').addEventListener('click', openKbdModal);
+document.getElementById('kbdModalClose').addEventListener('click', closeKbdModal);
+document.getElementById('kbdModal').addEventListener('click', e => {
+  if (e.target === document.getElementById('kbdModal')) closeKbdModal();
 });
 
 /* ════════════════════════════════════════
@@ -2238,15 +2520,41 @@ function setActiveTab(view){
     t.classList.toggle('active', t.dataset.view===view);
   });
 }
+setActiveTab(S.view);
 
 document.querySelectorAll('.view-tab').forEach(t=>{
   t.addEventListener('click',()=>{
     S.view = t.dataset.view;
     S.page = 1;
     setActiveTab(S.view);
+    localStorage.setItem(VIEW_KEY, S.view);
     renderView();
+    syncUrl();
   });
 });
+
+/* ════════════════════════════════════════
+   URL SYNC — deep-linkable view + search
+════════════════════════════════════════ */
+function syncUrl(){
+  const url = new URL(window.location.href);
+  if (S.view && S.view !== 'table') url.searchParams.set('view', S.view); else url.searchParams.delete('view');
+  if (S.search) url.searchParams.set('q', S.search); else url.searchParams.delete('q');
+  history.replaceState(null,'',url.toString());
+}
+function initFromUrl(){
+  const params = new URLSearchParams(window.location.search);
+  const view = params.get('view');
+  const q = params.get('q');
+  if (view && document.querySelector(`.view-tab[data-view="${view}"]`)) {
+    S.view = view; setActiveTab(view); localStorage.setItem(VIEW_KEY, view);
+  }
+  if (q) {
+    S.search = q;
+    document.getElementById('searchInput').value = q;
+  }
+}
+initFromUrl();
 
 /* ════════════════════════════════════════
    FILTER / SORT CONTROLS
@@ -2256,6 +2564,10 @@ function debounce(fn,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>f
 document.getElementById('searchInput').addEventListener('input', debounce(e=>{
   S.search = e.target.value; S.page = 1; applyFilters();
 }, 200));
+document.getElementById('searchClear').addEventListener('click', ()=>{
+  S.search=''; document.getElementById('searchInput').value=''; S.page=1; applyFilters();
+  document.getElementById('searchInput').focus();
+});
 
 document.getElementById('sortBy').addEventListener('change', e=>{
   S.sortBy = e.target.value; S.page = 1; applyFilters();
@@ -2283,18 +2595,43 @@ document.getElementById('refreshBtn').addEventListener('click',()=>{
 });
 
 /* ════════════════════════════════════════
+   BACK TO TOP
+════════════════════════════════════════ */
+const backToTop = document.getElementById('backToTop');
+window.addEventListener('scroll', ()=> backToTop.classList.toggle('visible', window.scrollY > 400));
+backToTop.addEventListener('click', ()=> window.scrollTo({top:0, behavior:'smooth'}));
+
+/* ════════════════════════════════════════
    KEYBOARD SHORTCUTS
 ════════════════════════════════════════ */
+const VIEW_KEYS = {'1':'table','2':'cards','3':'podium','4':'compare','5':'achievements','6':'activity'};
 document.addEventListener('keydown', e=>{
-  if (e.key==='Escape') closeModal();
+  const typing = ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName);
+  const anyModalOpen = document.getElementById('profileModal').classList.contains('open') || document.getElementById('kbdModal').classList.contains('open');
+
+  if (e.key==='Escape') { closeModal(); closeKbdModal(); return; }
+
+  if (typing) return; // don't hijack typing in search/inputs
+
+  if (e.key==='/') { e.preventDefault(); document.getElementById('searchInput').focus(); return; }
+  if (e.key==='?') { e.preventDefault(); openKbdModal(); return; }
+  if (anyModalOpen) return;
+
   if (e.key==='ArrowLeft' && S.page>1) gotoPage(S.page-1);
   if (e.key==='ArrowRight' && S.page<S.totalPages) gotoPage(S.page+1);
-  // R to refresh (when no modal)
-  if (e.key==='r' && !document.getElementById('profileModal').classList.contains('open')) {
-    if (!e.ctrlKey && !e.metaKey) {
-      document.getElementById('refreshBtn').click();
-    }
+
+  if (VIEW_KEYS[e.key]) {
+    const view = VIEW_KEYS[e.key];
+    S.view = view; S.page = 1; setActiveTab(view);
+    localStorage.setItem(VIEW_KEY, view);
+    renderView(); syncUrl();
+    return;
   }
+
+  if ((e.key==='f'||e.key==='F') && !e.ctrlKey && !e.metaKey) document.getElementById('jumpToMeBtn').click();
+  if ((e.key==='t'||e.key==='T') && !e.ctrlKey && !e.metaKey) toggleTheme();
+  if ((e.key==='e'||e.key==='E') && !e.ctrlKey && !e.metaKey) document.getElementById('exportBtn').click();
+  if ((e.key==='r'||e.key==='R') && !e.ctrlKey && !e.metaKey) document.getElementById('refreshBtn').click();
 });
 
 /* ════════════════════════════════════════
