@@ -355,47 +355,18 @@
     #voiceIntroBtn.speaking { animation: voice-btn-pulse 1s ease-in-out infinite; color: var(--cyan); border-color: var(--border-bright); }
     @keyframes voice-btn-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(0,240,255,0.35); } 50% { box-shadow: 0 0 0 6px rgba(0,240,255,0); } }
 
-    /* ===== TEMPORARY VOICE INTRO OVERLAY ===== */
-    .voice-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 99998;
-      background: rgba(5, 6, 15, 0.88);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1.5rem;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.5s ease, visibility 0.5s ease;
-      pointer-events: none;
-    }
-    .voice-overlay.active {
-      opacity: 1;
-      visibility: visible;
-      pointer-events: auto;
-    }
-
-    .voice-overlay .vu-banner {
+    /* ───── VOICE UPDATE BANNER ───── */
+    .vu-banner {
       position: relative;
-      max-width: 900px;
-      width: 100%;
-      margin: 0;
+      max-width: 1000px;
+      margin: 0 auto 3rem;
       background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-base) 55%, var(--bg-secondary) 100%);
       border: 1px solid var(--border-bright);
       border-radius: 22px;
       overflow: hidden;
       padding: 60px 40px 40px;
-      box-shadow: 0 30px 80px rgba(0,0,0,0.6), 0 0 60px var(--glow-cyan);
-      transform: scale(0.95) translateY(20px);
-      transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 60px var(--glow-cyan);
     }
-    .voice-overlay.active .vu-banner {
-      transform: scale(1) translateY(0);
-    }
-
     .vu-banner::before {
       content: '';
       position: absolute;
@@ -405,7 +376,6 @@
         linear-gradient(60deg, transparent 60%, rgba(139,63,251,0.10) 75%, transparent 90%);
       pointer-events: none;
     }
-
     .vu-ribbon {
       position: absolute;
       top: 22px;
@@ -429,7 +399,6 @@
       border-left: 8px solid rgba(0,100,120,0.9);
       border-bottom: 8px solid transparent;
     }
-
     .vu-logo {
       position: absolute;
       top: 22px;
@@ -460,7 +429,6 @@
       -webkit-text-fill-color: transparent;
       letter-spacing: -0.02em;
     }
-
     .vu-content {
       display: flex;
       align-items: center;
@@ -469,7 +437,6 @@
       position: relative;
       z-index: 2;
     }
-
     .vu-rules-box {
       flex: 1;
       min-width: 0;
@@ -504,7 +471,6 @@
       margin-top: 1px;
     }
     .vu-rules-box li b { color: var(--text-primary); }
-
     .vu-sound-wrap {
       flex-shrink: 0;
       width: 170px;
@@ -527,7 +493,6 @@
       0%, 100% { transform: scale(0.9); opacity: 0.6; }
       50% { transform: scale(1.08); opacity: 1; }
     }
-
     .vu-mic-circle {
       position: relative;
       width: 92px;
@@ -546,7 +511,6 @@
     .vu-mic-circle:hover { transform: scale(1.06); }
     .vu-mic-circle:active { transform: scale(0.96); }
     .vu-mic-circle i { font-size: 1.7rem; color: var(--bg-base); }
-
     .vu-bars {
       position: absolute;
       bottom: -6px;
@@ -571,7 +535,6 @@
       0%, 100% { transform: scaleY(0.5); }
       50% { transform: scaleY(1.3); }
     }
-
     .vu-title {
       margin-top: 30px;
       font-family: 'Syne', sans-serif;
@@ -595,7 +558,6 @@
       position: relative;
       z-index: 2;
     }
-
     .vu-stop-btn {
       position: relative;
       z-index: 2;
@@ -623,8 +585,7 @@
     .vu-stop-btn:hover { background: rgba(255, 46, 136, 0.18); border-color: rgba(255, 46, 136, 0.7); transform: translateY(-2px); }
 
     @media (max-width: 700px) {
-      .voice-overlay { padding: 1rem; }
-      .voice-overlay .vu-banner { padding: 56px 20px 30px; }
+      .vu-banner { padding: 56px 20px 30px; }
       .vu-content { flex-direction: column; }
       .vu-sound-wrap { width: 130px; height: 150px; }
     }
@@ -1444,47 +1405,6 @@
     <div class="loader-bar"><div class="loader-fill"></div></div>
   </div>
 
-  <!-- ───── TEMPORARY VOICE INTRO OVERLAY ───── -->
-  <div id="voiceIntroOverlay" class="voice-overlay">
-    <div class="vu-banner">
-      <div class="vu-ribbon">VOICE UPDATE</div>
-      <div class="vu-logo">
-        <div class="vu-logo-icon"><i class="fas fa-shield-alt"></i></div>
-        <div class="vu-logo-text">Sarveik</div>
-      </div>
-
-      <div class="vu-content">
-        <div class="vu-rules-box">
-          <ul>
-            <li><span class="num">1</span><span><b>Auto‑welcome</b> — plays once, only on your very first visit to Sarveik.</span></li>
-            <li><span class="num">2</span><span><b>Replay anytime</b> — tap the 🔊 speaker icon in the navbar to hear it again.</span></li>
-            <li><span class="num">3</span><span><b>No install needed</b> — runs entirely in your browser, no app or plugin required.</span></li>
-            <li><span class="num">4</span><span><b>Per‑tool guides</b> — open any tool card, then tap “Listen” to hear the how‑to‑use steps.</span></li>
-            <li><span class="num">5</span><span><b>Voice search</b> — tap the mic to jump straight to a tool hub by speaking its name.</span></li>
-          </ul>
-        </div>
-
-        <div class="vu-sound-wrap">
-          <div class="vu-sound-ring" id="vuSoundRing"></div>
-          <button class="vu-mic-circle" id="vuMicBtn" title="Play the welcome voice" aria-label="Play the welcome voice">
-            <i class="fas fa-microphone"></i>
-          </button>
-          <div class="vu-bars" id="vuBars">
-            <span></span><span></span><span></span><span></span><span></span>
-          </div>
-        </div>
-      </div>
-
-      <div class="vu-title">Voice Features</div>
-      <div class="vu-subtitle">Now live on Sarveik</div>
-
-      <!-- Stop button — cancels the welcome voice and closes the overlay -->
-      <button class="vu-stop-btn" id="vuStopBtn" title="Stop the welcome voice and close" aria-label="Stop the welcome voice and close">
-        <i class="fas fa-stop"></i> Stop &amp; close
-      </button>
-    </div>
-  </div>
-
   <!-- ───── NAVBAR ───── -->
   <nav class="navbar">
     <div class="navbar-left">
@@ -1575,6 +1495,45 @@
           <div class="stat-label">% Free</div>
         </div>
       </div>
+    </div>
+
+    <!-- ───── VOICE UPDATE BANNER ───── -->
+    <div class="vu-banner" id="voiceUpdateBanner">
+      <div class="vu-ribbon">VOICE UPDATE</div>
+      <div class="vu-logo">
+        <div class="vu-logo-icon"><i class="fas fa-shield-alt"></i></div>
+        <div class="vu-logo-text">Sarveik</div>
+      </div>
+
+      <div class="vu-content">
+        <div class="vu-rules-box">
+          <ul>
+            <li><span class="num">1</span><span><b>Auto-welcome</b> — plays once, only on your very first visit to Sarveik.</span></li>
+            <li><span class="num">2</span><span><b>Replay anytime</b> — tap the 🔊 speaker icon in the navbar to hear it again.</span></li>
+            <li><span class="num">3</span><span><b>No install needed</b> — runs entirely in your browser, no app or plugin required.</span></li>
+            <li><span class="num">4</span><span><b>Per-tool guides</b> — open any tool card, then tap "Listen" to hear the how-to-use steps.</span></li>
+            <li><span class="num">5</span><span><b>Voice search</b> — tap the mic to jump straight to a tool hub by speaking its name.</span></li>
+          </ul>
+        </div>
+
+        <div class="vu-sound-wrap">
+          <div class="vu-sound-ring" id="vuSoundRing"></div>
+          <button class="vu-mic-circle" id="vuMicBtn" title="Play the welcome voice" aria-label="Play the welcome voice">
+            <i class="fas fa-microphone"></i>
+          </button>
+          <div class="vu-bars" id="vuBars">
+            <span></span><span></span><span></span><span></span><span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="vu-title">Voice Features</div>
+      <div class="vu-subtitle">Now live on Sarveik</div>
+
+      <!-- Stop button — cancels the welcome voice mid-speech -->
+      <button class="vu-stop-btn" id="vuStopBtn" title="Stop the welcome voice" aria-label="Stop the welcome voice">
+        <i class="fas fa-stop"></i> Stop voice
+      </button>
     </div>
 
     <!-- Section Header -->
@@ -1907,10 +1866,14 @@
       if (!isLoggedIn) return;
       setTimeout(() => {
         document.getElementById('loadingScreen').classList.add('hidden');
-        // Auto‑play the voice intro on first visit and show the overlay.
-        if (!localStorage.getItem('sarveik_voice_intro_played')) {
-          showIntroOverlayAndPlay();
-        }
+        // Auto-play the 5-second voice welcome once the loading screen is gone,
+        // but only on this browser's very first visit (see playVoiceIntro below).
+        setTimeout(() => {
+          if (!localStorage.getItem('sarveik_voice_intro_played')) {
+            playVoiceIntro();
+            localStorage.setItem('sarveik_voice_intro_played', '1');
+          }
+        }, 500);
       }, 1100);
     });
 
@@ -1971,112 +1934,49 @@
       }, 5000);
     }
 
-    // ── VOICE INTRO OVERLAY MANAGEMENT ──
-    const overlay = document.getElementById('voiceIntroOverlay');
-    const stopBtn = document.getElementById('vuStopBtn');
-    let isIntroPlaying = false;
-
-    function showIntroOverlayAndPlay() {
-      overlay.classList.add('active');
-      document.body.style.overflow = 'hidden';
-      // Play the voice
-      playVoiceIntro(true); // true = from overlay
-    }
-
-    function hideIntroOverlay() {
-      overlay.classList.remove('active');
-      document.body.style.overflow = '';
-      // stop voice if still playing
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
-      setVoiceSpeakingState(false);
-      // Remember that we've shown it
-      localStorage.setItem('sarveik_voice_intro_played', '1');
-      isIntroPlaying = false;
-    }
+    // ── VOICE WELCOME INTRO (~5 seconds, browser Text-to-Speech, no API needed) ──
+    // Plays once automatically on a visitor's first-ever visit (see the LOADING
+    // block above) and can be replayed anytime via the 🔊 button in the navbar
+    // and mobile drawer.
+    const VOICE_INTRO_TEXT = "Welcome to Sarveik, your A.I. portal for students, teachers, developers and more!";
 
     function setVoiceSpeakingState(isSpeaking) {
       document.getElementById('voiceIntroBtn')?.classList.toggle('speaking', isSpeaking);
       document.getElementById('vuSoundRing')?.classList.toggle('speaking', isSpeaking);
       document.getElementById('vuBars')?.classList.toggle('speaking', isSpeaking);
-      stopBtn?.classList.toggle('active', isSpeaking);
+      document.getElementById('vuStopBtn')?.classList.toggle('active', isSpeaking);
     }
 
-    const VOICE_INTRO_TEXT = "Welcome to Sarveik, your A.I. portal for students, teachers, developers and more!";
-
-    function playVoiceIntro(fromOverlay = false) {
+    function playVoiceIntro() {
       if (!('speechSynthesis' in window)) {
         showToast('Voice welcome isn\'t supported in this browser.', 'warning');
-        if (fromOverlay) hideIntroOverlay();
         return;
       }
-      // Cancel any ongoing speech
-      window.speechSynthesis.cancel();
+      window.speechSynthesis.cancel(); // stop anything already speaking
       const utterance = new SpeechSynthesisUtterance(VOICE_INTRO_TEXT);
       utterance.lang = 'en-US';
       utterance.rate = 1;
       utterance.pitch = 1;
       utterance.volume = 1;
 
-      utterance.onstart = () => {
-        setVoiceSpeakingState(true);
-        isIntroPlaying = true;
-      };
-
-      utterance.onend = () => {
-        setVoiceSpeakingState(false);
-        isIntroPlaying = false;
-        // If this was the intro overlay, close it
-        if (fromOverlay) {
-          hideIntroOverlay();
-        }
-      };
-
-      utterance.onerror = () => {
-        setVoiceSpeakingState(false);
-        isIntroPlaying = false;
-        if (fromOverlay) hideIntroOverlay();
-      };
+      utterance.onstart = () => setVoiceSpeakingState(true);
+      utterance.onend = () => setVoiceSpeakingState(false);
+      utterance.onerror = () => setVoiceSpeakingState(false);
 
       window.speechSynthesis.speak(utterance);
     }
 
-    function stopVoiceIntroAndClose() {
+    function stopVoiceIntro() {
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
       }
       setVoiceSpeakingState(false);
-      isIntroPlaying = false;
-      hideIntroOverlay();
     }
 
-    // ── Event listeners for voice intro ──
-    stopBtn?.addEventListener('click', stopVoiceIntroAndClose);
-
-    // Overlay mic button – replay voice without reopening overlay (if already open)
-    document.getElementById('vuMicBtn')?.addEventListener('click', () => {
-      // If overlay is active, replay voice (it will close on end)
-      if (overlay.classList.contains('active')) {
-        playVoiceIntro(true);
-      } else {
-        // If overlay is not active, just play normal voice (no overlay)
-        playVoiceIntro(false);
-      }
-    });
-
-    // Navbar voice button – replay without showing overlay
-    document.getElementById('voiceIntroBtn')?.addEventListener('click', () => {
-      playVoiceIntro(false);
-    });
-
-    // Mobile drawer voice button – replay without showing overlay
-    document.getElementById('mobileVoiceIntroBtn')?.addEventListener('click', () => {
-      playVoiceIntro(false);
-      closeDrawer();
-    });
-
-    // If user clicks on the overlay background (not on banner), we don't close – they must use Stop button.
+    document.getElementById('voiceIntroBtn')?.addEventListener('click', playVoiceIntro);
+    document.getElementById('mobileVoiceIntroBtn')?.addEventListener('click', () => { playVoiceIntro(); closeDrawer(); });
+    document.getElementById('vuMicBtn')?.addEventListener('click', playVoiceIntro);
+    document.getElementById('vuStopBtn')?.addEventListener('click', stopVoiceIntro);
 
     // ── STATS COUNTER ──
     function animateCount(el, target, duration = 1800) {
