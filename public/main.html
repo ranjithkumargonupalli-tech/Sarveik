@@ -351,320 +351,6 @@
     }
     .theme-toggle:hover { background: var(--gradient-main); color: white; border-color: transparent; transform: rotate(20deg); }
 
-    /* Voice-intro button: same look as theme-toggle, plus a soft pulse so first-time users notice it */
-    #voiceIntroBtn.speaking { animation: voice-btn-pulse 1s ease-in-out infinite; color: var(--cyan); border-color: var(--border-bright); }
-    @keyframes voice-btn-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(0,240,255,0.35); } 50% { box-shadow: 0 0 0 6px rgba(0,240,255,0); } }
-
-    /* ───── VOICE UPDATE BANNER ───── */
-    .vu-banner {
-      position: relative;
-      max-width: 1000px;
-      margin: 0 auto 3rem;
-      background: linear-gradient(135deg, var(--bg-secondary) 0%, var(--bg-base) 55%, var(--bg-secondary) 100%);
-      border: 1px solid var(--border-bright);
-      border-radius: 22px;
-      overflow: hidden;
-      padding: 60px 40px 40px;
-      box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 60px var(--glow-cyan);
-      max-height: 900px;
-      opacity: 1;
-      transform: translateY(0) scale(1);
-      transition: opacity 0.7s ease, transform 0.7s ease, max-height 0.8s ease 0.1s, margin 0.8s ease 0.1s, padding 0.8s ease 0.1s, border-width 0.8s ease 0.1s;
-    }
-    /* Temporary-intro state: fades + collapses the banner away automatically
-       (auto-hides ~10s after page load) or when the user dismisses it manually. */
-    .vu-banner.vu-hidden {
-      opacity: 0;
-      transform: translateY(-18px) scale(0.97);
-      max-height: 0;
-      margin: 0 auto;
-      padding-top: 0;
-      padding-bottom: 0;
-      border-width: 0;
-      pointer-events: none;
-    }
-    .vu-banner::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background:
-        linear-gradient(120deg, transparent 40%, rgba(0,240,255,0.08) 55%, transparent 70%),
-        linear-gradient(60deg, transparent 60%, rgba(139,63,251,0.10) 75%, transparent 90%);
-      pointer-events: none;
-    }
-    .vu-ribbon {
-      position: absolute;
-      top: 22px;
-      left: -8px;
-      background: var(--gradient-main);
-      color: var(--bg-base);
-      font-family: 'Syne', sans-serif;
-      font-weight: 800;
-      font-size: 0.85rem;
-      letter-spacing: 1px;
-      padding: 10px 28px 10px 22px;
-      border-radius: 0 8px 8px 0;
-      box-shadow: 0 6px 18px var(--glow-cyan);
-      z-index: 3;
-    }
-    .vu-ribbon::after {
-      content: '';
-      position: absolute;
-      left: 0;
-      bottom: -8px;
-      border-left: 8px solid rgba(0,100,120,0.9);
-      border-bottom: 8px solid transparent;
-    }
-    .vu-top-right {
-      position: absolute;
-      top: 18px;
-      right: 20px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      z-index: 3;
-    }
-    .vu-logo {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-    .vu-logo-icon {
-      width: 34px;
-      height: 34px;
-      border-radius: 9px;
-      background: var(--gradient-main);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #fff;
-      font-size: 0.9rem;
-      box-shadow: 0 0 14px var(--glow-cyan);
-      flex-shrink: 0;
-    }
-    .vu-logo-text {
-      font-family: 'Syne', sans-serif;
-      font-weight: 800;
-      font-size: 1.05rem;
-      background: var(--gradient-main);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      letter-spacing: -0.02em;
-    }
-    .vu-close-btn {
-      width: 30px;
-      height: 30px;
-      border-radius: 8px;
-      background: var(--bg-glass);
-      border: 1px solid var(--border);
-      color: var(--text-secondary);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.85rem;
-      flex-shrink: 0;
-      transition: all 0.2s;
-    }
-    .vu-close-btn:hover { color: var(--pink); background: rgba(255,46,136,0.1); border-color: rgba(255,46,136,0.3); }
-    .vu-content {
-      display: flex;
-      align-items: center;
-      gap: 32px;
-      margin-top: 26px;
-      position: relative;
-      z-index: 2;
-    }
-    .vu-rules-box {
-      flex: 1;
-      min-width: 0;
-      background: var(--bg-card);
-      border: 1px solid var(--border-bright);
-      border-radius: 16px;
-      padding: 22px 26px;
-      backdrop-filter: blur(6px);
-    }
-    .vu-rules-box ul { list-style: none; }
-    .vu-rules-box li {
-      display: flex;
-      gap: 10px;
-      color: var(--text-secondary);
-      font-size: 0.9rem;
-      line-height: 1.55;
-      margin-bottom: 14px;
-    }
-    .vu-rules-box li:last-child { margin-bottom: 0; }
-    .vu-rules-box li .num {
-      flex-shrink: 0;
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      background: var(--gradient-main);
-      color: var(--bg-base);
-      font-weight: 800;
-      font-size: 0.72rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin-top: 1px;
-    }
-    .vu-rules-box li b { color: var(--text-primary); }
-    .vu-sound-wrap {
-      flex-shrink: 0;
-      width: 170px;
-      height: 220px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-    }
-    .vu-sound-ring {
-      position: absolute;
-      width: 150px;
-      height: 150px;
-      border-radius: 50%;
-      background: radial-gradient(circle, var(--glow-cyan), transparent 70%);
-      animation: vuPulse 2.4s ease-in-out infinite;
-    }
-    .vu-sound-ring.speaking { animation: vuPulse 0.9s ease-in-out infinite; }
-    @keyframes vuPulse {
-      0%, 100% { transform: scale(0.9); opacity: 0.6; }
-      50% { transform: scale(1.08); opacity: 1; }
-    }
-    .vu-mic-circle {
-      position: relative;
-      width: 92px;
-      height: 92px;
-      border-radius: 50%;
-      background: var(--gradient-main);
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 0 40px var(--glow-cyan);
-      z-index: 2;
-      transition: transform 0.25s ease;
-    }
-    .vu-mic-circle:hover { transform: scale(1.06); }
-    .vu-mic-circle:active { transform: scale(0.96); }
-    .vu-mic-circle i { font-size: 1.7rem; color: var(--bg-base); }
-    .vu-bars {
-      position: absolute;
-      bottom: -6px;
-      display: flex;
-      align-items: flex-end;
-      gap: 4px;
-      z-index: 2;
-    }
-    .vu-bars span {
-      width: 4px;
-      border-radius: 2px;
-      background: var(--gradient-main);
-      opacity: 0.35;
-    }
-    .vu-bars.speaking span { animation: vuBar 1s ease-in-out infinite; opacity: 1; }
-    .vu-bars span:nth-child(1) { height: 10px; animation-delay: 0s; }
-    .vu-bars span:nth-child(2) { height: 20px; animation-delay: 0.15s; }
-    .vu-bars span:nth-child(3) { height: 30px; animation-delay: 0.3s; }
-    .vu-bars span:nth-child(4) { height: 18px; animation-delay: 0.45s; }
-    .vu-bars span:nth-child(5) { height: 12px; animation-delay: 0.6s; }
-    @keyframes vuBar {
-      0%, 100% { transform: scaleY(0.5); }
-      50% { transform: scaleY(1.3); }
-    }
-    .vu-caption {
-      position: absolute;
-      bottom: -30px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 180px;
-      max-width: 220px;
-      text-align: center;
-      font-family: 'JetBrains Mono', monospace;
-      font-size: 0.65rem;
-      line-height: 1.4;
-      color: var(--text-secondary);
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      pointer-events: none;
-    }
-    .vu-caption.show { opacity: 1; }
-    .vu-title {
-      margin-top: 30px;
-      font-family: 'Syne', sans-serif;
-      font-weight: 800;
-      font-size: clamp(1.7rem, 5vw, 2.6rem);
-      letter-spacing: 0.3px;
-      background: var(--gradient-main);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      position: relative;
-      z-index: 2;
-      text-transform: uppercase;
-    }
-    .vu-subtitle {
-      margin-top: 4px;
-      color: var(--text-secondary);
-      font-size: 0.75rem;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      font-weight: 600;
-      position: relative;
-      z-index: 2;
-    }
-    .vu-countdown-track {
-      position: relative;
-      z-index: 2;
-      margin-top: 22px;
-      height: 3px;
-      width: 100%;
-      max-width: 260px;
-      background: rgba(255,255,255,0.08);
-      border-radius: 2px;
-      overflow: hidden;
-    }
-    .vu-countdown-fill {
-      height: 100%;
-      width: 100%;
-      background: var(--gradient-main);
-      border-radius: 2px;
-      transform-origin: left center;
-      animation: vu-countdown 10s linear forwards;
-    }
-    @keyframes vu-countdown { from { transform: scaleX(1); } to { transform: scaleX(0); } }
-    .vu-stop-btn {
-      position: relative;
-      z-index: 2;
-      margin-top: 22px;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 22px;
-      border-radius: 40px;
-      border: 1px solid rgba(255, 46, 136, 0.4);
-      background: rgba(255, 46, 136, 0.08);
-      color: var(--pink);
-      font-family: 'DM Sans', sans-serif;
-      font-weight: 700;
-      font-size: 0.85rem;
-      cursor: pointer;
-      transition: all 0.25s ease;
-      opacity: 0.55;
-      pointer-events: none;
-    }
-    .vu-stop-btn.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    .vu-stop-btn:hover { background: rgba(255, 46, 136, 0.18); border-color: rgba(255, 46, 136, 0.7); transform: translateY(-2px); }
-
-    @media (max-width: 700px) {
-      .vu-banner { padding: 56px 20px 30px; }
-      .vu-content { flex-direction: column; }
-      .vu-sound-wrap { width: 130px; height: 150px; }
-    }
-
     .hamburger {
       display: none;
       width: 38px;
@@ -812,7 +498,7 @@
       font-family: 'Syne', sans-serif;
       font-size: clamp(2.5rem, 7vw, 4.5rem);
       font-weight: 800;
-      line-height: 1.05;
+            line-height: 1.05;
       letter-spacing: -0.04em;
       margin-bottom: 1.25rem;
       animation: fadeUp 0.7s 0.1s ease both, title-float 6s ease-in-out 1s infinite;
@@ -1171,13 +857,9 @@
     }
     .fab:hover::after { opacity: 1; }
     .fab:hover { transform: scale(1.12) translateY(-3px); }
-    .fab-voice { background: linear-gradient(135deg, #10b981, #059669); box-shadow: 0 8px 24px rgba(16,185,129,0.4); }
     .fab-chat { width: 60px; height: 60px; font-size: 1.3rem; background: var(--gradient-main); box-shadow: 0 8px 28px var(--glow-cyan); animation: fab-pulse 2.4s ease-in-out infinite; }
     @keyframes fab-pulse { 0%, 100% { box-shadow: 0 8px 28px var(--glow-cyan); } 50% { box-shadow: 0 8px 40px var(--glow-cyan), 0 0 0 6px rgba(0,240,255,0.08); } }
-    .fab-voice:hover { box-shadow: 0 12px 32px rgba(16,185,129,0.6); }
     .fab-chat:hover { box-shadow: 0 12px 36px var(--glow-cyan); }
-    .fab.recording { animation: mic-pulse 1s ease-in-out infinite; }
-    @keyframes mic-pulse { 0%, 100% { box-shadow: 0 8px 24px rgba(239,68,68,0.4); } 50% { box-shadow: 0 8px 36px rgba(239,68,68,0.8), 0 0 0 8px rgba(239,68,68,0.15); } }
 
     .feedback-fab {
       position: fixed;
@@ -1463,9 +1145,180 @@
       outline: 2px solid var(--cyan);
       outline-offset: 2px;
     }
-  </style>
+
+    /* ───── SARVEIK LIGHT BLUE + LIGHT GREEN THEME ───── */
+    :root {
+      --bg-base: #f2f8fc;
+      --bg-secondary: #ffffff;
+      --bg-card: #ffffff;
+      --bg-glass: rgba(231, 243, 248, 0.82);
+      --text-primary: #183449;
+      --text-secondary: #526f80;
+      --text-muted: #7f98a6;
+      --border: #dceaf0;
+      --border-bright: #b8dce5;
+      --cyan: #459fbd;
+      --violet: #6cae9a;
+      --pink: #78b99c;
+      --gold: #d5a84d;
+      --green: #55a985;
+      --gradient-main: linear-gradient(135deg, #9bd8ef 0%, #b8e8d0 100%);
+      --gradient-card1: linear-gradient(145deg, #c5e9f7, #d9f1e6);
+      --gradient-card2: linear-gradient(145deg, #d2eafa, #c9eadf);
+      --gradient-card3: linear-gradient(145deg, #c5e8f2, #d4eee5);
+      --gradient-card4: linear-gradient(145deg, #c9ecdf, #d9f1e8);
+      --gradient-card5: linear-gradient(145deg, #d8edf4, #e1f1df);
+      --gradient-card6: linear-gradient(145deg, #d2e9f7, #d9efe6);
+      --gradient-card7: linear-gradient(145deg, #dceefa, #d5eee4);
+      --gradient-card8: linear-gradient(145deg, #e2f1e8, #d1eaf3);
+      --gradient-card9: linear-gradient(145deg, #d5eaf2, #d9efe4);
+      --gradient-card10: linear-gradient(145deg, #c7e8f4, #d5eee5);
+      --gradient-card11: linear-gradient(145deg, #d7eafa, #d9f0e6);
+      --gradient-card12: linear-gradient(145deg, #c8ecdf, #d8f0e8);
+      --gradient-card13: linear-gradient(145deg, #cde8f7, #d8eee5);
+      --gradient-card14: linear-gradient(145deg, #d8eafa, #d0ecdf);
+      --gradient-card15: linear-gradient(145deg, #c9eadd, #d8f0e7);
+      --gradient-card16: linear-gradient(145deg, #dceef3, #d9eee1);
+      --gradient-card17: linear-gradient(145deg, #c5e8f3, #cfeee0);
+      --glow-cyan: rgba(92, 177, 202, 0.22);
+      --glow-violet: rgba(115, 185, 157, 0.20);
+      --glow-pink: rgba(129, 190, 160, 0.18);
+      --shadow-card: 0 14px 34px rgba(55, 105, 125, 0.10);
+    }
+
+    body.light-mode {
+      --bg-base: #f2f8fc;
+      --bg-secondary: #ffffff;
+      --bg-card: #ffffff;
+      --bg-glass: rgba(231, 243, 248, 0.82);
+      --text-primary: #183449;
+      --text-secondary: #526f80;
+      --text-muted: #7f98a6;
+      --border: #dceaf0;
+      --border-bright: #b8dce5;
+      --cyan: #459fbd;
+      --violet: #6cae9a;
+      --pink: #78b99c;
+      --gradient-main: linear-gradient(135deg, #9bd8ef 0%, #b8e8d0 100%);
+      --glow-cyan: rgba(92, 177, 202, 0.22);
+      --shadow-card: 0 14px 34px rgba(55, 105, 125, 0.10);
+    }
+
+    body.light-mode {
+      background:
+        radial-gradient(circle at 8% 8%, rgba(185, 226, 243, 0.38), transparent 28%),
+        radial-gradient(circle at 92% 24%, rgba(190, 235, 211, 0.36), transparent 30%),
+        var(--bg-base);
+    }
+    body.light-mode .navbar { background: rgba(248, 252, 254, 0.92); border-bottom-color: #dceaf0; }
+    body.light-mode .tool-card {
+      color: var(--text-primary);
+      background: var(--gradient-card1);
+      border: 1px solid rgba(160, 204, 215, 0.72);
+      box-shadow: 0 12px 30px rgba(55, 105, 125, 0.10);
+    }
+    body.light-mode .tool-card:nth-child(4n + 2) { background: var(--gradient-card2); }
+    body.light-mode .tool-card:nth-child(4n + 3) { background: var(--gradient-card3); }
+    body.light-mode .tool-card:nth-child(4n) { background: var(--gradient-card4); }
+    body.light-mode .tool-title { color: #183449; }
+    body.light-mode .tool-desc { color: #526f80; }
+    body.light-mode .card-tag { color: #527486; }
+    body.light-mode .tool-icon-wrap { background: rgba(255,255,255,0.56); border-color: rgba(255,255,255,0.85); }
+    body.light-mode .card-arrow { background: rgba(255,255,255,0.58); color: #426d7e; }
+    body.light-mode .tool-card:hover { box-shadow: 0 20px 42px rgba(65, 133, 150, 0.18); }
+    body.light-mode .modal-box { box-shadow: 0 28px 80px rgba(49, 91, 109, 0.18); }
+    body.light-mode .modal-overlay { background: rgba(32, 66, 83, 0.34); }
+    body.light-mode .announcement-item { background: #f5fafc; border-color: #dceaf0; }
+    body.light-mode .announcement-item:hover { background: #edf8f5; }
+    body.light-mode .notif { box-shadow: 0 10px 28px rgba(55, 105, 125, 0.14); }
+
+    /* Latest notifications panel */
+    .latest-notifications {
+      position: relative;
+      z-index: 2;
+      width: min(1100px, calc(100% - 2.5rem));
+      margin: 2rem auto 3rem;
+      padding: clamp(1.25rem, 3vw, 2rem);
+      border: 1px solid #d8eaf0;
+      border-radius: 24px;
+      background: linear-gradient(135deg, rgba(255,255,255,0.96), rgba(237,248,246,0.94));
+      box-shadow: 0 14px 36px rgba(58, 112, 132, 0.09);
+    }
+    .notifications-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+    .notifications-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      color: #5598ad;
+      font: 700 0.7rem 'JetBrains Mono', monospace;
+      letter-spacing: 0.12em;
+    }
+    .notifications-heading h2 {
+      margin: 0.35rem 0;
+      color: #1b3b4d;
+      font: 800 clamp(1.35rem, 3vw, 1.8rem) 'Syne', sans-serif;
+    }
+    .notifications-heading p { color: #678392; font-size: 0.88rem; }
+    .notifications-view-all {
+      flex-shrink: 0;
+      border: 1px solid #c6e2e8;
+      border-radius: 30px;
+      background: #eaf6f8;
+      color: #397c91;
+      padding: 0.7rem 1rem;
+      font: 700 0.8rem 'DM Sans', sans-serif;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+    .notifications-view-all:hover { background: #dff2eb; border-color: #b9dfcf; transform: translateY(-2px); }
+    .latest-notifications-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.9rem; }
+    .latest-notification-card {
+      position: relative;
+      display: flex;
+      align-items: flex-start;
+      gap: 0.8rem;
+      min-width: 0;
+      padding: 1rem;
+      border-radius: 17px;
+      border: 1px solid #d7e9ee;
+    }
+    .notification-blue { background: linear-gradient(140deg, #e8f5fb, #f5fbfd); }
+    .notification-green { background: linear-gradient(140deg, #e8f6ef, #f5fbf7); border-color: #d4eadf; }
+    .latest-notification-icon {
+      width: 38px; height: 38px; flex: 0 0 38px;
+      display: grid; place-items: center; border-radius: 12px;
+      background: rgba(255,255,255,0.82); color: #579bb0;
+    }
+    .notification-green .latest-notification-icon { color: #5c9d7e; }
+    .latest-notification-content { min-width: 0; padding-right: 0.2rem; }
+    .latest-notification-content h3 { color: #24495a; font-size: 0.9rem; margin: 0 0 0.35rem; }
+    .latest-notification-content p { color: #607b88; font-size: 0.78rem; line-height: 1.5; overflow-wrap: anywhere; }
+    .latest-notification-content time { display: block; margin-top: 0.65rem; color: #8299a4; font: 0.65rem 'JetBrains Mono', monospace; }
+    .notification-new-badge {
+      position: absolute; top: 0.65rem; right: 0.65rem;
+      padding: 3px 7px; border-radius: 20px;
+      background: #d9f0e4; color: #4b8e70;
+      font: 700 0.58rem 'JetBrains Mono', monospace;
+    }
+    .notification-loading, .notification-empty {
+      grid-column: 1 / -1; display: flex; align-items: center; justify-content: center;
+      gap: 0.65rem; min-height: 90px; color: #718b98; font-size: 0.85rem;
+    }
+    @media (max-width: 850px) { .latest-notifications-list { grid-template-columns: 1fr; } }
+    @media (max-width: 600px) {
+      .latest-notifications { width: calc(100% - 1.25rem); margin: 1rem auto 2rem; padding: 1rem; }
+      .notifications-heading { align-items: flex-start; }
+      .notifications-view-all { padding: 0.6rem 0.75rem; }
+    }
+      </style>
 </head>
-<body class="dark-mode">
+<body class="light-mode">
 
   <!-- Depth-grid 3D scene background -->
   <div class="grid-scene" aria-hidden="true">
@@ -1502,9 +1355,6 @@
       <li><a href="#" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
     </ul>
     <div class="nav-right">
-      <button class="theme-toggle" id="voiceIntroBtn" title="Play 5-second voice welcome" aria-label="Play voice welcome">
-        <i class="fas fa-volume-up"></i>
-      </button>
       <button class="theme-toggle" id="themeToggle" title="Toggle theme"><i class="fas fa-moon"></i></button>
       <div class="hamburger" id="hamburgerBtn">
         <span></span><span></span><span></span>
@@ -1529,7 +1379,6 @@
       <li><a href="friends.html"><i class="fas fa-users"></i> Friends</a></li>
     </ul>
     <div class="drawer-actions">
-      <button class="drawer-btn" id="mobileVoiceIntroBtn"><i class="fas fa-volume-up"></i> Play Welcome</button>
       <button class="drawer-btn" id="mobileThemeBtn"><i class="fas fa-moon"></i> Dark Mode</button>
       <button class="drawer-btn" id="mobileLogoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</button>
     </div>
@@ -1537,6 +1386,23 @@
 
   <!-- ───── MAIN PAGE ───── -->
   <div id="mainPage">
+
+    <!-- ───── LATEST NOTIFICATIONS ───── -->
+    <section class="latest-notifications" aria-labelledby="latestNotificationsTitle">
+      <div class="notifications-heading">
+        <div>
+          <span class="notifications-eyebrow"><i class="fas fa-bell"></i> SARVEIK UPDATES</span>
+          <h2 id="latestNotificationsTitle">New Notifications</h2>
+          <p>Latest announcements and important updates from Sarveik.</p>
+        </div>
+        <button type="button" class="notifications-view-all" id="openAllNotifications">
+          View all <i class="fas fa-arrow-right"></i>
+        </button>
+      </div>
+      <div class="latest-notifications-list" id="latestNotificationsList" aria-live="polite">
+        <div class="notification-loading"><i class="fas fa-spinner fa-spin"></i> Loading latest updates...</div>
+      </div>
+    </section>
 
     <!-- Hero -->
     <div class="hero">
@@ -1570,54 +1436,6 @@
           <div class="stat-label">% Free</div>
         </div>
       </div>
-    </div>
-
-    <!-- ───── VOICE UPDATE BANNER (temporary intro — auto-hides ~10s after load, or dismiss with ✕) ───── -->
-    <div class="vu-banner" id="voiceUpdateBanner">
-      <div class="vu-ribbon">VOICE UPDATE</div>
-      <div class="vu-top-right">
-        <div class="vu-logo">
-          <div class="vu-logo-icon"><i class="fas fa-shield-alt"></i></div>
-          <div class="vu-logo-text">Sarveik</div>
-        </div>
-        <button class="vu-close-btn" id="vuCloseBtn" title="Dismiss" aria-label="Dismiss voice update banner">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-
-      <div class="vu-content">
-        <div class="vu-rules-box">
-          <ul>
-            <li><span class="num">1</span><span><b>welcome</b> — Welcome to Sarveik, your A.I. portal for students, teachers, developers and more! </span></li>
-            <li><span class="num">2</span><span><b>Instructions</Details></b> — Tap any tool card to open that hub, and click the Details tab . <b>Click</b> on any Tool.</span></li>
-            <li><span class="num">3</span><span><b>Details</b> — It will display the Discription,How to use these Particular tool and Similar Tools</span></li>
-            <li><span class="num">4</span><span><b>Website</b> — then click <b>VISIT WEBISTE</b> It will directly redirect to that particular page</span></li>
-            <li><span class="num">5</span><span><b>Freinds</b> — search professionals in Sarveik then connect and share the tools,ideas with ur freinds.</span></li>
-          </ul>
-        </div>
-
-        <div class="vu-sound-wrap">
-          <div class="vu-sound-ring" id="vuSoundRing"></div>
-          <button class="vu-mic-circle" id="vuMicBtn" title="Play the welcome voice" aria-label="Play the welcome voice">
-            <i class="fas fa-microphone"></i>
-          </button>
-          <div class="vu-bars" id="vuBars">
-            <span></span><span></span><span></span><span></span><span></span>
-          </div>
-          <div class="vu-caption" id="vuCaption"></div>
-        </div>
-      </div>
-
-      <div class="vu-title">Voice Features</div>
-      <div class="vu-subtitle">Now live on Sarveik</div>
-
-      <!-- Countdown bar — visually shows the banner ticking down to auto-dismiss -->
-      <div class="vu-countdown-track"><div class="vu-countdown-fill" id="vuCountdownFill"></div></div>
-
-      <!-- Stop button — cancels the welcome voice mid-speech -->
-      <button class="vu-stop-btn" id="vuStopBtn" title="Stop the welcome voice" aria-label="Stop the welcome voice">
-        <i class="fas fa-stop"></i> Stop voice
-      </button>
     </div>
 
     <!-- Section Header -->
@@ -1814,9 +1632,6 @@
 
   <!-- ───── FABs ───── -->
   <div class="fab-container">
-    <button class="fab fab-voice" id="voiceBtn" data-tip="Voice Control" title="Voice Control">
-      <i class="fas fa-microphone"></i>
-    </button>
     <a href="tool.html" class="fab fab-chat" data-tip="Sarveik AI Assistant" title="Sarveik AI Assistant">
       <i class="fas fa-robot"></i>
     </a>
@@ -1933,7 +1748,7 @@
     async function checkSession() {
       try { 
         const session = await apiCall('/check-session'); 
-        if (!session.loggedIn) { 
+                if (!session.loggedIn) { 
           window.location.href = '/'; 
           return false; 
         } 
@@ -1948,20 +1763,12 @@
     window.addEventListener('load', async () => {
       const isLoggedIn = await checkSession();
       if (!isLoggedIn) return;
+
       setTimeout(() => {
-        document.getElementById('loadingScreen').classList.add('hidden');
-        // Auto-play the ~5-second voice welcome every time the page loads,
-        // timed with the intro banner appearing (see playVoiceIntro below).
-        // Passing `true` marks this as an autoplay attempt so we can detect
-        // if the browser silently blocks it and recover on first interaction.
-        setTimeout(() => {
-          playVoiceIntro(true);
-        }, 500);
-        // Kick off the temporary-intro banner countdown once the loading
-        // screen is out of the way, so the ~10s timer reflects what the
-        // visitor actually sees rather than ticking down behind the loader.
-        startVoiceBannerCountdown();
-      }, 1100);
+        document.getElementById('loadingScreen')?.classList.add('hidden');
+      }, 700);
+
+      loadLatestNotifications();
     });
 
     // ── THEME ──
@@ -1977,7 +1784,7 @@
       localStorage.setItem('nova_theme', isDark ? 'dark' : 'light');
     }
 
-    const savedTheme = localStorage.getItem('nova_theme') || 'dark';
+    const savedTheme = localStorage.getItem('nova_theme') || 'light';
     applyTheme(savedTheme !== 'light');
 
     themeToggle?.addEventListener('click', () => applyTheme(!document.body.classList.contains('dark-mode')));
@@ -2020,171 +1827,6 @@
         setTimeout(() => el.remove(), 400);
       }, 5000);
     }
-
-    // ── VOICE WELCOME INTRO (~5 seconds, browser Text-to-Speech, no API needed) ──
-    // Plays automatically every time the page loads (see the LOADING block
-    // above) and can be replayed anytime via the 🔊 button in the navbar,
-    // the mobile drawer, the mic in the banner, or the "V" keyboard shortcut.
-    const VOICE_INTRO_TEXT = "Welcome to Sarveik, your A.I. portal for students, teachers, developers and more!";
-    const VOICE_MUTE_KEY = 'sarveik_voice_muted';
-    let voicesReady = false;
-    let voiceAutoplayPending = false; // true once we've tried the auto-intro and are waiting to confirm it actually played
-
-    // Some browsers (notably Chrome) report an empty voice list until the
-    // async 'voiceschanged' event fires, which can silently swallow the very
-    // first speak() call on page load. Cache readiness so we don't fire too early.
-    function primeVoices() {
-      if (!('speechSynthesis' in window)) return;
-      const v = window.speechSynthesis.getVoices();
-      if (v && v.length) voicesReady = true;
-    }
-    primeVoices();
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.addEventListener('voiceschanged', primeVoices);
-    }
-
-    function isVoiceMuted() { return localStorage.getItem(VOICE_MUTE_KEY) === '1'; }
-
-    function updateMuteIcon() {
-      const muted = isVoiceMuted();
-      const icon = muted ? 'fa-volume-mute' : 'fa-volume-up';
-      const btn = document.getElementById('voiceIntroBtn');
-      if (btn) { btn.innerHTML = `<i class="fas ${icon}"></i>`; btn.title = muted ? 'Voice welcome muted — click to unmute & play' : 'Play voice welcome (double-click to mute)'; }
-      const mBtn = document.getElementById('mobileVoiceIntroBtn');
-      if (mBtn) mBtn.innerHTML = `<i class="fas ${icon}"></i> ${muted ? 'Unmute Voice' : 'Play Welcome'}`;
-    }
-    updateMuteIcon();
-
-    function setVoiceSpeakingState(isSpeaking, captionText) {
-      document.getElementById('voiceIntroBtn')?.classList.toggle('speaking', isSpeaking);
-      document.getElementById('vuSoundRing')?.classList.toggle('speaking', isSpeaking);
-      document.getElementById('vuBars')?.classList.toggle('speaking', isSpeaking);
-      document.getElementById('vuStopBtn')?.classList.toggle('active', isSpeaking);
-      const caption = document.getElementById('vuCaption');
-      if (caption) {
-        caption.textContent = isSpeaking ? (captionText || '') : '';
-        caption.classList.toggle('show', !!isSpeaking);
-      }
-    }
-
-    // Plays the welcome voice. `isAutoplay` marks calls fired without a direct
-    // user click, so we can gracefully detect & recover if the browser blocks it.
-    function playVoiceIntro(isAutoplay) {
-      if (isAutoplay && isVoiceMuted()) return; // respect the mute toggle for auto-plays only
-      if (!('speechSynthesis' in window)) {
-        showToast('Voice welcome isn\'t supported in this browser.', 'warning');
-        return;
-      }
-      window.speechSynthesis.cancel(); // stop anything already speaking
-
-      const speakNow = () => {
-        const utterance = new SpeechSynthesisUtterance(VOICE_INTRO_TEXT);
-        utterance.lang = 'en-US';
-        utterance.rate = 1;
-        utterance.pitch = 1;
-        utterance.volume = 1;
-
-        let started = false;
-        utterance.onstart = () => { started = true; voiceAutoplayPending = false; setVoiceSpeakingState(true, VOICE_INTRO_TEXT); };
-        utterance.onend = () => setVoiceSpeakingState(false);
-        utterance.onerror = () => setVoiceSpeakingState(false);
-
-        window.speechSynthesis.speak(utterance);
-
-        // Autoplay-block detector: if the browser silently refuses to start
-        // speaking within ~700ms, fall back to "tap anywhere to hear it".
-        if (isAutoplay) {
-          voiceAutoplayPending = true;
-          setTimeout(() => {
-            if (!started && voiceAutoplayPending) {
-              voiceAutoplayPending = false;
-              armVoiceUnlockOnFirstInteraction();
-            }
-          }, 700);
-        }
-      };
-
-      // Give the voice list a brief head-start if it hasn't reported in yet.
-      if (voicesReady || !isAutoplay) speakNow();
-      else setTimeout(speakNow, 150);
-    }
-
-    let voiceUnlockArmed = false;
-    function armVoiceUnlockOnFirstInteraction() {
-      if (voiceUnlockArmed || isVoiceMuted()) return;
-      voiceUnlockArmed = true;
-      showToast('🔊 Tap anywhere to hear the welcome message.', 'info');
-      const unlock = () => {
-        voiceUnlockArmed = false;
-        document.removeEventListener('click', unlock);
-        document.removeEventListener('touchstart', unlock);
-        document.removeEventListener('keydown', unlock);
-        playVoiceIntro(false);
-      };
-      document.addEventListener('click', unlock, { once: true });
-      document.addEventListener('touchstart', unlock, { once: true });
-      document.addEventListener('keydown', unlock, { once: true });
-    }
-
-    function stopVoiceIntro() {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-      }
-      voiceAutoplayPending = false;
-      setVoiceSpeakingState(false);
-    }
-
-    function toggleVoiceMute() {
-      const nowMuted = !isVoiceMuted();
-      localStorage.setItem(VOICE_MUTE_KEY, nowMuted ? '1' : '0');
-      updateMuteIcon();
-      if (nowMuted) { stopVoiceIntro(); showToast('Voice welcome muted for future visits.', 'info'); }
-      else showToast('Voice welcome unmuted.', 'success');
-    }
-
-    // Track click timing manually so a single click plays and a fast double-click mutes.
-    let voiceBtnClickTimer = null;
-    function handleVoiceIntroBtnClick() {
-      if (voiceBtnClickTimer) { clearTimeout(voiceBtnClickTimer); voiceBtnClickTimer = null; toggleVoiceMute(); return; }
-      voiceBtnClickTimer = setTimeout(() => { voiceBtnClickTimer = null; if (!isVoiceMuted()) playVoiceIntro(false); }, 260);
-    }
-
-    document.getElementById('voiceIntroBtn')?.addEventListener('click', handleVoiceIntroBtnClick);
-    document.getElementById('mobileVoiceIntroBtn')?.addEventListener('click', () => { if (isVoiceMuted()) toggleVoiceMute(); else playVoiceIntro(false); closeDrawer(); });
-    document.getElementById('vuMicBtn')?.addEventListener('click', () => playVoiceIntro(false));
-    document.getElementById('vuStopBtn')?.addEventListener('click', stopVoiceIntro);
-
-    // Keyboard shortcut: "V" replays the welcome voice (ignored while typing).
-    document.addEventListener('keydown', e => {
-      if ((e.key === 'v' || e.key === 'V') && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
-        playVoiceIntro(false);
-      }
-    });
-
-    // ── TEMPORARY VOICE-UPDATE BANNER (shows like a ~10s intro, then tucks away) ──
-    // Auto-dismisses itself 10 seconds after it becomes visible, with a visible
-    // countdown bar, or can be dismissed early via the ✕ button.
-    const vuBanner = document.getElementById('voiceUpdateBanner');
-    let vuHideTimer = null;
-    let vuCountdownStarted = false;
-
-    function hideVoiceBanner() {
-      if (!vuBanner || vuBanner.classList.contains('vu-hidden')) return;
-      vuBanner.classList.add('vu-hidden');
-      stopVoiceIntro();
-      clearTimeout(vuHideTimer);
-    }
-
-    function startVoiceBannerCountdown() {
-      if (vuCountdownStarted || !vuBanner) return;
-      vuCountdownStarted = true;
-      vuHideTimer = setTimeout(hideVoiceBanner, 19999);
-    }
-
-    document.getElementById('vuCloseBtn')?.addEventListener('click', hideVoiceBanner);
-    // Interacting with the mic/stop buttons means the visitor is engaged with
-    // it on purpose — no need to yank it away mid-interaction.
-    document.getElementById('vuMicBtn')?.addEventListener('click', () => clearTimeout(vuHideTimer));
 
     // ── STATS COUNTER ──
     function animateCount(el, target, duration = 1800) {
@@ -2459,6 +2101,45 @@
       }
     });
 
+    // ── LATEST NOTIFICATIONS ──
+    async function loadLatestNotifications() {
+      const list = document.getElementById('latestNotificationsList');
+      if (!list) return;
+
+      list.innerHTML = '<div class="notification-loading"><i class="fas fa-spinner fa-spin"></i> Loading latest updates...</div>';
+
+      try {
+        const items = await apiCall('/api/announcements');
+        const latest = Array.isArray(items)
+          ? [...items].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).slice(0, 3)
+          : [];
+
+        if (!latest.length) {
+          list.innerHTML = '<div class="notification-empty"><i class="fas fa-bell-slash"></i><span>No new notifications right now.</span></div>';
+          return;
+        }
+
+        list.innerHTML = latest.map((item, index) => `
+          <article class="latest-notification-card ${index % 2 === 0 ? 'notification-blue' : 'notification-green'}">
+            <div class="latest-notification-icon"><i class="fas fa-bell"></i></div>
+            <div class="latest-notification-content">
+              <h3>${escapeHtml(item.title)}</h3>
+              <p>${escapeHtml(item.content)}</p>
+              <time datetime="${escapeHtml(item.created_at)}"><i class="fas fa-clock"></i> ${new Date(item.created_at).toLocaleString()}</time>
+            </div>
+            ${index === 0 ? '<span class="notification-new-badge">LATEST</span>' : ''}
+          </article>
+        `).join('');
+      } catch (error) {
+        list.innerHTML = '<div class="notification-empty"><i class="fas fa-circle-exclamation"></i><span>Unable to load notifications. Please try again later.</span></div>';
+      }
+    }
+
+    document.getElementById('openAllNotifications')?.addEventListener('click', () => {
+      loadAnnouncements();
+      openModal('announcementModal');
+    });
+
     // ── ANNOUNCEMENTS ──
     async function loadAnnouncements() {
       const list = document.getElementById('announcementsList');
@@ -2485,61 +2166,6 @@
       openModal('announcementModal'); 
     });
     document.getElementById('closeAnnouncement')?.addEventListener('click', () => closeModal('announcementModal'));
-
-    // ── VOICE CONTROL ──
-    const voiceBtn = document.getElementById('voiceBtn');
-    const SpeechAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-    if (voiceBtn && SpeechAPI) {
-      const recognition = new SpeechAPI();
-      recognition.lang = 'en-US';
-      recognition.continuous = false;
-      recognition.interimResults = false;
-
-      voiceBtn.addEventListener('click', () => {
-        voiceBtn.classList.add('recording');
-        voiceBtn.innerHTML = '<i class="fas fa-microphone-slash"></i>';
-        recognition.start();
-        showToast('Listening... Speak a tool name!', 'info');
-      });
-
-      const cmds = {
-        'student': 'student.html', 'teacher': 'teacher1.html', 'study': 'student.html',
-        'developer': 'developer.html', 'dev': 'developer1.html', 'coding': 'developer.html',
-        'gamer': 'gamer1.html', 'gaming': 'gamer1.html', 'music': 'music-mega.html',
-        'shopping': 'shopping.html', 'chat': 'tool.html', 'assistant': 'tool.html',
-        'new': 'newtools.html', 'exam': 'examkit.html', 'career': 'career.html',
-        'editing': 'editing.html', 'essentials': 'essentials.html', 'research': 'researcher.html',
-        'business': 'businessdirectory.html', 'directory': 'businessdirectory.html', 'local': 'businessdirectory.html'
-      };
-
-      recognition.onresult = e => {
-        const cmd = e.results[0][0].transcript.toLowerCase();
-        voiceBtn.classList.remove('recording');
-        voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
-        for (const [k, url] of Object.entries(cmds)) {
-          if (cmd.includes(k)) {
-            showToast(`Opening ${k} tools...`, 'success');
-            setTimeout(() => window.location.href = url, 600);
-            return;
-          }
-        }
-        showToast(`"${cmd}" — Try: student, developer, music, exam, career, business...`, 'warning');
-      };
-
-      recognition.onend = () => {
-        voiceBtn.classList.remove('recording');
-        voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
-      };
-
-      recognition.onerror = () => {
-        voiceBtn.classList.remove('recording');
-        voiceBtn.innerHTML = '<i class="fas fa-microphone"></i>';
-        showToast('Voice recognition unavailable.', 'error');
-      };
-    } else if (voiceBtn) {
-      voiceBtn.style.display = 'none';
-    }
 
     // ── LOGOUT ──
     async function logoutUser() {
