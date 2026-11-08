@@ -1,19 +1,26 @@
-/* Sarveik Chat service worker  (v3)
-   - Background / mobile push notifications (Web Push + VAPID)
-   - No duplicate alerts while the chat is open, focused and visible
-   - Per-chat grouping: "Ravi (3 new messages)" + app-icon badge = total unread
-   - Notification actions: Open / Mark read (friend chats) / Dismiss
-   - Taps open the exact chat; payload URLs are validated (same-origin only)
-   - App-shell cache with offline fallback, size-capped, never caches live data
+/* Sarveik Chat service worker  (v4)
+   - Web Push (VAPID) notifications for background / closed-app / mobile
+   - No alert while the chat is open, focused and visible
+   - Per-chat stacking: "Ravi (3 new messages)" with the last 3 lines in the body; app-icon badge
+   - De-duplicates the page's own notification vs the server push (same message never counts twice)
+   - Actions: Open / Mark read (friend chats) / Dismiss
+   - Taps open the exact chat, even if the app is on another page; payload URLs are same-origin only
+   - Fast loads: precached shell + icons, query-insensitive page cache, stale-while-revalidate assets,
+     CDN fonts/icons cached too (works offline), caches size-capped, live data never cached
+   - 'logout' message wipes caches + notifications
    Serve from the ROOT of the site:  /sw.js  */
 
-const VERSION = 'v3';
+const VERSION = 'v4';
 const CACHE = 'sarveik-' + VERSION;
-const SHELL = ['/chat.html'];
+const CDN_CACHE = 'sarveik-cdn-' + VERSION;
+const SHELL = ['/chat.html', '/manifest.json', '/icons/icon-192.png'];
 const DEFAULT_URL = '/chat.html';
 const ICON = '/icons/icon-192.png';
-const BADGE = '/icons/badge-72.png';       // optional: monochrome white-on-transparent PNG (Android status bar)
-const MAX_PAGES = 30;
+const BADGE = '/icons/badge-72.png';            // optional monochrome white-on-transparent PNG
+const CDN_HOSTS = ['cdnjs.cloudflare.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
+const MAX_PAGES = 20, MAX_ASSETS = 80, MAX_CDN = 60;
+const MAX_LINES = 3;                             // message lines shown in a stacked notification
+const DUP_WINDOW = 8000;                         // ms: page notification + push for the same message = one
 
 const OFFLINE_HTML = `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Offline</title><body style="margin:0;height:100vh;display:grid;place-items:center;background:#0c0d14;color:#f1f3ff;font-family:system-ui,sans-serif;text-align:center">
@@ -22,12 +29,18 @@ const OFFLINE_HTML = `<!doctype html><meta charset="utf-8"><meta name="viewport"
 
 /* ---------- Install / activate ---------- */
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).catch(() => {}).then(() => self.skipWaiting()));
+  e.waitUntil((async () => {
+    const c = await caches.open(CACHE);
+    // add one by one: a single 404 must not abort the whole precache
+    await Promise.allSettled(SHELL.map(u => c.add(new Request(u, { cache: 'reload' }))));
+    await self.skipWaiting();
+  })());
 });
 self.addEventListener('activate', e => {
   e.waitUntil((async () => {
+    const keep = new Set([CACHE, CDN_CACHE]);
     const keys = await caches.keys();
-    await Promise.all(keys.filter(k => k.startsWith('sarveik-') && k !== CACHE).map(k => caches.delete(k)));
+    await Promise.all(keys.filter(k => k.startsWith('sarveik-') && !keep.has(k)).map(k => caches.delete(k)));
     if (self.registration.navigationPreload) await self.registration.navigationPreload.enable().catch(() => {});
     await self.clients.claim();
   })());
@@ -38,11 +51,29 @@ async function trim(cache, max) {
   const keys = await cache.keys();
   if (keys.length > max) await Promise.all(keys.slice(0, keys.length - max).map(k => cache.delete(k)));
 }
+const pageKey = url => new Request(url.origin + url.pathname);   // /chat.html?friend=3 and /chat.html share one entry
+
+async function swr(e, req, cacheName, max) {
+  const cache = await caches.open(cacheName);
+  const cached = await cache.match(req);
+  const net = fetch(req).then(res => {
+    if (res.ok || res.type === 'opaque') { cache.put(req, res.clone()).then(() => trim(cache, max)); }
+    return res;
+  }).catch(() => cached || Response.error());
+  if (cached) { e.waitUntil(net); return cached; }
+  return net;
+}
+
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
-  if (url.origin !== location.origin) return;
+
+  // Third-party fonts / icon CSS: cache so the UI renders instantly and offline
+  if (url.origin !== location.origin) {
+    if (CDN_HOSTS.includes(url.hostname)) e.respondWith(swr(e, req, CDN_CACHE, MAX_CDN));
+    return;
+  }
   if (url.pathname === '/sw.js' || url.pathname.startsWith('/api/') || url.pathname.startsWith('/socket.io/')) return;
 
   // Pages: network-first (always fresh), cached copy when offline
@@ -50,14 +81,15 @@ self.addEventListener('fetch', e => {
     e.respondWith((async () => {
       try {
         const res = (await e.preloadResponse) || (await fetch(req));
-        if (res.ok && res.type === 'basic') {
+        // never cache redirects / login pages: a redirected response can't be replayed for navigations
+        if (res.ok && res.type === 'basic' && !res.redirected) {
           const c = await caches.open(CACHE);
-          await c.put(req, res.clone());
+          await c.put(pageKey(url), res.clone());
           trim(c, MAX_PAGES);
         }
         return res;
       } catch (_) {
-        return (await caches.match(req, { ignoreSearch: true })) || (await caches.match(DEFAULT_URL)) ||
+        return (await caches.match(pageKey(url))) || (await caches.match(DEFAULT_URL)) ||
           new Response(OFFLINE_HTML, { headers: { 'Content-Type': 'text/html; charset=utf-8' }, status: 503 });
       }
     })());
@@ -65,16 +97,8 @@ self.addEventListener('fetch', e => {
   }
 
   // Static assets: stale-while-revalidate
-  if (/\.(?:js|css|png|jpg|jpeg|svg|webp|ico|woff2?)$/i.test(url.pathname)) {
-    e.respondWith((async () => {
-      const cached = await caches.match(req);
-      const net = fetch(req).then(res => {
-        if (res.ok && res.type === 'basic') { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
-        return res;
-      }).catch(() => cached || Response.error());
-      if (cached) { e.waitUntil(net); return cached; }
-      return net;
-    })());
+  if (/\.(?:js|css|png|jpg|jpeg|svg|webp|ico|woff2?|json)$/i.test(url.pathname)) {
+    e.respondWith(swr(e, req, CACHE, MAX_ASSETS));
   }
 });
 
@@ -110,11 +134,16 @@ async function markRead(friendId) {
       method: 'POST', credentials: 'include',
       headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': await csrf() }
     });
-  } catch (_) {}
+    return true;
+  } catch (_) { return false; }
 }
+const broadcast = async msg => (await self.clients.matchAll({ type: 'window', includeUncontrolled: true })).forEach(c => c.postMessage(msg));
 
 /* ---------- Push ----------
-   Payload JSON: { title, body, friendId | groupId, url, icon, badge, image, tag, count, timestamp } */
+   Payload JSON: { title, body, sender, friendId | groupId, url, icon, badge, image, tag, count,
+                   msgId, timestamp, silent, force }
+   - groups: send "sender" so the line reads "Ravi: hello"
+   - msgId: lets the worker ignore a repeated delivery of the same message */
 self.addEventListener('push', event => {
   event.waitUntil((async () => {
     let d = {};
@@ -126,23 +155,37 @@ self.addEventListener('push', event => {
 
     const url = chatUrl(d), tag = chatTag(d);
     const existing = await self.registration.getNotifications({ tag });
-    const prev = existing.reduce((n, x) => Math.max(n, (x.data && x.data.count) || 1), 0);
-    const count = d.count || (existing.length ? prev + 1 : 1);
-    const baseTitle = d.title || (existing[0] && existing[0].data && existing[0].data.baseTitle) || 'Sarveik Chat';
+    const prev = existing[0] && existing[0].data || {};
+    const now = Date.now();
+
+    // Same message already announced? (page notification a moment ago, or a repeated push)
+    const dupOfPage = prev.src === 'page' && now - (prev.t || 0) < DUP_WINDOW;
+    const dupById = d.msgId && prev.lastId === d.msgId;
+    const isDup = !!(existing.length && (dupOfPage || dupById));
+
+    const baseTitle = d.title || prev.baseTitle || 'Sarveik Chat';
+    const line = (d.sender && d.groupId ? d.sender + ': ' : '') + (d.body || 'You have a new message');
+    let lines = existing.length ? (prev.lines || (prev.body ? [prev.body] : [])) : [];
+    if (isDup) lines = lines.slice(0, -1);              // replace the duplicate line instead of adding one
+    lines = [...lines, line].slice(-MAX_LINES);
+
+    const prevCount = existing.length ? (prev.count || 1) : 0;
+    const count = d.count || (isDup ? Math.max(prevCount, 1) : prevCount + 1);
 
     const actions = d.groupId
       ? [{ action: 'open', title: 'Open' }, { action: 'dismiss', title: 'Dismiss' }]
       : [{ action: 'open', title: 'Open' }, { action: 'read', title: 'Mark read' }];
 
     await self.registration.showNotification(count > 1 ? `${baseTitle} (${count} new messages)` : baseTitle, {
-      body: d.body || 'You have a new message',
+      body: count > 1 ? lines.join('\n') : line,
       icon: d.icon || ICON,
       badge: d.badge || BADGE,
       image: d.image,
-      tag, renotify: true,
-      timestamp: d.timestamp || Date.now(),
+      tag, renotify: !isDup,                            // a duplicate must not buzz twice
+      silent: !!d.silent,
+      timestamp: d.timestamp || now,
       vibrate: [120, 60, 120],
-      data: { url, friendId: d.friendId, groupId: d.groupId, count, baseTitle },
+      data: { url, friendId: d.friendId, groupId: d.groupId, count, baseTitle, lines, body: line, lastId: d.msgId || null, src: 'push', t: now },
       actions
     });
     await updateBadge();
@@ -153,19 +196,32 @@ self.addEventListener('push', event => {
 self.addEventListener('notificationclick', event => {
   event.notification.close();
   const data = event.notification.data || {};
+
   if (event.action === 'dismiss') { event.waitUntil(updateBadge()); return; }
-  if (event.action === 'read') { event.waitUntil((async () => { if (data.friendId) await markRead(data.friendId); await updateBadge(); })()); return; }
+  if (event.action === 'read') {
+    event.waitUntil((async () => {
+      if (data.friendId && await markRead(data.friendId)) await broadcast({ type: 'marked-read', friendId: data.friendId });
+      await updateBadge();
+    })());
+    return;
+  }
 
   const url = chatUrl(data);
   event.waitUntil((async () => {
     const list = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    // prefer a window that is already on the chat page, then any visible one
-    const target = list.find(c => c.url.includes(DEFAULT_URL)) || list.find(c => c.visibilityState === 'visible') || list[0];
-    if (target && 'focus' in target) {
-      await target.focus();
-      target.postMessage({ type: 'open-chat', open: url, friendId: data.friendId, groupId: data.groupId });
-    } else if (self.clients.openWindow) {
-      await self.clients.openWindow(url);
+    const onChat = list.find(c => new URL(c.url).pathname === DEFAULT_URL);
+    const target = onChat || list.find(c => c.visibilityState === 'visible') || list[0];
+    try {
+      if (target) {
+        await target.focus();
+        if (onChat) target.postMessage({ type: 'open-chat', open: url, friendId: data.friendId, groupId: data.groupId });
+        else if ('navigate' in target) await target.navigate(url);   // app is on another page: bring it to the chat
+        else if (self.clients.openWindow) await self.clients.openWindow(url);
+      } else if (self.clients.openWindow) {
+        await self.clients.openWindow(url);
+      }
+    } catch (_) {
+      if (self.clients.openWindow) await self.clients.openWindow(url).catch(() => {});
     }
     await updateBadge();
   })());
@@ -181,7 +237,15 @@ self.addEventListener('message', event => {
       await updateBadge();
     })());
   }
+  if (m.type === 'logout') {
+    event.waitUntil((async () => {
+      (await self.registration.getNotifications()).forEach(n => n.close());
+      await caches.delete(CACHE);                      // pages cached for the signed-in user
+      await updateBadge();
+    })());
+  }
   if (m.type === 'skip-waiting') self.skipWaiting();
+  if (m.type === 'get-version' && event.source) event.source.postMessage({ type: 'version', version: VERSION });
 });
 
 /* ---------- Keep the push subscription alive when the browser rotates it ---------- */
