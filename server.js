@@ -1421,6 +1421,58 @@ app.get('/api/verify-payment', isAuthenticated, async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
+// ==================== WEB PUSH ====================
+const webpush = require('web-push');
+if (process.env.VAPID_PUBLIC && process.env.VAPID_PRIVATE) {
+    webpush.setVapidDetails('mailto:support@sarveik.com', process.env.VAPID_PUBLIC, process.env.VAPID_PRIVATE);
+} else {
+    console.log('⚠️ VAPID keys missing, push notifications disabled');
+}
+
+async function setupPushTable() {
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS push_subs (
+            id SERIAL PRIMARY KEY,
+            user_id INT REFERENCES users(id) ON DELETE CASCADE,
+            endpoint TEXT UNIQUE NOT NULL,
+            data JSONB NOT NULL,
+            created_at TIMESTAMP DEFAULT NOW()
+        )
+    `);
+    await pool.query('CREATE INDEX IF NOT EXISTS push_subs_user_idx ON push_subs(user_id)');
+}
+
+app.get('/api/push/public-key', (req, res) => res.json({ key: process.env.VAPID_PUBLIC || null }));
+
+app.post('/api/push/subscribe', isAuthenticated, async (req, res) => {
+    const sub = req.body;
+    if (!sub || !sub.endpoint || !sub.keys) return res.status(400).json({ error: 'Bad subscription' });
+    try {
+        await pool.query(
+            `INSERT INTO push_subs (user_id, endpoint, data) VALUES ($1, $2, $3)
+             ON CONFLICT (endpoint) DO UPDATE SET user_id = EXCLUDED.user_id, data = EXCLUDED.data`,
+            [req.session.userId, sub.endpoint, sub]
+        );
+        res.json({ ok: true });
+    } catch (err) {
+        console.error('Push subscribe error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+async function pushTo(userId, payload) {
+    if (!process.env.VAPID_PUBLIC || !process.env.VAPID_PRIVATE) return;
+    try {
+        const { rows } = await pool.query('SELECT endpoint, data FROM push_subs WHERE user_id = $1', [userId]);
+        await Promise.all(rows.map(async r => {
+            try { await webpush.sendNotification(r.data, JSON.stringify(payload)); }
+            catch (e) {
+                if (e.statusCode === 404 || e.statusCode === 410)   // device unsubscribed or expired
+                    await pool.query('DELETE FROM push_subs WHERE endpoint = $1', [r.endpoint]);
+            }
+        }));
+    } catch (err) { console.error('pushTo error:', err.message); }
+}
 
 // ==================== SOCKET.IO SETUP ====================
 const server = http.createServer(app);
@@ -1499,25 +1551,33 @@ io.on('connection', (socket) => {
 
     socket.on('private_message', async (data) => {
         const { to, message, tempId } = data;
-        if (!to || !message) return;
+        const toId = parseInt(to);
+        if (!toId || !message || typeof message !== 'string' || message.length > 1000) return;
         try {
+            const friendship = await pool.query(
+                `SELECT 1 FROM friendships WHERE status = 'accepted'
+                   AND ((user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1))`,
+                [userId, toId]
+            );
+            if (friendship.rows.length === 0) return;
+
             const result = await pool.query(
                 'INSERT INTO messages (sender_id, receiver_id, content) VALUES ($1, $2, $3) RETURNING id',
-                [userId, to, message]
+                [userId, toId, message]
             );
             const newMessageId = result.rows[0]?.id;
             const realMessage = {
-                id: newMessageId,
-                sender_id: userId,
-                content: message,
-                created_at: new Date().toISOString(),
-                is_boosted: false
+                id: newMessageId, sender_id: userId, content: message,
+                created_at: new Date().toISOString(), is_boosted: false
             };
-            const toEntry = onlineUsers.get(to);
-            if (toEntry && toEntry.socketId) io.to(toEntry.socketId).emit('private_message', { from: userId, message, timestamp: new Date().toISOString(), id: newMessageId });
-            if (tempId) {
-                socket.emit('message_confirmed', { tempId, realMessage });
+            const toEntry = onlineUsers.get(toId);
+            if (toEntry && toEntry.socketId) {
+                io.to(toEntry.socketId).emit('private_message', { from: userId, message, timestamp: new Date().toISOString(), id: newMessageId });
+            } else {
+                // receiver has no open connection → phone / closed app notification
+                pushTo(toId, { title: session.username, body: message.slice(0, 80), friendId: userId });
             }
+            if (tempId) socket.emit('message_confirmed', { tempId, realMessage });
         } catch (err) { console.error('Error saving message:', err); }
     });
 
@@ -1529,7 +1589,7 @@ io.on('connection', (socket) => {
     });
     socket.on('group_message', async (data) => {
         const { groupId, message } = data;
-        if (!groupId || !message) return;
+        if (!groupId || !message || typeof message !== 'string' || message.length > 1000) return;
         try {
             const membership = await pool.query(
                 'SELECT 1 FROM group_members WHERE group_id = $1 AND user_id = $2',
@@ -1541,15 +1601,27 @@ io.on('connection', (socket) => {
                 'INSERT INTO group_messages (group_id, sender_id, content) VALUES ($1, $2, $3) RETURNING id',
                 [groupId, userId, message]
             );
-            const newId = result.rows[0].id;
+            const payload = { groupId, from: userId, message, timestamp: new Date().toISOString(), id: result.rows[0].id };
+            io.to(`group_${groupId}`).emit('group_message', payload);
 
-            io.to(`group_${groupId}`).emit('group_message', {
-                groupId,
-                from: userId,
-                message,
-                timestamp: new Date().toISOString(),
-                id: newId
-            });
+            // everyone else in the group who is NOT looking at it right now
+            const room = io.sockets.adapter.rooms.get(`group_${groupId}`) || new Set();
+            const [info, members] = await Promise.all([
+                pool.query('SELECT name FROM groups WHERE id = $1', [groupId]),
+                pool.query('SELECT user_id FROM group_members WHERE group_id = $1 AND user_id <> $2', [groupId, userId])
+            ]);
+            const groupName = info.rows[0]?.name || 'Group';
+            for (const m of members.rows) {
+                const entry = onlineUsers.get(m.user_id);
+                const inRoom = entry && [...entry.socketIds].some(sid => room.has(sid));
+                if (inRoom) continue;                                   // already got it live
+                if (entry) io.to(`user_${m.user_id}`).emit('group_message', payload);   // online elsewhere
+                else pushTo(m.user_id, {                                // offline → push
+                    title: groupName,
+                    body: `${session.username}: ${message.slice(0, 70)}`,
+                    groupId: Number(groupId)
+                });
+            }
         } catch (err) {
             console.error('Group message error:', err);
         }
