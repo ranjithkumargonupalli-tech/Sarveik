@@ -439,7 +439,7 @@ async function seedActivity(list, type) {
     try {
       const url = type === 'f' ? `/api/messages/${x.id}?offset=0&limit=1` : `/api/groups/${x.id}/messages?offset=0&limit=1`;
       const m = (await api(url))[0];
-      if (m) activity[ckey(type, x.id)] = { t: new Date(m.created_at).getTime(), p: m.content || '📎 File', i: type === 'f' && m.sender_id === x.id ? 1 : 0 };
+      if (m) activity[ckey(type, x.id)] = { t: new Date(m.created_at).getTime(), p: splitReply(m.content).text || '📎 File', i: type === 'f' && m.sender_id === x.id ? 1 : 0 };
     } catch (e) {}
   }));
   saveActivity();
@@ -815,10 +815,24 @@ function saveReplies() {
   }, 600);
 }
 const rKey = m => (curType() || 'x') + m.id;
+/* The quoted reply is embedded (invisibly) at the start of the message text, so it is stored and delivered
+   by ANY server and BOTH people see it – no server change needed. */
+const RP_RE = /^\u2063R(\d+)\u2064([\s\S]*?)\u2063/;
+function splitReply(content) {
+  const c = typeof content === 'string' ? content : '';
+  const m = c.match(RP_RE);
+  return m ? { text: c.slice(m[0].length), reply: { id: +m[1], content: m[2] || 'media' } } : { text: c, reply: null };
+}
+function encodeReply(id, text) {
+  if (!id) return text;
+  const snip = (msgText(id) || 'media').replace(/[\u2063\u2064\r\n]+/g, ' ').slice(0, 40);
+  const out = `\u2063R${id}\u2064${snip}\u2063${text}`;
+  return out.length <= 1000 ? out : text;     // too long → fall back to the plain reply id field
+}
 function replyInfo(m) {
   const r = m.replyTo ?? m.reply_to ?? m.replyToId ?? m.reply_to_id;
-  let info = null;
-  if (r !== undefined && r !== null && r !== '' && r !== 0) {
+  let info = splitReply(m.content).reply;
+  if (!info && r !== undefined && r !== null && r !== '' && r !== 0) {
     if (typeof r === 'object') {
       const id = r.id ?? r._id;
       info = { id, content: r.content || r.message || (r.fileName ? '📎 ' + r.fileName : '') || msgText(id) || 'media' };
@@ -848,7 +862,8 @@ function msgHTML(msg) {
     ? act('reply', 'fa-reply', 'Reply') + act('boost', 'fa-star', boostsLeft > 0 ? 'Free boost' : 'Pay 10 credits', 'boost') + act('copy', 'fa-copy', 'Copy') + act('del', 'fa-trash-alt', 'Delete', 'del')
     : act('reply', 'fa-reply', 'Reply') + act('copy', 'fa-copy', 'Copy');
   const isFile = !!(msg.fileData || msg.fileType);
-  const showText = msg.content && !(isFile && msg.content === msg.fileName);
+  const bodyText = splitReply(msg.content).text;
+  const showText = bodyText && !(isFile && bodyText === msg.fileName);
   const ri = replyInfo(msg);
   const reply = ri ? `<div class="reply-indicator" data-rid="${esc(ri.id)}"><i class="fas fa-reply"></i> <span class="ri-text">${esc(ri.content || 'media')}</span></div>` : '';
   const boost = msg.is_boosted ? '<div class="boost-badge"><i class="fas fa-star"></i></div>' : '';
@@ -856,7 +871,7 @@ function msgHTML(msg) {
   const status = pending ? '<span class="msg-status"><i class="fas fa-spinner"></i></span>' : isMe ? `<span class="msg-status">${sAt ? '<i class="fas fa-check-double"></i>' : '<i class="fas fa-check"></i>'}</span>` : '';
   return `<div class="msg ${isMe ? 'out' : 'in'}${pending ? ' sending' : ''}" data-id="${msg.id}" data-timestamp="${ts}"${sAt ? ` data-seen="1" data-seen-at="${sAt > 0 ? sAt : 0}"` : ''}${pending ? ` data-temp="${msg.id}"` : ''}>` +
     `<div class="msg-actions">${actions}</div>` +
-    `<div class="msg-bubble${msg.is_boosted ? ' boosted' : ''}">${boost}${reply}<span class="msg-text">${showText ? esc(msg.content) : ''}</span>${isFile ? renderFilePreview(msg) : ''}</div>` +
+    `<div class="msg-bubble${msg.is_boosted ? ' boosted' : ''}">${boost}${reply}<span class="msg-text">${showText ? esc(bodyText) : ''}</span>${isFile ? renderFilePreview(msg) : ''}</div>` +
     `<div class="msg-meta"><span class="msg-time">${timeAgo(msg.created_at)}</span>${status}</div></div>`;
 }
 const msgText = id => {
@@ -1049,7 +1064,7 @@ function sendMsg() {
   const rid = replyToId;
   appendMsg({ id: tempId, sender_id: currentUserId, content: txt, created_at: new Date().toISOString(), is_boosted: false,
     replyTo: rid ? { id: rid, content: msgText(rid) || 'media' } : null });
-  if (!emitMessage({ message: txt, replyTo: rid || null, tempId })) { document.querySelector(`.msg[data-temp="${tempId}"]`)?.remove(); return toast('Not connected yet – try again in a moment', 'error'); }
+  if (!emitMessage({ message: encodeReply(rid, txt), replyTo: rid || null, replyContent: rid ? (msgText(rid) || 'media').slice(0, 40) : null, tempId })) { document.querySelector(`.msg[data-temp="${tempId}"]`)?.remove(); return toast('Not connected yet – try again in a moment', 'error'); }
   settleTemp(tempId);
   touch(curType(), curId(), 'You: ' + txt);
   ta.value = ''; updateChar(); autoGrow(); resetReply();
@@ -1104,7 +1119,7 @@ async function handleFiles(files) {
       appendMsg({ id: tempId, sender_id: currentUserId, content: file.name, created_at: new Date().toISOString(), is_boosted: false,
         fileData: dataUrl, fileType: file.type, fileName: file.name, fileSize: file.size,
         replyTo: rid ? { id: rid, content: msgText(rid) || 'media' } : null });
-      if (!emitMessage({ message: file.name, fileData: dataUrl, fileType: file.type, fileName: file.name, fileSize: file.size, replyTo: rid || null, tempId })) throw new Error('Not connected');
+      if (!emitMessage({ message: encodeReply(rid, file.name), fileData: dataUrl, fileType: file.type, fileName: file.name, fileSize: file.size, replyTo: rid || null, replyContent: rid ? (msgText(rid) || 'media').slice(0, 40) : null, tempId })) throw new Error('Not connected');
       settleTemp(tempId);
       touch(curType(), curId(), '📎 ' + file.name);
       bar.style.width = '100%'; resetReply();
@@ -1288,7 +1303,7 @@ function initSocket() {
 
   socket.on('private_message', msg => {
     if (msg.from === currentUserId) return;
-    const text = msg.message || (msg.fileName ? '📎 ' + msg.fileName : '📎 File');
+    const text = splitReply(msg.message).text || (msg.fileName ? '📎 ' + msg.fileName : '📎 File');
     const isCurrent = currentFriendId === msg.from && !currentGroupId;
     touch('f', msg.from, text, null, true);
     markActive(msg.from);                                   // they just messaged → online
@@ -1296,7 +1311,7 @@ function initSocket() {
     if (isCurrent) {
       appendMsg({ id: msg.id || Date.now(), sender_id: msg.from, content: msg.message || '', created_at: msg.timestamp || new Date().toISOString(),
         is_boosted: false, fileData: msg.fileData, fileType: msg.fileType, fileName: msg.fileName, fileSize: msg.fileSize || 0,
-        replyTo: msg.replyTo || msg.reply_to || null });
+        replyTo: msg.replyTo || msg.reply_to || null, reply_content: msg.replyContent });
       if (viewingChat()) markRead(msg.from);
     }
     const hidden = document.hidden || !$('app').classList.contains('in-chat') && isMobile();
@@ -1310,14 +1325,14 @@ function initSocket() {
   });
 
   socket.on('group_message', data => {
-    const text = data.message || (data.fileName ? '📎 ' + data.fileName : '📎 File');
+    const text = splitReply(data.message).text || (data.fileName ? '📎 ' + data.fileName : '📎 File');
     const mine = data.from === currentUserId;
     const isCurrent = data.groupId === currentGroupId;
     if (!mine) { touch('g', data.groupId, text); flashRow('g', data.groupId); }
     if (isCurrent && !mine) {
       appendMsg({ id: data.id || Date.now(), sender_id: data.from, content: data.message || '', created_at: data.timestamp || new Date().toISOString(),
         is_boosted: false, fileData: data.fileData, fileType: data.fileType, fileName: data.fileName, fileSize: data.fileSize || 0,
-        replyTo: data.replyTo || data.reply_to || null });
+        replyTo: data.replyTo || data.reply_to || null, reply_content: data.replyContent });
     }
     if (!mine && (!isCurrent || document.hidden || (isMobile() && !$('app').classList.contains('in-chat')))) {
       addUnread('g', data.groupId); renderGroups();
