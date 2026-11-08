@@ -1,20 +1,29 @@
-/* Sarveik Chat service worker
-   - Background/mobile push notifications (needs a Web Push server with VAPID)
-   - Skips duplicate alerts when the chat is already open and visible
-   - Opens the exact chat (friend or group) when a notification is tapped
-   - Fast loading + offline fallback via a small app-shell cache
-   Place at the ROOT of your site so it is served as /sw.js */
+/* Sarveik Chat service worker  (v3)
+   - Background / mobile push notifications (Web Push + VAPID)
+   - No duplicate alerts while the chat is open, focused and visible
+   - Per-chat grouping: "Ravi (3 new messages)" + app-icon badge = total unread
+   - Notification actions: Open / Mark read (friend chats) / Dismiss
+   - Taps open the exact chat; payload URLs are validated (same-origin only)
+   - App-shell cache with offline fallback, size-capped, never caches live data
+   Serve from the ROOT of the site:  /sw.js  */
 
-const VERSION = 'v2';
+const VERSION = 'v3';
 const CACHE = 'sarveik-' + VERSION;
 const SHELL = ['/chat.html'];
 const DEFAULT_URL = '/chat.html';
+const ICON = '/icons/icon-192.png';
+const BADGE = '/icons/badge-72.png';       // optional: monochrome white-on-transparent PNG (Android status bar)
+const MAX_PAGES = 30;
+
+const OFFLINE_HTML = `<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Offline</title><body style="margin:0;height:100vh;display:grid;place-items:center;background:#0c0d14;color:#f1f3ff;font-family:system-ui,sans-serif;text-align:center">
+<div><div style="font-size:3rem">📡</div><h2>You're offline</h2><p style="color:#9ba3c0">Messages will load when you're back online.</p>
+<button onclick="location.reload()" style="margin-top:12px;padding:9px 20px;border:0;border-radius:10px;background:#7c6dfa;color:#fff;font-weight:600">Retry</button></div>`;
 
 /* ---------- Install / activate ---------- */
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).catch(() => {}).then(() => self.skipWaiting()));
 });
-
 self.addEventListener('activate', e => {
   e.waitUntil((async () => {
     const keys = await caches.keys();
@@ -24,145 +33,175 @@ self.addEventListener('activate', e => {
   })());
 });
 
-/* ---------- Fetch: network-first pages, stale-while-revalidate static ---------- */
+/* ---------- Fetch ---------- */
+async function trim(cache, max) {
+  const keys = await cache.keys();
+  if (keys.length > max) await Promise.all(keys.slice(0, keys.length - max).map(k => cache.delete(k)));
+}
 self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
   if (url.origin !== location.origin) return;
-  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/socket.io/')) return; // never cache live data
+  if (url.pathname === '/sw.js' || url.pathname.startsWith('/api/') || url.pathname.startsWith('/socket.io/')) return;
 
+  // Pages: network-first (always fresh), cached copy when offline
   if (req.mode === 'navigate') {
     e.respondWith((async () => {
       try {
         const res = (await e.preloadResponse) || (await fetch(req));
-        if (res.ok) { const c = await caches.open(CACHE); c.put(req, res.clone()); }
+        if (res.ok && res.type === 'basic') {
+          const c = await caches.open(CACHE);
+          await c.put(req, res.clone());
+          trim(c, MAX_PAGES);
+        }
         return res;
       } catch (_) {
-        return (await caches.match(req)) || (await caches.match(DEFAULT_URL)) || Response.error();
+        return (await caches.match(req, { ignoreSearch: true })) || (await caches.match(DEFAULT_URL)) ||
+          new Response(OFFLINE_HTML, { headers: { 'Content-Type': 'text/html; charset=utf-8' }, status: 503 });
       }
     })());
     return;
   }
 
+  // Static assets: stale-while-revalidate
   if (/\.(?:js|css|png|jpg|jpeg|svg|webp|ico|woff2?)$/i.test(url.pathname)) {
     e.respondWith((async () => {
       const cached = await caches.match(req);
       const net = fetch(req).then(res => {
-        if (res.ok) caches.open(CACHE).then(c => c.put(req, res.clone()));
+        if (res.ok && res.type === 'basic') { const copy = res.clone(); caches.open(CACHE).then(c => c.put(req, copy)); }
         return res;
-      }).catch(() => cached);
-      return cached || net;
+      }).catch(() => cached || Response.error());
+      if (cached) { e.waitUntil(net); return cached; }
+      return net;
     })());
   }
 });
 
 /* ---------- Helpers ---------- */
+const sameOrigin = u => { try { return new URL(u, location.origin).origin === location.origin; } catch (_) { return false; } };
 function chatUrl(d) {
-  if (d.url) return d.url;
+  if (d.url && sameOrigin(d.url)) return d.url;
   if (d.groupId) return DEFAULT_URL + '?group=' + encodeURIComponent(d.groupId);
   if (d.friendId) return DEFAULT_URL + '?friend=' + encodeURIComponent(d.friendId);
   return DEFAULT_URL;
 }
 function chatTag(d) {
-  if (d.tag) return d.tag;
+  if (d.tag) return String(d.tag);
   if (d.groupId) return 'msg-g' + d.groupId;
   if (d.friendId) return 'msg-f' + d.friendId;
   return 'msg';
 }
-const ICON = 'data:image/svg+xml,' + encodeURIComponent(
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#bae6fd"/><text x="32" y="44" font-size="34" text-anchor="middle">💬</text></svg>');
+async function updateBadge() {
+  if (!navigator.setAppBadge) return;
+  try {
+    const list = await self.registration.getNotifications();
+    const total = list.reduce((n, x) => n + ((x.data && x.data.count) || 1), 0);
+    total ? await navigator.setAppBadge(total) : await navigator.clearAppBadge();
+  } catch (_) {}
+}
+async function csrf() {
+  const r = await fetch('/api/csrf-token', { credentials: 'include' });
+  return (await r.json()).csrfToken;
+}
+async function markRead(friendId) {
+  try {
+    await fetch('/api/messages/read/' + encodeURIComponent(friendId), {
+      method: 'POST', credentials: 'include',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': await csrf() }
+    });
+  } catch (_) {}
+}
 
-/* ---------- Push ---------- */
-/* Payload JSON: { title, body, friendId | groupId, url, icon, image, tag, count, timestamp } */
+/* ---------- Push ----------
+   Payload JSON: { title, body, friendId | groupId, url, icon, badge, image, tag, count, timestamp } */
 self.addEventListener('push', event => {
   event.waitUntil((async () => {
     let d = {};
     try { d = event.data ? event.data.json() : {}; }
     catch (_) { d = { body: event.data ? event.data.text() : '' }; }
 
-    const url = chatUrl(d), tag = chatTag(d);
     const wins = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    if (!d.force && wins.some(c => c.visibilityState === 'visible' && c.focused)) return; // live socket already shows it
 
-    // Chat already on screen: the live socket shows it, so skip the system alert (no duplicates)
-    const watching = wins.some(c => c.visibilityState === 'visible' && c.focused);
-    if (watching) return;
-
-    // Replace the old notification for the same chat and keep a running count: "Ravi (3 new messages)"
+    const url = chatUrl(d), tag = chatTag(d);
     const existing = await self.registration.getNotifications({ tag });
     const prev = existing.reduce((n, x) => Math.max(n, (x.data && x.data.count) || 1), 0);
     const count = d.count || (existing.length ? prev + 1 : 1);
-    const title = (d.title || 'Sarveik Chat') + (count > 1 ? ` (${count} new messages)` : '');
+    const baseTitle = d.title || (existing[0] && existing[0].data && existing[0].data.baseTitle) || 'Sarveik Chat';
 
-    const opts = {
+    const actions = d.groupId
+      ? [{ action: 'open', title: 'Open' }, { action: 'dismiss', title: 'Dismiss' }]
+      : [{ action: 'open', title: 'Open' }, { action: 'read', title: 'Mark read' }];
+
+    await self.registration.showNotification(count > 1 ? `${baseTitle} (${count} new messages)` : baseTitle, {
       body: d.body || 'You have a new message',
       icon: d.icon || ICON,
-      badge: d.badge || d.icon || ICON,
+      badge: d.badge || BADGE,
       image: d.image,
-      tag,
-      renotify: true,
+      tag, renotify: true,
       timestamp: d.timestamp || Date.now(),
       vibrate: [120, 60, 120],
-      data: { url, friendId: d.friendId, groupId: d.groupId, count },
-      actions: [{ action: 'open', title: 'Open' }, { action: 'dismiss', title: 'Dismiss' }]
-    };
-    await self.registration.showNotification(title, opts);
-
-    if (navigator.setAppBadge) {
-      const all = await self.registration.getNotifications();
-      navigator.setAppBadge(all.length).catch(() => {});
-    }
+      data: { url, friendId: d.friendId, groupId: d.groupId, count, baseTitle },
+      actions
+    });
+    await updateBadge();
   })());
 });
 
-/* ---------- Notification click: focus the app and open the right chat ---------- */
+/* ---------- Click / close ---------- */
 self.addEventListener('notificationclick', event => {
   event.notification.close();
-  if (event.action === 'dismiss') return;
   const data = event.notification.data || {};
-  const url = data.url || chatUrl(data);
+  if (event.action === 'dismiss') { event.waitUntil(updateBadge()); return; }
+  if (event.action === 'read') { event.waitUntil((async () => { if (data.friendId) await markRead(data.friendId); await updateBadge(); })()); return; }
 
+  const url = chatUrl(data);
   event.waitUntil((async () => {
     const list = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    const msg = { type: 'open-chat', open: url, friendId: data.friendId, groupId: data.groupId };
-    for (const c of list) {
-      if ('focus' in c) { await c.focus(); c.postMessage(msg); return; }
+    // prefer a window that is already on the chat page, then any visible one
+    const target = list.find(c => c.url.includes(DEFAULT_URL)) || list.find(c => c.visibilityState === 'visible') || list[0];
+    if (target && 'focus' in target) {
+      await target.focus();
+      target.postMessage({ type: 'open-chat', open: url, friendId: data.friendId, groupId: data.groupId });
+    } else if (self.clients.openWindow) {
+      await self.clients.openWindow(url);
     }
-    if (self.clients.openWindow) await self.clients.openWindow(url);
+    await updateBadge();
   })());
 });
+self.addEventListener('notificationclose', e => e.waitUntil(updateBadge()));
 
-/* ---------- Page → SW: clear notifications of a chat once the user opens it ---------- */
+/* ---------- Page → SW ---------- */
 self.addEventListener('message', event => {
   const m = event.data || {};
   if (m.type === 'clear-notifications') {
     event.waitUntil((async () => {
-      const opts = m.tag ? { tag: m.tag } : {};
-      (await self.registration.getNotifications(opts)).forEach(n => n.close());
-      if (navigator.setAppBadge) {
-        const left = await self.registration.getNotifications();
-        left.length ? navigator.setAppBadge(left.length).catch(() => {}) : navigator.clearAppBadge().catch(() => {});
-      }
+      (await self.registration.getNotifications(m.tag ? { tag: m.tag } : {})).forEach(n => n.close());
+      await updateBadge();
     })());
   }
   if (m.type === 'skip-waiting') self.skipWaiting();
 });
 
-/* ---------- Keep the push subscription alive if the browser rotates it ---------- */
+/* ---------- Keep the push subscription alive when the browser rotates it ---------- */
 function b64u(s) {
-  const p = '='.repeat((4 - s.length % 4) % 4), b = (s + p).replace(/-/g, '+').replace(/_/g, '/'), r = atob(b);
+  const p = '='.repeat((4 - s.length % 4) % 4), r = atob((s + p).replace(/-/g, '+').replace(/_/g, '/'));
   return Uint8Array.from([...r].map(c => c.charCodeAt(0)));
 }
 self.addEventListener('pushsubscriptionchange', event => {
   event.waitUntil((async () => {
     try {
-      const { key } = await (await fetch('/api/push/public-key', { credentials: 'include' })).json();
-      if (!key) return;
-      const sub = await self.registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u(key) });
-      const { csrfToken } = await (await fetch('/api/csrf-token', { credentials: 'include' })).json();
+      let key = event.oldSubscription && event.oldSubscription.options && event.oldSubscription.options.applicationServerKey;
+      if (!key) {
+        const j = await (await fetch('/api/push/public-key', { credentials: 'include' })).json();
+        if (!j.key) return;
+        key = b64u(j.key);
+      }
+      const sub = await self.registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: key });
       await fetch('/api/push/subscribe', {
         method: 'POST', credentials: 'include',
-        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': await csrf() },
         body: JSON.stringify(sub)
       });
     } catch (_) {}
