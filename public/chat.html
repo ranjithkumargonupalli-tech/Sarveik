@@ -133,7 +133,9 @@ button{font-family:inherit}
 .file-icon span{font-size:.7rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .msg-meta{display:flex;align-items:center;gap:5px;margin-top:2px;padding:0 4px}
 .msg-time{font-size:.6rem;color:var(--text3);font-family:var(--mono)}
-.msg-status{font-size:.55rem}.msg-status .fa-check-circle{color:var(--green)}.msg-status .fa-spinner{color:var(--accent);animation:spin 1s linear infinite}
+.msg-status{font-size:.62rem}.msg-status .fa-check{color:var(--text3)}.msg-status .fa-check-double{color:var(--green);animation:tickPop .35s ease-out}.msg-status .fa-spinner{color:var(--accent);animation:spin 1s linear infinite}
+@keyframes tickPop{from{transform:scale(.4);opacity:0}}
+.seen-label{font-size:.6rem;font-weight:600;color:var(--green);font-family:var(--mono);animation:msgIn .25s ease-out}
 @keyframes spin{to{transform:rotate(360deg)}}
 .msg-actions{display:flex;gap:4px;position:absolute;top:-16px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:2}
 .msg.out .msg-actions{right:0}.msg.in .msg-actions{left:0}
@@ -542,6 +544,7 @@ document.addEventListener('visibilitychange', () => {
   setAppHeight();
   if (socket && !socket.connected) socket.connect();   // mobile browsers kill sockets in background
   if (curType()) { clearUnread(curType(), curId()); clearNotifs((curType() === 'f' ? 'msg-f' : 'msg-g') + curId()); }
+  if (curType() === 'f' && viewingChat()) markRead(currentFriendId);   // came back to the app: messages that arrived meanwhile are now read
   renderFriends(); renderGroups();
 });
 window.addEventListener('online', () => { if (socket && !socket.connected) socket.connect(); });
@@ -683,7 +686,7 @@ function resetReply() { replyToId = null; $('replyPreview').classList.remove('vi
 
 async function selectFriend(id) {
   showChatView();
-  if (currentFriendId === id && !currentGroupId) return;
+  if (currentFriendId === id && !currentGroupId) { clearUnread('f', id); renderFriends(); markRead(id); return; }
   if (currentGroupId) { socket?.emit('leave_group', currentGroupId); currentGroupId = null; }
   currentFriendId = id; resetReply(); hideTyping();
   clearUnread('f', id); clearNotifs('msg-f' + id);
@@ -741,8 +744,9 @@ function msgHTML(msg) {
   const showText = msg.content && !(isFile && msg.content === msg.fileName);
   const reply = msg.replyTo ? `<div class="reply-indicator"><i class="fas fa-reply"></i> ${esc(msg.replyTo.content || 'media')}</div>` : '';
   const boost = msg.is_boosted ? '<div class="boost-badge"><i class="fas fa-star"></i></div>' : '';
-  const status = pending ? '<span class="msg-status"><i class="fas fa-spinner"></i></span>' : isMe ? '<span class="msg-status"><i class="fas fa-check-circle"></i></span>' : '';
-  return `<div class="msg ${isMe ? 'out' : 'in'}${pending ? ' sending' : ''}" data-id="${msg.id}" data-timestamp="${ts}"${pending ? ` data-temp="${msg.id}"` : ''}>` +
+  const sAt = isMe && !pending ? seenTs(msg) : 0;   // 0 = not seen yet, -1 = seen (time unknown), >0 = seen at that time
+  const status = pending ? '<span class="msg-status"><i class="fas fa-spinner"></i></span>' : isMe ? `<span class="msg-status">${sAt ? '<i class="fas fa-check-double"></i>' : '<i class="fas fa-check"></i>'}</span>` : '';
+  return `<div class="msg ${isMe ? 'out' : 'in'}${pending ? ' sending' : ''}" data-id="${msg.id}" data-timestamp="${ts}"${sAt ? ` data-seen="1" data-seen-at="${sAt > 0 ? sAt : 0}"` : ''}${pending ? ` data-temp="${msg.id}"` : ''}>` +
     `<div class="msg-actions">${actions}</div>` +
     `<div class="msg-bubble${msg.is_boosted ? ' boosted' : ''}">${boost}${reply}<span class="msg-text">${showText ? esc(msg.content) : ''}</span>${isFile ? renderFilePreview(msg) : ''}</div>` +
     `<div class="msg-meta"><span class="msg-time">${timeAgo(msg.created_at)}</span>${status}</div></div>`;
@@ -852,7 +856,7 @@ function emitMessage(payload) {
 function settleTemp(tempId) {
   setTimeout(() => {
     const el = document.querySelector(`.msg[data-temp="${tempId}"]`);
-    if (el) { el.classList.remove('sending'); const s = el.querySelector('.msg-status'); if (s) s.innerHTML = '<i class="fas fa-check-circle"></i>'; }
+    if (el) { el.classList.remove('sending'); const s = el.querySelector('.msg-status'); if (s) s.innerHTML = '<i class="fas fa-check"></i>'; }
   }, 6000);
 }
 function autoGrow() { const ta = $('msgInput'); ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 110) + 'px'; }
@@ -979,6 +983,78 @@ $('searchResults').addEventListener('click', e => {
   $('searchModal').classList.remove('open');
 });
 
+/* ============ READ RECEIPTS (gray ✓ = sent, green ✓✓ = seen by the other person) ============ */
+const seenCut = lsGet('nc_seen', {});   // friendId -> time up to which that friend has read my messages
+const viewingChat = () => !document.hidden && (!isMobile() || $('app').classList.contains('in-chat'));
+
+/* 0 = not seen, -1 = seen (time unknown), >0 = time it was seen. Private chats only. */
+function seenTs(m) {
+  if (curType() !== 'f') return 0;
+  const v = m.read_at || m.seen_at || m.readAt || m.seenAt;
+  if (v) return new Date(v).getTime() || -1;
+  if (m.is_read === true || m.is_read === 1 || m.is_read === '1' || m.read === true || m.read === 1 || m.seen === true || m.seen === 1 || m.is_seen === true || m.is_seen === 1) return -1;
+  const cut = seenCut[currentFriendId];
+  if (cut && new Date(m.created_at).getTime() <= cut) return cut;
+  return 0;
+}
+function seenText(t) {
+  if (!t || t < 0) return 'Seen';
+  const s = Math.max(0, (Date.now() - t) / 1000);
+  if (s < 45) return 'Seen now';
+  const m = Math.round(s / 60);
+  if (m < 60) return m <= 1 ? 'Seen 1 minute ago' : `Seen ${m} minutes ago`;
+  const h = Math.floor(m / 60);
+  return h === 1 ? 'Seen 1 hour ago' : `Seen ${h} hours ago`;
+}
+function markSeen(el, t) {
+  if (el.dataset.seen) return;
+  el.dataset.seen = '1'; el.dataset.seenAt = t > 0 ? t : 0;
+  const s = el.querySelector('.msg-status'); if (s) s.innerHTML = '<i class="fas fa-check-double"></i>';
+  scheduleSeenLabel();
+}
+/* The "Seen …" label sits under the LAST message of mine that has been seen, in this chat only */
+function updateSeenLabel() {
+  document.querySelectorAll('.seen-label').forEach(x => x.remove());
+  if (curType() !== 'f') return;
+  const seen = document.querySelectorAll('.msg.out[data-seen="1"]');
+  const last = seen[seen.length - 1]; if (!last) return;
+  const meta = last.querySelector('.msg-meta'); if (!meta) return;
+  const l = document.createElement('span');
+  l.className = 'seen-label'; l.dataset.t = last.dataset.seenAt || 0; l.textContent = seenText(+l.dataset.t);
+  meta.appendChild(l);
+}
+let slRaf = 0;
+function scheduleSeenLabel() { cancelAnimationFrame(slRaf); slRaf = requestAnimationFrame(updateSeenLabel); }
+new MutationObserver(scheduleSeenLabel).observe($('messagesArea'), { childList: true });   // new chat / new message → refresh label
+setInterval(() => { const l = document.querySelector('.seen-label'); if (l) l.textContent = seenText(+l.dataset.t); }, 10000);   // "now" → "1 minute ago" → …
+
+/* Friend read everything I sent up to time `at` */
+function applySeen(fid, at) {
+  const t = at || Date.now();
+  seenCut[fid] = Math.max(seenCut[fid] || 0, t); lsSet('nc_seen', seenCut);
+  if (currentFriendId !== fid || currentGroupId) return;
+  document.querySelectorAll('.msg.out:not([data-seen]):not(.sending)').forEach(el => {
+    if (+el.dataset.id > 0 && +el.dataset.timestamp <= t) markSeen(el, t);
+  });
+}
+/* Fallback if the server only stores is_read / read_at (no live event): re-check my unseen messages every few seconds */
+async function pollSeen() {
+  if (document.hidden || curType() !== 'f') return;
+  const unseen = [...document.querySelectorAll('.msg.out:not([data-seen]):not(.sending)')].filter(e => +e.dataset.id > 0);
+  if (!unseen.length) return;
+  const fid = currentFriendId;
+  try {
+    const msgs = await api(`/api/messages/${fid}?offset=0&limit=${MSG_LIMIT}`);
+    if (fid !== currentFriendId || currentGroupId) return;
+    msgs.forEach(m => {
+      if (m.sender_id !== currentUserId) return;
+      const el = document.querySelector(`.msg[data-id="${m.id}"]`); if (!el || el.dataset.seen) return;
+      const t = seenTs(m); if (t) markSeen(el, t > 0 ? t : Date.now());
+    });
+  } catch (e) {}
+}
+setInterval(pollSeen, 5000);
+
 /* ============ SOCKET ============ */
 let firstConnect = true;
 function initSocket() {
@@ -1001,7 +1077,7 @@ function initSocket() {
       appendMsg({ id: msg.id || Date.now(), sender_id: msg.from, content: msg.message || '', created_at: msg.timestamp || new Date().toISOString(),
         is_boosted: false, fileData: msg.fileData, fileType: msg.fileType, fileName: msg.fileName, fileSize: msg.fileSize || 0,
         replyTo: msg.replyTo ? { id: msg.replyTo, content: msgText(msg.replyTo) || 'message' } : null });
-      markRead(msg.from);
+      if (viewingChat()) markRead(msg.from);
     }
     const hidden = document.hidden || !$('app').classList.contains('in-chat') && isMobile();
     if (!isCurrent || document.hidden || hidden) {
@@ -1033,6 +1109,15 @@ function initSocket() {
   });
 
   socket.on('message_confirmed', d => { if (d.tempId && d.realMessage) replaceTempMsg(d.tempId, d.realMessage); });
+
+  // the other person opened the chat and read my messages (server emits one of these names)
+  ['messages_read', 'message_read', 'read_receipt', 'messages_seen'].forEach(ev => socket.on(ev, d => {
+    if (d === null || typeof d !== 'object') d = { by: d };
+    const fid = +(d.by ?? d.from ?? d.reader ?? d.readerId ?? d.userId ?? d.friendId);
+    if (!fid) return;
+    const at = d.readAt || d.read_at || d.seenAt || d.seen_at || d.timestamp;
+    applySeen(fid, at ? (new Date(at).getTime() || Date.now()) : Date.now());
+  }));
 
   socket.on('user_status', d => {
     const f = friends.find(x => x.id === d.userId); if (!f) return;
