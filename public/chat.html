@@ -380,7 +380,7 @@ select.form-input[multiple]{height:110px}
         <div class="input-row">
           <div class="input-tools-left">
             <button class="tool-btn" id="emojiBtn" title="Emoji"><i class="far fa-smile-wink"></i></button>
-            <button class="tool-btn" title="Send photo"><i class="fas fa-image"></i><input type="file" id="fileInput" multiple accept="image/*" /></button>
+            <button class="tool-btn" title="Send photo (up to 200 MB)"><i class="fas fa-image"></i><input type="file" id="fileInput" multiple accept="image/*" /></button>
             <button class="tool-btn mic" id="micBtn" title="Record voice message"><i class="fas fa-microphone"></i></button>
           </div>
           <div class="textarea-wrap"><textarea id="msgInput" placeholder="Type a message…" rows="1" disabled maxlength="1000" enterkeyhint="send"></textarea></div>
@@ -429,7 +429,7 @@ let typingTimeout = null, msgOffset = 0, hasMore = true, loading = false;
 let boostsLeft = 0, credits = 0, csrfToken = null, searchQ = '', typingEl = null, replyToId = null, expireInterval = null, isSending = false;
 let lastSwipe = 0;
 const MSG_LIMIT = 30, EXPIRE_HOURS = 24;
-const MAX_PAYLOAD = 700000;               // max size (chars of base64) of one photo / voice note – stays under socket.io's default 1 MB limit
+const MAX_FILE = 200 * 1024 * 1024;       // largest photo / voice note allowed (200 MB) – sent as the ORIGINAL file, no compression
 const MAX_VOICE_SEC = 90;                 // longest voice message
 const ACTIVE_WINDOW = 2 * 60 * 1000;      // a friend counts as "online" only if active in chat within the last 2 minutes
 const SEEN_REFRESH = 2000;                // "Seen …" label + read-receipt check refresh (ms)
@@ -455,6 +455,7 @@ function filePreviewText(type, name) {
   return '📎 ' + (name || 'File');
 }
 const fmtDur = s => { s = Math.max(0, Math.round(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+const fmtSize = b => b >= 1048576 ? (b / 1048576).toFixed(b >= 10485760 ? 0 : 1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB';
 
 /* ============ MOBILE VIEWPORT (fits address bar + keyboard exactly) ============ */
 function setAppHeight() {
@@ -577,7 +578,7 @@ function toast(msg, type = 'success', onClick = null, title = '') {
   el.innerHTML = `<i class="fas ${icons[type] || icons.info}"></i><div>${title ? `<b>${esc(title)}</b><small>${esc(msg)}</small>` : esc(msg)}</div>`;
   if (onClick) el.addEventListener('click', () => { onClick(); el.remove(); });
   $('toastContainer').appendChild(el);
-  setTimeout(() => { el.style.cssText += 'opacity:0;transform:translateX(120%);transition:.3s'; setTimeout(() => el.remove(), 300); }, onClick ? 5000 : 3200);
+  setTimeout(() => { el.style.cssText += 'opacity:0;transform:translateX(120%);transition:.3s'; setTimeout(() => el.remove(), 300); }, onClick ? 5000 : (type === 'error' ? 5000 : 3200));
 }
 let audioCtx = null;
 function sound() {
@@ -923,7 +924,7 @@ function voiceBars(seed, n = 28) {
 }
 function renderFilePreview(msg) {
   const ft = msg.fileType || '', fd = msg.fileData || '', fn = msg.fileName || 'file';
-  const size = msg.fileSize > 0 ? (msg.fileSize / 1024).toFixed(0) + 'KB' : '';
+  const size = msg.fileSize > 0 ? fmtSize(msg.fileSize) : '';
   if (ft.startsWith('image/')) {
     if (fd) return `<div class="msg-file photo" data-open="${esc(fd)}" data-name="${esc(fn)}"><img src="${esc(fd)}" alt="${esc(fn)}" loading="lazy" draggable="false" onerror="this.parentNode.innerHTML='<div class=&quot;file-icon&quot;><i class=&quot;fas fa-image&quot;></i><span>Photo unavailable</span></div>'" /></div>`;
     return `<div class="msg-file photo"><div class="file-icon"><i class="fas fa-image"></i><span>Photo</span></div></div>`;
@@ -1182,6 +1183,7 @@ async function clearChat() {
 function downloadFile(url, name) { const a = document.createElement('a'); a.href = url; a.download = name || 'file'; document.body.appendChild(a); a.click(); a.remove(); }
 
 /* ============ SENDING ============ */
+const pendingMedia = new Set();   // temp ids of photos / voice notes still travelling to the server
 function emitMessage(payload) {
   if (!socket || !socket.connected) return false;
   if (currentGroupId) socket.emit('group_message', { groupId: currentGroupId, ...payload });
@@ -1189,11 +1191,13 @@ function emitMessage(payload) {
   else return false;
   return true;
 }
-function settleTemp(tempId) {
+/* after `ms` the message is treated as delivered (big files get more time) */
+function settleTemp(tempId, ms = 6000) {
   setTimeout(() => {
+    pendingMedia.delete(tempId);
     const el = document.querySelector(`.msg[data-temp="${tempId}"]`);
     if (el) { el.classList.remove('sending'); const s = el.querySelector('.msg-status'); if (s) s.innerHTML = '<i class="fas fa-check"></i>'; }
-  }, 6000);
+  }, ms);
 }
 function autoGrow() { const ta = $('msgInput'); ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 110) + 'px'; }
 function sendMsg() {
@@ -1231,52 +1235,25 @@ function updateChar() {
   $('charCount').className = 'char-count' + (n > 900 ? ' over' : n > 700 ? ' warn' : '');
 }
 
-/* ============ PHOTOS (photos only) ============ */
+/* ============ PHOTOS (photos only, ORIGINAL quality, up to 200 MB) ============ */
 const readAsDataURL = f => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(new Error('Could not read file')); r.readAsDataURL(f); });
-const isPhoto = f => (f.type && f.type.startsWith('image/')) || (!f.type && /\.(jpe?g|png|gif|webp|bmp|avif|heic|heif)$/i.test(f.name || ''));
-function loadImage(file) {
-  return new Promise((res, rej) => {
-    const url = URL.createObjectURL(file), img = new Image();
-    img.onload = () => { URL.revokeObjectURL(url); res(img); };
-    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('decode')); };
-    img.src = url;
-  });
-}
-/* Shrinks every photo until it fits the socket limit (phone photos are 3–10 MB) */
-async function preparePhoto(file) {
-  const rawOk = file.size * 1.37 < MAX_PAYLOAD;
-  if (file.type === 'image/gif' && rawOk) return { dataUrl: await readAsDataURL(file), type: 'image/gif', name: file.name };
-  try {
-    const img = await loadImage(file);
-    const W = img.naturalWidth || img.width, H = img.naturalHeight || img.height;
-    let scale = Math.min(1, 1280 / Math.max(W, H)), q = 0.82, out = '';
-    for (let i = 0; i < 7; i++) {
-      const cv = document.createElement('canvas');
-      cv.width = Math.max(1, Math.round(W * scale)); cv.height = Math.max(1, Math.round(H * scale));
-      const cx = cv.getContext('2d');
-      cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height);   // transparent PNGs don't turn black
-      cx.drawImage(img, 0, 0, cv.width, cv.height);
-      out = cv.toDataURL('image/jpeg', q);
-      if (out.length <= MAX_PAYLOAD) break;
-      q = Math.max(0.5, q - 0.1); scale *= 0.8;
-    }
-    if (out.length > MAX_PAYLOAD) throw new Error('too big');
-    return { dataUrl: out, type: 'image/jpeg', name: (file.name || 'photo').replace(/\.[^.]+$/, '') + '.jpg' };
-  } catch (e) {
-    if (rawOk) return { dataUrl: await readAsDataURL(file), type: file.type || 'image/jpeg', name: file.name };   // e.g. browser can't decode HEIC but it's small
-    throw new Error('Could not process this photo');
-  }
-}
-/* One place that sends any media message (photo or voice note) */
-function sendFileMessage(dataUrl, type, name, size) {
+const IMG_EXT = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp', avif: 'image/avif', heic: 'image/heic', heif: 'image/heif' };
+const extOf = f => ((f.name || '').split('.').pop() || '').toLowerCase();
+const isPhoto = f => (f.type && f.type.startsWith('image/')) || (!f.type && !!IMG_EXT[extOf(f)]);
+const photoType = f => (f.type && f.type.startsWith('image/')) ? f.type : (IMG_EXT[extOf(f)] || 'image/jpeg');
+
+/* One place that sends any media message (photo or voice note).
+   `localUrl` = light blob: URL used for my own bubble so huge files don't freeze the page. */
+function sendFileMessage(dataUrl, type, name, size, localUrl) {
   const tempId = -Date.now() - Math.random();
   const rid = replyToId;
   appendMsg({ id: tempId, sender_id: currentUserId, content: name, created_at: new Date().toISOString(), is_boosted: false,
-    fileData: dataUrl, fileType: type, fileName: name, fileSize: size,
+    fileData: localUrl || dataUrl, fileType: type, fileName: name, fileSize: size,
     replyTo: rid ? { id: rid, content: msgText(rid) || 'media' } : null });
   const ok = emitMessage({ message: encodeReply(rid, name), fileData: dataUrl, fileType: type, fileName: name, fileSize: size, replyTo: rid || null, replyContent: rid ? (msgText(rid) || 'media').slice(0, 40) : null, tempId });
   if (!ok) { document.querySelector(`.msg[data-temp="${tempId}"]`)?.remove(); throw new Error('Not connected – try again in a moment'); }
-  settleTemp(tempId);
+  pendingMedia.add(tempId);
+  settleTemp(tempId, Math.max(6000, Math.round(size / 150)));   // ~150 KB/s worst case before we stop showing the spinner
   touch(curType(), curId(), 'You: ' + filePreviewText(type, name));
   resetReply();
 }
@@ -1285,18 +1262,18 @@ async function handleFiles(files) {
   if (!files.length) return;
   if (!curType()) return toast('Select a conversation first', 'error');
   const progress = $('uploadProgress'), bar = $('uploadBar'), label = $('uploadLabel');
-  let sent = 0;
   for (const file of files) {
     if (!isPhoto(file)) { toast('Only photos can be sent here', 'error'); continue; }
-    progress.classList.add('visible'); bar.style.width = '30%'; label.textContent = `Preparing photo…`;
+    if (file.size > MAX_FILE) { toast(`"${file.name}" is ${fmtSize(file.size)} – the limit is 200 MB`, 'error'); continue; }
+    progress.classList.add('visible'); bar.style.width = '25%'; label.textContent = `Reading ${fmtSize(file.size)}…`;
     try {
-      const p = await preparePhoto(file);
-      bar.style.width = '70%';
-      sendFileMessage(p.dataUrl, p.type, p.name, Math.round(p.dataUrl.length * 0.73));
-      bar.style.width = '100%'; sent++;
+      const dataUrl = await readAsDataURL(file);                 // original bytes, untouched
+      bar.style.width = '70%'; label.textContent = 'Sending…';
+      sendFileMessage(dataUrl, photoType(file), file.name || 'photo.jpg', file.size, URL.createObjectURL(file));
+      bar.style.width = '100%';
     } catch (err) { toast(err.message || 'Error sending photo', 'error'); }
   }
-  setTimeout(() => { progress.classList.remove('visible'); bar.style.width = '0'; }, 400);
+  setTimeout(() => { progress.classList.remove('visible'); bar.style.width = '0'; }, 600);
 }
 $('fileInput').addEventListener('change', function () { if (this.files.length) { handleFiles(this.files); this.value = ''; } });
 const dropZone = $('dropZone'), chatMain = $('chatMain');
@@ -1358,10 +1335,10 @@ async function finishRec(r) {
   try {
     const base = (r.mime || 'audio/webm').split(';')[0];
     const blob = new Blob(r.chunks, { type: base });
+    if (blob.size > MAX_FILE) return toast('Voice message too large', 'error');
     const dataUrl = await readAsDataURL(blob);
-    if (dataUrl.length > MAX_PAYLOAD) return toast('Voice message too long – keep it shorter', 'error');
     const ext = base.includes('mp4') ? 'm4a' : base.includes('ogg') ? 'ogg' : 'webm';
-    sendFileMessage(dataUrl, base, `voice_${secs}s.${ext}`, blob.size);
+    sendFileMessage(dataUrl, base, `voice_${secs}s.${ext}`, blob.size, URL.createObjectURL(blob));
   } catch (err) { toast(err.message || 'Could not send voice message', 'error'); }
 }
 $('micBtn').addEventListener('click', () => { rec ? stopRec(false) : startRec(); });
@@ -1528,7 +1505,15 @@ function initSocket() {
     if (!firstConnect) { loadConv(true); loadFriends(); }   // catch up on anything missed while the phone slept
     firstConnect = false;
   });
-  socket.on('disconnect', () => { $('connPulse').className = 'pulse off'; $('connLabel').textContent = 'Reconnecting…'; });
+  socket.on('disconnect', () => {
+    $('connPulse').className = 'pulse off'; $('connLabel').textContent = 'Reconnecting…';
+    /* Socket.IO drops the connection when a message is bigger than the server's maxHttpBufferSize → the file never arrived */
+    if (pendingMedia.size) {
+      pendingMedia.forEach(id => document.querySelector(`.msg[data-temp="${id}"]`)?.remove());
+      pendingMedia.clear();
+      toast('File not sent – the connection dropped while uploading. If it keeps happening, the server limit (maxHttpBufferSize) is smaller than the file.', 'error');
+    }
+  });
 
   socket.on('private_message', msg => {
     if (msg.from === currentUserId) return;
@@ -1602,6 +1587,7 @@ function initSocket() {
 }
 /* Swap the temporary bubble for the server's copy – and keep the quoted reply + media even if the server doesn't echo them */
 function replaceTempMsg(tempId, real) {
+  pendingMedia.delete(tempId);
   const el = document.querySelector(`.msg[data-temp="${tempId}"]`); if (!el) return;
   const ri = el.querySelector('.reply-indicator');
   const prev = ri ? { id: ri.dataset.rid, content: ri.querySelector('.ri-text')?.textContent || 'media' } : null;
