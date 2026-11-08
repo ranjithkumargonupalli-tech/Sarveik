@@ -132,6 +132,7 @@ button{font-family:inherit}
 .boost-badge{position:absolute;top:-9px;right:-7px;background:var(--gold);color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:.6rem}
 .msg-file{margin:6px 0 2px;border-radius:var(--radius-xs);overflow:hidden;max-width:280px;background:var(--bg3);border:1px solid var(--border2);cursor:pointer}
 .msg-file img,.msg-file video{width:100%;max-height:260px;object-fit:cover;display:block;background:#000;-webkit-user-drag:none;user-drag:none}
+.msg-file.photo{min-height:60px}
 .file-icon{display:flex;flex-direction:column;align-items:center;padding:20px 16px;gap:6px;color:var(--text2);white-space:normal}
 .file-icon i{font-size:2.4rem;color:var(--accent)}
 .file-icon span{font-size:.7rem;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -154,6 +155,28 @@ button{font-family:inherit}
 .reply-text{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .reply-cancel{cursor:pointer;color:var(--red);padding:0 4px}
 
+/* Voice message player */
+.voice{display:flex;align-items:center;gap:10px;min-width:220px;max-width:100%;padding:2px 0}
+.voice-btn{width:38px;height:38px;border-radius:50%;border:none;background:rgba(255,255,255,.22);color:inherit;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;font-size:.85rem;transition:transform .15s}
+.voice-btn:active{transform:scale(.92)}
+.voice-btn:disabled{opacity:.5;cursor:not-allowed}
+.msg.in .voice-btn{background:var(--accent);color:#fff}
+.voice-track{flex:1;height:30px;display:flex;align-items:center;gap:2px;cursor:pointer;min-width:100px}
+.voice-track i{display:block;flex:1;min-width:2px;background:currentColor;border-radius:2px;opacity:.35;transition:opacity .15s}
+.voice-track i.on{opacity:1}
+.voice-time{font-family:var(--mono);font-size:.68rem;min-width:34px;text-align:right;opacity:.9}
+
+/* Recording bar */
+.rec-bar{display:none;align-items:center;gap:10px;padding:4px 2px}
+.input-card.recording .rec-bar{display:flex}
+.input-card.recording .input-row,.input-card.recording .input-bottom,.input-card.recording .reply-preview{display:none!important}
+.rec-dot{width:10px;height:10px;border-radius:50%;background:var(--red);animation:blink 1s infinite;flex-shrink:0}
+.rec-time{font-family:var(--mono);font-size:.85rem;font-weight:600;min-width:42px}
+.rec-hint{flex:1;font-size:.75rem;color:var(--text3);display:flex;align-items:center;gap:8px;min-width:0;overflow:hidden}
+.rec-hint .tp-wave i{background:var(--red)}
+.rec-cancel:hover{background:var(--red)!important;border-color:var(--red)!important}
+.tool-btn.mic.live{background:var(--red);color:#fff;border-color:var(--red)}
+
 /* Swipe-to-reply (drag a message sideways) */
 .msg.swiping{user-select:none;-webkit-user-select:none;z-index:3}
 .msg.swipe-back{transition:transform .22s cubic-bezier(.2,.8,.3,1)}
@@ -168,23 +191,19 @@ button{font-family:inherit}
 .typing-dots span:nth-child(2){animation-delay:.15s}.typing-dots span:nth-child(3){animation-delay:.3s}
 .typing-dots.mini span{width:4px;height:4px;background:var(--accent)}
 @keyframes bounce{0%,60%,100%{transform:translateY(0);opacity:.4}30%{transform:translateY(-6px);opacity:1}}
-/* wave bars */
 .tp-wave{display:flex;gap:3px;align-items:center;height:16px}
 .tp-wave i{display:block;width:3px;height:5px;background:var(--accent);border-radius:2px;animation:wave 1s ease-in-out infinite}
 .tp-wave i:nth-child(2){animation-delay:.1s}.tp-wave i:nth-child(3){animation-delay:.2s}.tp-wave i:nth-child(4){animation-delay:.3s}.tp-wave i:nth-child(5){animation-delay:.4s}
 @keyframes wave{0%,100%{height:5px;opacity:.5}50%{height:16px;opacity:1}}
-/* pulsing dots */
 .tp-pulse{display:flex;gap:5px;align-items:center}
 .tp-pulse span{width:7px;height:7px;border-radius:50%;background:var(--accent);animation:pulseDot 1.2s ease-in-out infinite}
 .tp-pulse span:nth-child(2){animation-delay:.2s;background:var(--accent2)}.tp-pulse span:nth-child(3){animation-delay:.4s}
 @keyframes pulseDot{0%,80%,100%{transform:scale(.5);opacity:.4}40%{transform:scale(1.2);opacity:1}}
-/* pen writing */
 .tp-pen{display:flex;flex-direction:column;align-items:flex-start;gap:1px;color:var(--accent)}
 .tp-pen i{font-size:.85rem;transform-origin:bottom left;animation:pen .9s ease-in-out infinite}
 .tp-pen b{display:block;height:2px;border-radius:2px;background:linear-gradient(90deg,var(--accent),var(--accent2));animation:ink 1.6s ease-in-out infinite}
 @keyframes pen{0%,100%{transform:translateX(0) rotate(-12deg)}50%{transform:translateX(7px) rotate(8deg)}}
 @keyframes ink{0%{width:0}70%,100%{width:26px}}
-/* jumping letters */
 .tp-letters{display:flex;align-items:flex-end;font-weight:600;color:var(--accent);font-size:.8rem}
 .tp-letters span,.tp-letters em{display:inline-block;font-style:normal;animation:letterHop 1.2s ease-in-out infinite;animation-delay:calc(var(--i)*.08s)}
 @keyframes letterHop{0%,50%,100%{transform:translateY(0)}25%{transform:translateY(-5px)}}
@@ -201,6 +220,7 @@ button{font-family:inherit}
 .input-area{padding:10px 16px calc(12px + var(--sab));background:var(--surface);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--border);flex-shrink:0}
 .input-card{background:var(--bg2);border:1.5px solid var(--border2);border-radius:var(--radius);padding:8px 10px;display:flex;flex-direction:column;gap:6px}
 .input-card:focus-within{border-color:var(--accent)}
+.input-card.recording{border-color:var(--red)}
 .input-row{display:flex;align-items:flex-end;gap:8px}
 .input-tools-left{display:flex;gap:4px;flex-shrink:0}
 .textarea-wrap{flex:1;min-width:0}
@@ -219,6 +239,14 @@ textarea#msgInput:disabled{opacity:.4;cursor:not-allowed}
 .bar-fill{height:100%;width:0;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:width .3s}
 .drop-zone{display:none;position:absolute;inset:0;background:rgba(124,109,250,.1);backdrop-filter:blur(4px);border:3px dashed var(--accent);z-index:100;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:var(--text2);font-weight:600;font-size:1.1rem}
 .drop-zone.visible{display:flex}.drop-zone i{font-size:3rem;color:var(--accent)}
+
+/* Photo viewer */
+.lightbox{position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:8000;display:none;align-items:center;justify-content:center;padding:calc(56px + var(--sat)) 12px calc(12px + var(--sab))}
+.lightbox.open{display:flex}
+.lightbox img{max-width:100%;max-height:100%;object-fit:contain;border-radius:6px;animation:msgIn .2s ease-out}
+.lb-btn{position:absolute;top:calc(10px + var(--sat));width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.14);color:#fff;border:none;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1rem;text-decoration:none}
+.lb-btn:hover{background:var(--accent)}
+.lb-close{right:12px}.lb-dl{right:60px}
 
 /* Toast / modal / emoji */
 .toast-container{position:fixed;bottom:20px;right:20px;z-index:99999;display:flex;flex-direction:column;gap:6px;max-width:340px;width:100%;pointer-events:none}
@@ -275,12 +303,13 @@ select.form-input[multiple]{height:110px}
   .modal-backdrop{padding:10px;align-items:flex-end}
   .modal-card{width:100%;border-radius:20px 20px 12px 12px;padding:20px 18px calc(18px + var(--sab))}
   .msg-file{max-width:220px}
+  .voice{min-width:200px}
   .drop-zone{display:none!important}
 }
 @media(max-width:380px){
-  #soundBtn{display:none}
   .msg-bubble{padding:7px 11px}
   .chip{padding:3px 7px}
+  .voice{min-width:170px}
 }
 </style>
 </head>
@@ -338,25 +367,38 @@ select.form-input[multiple]{height:110px}
       <div class="empty-state"><div class="empty-icon"><i class="fas fa-comments"></i></div><h3>No conversation selected</h3><p>Choose a friend or group from the sidebar</p></div>
     </div>
     <div class="input-area">
-      <div class="input-card">
+      <div class="input-card" id="inputCard">
         <div class="reply-preview" id="replyPreview"><span class="reply-text"><i class="fas fa-reply"></i> Replying to: <span id="replyPreviewText"></span></span><span class="reply-cancel" id="replyCancel"><i class="fas fa-times-circle"></i></span></div>
         <div class="upload-progress" id="uploadProgress"><span class="label" id="uploadLabel">Uploading...</span><div class="bar-track"><div class="bar-fill" id="uploadBar"></div></div></div>
+        <div class="rec-bar" id="recBar">
+          <button class="tool-btn rec-cancel" id="recCancel" title="Cancel recording"><i class="fas fa-trash-alt"></i></button>
+          <div class="rec-dot"></div>
+          <span class="rec-time" id="recTime">0:00</span>
+          <div class="rec-hint"><div class="tp-wave"><i></i><i></i><i></i><i></i><i></i></div><span>Recording…</span></div>
+          <button class="send-btn" id="recSend" title="Send voice message"><i class="fas fa-paper-plane"></i></button>
+        </div>
         <div class="input-row">
           <div class="input-tools-left">
             <button class="tool-btn" id="emojiBtn" title="Emoji"><i class="far fa-smile-wink"></i></button>
-            <button class="tool-btn" title="Attach file"><i class="fas fa-paperclip"></i><input type="file" id="fileInput" multiple accept="image/*,video/*,.pdf,.doc,.docx,.txt,.zip,.rar,.xls,.xlsx,.ppt,.pptx" /></button>
-            <button class="tool-btn" id="soundBtn" title="Toggle sound"><i class="fas fa-volume-up"></i></button>
+            <button class="tool-btn" title="Send photo"><i class="fas fa-image"></i><input type="file" id="fileInput" multiple accept="image/*" /></button>
+            <button class="tool-btn mic" id="micBtn" title="Record voice message"><i class="fas fa-microphone"></i></button>
           </div>
           <div class="textarea-wrap"><textarea id="msgInput" placeholder="Type a message…" rows="1" disabled maxlength="1000" enterkeyhint="send"></textarea></div>
         </div>
         <div class="input-bottom"><span class="char-count" id="charCount">0 / 1000</span><button class="send-btn" id="sendBtn" disabled><i class="fas fa-paper-plane"></i> Send</button></div>
       </div>
     </div>
-    <div class="drop-zone" id="dropZone"><i class="fas fa-cloud-upload-alt"></i><span>Drop files here to send</span></div>
+    <div class="drop-zone" id="dropZone"><i class="fas fa-cloud-upload-alt"></i><span>Drop photos here to send</span></div>
   </main>
 </div>
 
 <div class="toast-container" id="toastContainer"></div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lb-btn lb-close" id="lbClose" aria-label="Close"><i class="fas fa-times"></i></button>
+  <a class="lb-btn lb-dl" id="lbDl" download title="Download"><i class="fas fa-download"></i></a>
+  <img id="lbImg" alt="" />
+</div>
 
 <div class="modal-backdrop" id="groupModal"><div class="modal-card">
   <button class="modal-close" data-close="groupModal"><i class="fas fa-times"></i></button>
@@ -382,16 +424,37 @@ const APP_TITLE = 'Sarveik Chat – Instant Messaging';
 const isMobile = () => window.matchMedia('(max-width:768px)').matches;
 let socket = null, currentUserId = +localStorage.getItem('nc_uid') || null, currentFriendId = null, currentGroupId = null;
 let friends = [], groups = [];
-let soundOn = true, typingTimeout = null, msgOffset = 0, hasMore = true, loading = false;
+const soundOn = true;   // notification sound is always on (toggle button was replaced by the mic)
+let typingTimeout = null, msgOffset = 0, hasMore = true, loading = false;
 let boostsLeft = 0, credits = 0, csrfToken = null, searchQ = '', typingEl = null, replyToId = null, expireInterval = null, isSending = false;
 let lastSwipe = 0;
 const MSG_LIMIT = 30, EXPIRE_HOURS = 24;
+const MAX_PAYLOAD = 700000;               // max size (chars of base64) of one photo / voice note – stays under socket.io's default 1 MB limit
+const MAX_VOICE_SEC = 90;                 // longest voice message
 const ACTIVE_WINDOW = 2 * 60 * 1000;      // a friend counts as "online" only if active in chat within the last 2 minutes
 const SEEN_REFRESH = 2000;                // "Seen …" label + read-receipt check refresh (ms)
 const lsGet = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
 /* wipe cached chats/friends so the next person on this device never sees them */
 const wipeLocal = () => { try { Object.keys(localStorage).filter(k => k.startsWith('nc_') && k !== 'nc_theme' && k !== 'nc_typing').forEach(k => localStorage.removeItem(k)); } catch (e) {} };
+
+/* Accept both camelCase and snake_case file fields from the server */
+function norm(m) {
+  if (!m) return m;
+  return { ...m,
+    fileData: m.fileData ?? m.file_data,
+    fileType: m.fileType ?? m.file_type,
+    fileName: m.fileName ?? m.file_name,
+    fileSize: m.fileSize ?? m.file_size };
+}
+/* Short label used in the chat list + reply previews */
+function filePreviewText(type, name) {
+  type = type || '';
+  if (type.startsWith('audio/')) return '🎤 Voice message';
+  if (type.startsWith('image/')) return '📷 Photo';
+  return '📎 ' + (name || 'File');
+}
+const fmtDur = s => { s = Math.max(0, Math.round(s || 0)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
 
 /* ============ MOBILE VIEWPORT (fits address bar + keyboard exactly) ============ */
 function setAppHeight() {
@@ -413,7 +476,7 @@ function showChatView() {
 }
 function showListView() { $('app').classList.remove('in-chat'); }
 $('backBtn').addEventListener('click', () => { if (history.state && history.state.chat) history.back(); else showListView(); });
-window.addEventListener('popstate', showListView);
+window.addEventListener('popstate', () => { cancelRec(); showListView(); });
 
 /* Conversation activity: drives ordering (latest chat on top), previews, unread badges.
    i = 1 when the last message in that chat came FROM the other person (used for presence) */
@@ -438,8 +501,8 @@ async function seedActivity(list, type) {
   await Promise.all(missing.map(async x => {
     try {
       const url = type === 'f' ? `/api/messages/${x.id}?offset=0&limit=1` : `/api/groups/${x.id}/messages?offset=0&limit=1`;
-      const m = (await api(url))[0];
-      if (m) activity[ckey(type, x.id)] = { t: new Date(m.created_at).getTime(), p: splitReply(m.content).text || '📎 File', i: type === 'f' && m.sender_id === x.id ? 1 : 0 };
+      const m = norm((await api(url))[0]);
+      if (m) activity[ckey(type, x.id)] = { t: new Date(m.created_at).getTime(), p: m.fileType ? filePreviewText(m.fileType, m.fileName) : (splitReply(m.content).text || '📎 File'), i: type === 'f' && m.sender_id === x.id ? 1 : 0 };
     } catch (e) {}
   }));
   saveActivity();
@@ -766,6 +829,7 @@ function resetReply() { replyToId = null; $('replyPreview').classList.remove('vi
 async function selectFriend(id) {
   showChatView();
   if (currentFriendId === id && !currentGroupId) { clearUnread('f', id); renderFriends(); markRead(id); return; }
+  cancelRec(); voiceStop();
   if (currentGroupId) { socket?.emit('leave_group', currentGroupId); currentGroupId = null; }
   currentFriendId = id; resetReply(); hideTyping();
   clearUnread('f', id); clearNotifs('msg-f' + id);
@@ -778,6 +842,7 @@ async function selectFriend(id) {
 async function selectGroup(id) {
   showChatView();
   if (currentGroupId === id) return;
+  cancelRec(); voiceStop();
   if (currentGroupId) socket?.emit('leave_group', currentGroupId);
   currentGroupId = id; currentFriendId = null; resetReply(); hideTyping();
   clearUnread('g', id); clearNotifs('msg-g' + id);
@@ -846,15 +911,33 @@ function replyInfo(m) {
 }
 
 /* ============ MESSAGE RENDERING ============ */
+/* deterministic "waveform" so every voice note looks the same for sender and receiver */
+function voiceBars(seed, n = 28) {
+  let h = '', s = Math.abs(+seed || 7) % 997 + 3;
+  for (let i = 0; i < n; i++) {
+    s = (s * 9301 + 49297) % 233280;
+    const v = 6 + Math.round((s / 233280) * 18);
+    h += `<i style="height:${v}px"></i>`;
+  }
+  return h;
+}
 function renderFilePreview(msg) {
   const ft = msg.fileType || '', fd = msg.fileData || '', fn = msg.fileName || 'file';
   const size = msg.fileSize > 0 ? (msg.fileSize / 1024).toFixed(0) + 'KB' : '';
-  if (ft.startsWith('image/') && fd) return `<div class="msg-file" data-open="${esc(fd)}"><img src="${esc(fd)}" alt="${esc(fn)}" loading="lazy" draggable="false" onerror="this.style.display='none'" /></div>`;
+  if (ft.startsWith('image/')) {
+    if (fd) return `<div class="msg-file photo" data-open="${esc(fd)}" data-name="${esc(fn)}"><img src="${esc(fd)}" alt="${esc(fn)}" loading="lazy" draggable="false" onerror="this.parentNode.innerHTML='<div class=&quot;file-icon&quot;><i class=&quot;fas fa-image&quot;></i><span>Photo unavailable</span></div>'" /></div>`;
+    return `<div class="msg-file photo"><div class="file-icon"><i class="fas fa-image"></i><span>Photo</span></div></div>`;
+  }
+  if (ft.startsWith('audio/')) {
+    const dm = fn.match(/_(\d+)s\./), dur = dm ? +dm[1] : 0;
+    return `<div class="voice" data-src="${esc(fd)}" data-dur="${dur}"><button class="voice-btn" type="button" ${fd ? '' : 'disabled'} aria-label="Play"><i class="fas fa-play"></i></button><div class="voice-track">${voiceBars(dur * 31 + (fn.length || 1))}</div><span class="voice-time">${fmtDur(dur)}</span></div>`;
+  }
   if (ft.startsWith('video/') && fd) return `<div class="msg-file"><video src="${esc(fd)}" controls playsinline preload="metadata" style="max-height:200px"></video></div>`;
   const icon = ft.includes('pdf') ? 'fa-file-pdf' : ft.includes('word') || ft.includes('doc') ? 'fa-file-word' : ft.includes('excel') || ft.includes('sheet') ? 'fa-file-excel' : ft.includes('zip') || ft.includes('rar') ? 'fa-file-archive' : ft.includes('text') ? 'fa-file-alt' : 'fa-file';
   return `<div class="msg-file" data-dl="${esc(fd)}" data-name="${esc(fn)}"><div class="file-icon"><i class="fas ${icon}"></i><span>${esc(fn)}</span><span style="color:var(--text3)">${size}</span></div></div>`;
 }
 function msgHTML(msg) {
+  msg = norm(msg);
   const isMe = msg.sender_id === currentUserId, pending = msg.id < 0;
   const ts = new Date(msg.created_at).getTime();
   const act = (a, ic, t, cls = '') => `<button class="msg-act ${cls}" data-act="${a}" title="${t}"><i class="fas ${ic}"></i></button>`;
@@ -878,7 +961,12 @@ const msgText = id => {
   if (id === undefined || id === null) return '';
   const el = document.querySelector(`.msg[data-id="${id}"]`);
   if (!el) return '';
-  return el.querySelector('.msg-text')?.textContent?.trim() || (el.querySelector('.msg-file') ? '📎 ' + (el.querySelector('.file-icon span')?.textContent || 'Media') : '');
+  const t = el.querySelector('.msg-text')?.textContent?.trim();
+  if (t) return t;
+  if (el.querySelector('.voice')) return '🎤 Voice message';
+  if (el.querySelector('.msg-file.photo')) return '📷 Photo';
+  if (el.querySelector('.msg-file')) return '📎 ' + (el.querySelector('.file-icon span')?.textContent || 'Media');
+  return '';
 };
 function appendMsg(data) {
   const c = $('messagesArea');
@@ -890,7 +978,7 @@ function appendMsg(data) {
 
 /* ============ LOAD MESSAGES (cached copy shows instantly, fresh copy replaces it) ============ */
 const mcKey = (t, i) => 'nc_m_' + t + i;
-function cacheMsgs(t, i, msgs) { lsSet(mcKey(t, i), msgs.slice(0, MSG_LIMIT).map(m => ({ ...m, fileData: undefined }))); }
+function cacheMsgs(t, i, msgs) { lsSet(mcKey(t, i), msgs.slice(0, MSG_LIMIT).map(m => ({ ...m, fileData: undefined, file_data: undefined }))); }
 async function loadConv(reset = true) {
   if (loading && !reset) return;
   const type = curType(), id = curId();
@@ -931,6 +1019,55 @@ async function loadConv(reset = true) {
   } finally { loading = false; }
 }
 
+/* ============ PHOTO VIEWER ============ */
+function openLightbox(src, name) {
+  $('lbImg').src = src; $('lbDl').href = src; $('lbDl').setAttribute('download', name || 'photo.jpg');
+  $('lightbox').classList.add('open');
+}
+function closeLightbox() { $('lightbox').classList.remove('open'); $('lbImg').removeAttribute('src'); }
+$('lbClose').addEventListener('click', closeLightbox);
+$('lightbox').addEventListener('click', e => { if (e.target === $('lightbox') || e.target === $('lbImg')) closeLightbox(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+/* ============ VOICE PLAYER ============ */
+let vcur = null;   // { el, audio }
+function setVoiceUI(el, p, playing, cur) {
+  if (!el || !el.isConnected) return;
+  const bars = el.querySelectorAll('.voice-track i'), n = bars.length, k = Math.round(Math.min(1, Math.max(0, p)) * n);
+  bars.forEach((b, i) => b.classList.toggle('on', i < k));
+  const ic = el.querySelector('.voice-btn i'); if (ic) ic.className = 'fas ' + (playing ? 'fa-pause' : 'fa-play');
+  const t = el.querySelector('.voice-time'); if (t) t.textContent = fmtDur(playing || p > 0 ? cur : (+el.dataset.dur || 0));
+}
+function voiceStop() {
+  if (!vcur) return;
+  try { vcur.audio.pause(); } catch (e) {}
+  const el = vcur.el; vcur = null;
+  setVoiceUI(el, 0, false, 0);
+}
+function voiceToggle(el) {
+  if (!el.dataset.src) return;
+  if (vcur && vcur.el === el) {
+    if (vcur.audio.paused) vcur.audio.play().catch(() => {});
+    else { vcur.audio.pause(); const a = vcur.audio, d = +el.dataset.dur || a.duration || 0; setVoiceUI(el, d ? a.currentTime / d : 0, false, a.currentTime); }
+    return;
+  }
+  voiceStop();
+  const a = new Audio(el.dataset.src), dur = +el.dataset.dur || 0;
+  vcur = { el, audio: a };
+  a.addEventListener('timeupdate', () => { const d = dur || (isFinite(a.duration) ? a.duration : 0); setVoiceUI(el, d ? a.currentTime / d : 0, !a.paused, a.currentTime); });
+  a.addEventListener('play', () => setVoiceUI(el, 0.001, true, a.currentTime));
+  a.addEventListener('ended', () => { if (vcur && vcur.audio === a) vcur = null; setVoiceUI(el, 0, false, 0); });
+  a.addEventListener('error', () => { if (vcur && vcur.audio === a) vcur = null; setVoiceUI(el, 0, false, 0); toast('Cannot play this voice message', 'error'); });
+  a.play().catch(() => { vcur = null; setVoiceUI(el, 0, false, 0); toast('Cannot play this voice message', 'error'); });
+}
+function voiceSeek(el, ratio) {
+  if (!el.dataset.src) return;
+  if (!vcur || vcur.el !== el) voiceToggle(el);
+  const a = vcur && vcur.audio; if (!a) return;
+  const d = +el.dataset.dur || (isFinite(a.duration) ? a.duration : 0);
+  if (d) { try { a.currentTime = Math.min(d - 0.05, Math.max(0, ratio * d)); } catch (e) {} }
+}
+
 /* ============ MESSAGE ACTIONS (tap on mobile, hover on desktop) ============ */
 $('messagesArea').addEventListener('click', e => {
   if (Date.now() - lastSwipe < 400) return;               // a drag just ended – not a tap
@@ -942,13 +1079,17 @@ $('messagesArea').addEventListener('click', e => {
     ({ reply: setReply, boost: boostMsg, copy: copyMsg, del: deleteMsg })[btn.dataset.act]?.(id);
     return;
   }
+  const vbtn = e.target.closest('.voice-btn');
+  if (vbtn) { voiceToggle(vbtn.closest('.voice')); return; }
+  const vtr = e.target.closest('.voice-track');
+  if (vtr) { const r = vtr.getBoundingClientRect(); voiceSeek(vtr.closest('.voice'), (e.clientX - r.left) / (r.width || 1)); return; }
   const ri = e.target.closest('.reply-indicator');        // tap a quoted reply → jump to the original message
   if (ri) {
     const orig = document.querySelector(`.msg[data-id="${CSS.escape(ri.dataset.rid)}"]`);
     if (orig) { orig.scrollIntoView({ behavior: 'smooth', block: 'center' }); orig.classList.remove('hl'); void orig.offsetWidth; orig.classList.add('hl'); setTimeout(() => orig.classList.remove('hl'), 1500); }
     return;
   }
-  const open = e.target.closest('[data-open]'); if (open) return window.open(open.dataset.open, '_blank');
+  const open = e.target.closest('[data-open]'); if (open) return openLightbox(open.dataset.open, open.dataset.name);
   const dl = e.target.closest('[data-dl]'); if (dl) return downloadFile(dl.dataset.dl, dl.dataset.name);
   const m = e.target.closest('.msg');                     // tap a bubble → toggle its action buttons
   document.querySelectorAll('.msg.show-actions').forEach(x => { if (x !== m) x.classList.remove('show-actions'); });
@@ -969,7 +1110,7 @@ $('replyCancel').addEventListener('click', resetReply);
   let sw = null;
   area.addEventListener('pointerdown', e => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
-    if (e.target.closest('video,audio,button,a,input,textarea,.msg-actions')) return;
+    if (e.target.closest('video,audio,button,a,input,textarea,.msg-actions,.voice-track')) return;
     const bubble = e.target.closest('.msg-bubble'); if (!bubble) return;
     const el = bubble.closest('.msg'); if (!el || !el.dataset.id) return;
     sw = { el, id: +el.dataset.id, pid: e.pointerId, x: e.clientX, y: e.clientY, mv: 0, dir: 0, drag: false, hit: false, icon: null };
@@ -1042,7 +1183,7 @@ function downloadFile(url, name) { const a = document.createElement('a'); a.href
 
 /* ============ SENDING ============ */
 function emitMessage(payload) {
-  if (!socket) return false;
+  if (!socket || !socket.connected) return false;
   if (currentGroupId) socket.emit('group_message', { groupId: currentGroupId, ...payload });
   else if (currentFriendId) socket.emit('private_message', { to: currentFriendId, ...payload });
   else return false;
@@ -1090,40 +1231,70 @@ function updateChar() {
   $('charCount').className = 'char-count' + (n > 900 ? ' over' : n > 700 ? ' warn' : '');
 }
 
-/* ============ FILES ============ */
-const readAsDataURL = f => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = rej; r.readAsDataURL(f); });
-function compressImage(file, maxW = 800, q = 0.7) {
-  return readAsDataURL(file).then(src => new Promise((res, rej) => {
-    const img = new Image();
-    img.onload = () => {
-      let w = img.width, h = img.height;
-      if (w > maxW) { h = maxW / w * h; w = maxW; }
-      const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
-      cv.getContext('2d').drawImage(img, 0, 0, w, h);
-      res(cv.toDataURL('image/jpeg', q));
-    };
-    img.onerror = rej; img.src = src;
-  }));
+/* ============ PHOTOS (photos only) ============ */
+const readAsDataURL = f => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(new Error('Could not read file')); r.readAsDataURL(f); });
+const isPhoto = f => (f.type && f.type.startsWith('image/')) || (!f.type && /\.(jpe?g|png|gif|webp|bmp|avif|heic|heif)$/i.test(f.name || ''));
+function loadImage(file) {
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => { URL.revokeObjectURL(url); res(img); };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('decode')); };
+    img.src = url;
+  });
+}
+/* Shrinks every photo until it fits the socket limit (phone photos are 3–10 MB) */
+async function preparePhoto(file) {
+  const rawOk = file.size * 1.37 < MAX_PAYLOAD;
+  if (file.type === 'image/gif' && rawOk) return { dataUrl: await readAsDataURL(file), type: 'image/gif', name: file.name };
+  try {
+    const img = await loadImage(file);
+    const W = img.naturalWidth || img.width, H = img.naturalHeight || img.height;
+    let scale = Math.min(1, 1280 / Math.max(W, H)), q = 0.82, out = '';
+    for (let i = 0; i < 7; i++) {
+      const cv = document.createElement('canvas');
+      cv.width = Math.max(1, Math.round(W * scale)); cv.height = Math.max(1, Math.round(H * scale));
+      const cx = cv.getContext('2d');
+      cx.fillStyle = '#fff'; cx.fillRect(0, 0, cv.width, cv.height);   // transparent PNGs don't turn black
+      cx.drawImage(img, 0, 0, cv.width, cv.height);
+      out = cv.toDataURL('image/jpeg', q);
+      if (out.length <= MAX_PAYLOAD) break;
+      q = Math.max(0.5, q - 0.1); scale *= 0.8;
+    }
+    if (out.length > MAX_PAYLOAD) throw new Error('too big');
+    return { dataUrl: out, type: 'image/jpeg', name: (file.name || 'photo').replace(/\.[^.]+$/, '') + '.jpg' };
+  } catch (e) {
+    if (rawOk) return { dataUrl: await readAsDataURL(file), type: file.type || 'image/jpeg', name: file.name };   // e.g. browser can't decode HEIC but it's small
+    throw new Error('Could not process this photo');
+  }
+}
+/* One place that sends any media message (photo or voice note) */
+function sendFileMessage(dataUrl, type, name, size) {
+  const tempId = -Date.now() - Math.random();
+  const rid = replyToId;
+  appendMsg({ id: tempId, sender_id: currentUserId, content: name, created_at: new Date().toISOString(), is_boosted: false,
+    fileData: dataUrl, fileType: type, fileName: name, fileSize: size,
+    replyTo: rid ? { id: rid, content: msgText(rid) || 'media' } : null });
+  const ok = emitMessage({ message: encodeReply(rid, name), fileData: dataUrl, fileType: type, fileName: name, fileSize: size, replyTo: rid || null, replyContent: rid ? (msgText(rid) || 'media').slice(0, 40) : null, tempId });
+  if (!ok) { document.querySelector(`.msg[data-temp="${tempId}"]`)?.remove(); throw new Error('Not connected – try again in a moment'); }
+  settleTemp(tempId);
+  touch(curType(), curId(), 'You: ' + filePreviewText(type, name));
+  resetReply();
 }
 async function handleFiles(files) {
+  files = [...files];
   if (!files.length) return;
   if (!curType()) return toast('Select a conversation first', 'error');
   const progress = $('uploadProgress'), bar = $('uploadBar'), label = $('uploadLabel');
+  let sent = 0;
   for (const file of files) {
-    progress.classList.add('visible'); bar.style.width = '30%'; label.textContent = `Processing ${file.name}…`;
+    if (!isPhoto(file)) { toast('Only photos can be sent here', 'error'); continue; }
+    progress.classList.add('visible'); bar.style.width = '30%'; label.textContent = `Preparing photo…`;
     try {
-      // compress every large-ish image: phone photos are huge
-      const dataUrl = file.type.startsWith('image/') && file.size > 400 * 1024 ? await compressImage(file) : await readAsDataURL(file);
-      const tempId = -Date.now() - Math.random();
-      const rid = replyToId;
-      appendMsg({ id: tempId, sender_id: currentUserId, content: file.name, created_at: new Date().toISOString(), is_boosted: false,
-        fileData: dataUrl, fileType: file.type, fileName: file.name, fileSize: file.size,
-        replyTo: rid ? { id: rid, content: msgText(rid) || 'media' } : null });
-      if (!emitMessage({ message: encodeReply(rid, file.name), fileData: dataUrl, fileType: file.type, fileName: file.name, fileSize: file.size, replyTo: rid || null, replyContent: rid ? (msgText(rid) || 'media').slice(0, 40) : null, tempId })) throw new Error('Not connected');
-      settleTemp(tempId);
-      touch(curType(), curId(), '📎 ' + file.name);
-      bar.style.width = '100%'; resetReply();
-    } catch (err) { toast('Error sending file: ' + err.message, 'error'); }
+      const p = await preparePhoto(file);
+      bar.style.width = '70%';
+      sendFileMessage(p.dataUrl, p.type, p.name, Math.round(p.dataUrl.length * 0.73));
+      bar.style.width = '100%'; sent++;
+    } catch (err) { toast(err.message || 'Error sending photo', 'error'); }
   }
   setTimeout(() => { progress.classList.remove('visible'); bar.style.width = '0'; }, 400);
 }
@@ -1132,14 +1303,72 @@ const dropZone = $('dropZone'), chatMain = $('chatMain');
 chatMain.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('visible'); });
 chatMain.addEventListener('dragleave', e => { if (!e.relatedTarget || !chatMain.contains(e.relatedTarget)) dropZone.classList.remove('visible'); });
 chatMain.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('visible'); if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files); });
-
-/* ============ SOUND TOGGLE / EMOJI ============ */
-$('soundBtn').addEventListener('click', function () {
-  soundOn = !soundOn;
-  this.innerHTML = `<i class="fas ${soundOn ? 'fa-volume-up' : 'fa-volume-mute'}"></i>`;
-  this.classList.toggle('on', !soundOn);
-  toast(`Sound ${soundOn ? 'on' : 'off'}`, 'info');
+/* paste a photo straight into the message box */
+$('msgInput').addEventListener('paste', e => {
+  const imgs = [...(e.clipboardData?.files || [])].filter(isPhoto);
+  if (imgs.length) { e.preventDefault(); handleFiles(imgs); }
 });
+
+/* ============ VOICE RECORDING ============ */
+let rec = null;
+function recUI(on) {
+  $('inputCard').classList.toggle('recording', on);
+  $('micBtn').classList.toggle('live', on);
+}
+async function startRec() {
+  if (rec) return;
+  if (!curType()) return toast('Select a conversation first', 'error');
+  if (!navigator.mediaDevices?.getUserMedia || !window.MediaRecorder) return toast('Voice recording is not supported in this browser', 'error');
+  voiceStop();
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }); }
+  catch (e) { return toast('Allow microphone access to record voice messages', 'error'); }
+  const mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus'].find(t => { try { return MediaRecorder.isTypeSupported(t); } catch (e) { return false; } }) || '';
+  let mr;
+  try { mr = new MediaRecorder(stream, mime ? { mimeType: mime, audioBitsPerSecond: 32000 } : { audioBitsPerSecond: 32000 }); }
+  catch (e) { stream.getTracks().forEach(t => t.stop()); return toast('Could not start recording', 'error'); }
+  const r = rec = { mr, stream, chunks: [], t0: Date.now(), cancel: false, mime: mr.mimeType || mime || 'audio/webm', timer: null, conv: [curType(), curId()] };
+  mr.ondataavailable = e => { if (e.data && e.data.size) r.chunks.push(e.data); };
+  mr.onstop = () => finishRec(r);
+  mr.start(250);
+  $('recTime').textContent = '0:00'; recUI(true);
+  r.timer = setInterval(() => {
+    const s = (Date.now() - r.t0) / 1000;
+    $('recTime').textContent = fmtDur(s);
+    if (s >= MAX_VOICE_SEC) stopRec(false);
+  }, 200);
+  try { navigator.vibrate?.(15); } catch (e) {}
+}
+function stopRec(cancel) {
+  if (!rec) return;
+  rec.cancel = !!cancel;
+  clearInterval(rec.timer);
+  try { if (rec.mr.state !== 'inactive') rec.mr.stop(); else finishRec(rec); } catch (e) { finishRec(rec); }
+}
+function cancelRec() { if (rec) stopRec(true); }
+async function finishRec(r) {
+  if (rec === r) rec = null;
+  clearInterval(r.timer);
+  try { r.stream.getTracks().forEach(t => t.stop()); } catch (e) {}
+  recUI(false);
+  const secs = Math.round((Date.now() - r.t0) / 1000);
+  if (r.cancel) return;
+  if (secs < 1 || !r.chunks.length) return toast('Hold on a little longer – message too short', 'info');
+  if (curType() !== r.conv[0] || curId() !== r.conv[1]) return toast('Voice message discarded (conversation changed)', 'info');
+  try {
+    const base = (r.mime || 'audio/webm').split(';')[0];
+    const blob = new Blob(r.chunks, { type: base });
+    const dataUrl = await readAsDataURL(blob);
+    if (dataUrl.length > MAX_PAYLOAD) return toast('Voice message too long – keep it shorter', 'error');
+    const ext = base.includes('mp4') ? 'm4a' : base.includes('ogg') ? 'ogg' : 'webm';
+    sendFileMessage(dataUrl, base, `voice_${secs}s.${ext}`, blob.size);
+  } catch (err) { toast(err.message || 'Could not send voice message', 'error'); }
+}
+$('micBtn').addEventListener('click', () => { rec ? stopRec(false) : startRec(); });
+$('recCancel').addEventListener('click', () => cancelRec());
+$('recSend').addEventListener('click', () => stopRec(false));
+
+/* ============ EMOJI ============ */
 const emojis = ['😀','😃','😄','😁','😅','😂','🤣','😊','😇','🙂','😉','😍','🥰','😘','😋','😜','🤪','🧐','🤓','😎','🤩','🥳','😏','😒','😔','😟','😫','🥺','😢','😭','😤','😠','😡','🤯','😳','😱','😰','🤗','🤔','🤫','😶','😬','🙄','😴','🤒','🤑','🤠','💀','👻','💩','💋','❤️','🧡','💛','💚','💙','💜','🖤','💯','💥','💫','👋','✋','👌','✌️','🤞','👍','👎','👏','🙌','🙏','💪','👀','🎉','🎊','🎈','🎁','🏆','⭐','🌟','✨','🌈','🌙','☀️','⚡','❄️','🔥','💧','🌊','🎶','🎵','🎸','🎤','🎧','🎮','🎯','🚀','🌍','🌺','🌸','🌹','🌻','🍕','🍔','🍟','🌮','🍜','🍣','🍰','🎂','☕','🍺','🥂','💖','🎀','🧸'];
 $('emojiBtn').addEventListener('click', e => {
   e.stopPropagation();
@@ -1303,7 +1532,7 @@ function initSocket() {
 
   socket.on('private_message', msg => {
     if (msg.from === currentUserId) return;
-    const text = splitReply(msg.message).text || (msg.fileName ? '📎 ' + msg.fileName : '📎 File');
+    const text = msg.fileType ? filePreviewText(msg.fileType, msg.fileName) : (splitReply(msg.message).text || '📎 File');
     const isCurrent = currentFriendId === msg.from && !currentGroupId;
     touch('f', msg.from, text, null, true);
     markActive(msg.from);                                   // they just messaged → online
@@ -1325,7 +1554,7 @@ function initSocket() {
   });
 
   socket.on('group_message', data => {
-    const text = splitReply(data.message).text || (data.fileName ? '📎 ' + data.fileName : '📎 File');
+    const text = data.fileType ? filePreviewText(data.fileType, data.fileName) : (splitReply(data.message).text || '📎 File');
     const mine = data.from === currentUserId;
     const isCurrent = data.groupId === currentGroupId;
     if (!mine) { touch('g', data.groupId, text); flashRow('g', data.groupId); }
@@ -1371,16 +1600,24 @@ function initSocket() {
   socket.on('achievement_unlocked', d => { notify('Achievement 🏆', `${d.name} (+${d.xp} XP)`); fetchStats(); });
   socket.on('quest_ready', d => notify('Quest ready 📋', (d.action || '').replace('_', ' ')));
 }
-/* Swap the temporary bubble for the server's copy – and keep the quoted reply even if the server doesn't echo it */
+/* Swap the temporary bubble for the server's copy – and keep the quoted reply + media even if the server doesn't echo them */
 function replaceTempMsg(tempId, real) {
   const el = document.querySelector(`.msg[data-temp="${tempId}"]`); if (!el) return;
   const ri = el.querySelector('.reply-indicator');
   const prev = ri ? { id: ri.dataset.rid, content: ri.querySelector('.ri-text')?.textContent || 'media' } : null;
+  const oldPhoto = el.querySelector('.msg-file.photo');
+  const oldVoice = el.querySelector('.voice');
   const tmp = document.createElement('div');
+  const n = norm(real);
   const rm = { id: real.id || real._id || Date.now(), sender_id: real.sender_id || currentUserId, content: real.content || '',
     created_at: real.created_at || new Date().toISOString(), is_boosted: real.is_boosted || false,
-    fileData: real.fileData, fileType: real.fileType, fileName: real.fileName, fileSize: real.fileSize || 0,
+    fileData: n.fileData, fileType: n.fileType, fileName: n.fileName, fileSize: n.fileSize || 0,
     replyTo: real.replyTo ?? real.reply_to ?? null };
+  if (!rm.fileData && (oldPhoto || oldVoice)) {          // server did not echo the media → keep what we already show
+    rm.fileData = oldPhoto ? oldPhoto.dataset.open : oldVoice.dataset.src;
+    rm.fileType = rm.fileType || (oldPhoto ? 'image/jpeg' : 'audio/webm');
+    rm.fileName = rm.fileName || (oldPhoto ? oldPhoto.dataset.name : '');
+  }
   if (replyInfo(rm) === null && prev) { rm.replyTo = prev; }
   tmp.innerHTML = msgHTML(rm);
   if (tmp.firstElementChild) el.replaceWith(tmp.firstElementChild);
