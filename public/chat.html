@@ -211,10 +211,10 @@ select.form-input[multiple]{height:110px}
 @media(max-width:768px){
   .app{display:block}
   .sidebar,.chat-main{position:absolute;top:0;left:0;width:100%;height:100%;min-width:0}
-  .sidebar{z-index:20;border-right:none;transition:transform .28s ease;padding-top:var(--sat);padding-left:var(--sal);padding-right:var(--sar)}
-  .chat-main{z-index:10;transform:translateX(100%);transition:transform .28s ease;background:var(--bg)}
-  .app.in-chat .chat-main{transform:none}
-  .app.in-chat .sidebar{transform:translateX(-30%);pointer-events:none}
+  .sidebar{z-index:10;border-right:none;background:var(--bg2);transition:transform .28s ease,visibility 0s;padding-top:var(--sat);padding-left:var(--sal);padding-right:var(--sar)}
+  .chat-main{z-index:20;transform:translateX(100%);visibility:hidden;transition:transform .28s ease,visibility 0s .28s;background:var(--bg)}
+  .app.in-chat .chat-main{transform:none;visibility:visible;transition:transform .28s ease,visibility 0s}
+  .app.in-chat .sidebar{transform:translateX(-25%);visibility:hidden;pointer-events:none;transition:transform .28s ease,visibility 0s .28s}
   .back-btn{display:flex}
   .sidebar-head{padding:14px 14px 10px}
   .brand{margin-bottom:10px}
@@ -402,7 +402,7 @@ async function seedActivity(list, type) {
 function updateTitle() {
   const n = Object.values(unread).reduce((a, b) => a + b, 0);
   document.title = (n ? `(${n}) ` : '') + APP_TITLE;
-  try { n ? navigator.setAppBadge?.(n) : navigator.clearAppBadge?.(); } catch (e) {}
+  try { (n ? navigator.setAppBadge?.(n) : navigator.clearAppBadge?.())?.catch?.(() => {}); } catch (e) {}
 }
 function clearUnread(type, id) { delete unread[ckey(type, id)]; updateTitle(); }
 function addUnread(type, id) { unread[ckey(type, id)] = (unread[ckey(type, id)] || 0) + 1; updateTitle(); }
@@ -589,7 +589,7 @@ function convRow(type, id, avatarHTML, name, fallbackSub, isActive) {
 async function loadFriends() {
   try {
     friends = (await api('/api/friends')).map(f => ({ ...f, online: f.status === 'online' }));
-    lsSet('nc_friends', friends);
+    lsSet('nc_friends', friends); setTimeout(refreshHeader);
     renderFriends();                                   // show immediately
     seedActivity(friends, 'f').then(ch => ch && renderFriends());  // previews fill in later
   } catch (e) { if (!friends.length) $('friendList').innerHTML = '<div class="hint">Failed to load</div>'; }
@@ -605,7 +605,7 @@ function renderFriends() {
 }
 async function loadGroups() {
   try {
-    groups = await api('/api/groups'); lsSet('nc_groups', groups);
+    groups = await api('/api/groups'); lsSet('nc_groups', groups); setTimeout(refreshHeader);
     renderGroups();
     seedActivity(groups, 'g').then(ch => ch && renderGroups());
   } catch (e) {}
@@ -671,6 +671,10 @@ function setHeader(name, sub, isGroup = false) {
   $('msgInput').disabled = false; $('sendBtn').disabled = false;
   $('clearBtn').disabled = !currentFriendId;
 }
+function refreshHeader() {
+  if (currentGroupId) { const g = groups.find(x => x.id === currentGroupId); if (g) setHeader(g.name, `Group · ${g.member_count} members`, true); }
+  else if (currentFriendId) { const f = friends.find(x => x.id === currentFriendId); if (f) setHeader(f.username, f.online ? 'Online' : 'Offline'); }
+}
 function showShimmer() {
   const w = [55, 38, 62, 30, 48, 42];
   $('messagesArea').innerHTML = '<div id="shimmerLoader">' + w.map((x, i) => `<div class="sk ${i % 3 === 1 ? 'r' : ''}" style="width:${x}%;height:${i % 2 ? 40 : 56}px"></div>`).join('') + '</div>';
@@ -684,7 +688,7 @@ async function selectFriend(id) {
   currentFriendId = id; resetReply(); hideTyping();
   clearUnread('f', id); clearNotifs('msg-f' + id);
   const f = friends.find(x => x.id === id);
-  if (f) setHeader(f.username, f.online ? 'Online' : 'Offline');
+  setHeader(f ? f.username : 'Chat', f ? (f.online ? 'Online' : 'Offline') : 'Loading…');
   renderFriends(); renderGroups();
   await loadConv(true);
   markRead(id); startExpiryChecker();
@@ -696,7 +700,7 @@ async function selectGroup(id) {
   currentGroupId = id; currentFriendId = null; resetReply(); hideTyping();
   clearUnread('g', id); clearNotifs('msg-g' + id);
   const g = groups.find(x => x.id === id);
-  if (g) setHeader(g.name, `Group · ${g.member_count} members`, true);
+  setHeader(g ? g.name : 'Group', g ? `Group · ${g.member_count} members` : 'Loading…', true);
   renderFriends(); renderGroups();
   socket?.emit('join_group', id);
   await loadConv(true);
@@ -860,7 +864,7 @@ function sendMsg() {
   const tempId = -Date.now() - Math.random();
   appendMsg({ id: tempId, sender_id: currentUserId, content: txt, created_at: new Date().toISOString(), is_boosted: false,
     replyTo: replyToId ? { id: replyToId, content: msgText(replyToId) || 'media' } : null });
-  emitMessage({ message: txt, replyTo: replyToId || null, tempId });
+  if (!emitMessage({ message: txt, replyTo: replyToId || null, tempId })) { document.querySelector(`.msg[data-temp="${tempId}"]`)?.remove(); return toast('Not connected yet – try again in a moment', 'error'); }
   settleTemp(tempId);
   touch(curType(), curId(), 'You: ' + txt);
   ta.value = ''; updateChar(); autoGrow(); resetReply();
@@ -1080,7 +1084,7 @@ function boot() {
   const st = lsGet('nc_stats', null); if (st) { $('creditsAmt').textContent = st.credits; $('userLvl').textContent = st.level; }
   if (friends.length) renderFriends(); if (groups.length) renderGroups();
   // 2) everything else at the same time (nothing waits for anything else)
-  initSocket();
+  startSocket();
   const lists = Promise.all([loadFriends(), loadGroups(), loadRequests()]);
   checkAuth().then(async ok => {
     if (!ok) return;
@@ -1092,7 +1096,13 @@ function boot() {
   // 3) push setup last, in the background
   (window.requestIdleCallback || (f => setTimeout(f, 800)))(initPush);
 }
-if (window.io) boot(); else window.addEventListener('DOMContentLoaded', () => { (function wait() { window.io ? boot() : setTimeout(wait, 30); })(); });
+/* socket.io.js loads deferred; the app must NOT wait for it (lists, chats and cache all work without it) */
+function startSocket(n = 0) {
+  if (window.io) return initSocket();
+  if (n < 200) setTimeout(() => startSocket(n + 1), 50);
+  else toast('Live connection unavailable – check your network', 'error');
+}
+boot();
 </script>
 </body>
 </html>
