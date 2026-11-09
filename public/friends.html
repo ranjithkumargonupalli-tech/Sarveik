@@ -7,6 +7,9 @@
 <title>Sarveik – Network</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="manifest" href="/manifest.json">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
 <style>
 :root{
   --bg:#eef8ff;--card:rgba(255,255,255,.92);--border:rgba(14,165,233,.18);--border-h:rgba(14,165,233,.45);
@@ -26,7 +29,7 @@ body{font-family:var(--body);background:var(--bg);
 .nav-brand{font-family:var(--display);font-size:1.35rem;font-weight:800;display:flex;align-items:center;gap:.55rem;background:linear-gradient(135deg,#0ea5e9,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .nav-brand i{-webkit-text-fill-color:var(--cyan);color:var(--cyan)}
 .nav-links{display:flex;list-style:none;gap:.25rem;align-items:center}
-.nav-links a{color:var(--sub);text-decoration:none;padding:.5rem 1rem;border-radius:var(--pill);transition:.25s;display:flex;align-items:center;gap:.45rem;font-size:.875rem;font-weight:500}
+.nav-links a{color:var(--sub);text-decoration:none;padding:.5rem 1rem;border-radius:var(--pill);transition:.25s;display:flex;align-items:center;gap:.45rem;font-size:.875rem;font-weight:500;white-space:nowrap}
 .nav-links a:hover{background:var(--cyan-dim);color:var(--cyan)}
 .nav-links a.active{background:linear-gradient(135deg,rgba(14,165,233,.14),rgba(16,185,129,.14));color:#0b7fb3;border:1px solid rgba(14,165,233,.3)}
 .badge{background:var(--red);color:#fff;border-radius:var(--pill);padding:1px 7px;font-size:.68rem;font-weight:700;display:inline-block}
@@ -43,8 +46,8 @@ body{font-family:var(--body);background:var(--bg);
 .mm-brand{font-family:var(--display);font-size:1.35rem;font-weight:800;color:var(--cyan);display:flex;gap:.5rem;align-items:center}
 .mm-close{background:rgba(14,165,233,.08);border:1px solid var(--border);border-radius:12px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--muted)}
 .mm-links{display:flex;flex-direction:column;gap:.35rem;flex:1}
-.mm-links a,.mm-links .mm-item{color:var(--sub);text-decoration:none;padding:.85rem 1.1rem;border-radius:14px;display:flex;align-items:center;gap:.85rem;font-size:1rem;font-weight:500;border:1px solid transparent;cursor:pointer}
-.mm-links a:hover,.mm-links a.active,.mm-links .mm-item:hover{background:var(--cyan-dim);color:#0b7fb3;border-color:rgba(14,165,233,.3)}
+.mm-links a{color:var(--sub);text-decoration:none;padding:.85rem 1.1rem;border-radius:14px;display:flex;align-items:center;gap:.85rem;font-size:1rem;font-weight:500;border:1px solid transparent;cursor:pointer}
+.mm-links a:hover,.mm-links a.active{background:var(--cyan-dim);color:#0b7fb3;border-color:rgba(14,165,233,.3)}
 .mm-links i{width:24px;text-align:center}
 .mm-links .badge{margin-left:auto}
 @media(max-width:768px){.hamburger{display:flex}.nav-links{display:none}.navbar{padding:.8rem 1rem}}
@@ -80,6 +83,7 @@ h2 .count{margin-left:auto;font-family:var(--body);font-size:.75rem;font-weight:
 .btn-success{background:linear-gradient(135deg,#10b981,#059669);color:#fff}
 .btn-danger{background:rgba(239,68,68,.08);color:#dc2626;border:1px solid rgba(239,68,68,.3)}
 .btn-danger:hover:not(:disabled){background:rgba(239,68,68,.16)}
+.btn-danger-solid{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff}
 .btn-outline{background:transparent;border:1px solid var(--border);color:var(--sub)}
 .btn-outline:hover:not(:disabled){border-color:rgba(14,165,233,.5);color:var(--cyan)}
 .btn-sm{padding:.5rem .9rem;font-size:.8rem}
@@ -95,10 +99,14 @@ h2 .count{margin-left:auto;font-family:var(--body);font-size:.75rem;font-weight:
 .chip.active,.chip:hover{background:linear-gradient(135deg,rgba(14,165,233,.16),rgba(16,185,129,.16));color:#0b7fb3;border-color:rgba(14,165,233,.45)}
 
 /* CARDS */
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:.9rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:.9rem}
 .card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.2rem;display:flex;align-items:center;gap:1rem;position:relative;overflow:hidden;box-shadow:0 3px 14px rgba(14,116,144,.07);transition:border-color .25s,box-shadow .25s,transform .25s;animation:rise .45s ease both}
 .card:hover{border-color:var(--border-h);box-shadow:var(--shadow);transform:translateY(-2px)}
 @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+/* grid cards stack: the name gets the full card width, buttons sit on their own row (fixes merged / clipped names) */
+.grid .card{flex-direction:column;align-items:stretch;gap:.8rem}
+.grid .card .actions{width:100%;padding-top:.75rem;border-top:1px solid var(--border)}
+.grid .card .actions .btn-primary{flex:1}
 .card.recent{border-left:3px solid var(--wa)}
 .card.has-unread{background:linear-gradient(135deg,rgba(37,211,102,.1),rgba(255,255,255,.95));border-color:rgba(37,211,102,.45)}
 .card.flash{animation:flash 1.4s ease}
@@ -106,18 +114,19 @@ h2 .count{margin-left:auto;font-family:var(--body);font-size:.75rem;font-weight:
 .info{display:flex;align-items:center;gap:.85rem;flex:1;min-width:0}
 .av-wrap{position:relative;flex-shrink:0}
 .av{width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid rgba(14,165,233,.4);display:block}
-.av-ph{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#d7f0ff,#d9f7ea);border:2px solid rgba(14,165,233,.35);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:1.1rem;font-weight:700;color:#0b7fb3}
+.av-ph{width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,#d7f0ff,#d9f7ea);border:2px solid rgba(14,165,233,.35);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:1.1rem;font-weight:700;color:#0b7fb3;flex-shrink:0}
 .dot{position:absolute;bottom:1px;right:1px;width:12px;height:12px;border-radius:50%;border:2px solid #fff;background:#aebfcf}
 .dot.online{background:var(--green);box-shadow:0 0 6px var(--green)}
 .dot.away{background:var(--amber)}.dot.busy{background:var(--red)}
 .meta{flex:1;min-width:0}
-.name-row{display:flex;align-items:center;gap:.4rem}
-.name{font-family:var(--display);font-weight:700;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.time{margin-left:auto;font-size:.7rem;color:var(--muted);white-space:nowrap;flex-shrink:0}
+.name-row{display:flex;align-items:center;gap:.5rem;min-width:0}
+.name{font-family:var(--display);font-weight:700;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
+.name-row .pro,.name-row .ver{flex-shrink:0}
+.time{margin-left:auto;padding-left:.5rem;font-size:.7rem;color:var(--muted);white-space:nowrap;flex-shrink:0}
 .card.has-unread .time{color:#128c7e;font-weight:700}
 .sub{color:var(--muted);font-size:.78rem;margin-top:.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.preview{display:flex;align-items:center;gap:.4rem;margin-top:.2rem;font-size:.8rem;color:var(--sub)}
-.preview .txt{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.preview{display:flex;align-items:center;gap:.4rem;margin-top:.2rem;font-size:.8rem;color:var(--sub);min-width:0}
+.preview .txt{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .unread{background:var(--wa);color:#fff;border-radius:var(--pill);min-width:20px;height:20px;padding:0 6px;font-size:.68rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
 .pro{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;padding:1px 7px;border-radius:var(--pill);font-size:.6rem;font-weight:700}
 .ver{background:var(--green);color:#fff;padding:1px 5px;border-radius:var(--pill);font-size:.55rem}
@@ -139,59 +148,37 @@ hr{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--bor
 @keyframes tin{from{transform:translateX(120%);opacity:0}to{transform:none;opacity:1}}
 .toast.out{transition:.3s;transform:translateX(120%);opacity:0}
 
-/* WHATSAPP-STYLE MESSAGE POPUP */
+/* REAL-TIME NOTIFICATION POPUPS */
 .wa-stack{position:fixed;top:4.6rem;left:50%;transform:translateX(-50%);z-index:3200;display:flex;flex-direction:column;gap:.55rem;width:min(400px,calc(100vw - 1.4rem));pointer-events:none}
 .wa-pop{pointer-events:auto;background:#fff;border-radius:16px;box-shadow:0 16px 44px rgba(10,60,50,.28);border:1px solid rgba(37,211,102,.35);display:flex;gap:.75rem;padding:.75rem .9rem;align-items:center;cursor:pointer;position:relative;overflow:hidden;animation:waIn .45s cubic-bezier(.2,.9,.25,1.15)}
 .wa-pop::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--wa)}
+.wa-pop.req::before,.wa-pop.req .wa-bar{background:var(--cyan)}
 .wa-pop .av,.wa-pop .av-ph{width:44px;height:44px;border-width:2px;border-color:rgba(37,211,102,.5)}
 .wa-body{flex:1;min-width:0}
 .wa-top{display:flex;justify-content:space-between;align-items:baseline;gap:.5rem}
-.wa-name{font-family:var(--display);font-weight:700;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.wa-app{font-size:.62rem;color:#128c7e;font-weight:700;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap}
+.wa-name{font-family:var(--display);font-weight:700;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.wa-app{font-size:.62rem;color:#128c7e;font-weight:700;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;flex-shrink:0}
 .wa-msg{font-size:.82rem;color:var(--sub);margin-top:.1rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
-.wa-count{background:var(--wa);color:#fff;border-radius:var(--pill);font-size:.65rem;font-weight:700;padding:1px 7px;margin-left:.3rem}
+.wa-count{background:var(--wa);color:#fff;border-radius:var(--pill);font-size:.65rem;font-weight:700;padding:1px 7px;margin-left:.3rem;white-space:nowrap}
 .wa-bar{position:absolute;left:0;bottom:0;height:3px;background:var(--wa);width:100%;transform-origin:left;animation:waBar 6s linear forwards}
 @keyframes waIn{from{transform:translateY(-130%) scale(.92);opacity:0}to{transform:none;opacity:1}}
 @keyframes waBar{to{transform:scaleX(0)}}
 .wa-pop.out{transition:.3s;transform:translateY(-130%);opacity:0}
 @media(max-width:768px){.wa-stack{top:.6rem}.toast-stack{top:4.2rem}}
 
-/* NOTIFICATION CENTER */
-.bell-wrap{position:relative}
-.nc{position:absolute;top:calc(100% + 12px);right:0;width:360px;max-height:460px;overflow-y:auto;background:#fff;border:1px solid rgba(14,165,233,.3);border-radius:16px;box-shadow:0 24px 50px rgba(14,116,144,.25);opacity:0;visibility:hidden;transform:translateY(-8px);transition:.25s;z-index:2500}
-.nc.open{opacity:1;visibility:visible;transform:none}
-.nc-head{padding:.8rem 1rem;font-family:var(--display);font-weight:700;font-size:.88rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;background:#fff;z-index:1}
-.nc-head button{background:none;border:none;color:var(--muted);font-size:.72rem;cursor:pointer;font-family:var(--body)}
-.nc-head button:hover{color:var(--cyan)}
-.nc-settings{padding:.65rem 1rem;display:flex;flex-direction:column;gap:.5rem;border-bottom:1px solid var(--border);background:rgba(14,165,233,.04)}
-.sw{display:flex;align-items:center;justify-content:space-between;font-size:.8rem;color:var(--sub)}
-.sw input{display:none}
-.sw .tg{width:38px;height:22px;border-radius:20px;background:#c5d5e2;position:relative;transition:.25s;cursor:pointer}
-.sw .tg::after{content:'';position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:.25s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
-.sw input:checked+.tg{background:var(--wa)}
-.sw input:checked+.tg::after{left:19px}
-.nc-item{display:flex;gap:.7rem;padding:.7rem 1rem;border-bottom:1px solid rgba(14,165,233,.1);cursor:pointer;align-items:flex-start}
-.nc-item:hover{background:var(--cyan-dim)}
-.nc-item.unread{background:rgba(37,211,102,.09)}
-.nc-ic{width:34px;height:34px;border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.85rem}
-.nc-ic.msg{background:rgba(37,211,102,.18);color:#128c7e}
-.nc-ic.req{background:rgba(245,158,11,.18);color:#b97708}
-.nc-ic.grp{background:rgba(14,165,233,.16);color:#0b7fb3}
-.nc-t{font-weight:700;font-size:.8rem}.nc-m{font-size:.77rem;color:var(--sub);margin-top:.1rem;line-height:1.35;word-break:break-word}.nc-time{font-size:.66rem;color:var(--muted);margin-top:.2rem}
-.bell-shake{animation:ring .8s ease}
-@keyframes ring{0%,100%{transform:rotate(0)}15%{transform:rotate(18deg)}30%{transform:rotate(-16deg)}45%{transform:rotate(12deg)}60%{transform:rotate(-8deg)}75%{transform:rotate(4deg)}}
-.mm-nc{display:none;margin:.25rem 0 .5rem;border:1px solid var(--border);border-radius:14px;overflow:hidden;background:#fff}
-.mm-nc.open{display:block}
-
 /* MODALS */
 .modal{display:none;position:fixed;z-index:2000;inset:0;background:rgba(15,60,90,.4);backdrop-filter:blur(10px);overflow-y:auto}
+#confirmModal{z-index:2100}
 .modal-content{background:#fbfffe;border:1px solid rgba(14,165,233,.3);border-radius:22px;margin:4% auto;padding:1.75rem;width:90%;max-width:520px;box-shadow:0 30px 60px rgba(14,116,144,.3);animation:mIn .35s cubic-bezier(.2,.8,.2,1)}
 @keyframes mIn{from{opacity:0;transform:translateY(-24px) scale(.95)}to{opacity:1;transform:none}}
 .close-modal{float:right;font-size:1.5rem;color:var(--muted);cursor:pointer;line-height:1}
+.cf-box{max-width:380px;text-align:center;margin-top:18vh}
+.cf-box p{font-size:.95rem;color:var(--text);line-height:1.5;margin:.4rem 0 1.3rem}
+.cf-box .cf-btns{display:flex;gap:.7rem;justify-content:center}
 .ph{text-align:center}
 .pav{width:92px;height:92px;border-radius:50%;object-fit:cover;border:3px solid var(--cyan);margin:0 auto .7rem;display:block}
 .pav-ph{width:92px;height:92px;border-radius:50%;background:linear-gradient(135deg,#d7f0ff,#d9f7ea);border:3px solid rgba(14,165,233,.45);display:flex;align-items:center;justify-content:center;font-family:var(--display);font-size:2rem;font-weight:700;color:#0b7fb3;margin:0 auto .7rem}
-.pname{font-family:var(--display);font-size:1.5rem;font-weight:800;background:linear-gradient(135deg,#0ea5e9,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.pname{font-family:var(--display);font-size:1.5rem;font-weight:800;background:linear-gradient(135deg,#0ea5e9,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;word-break:break-word}
 .puser{color:var(--muted);font-size:.88rem}
 .pbadges{display:flex;justify-content:center;gap:.5rem;margin-top:.5rem;flex-wrap:wrap}
 .pbadges span{display:inline-flex;gap:.35rem;align-items:center;font-size:.72rem;border-radius:var(--pill);padding:.2rem .75rem;background:rgba(14,165,233,.1);color:#0b7fb3;border:1px solid rgba(14,165,233,.2)}
@@ -211,7 +198,7 @@ hr{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--bor
 .mlist{max-height:190px;overflow-y:auto;border:1px solid var(--border);border-radius:12px;background:rgba(255,255,255,.8);margin:.7rem 0}
 .mem{display:flex;align-items:center;gap:.65rem;padding:.6rem .85rem;border-bottom:1px solid rgba(14,165,233,.1);cursor:pointer}
 .mem:hover{background:var(--cyan-dim)}.mem.selected{background:rgba(16,185,129,.14);border-left:3px solid var(--green)}
-.mem-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--green));display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#fff}
+.mem-av{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--green));display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;color:#fff;flex-shrink:0}
 .sel{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.7rem;padding-top:.7rem;border-top:1px solid var(--border)}
 .seltag{background:var(--cyan-dim);border:1px solid rgba(14,165,233,.3);padding:.25rem .7rem;border-radius:var(--pill);font-size:.78rem;display:inline-flex;align-items:center;gap:.4rem}
 .seltag i{cursor:pointer;font-size:.65rem}.seltag i:hover{color:var(--red)}
@@ -220,7 +207,6 @@ hr{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--bor
   .wrap{padding:0 1rem}.grid{grid-template-columns:1fr}.row{flex-direction:column;gap:.6rem}
   .stat-n{font-size:1.5rem}.stats{gap:.6rem}
   .card{flex-wrap:wrap}.actions{width:100%;padding-top:.6rem;border-top:1px solid var(--border);flex-wrap:wrap}
-  .nc{position:fixed;left:.7rem;right:.7rem;top:4.2rem;width:auto}
   .toolbar{flex-direction:column;align-items:stretch}
 }
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
@@ -235,10 +221,6 @@ hr{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--bor
     <li><a href="profile.html"><i class="fas fa-user"></i> Profile</a></li>
     <li><a href="main.html"><i class="fas fa-rocket"></i> Tools</a></li>
     <li><a href="friends.html" class="active"><i class="fas fa-users"></i> Network <span id="totalBadge" class="badge" style="display:none"></span></a></li>
-    <li class="bell-wrap">
-      <a href="#" id="bellBtn" title="Notifications"><i class="fas fa-bell" id="bellIcon"></i> Alerts <span id="bellBadge" class="badge" style="display:none"></span></a>
-      <div class="nc" id="nc"></div>
-    </li>
     <li><a href="index.html" id="logoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
   </ul>
   <div class="hamburger" id="hamburger" role="button" aria-label="Open menu" tabindex="0"><span></span><span></span><span></span></div>
@@ -255,8 +237,6 @@ hr{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--bor
     <a href="profile.html"><i class="fas fa-user"></i> Profile</a>
     <a href="main.html"><i class="fas fa-rocket"></i> Tools</a>
     <a href="friends.html" class="active"><i class="fas fa-users"></i> Network <span id="mTotalBadge" class="badge" style="display:none"></span></a>
-    <div class="mm-item" id="mBell"><i class="fas fa-bell"></i> Alerts <span id="mBellBadge" class="badge" style="display:none"></span></div>
-    <div class="mm-nc" id="mmNc"></div>
     <a href="index.html" id="mLogoutBtn"><i class="fas fa-sign-out-alt"></i> Logout</a>
   </div>
 </div>
@@ -268,7 +248,7 @@ hr{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--bor
 
   <div class="notif-banner" id="notifBanner">
     <i class="fab fa-whatsapp big"></i>
-    <div class="t"><strong>Turn on message alerts</strong>Get instant WhatsApp-style notifications on your phone and desktop, even when this tab is in the background.</div>
+    <div class="t"><strong>Turn on real-time notifications</strong>Get new messages, group messages and connection requests instantly on your phone and desktop, even when this tab is closed.</div>
     <button class="btn btn-wa btn-sm" id="enableNotifBtn"><i class="fas fa-bell"></i> Enable</button>
   </div>
 
@@ -321,11 +301,20 @@ hr{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--bor
 <div id="groupModal" class="modal"><div class="modal-content">
   <span class="close-modal" id="groupClose">&times;</span>
   <h3 style="font-family:var(--display);margin-bottom:1rem"><i class="fas fa-layer-group" style="color:var(--cyan)"></i> Create New Group</h3>
-  <div class="gprev"><div style="font-size:.82rem;color:var(--muted)">Group name</div><input type="text" id="groupName" placeholder="Enter group name"></div>
+  <div class="gprev"><div style="font-size:.82rem;color:var(--muted)">Group name</div><input type="text" id="groupName" placeholder="Enter group name" maxlength="100"></div>
   <label style="font-size:.87rem;font-weight:600"><i class="fas fa-user-friends" style="color:var(--cyan)"></i> Select members</label>
   <div class="mlist" id="memberList"></div>
   <div class="sel" id="selMembers"></div>
   <button id="confirmGroup" class="btn btn-primary" style="width:100%;margin-top:1.1rem"><i class="fas fa-check-circle"></i> Create Group</button>
+</div></div>
+
+<!-- In-page confirm dialog (replaces the browser's confirm() popup) -->
+<div id="confirmModal" class="modal"><div class="modal-content cf-box">
+  <p id="cfMsg"></p>
+  <div class="cf-btns">
+    <button class="btn btn-outline" id="cfNo">Cancel</button>
+    <button class="btn btn-danger-solid" id="cfOk">Confirm</button>
+  </div>
 </div></div>
 
 <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
@@ -334,6 +323,7 @@ hr{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--bor
    HELPERS
    ========================================================= */
 const $ = id => document.getElementById(id);
+const RECENT_MS = 10 * 24 * 60 * 60 * 1000;   // names / chats / requests only count for 10 days
 const safeParse = (raw, fb) => { try { const v = JSON.parse(raw); return v == null ? fb : v; } catch (_) { return fb; } };
 const store = {
   get: (k, fb) => safeParse(localStorage.getItem(k), fb),
@@ -362,6 +352,19 @@ function showToast(msg, type = 'success') {
   setTimeout(() => { t.classList.add('out'); setTimeout(() => t.remove(), 320); }, 3500);
 }
 function skeleton(el, n = 3) { el.innerHTML = Array(n).fill('<div class="skeleton"><div class="sk-a"></div><div class="sk-t"></div></div>').join(''); }
+
+/* in-page confirm dialog */
+let cfResolve = null;
+function askConfirm(message, okText = 'Confirm') {
+  return new Promise(resolve => {
+    $('cfMsg').textContent = message; $('cfOk').textContent = okText;
+    $('confirmModal').style.display = 'block';
+    cfResolve = v => { $('confirmModal').style.display = 'none'; cfResolve = null; resolve(v); };
+  });
+}
+$('cfOk').addEventListener('click', () => cfResolve && cfResolve(true));
+$('cfNo').addEventListener('click', () => cfResolve && cfResolve(false));
+$('confirmModal').addEventListener('click', e => { if (e.target === $('confirmModal') && cfResolve) cfResolve(false); });
 
 /* =========================================================
    API + CSRF
@@ -399,7 +402,7 @@ async function api(url, opt = {}, retry = true) {
    ========================================================= */
 const socket = io({ withCredentials: true });
 let me = { id: null, username: null };
-let friends = [], requests = [], groups = [];
+let friends = [], requests = [], groups = [], pickerFriends = [];
 let filters = { status: '', search: '' };
 let sortMode = store.get('sarveik_sort', 'recent');
 const online = new Map();        // id -> status
@@ -408,17 +411,24 @@ let lastChat = store.get('sarveik_lastchat', {});   // id -> { ts, text }
 let selected = [];
 
 function saveLast() { store.set('sarveik_lastchat', lastChat); }
+/* drop anything older than 10 days */
+function pruneLast() {
+  const cut = Date.now() - RECENT_MS; let changed = false;
+  Object.keys(lastChat).forEach(k => { if (!lastChat[k] || (lastChat[k].ts || 0) < cut) { delete lastChat[k]; changed = true; } });
+  if (changed) saveLast();
+}
 function touchChat(id, text, ts) {
   id = String(id);
   const prev = lastChat[id] || {};
   lastChat[id] = { ts: ts || Date.now(), text: text != null ? text : (prev.text || '') };
   saveLast();
 }
-/* newest known chat time = server value (if the API provides it) or our local record */
+/* newest chat time inside the 10-day window, otherwise 0 (= not a recent chat) */
 function chatTs(f) {
   const server = f.last_message_at ? new Date(f.last_message_at).getTime() : 0;
   const local = (lastChat[String(f.id)] || {}).ts || 0;
-  return Math.max(isNaN(server) ? 0 : server, local);
+  const ts = Math.max(isNaN(server) ? 0 : server, local);
+  return Date.now() - ts <= RECENT_MS ? ts : 0;
 }
 function chatText(f) {
   const local = lastChat[String(f.id)] || {};
@@ -426,37 +436,57 @@ function chatText(f) {
 }
 
 /* =========================================================
-   NOTIFICATIONS — in-app, system (mobile/desktop), sound, vibrate, title badge
+   REAL-TIME NOTIFICATIONS
+   in-page popup · system notification (tab hidden) · Web Push (tab closed) · sound · vibration · tab title
    ========================================================= */
-const prefs = Object.assign({ sound: true, vibrate: true, system: true }, store.get('sarveik_prefs', {}));
-let notifs = store.get('sarveik_notifs', []);
+const prefs = { sound: true, vibrate: true, system: true };
 let swReg = null;
 const baseTitle = document.title;
 let titleTimer = null;
 
-function savePrefs() { store.set('sarveik_prefs', prefs); }
-function saveNotifs() { store.set('sarveik_notifs', notifs.slice(0, 40)); }
-
-/* register service worker (needed for notifications on Android / installed PWAs) */
-(async function initSW() {
-  if (!('serviceWorker' in navigator)) return;
+const swReady = (async function initSW() {
+  if (!('serviceWorker' in navigator)) return null;
   try { swReg = await navigator.serviceWorker.register('/sw.js'); }
   catch (_) { try { swReg = await navigator.serviceWorker.getRegistration(); } catch (_) {} }
-  navigator.serviceWorker.addEventListener('message', e => {
-    if (e.data && e.data.type === 'open-chat' && e.data.friendId) location.href = 'chat.html?friend=' + e.data.friendId;
-  });
+navigator.serviceWorker && navigator.serviceWorker.addEventListener('message', e => {
+  if (e.data && e.data.type === 'marked-read') {
+    unread.delete(Number(e.data.friendId)); renderFriends(); updateBadges(); updateTitle();
+  }
+});
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && navigator.serviceWorker && navigator.serviceWorker.controller)
+    navigator.serviceWorker.controller.postMessage({ type: 'clear-notifications' });
+});
+return swReg;
 })();
 
 function permissionState() { return 'Notification' in window ? Notification.permission : 'unsupported'; }
-function refreshBanner() {
-  $('notifBanner').classList.toggle('show', permissionState() === 'default');
+function refreshBanner() { $('notifBanner').classList.toggle('show', permissionState() === 'default'); }
+
+function urlB64(b64) {
+  const pad = '='.repeat((4 - b64.length % 4) % 4);
+  const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+  return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+/* registers this device for server push so alerts arrive even when the site is closed */
+async function subscribePush() {
+  try {
+    await swReady;
+    if (!swReg || !('PushManager' in window) || permissionState() !== 'granted') return;
+    const { key } = await api('/api/push/public-key');
+    if (!key) return;
+    let sub = await swReg.pushManager.getSubscription();
+    if (!sub) sub = await swReg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64(key) });
+    await api('/api/push/subscribe', { method: 'POST', body: sub.toJSON() });
+  } catch (_) {}
 }
 async function askPermission() {
   if (!('Notification' in window)) { showToast('This browser does not support notifications', 'error'); return; }
   const p = await Notification.requestPermission();
-  refreshBanner(); renderNC();
+  refreshBanner();
   if (p === 'granted') {
-    showToast('Notifications enabled 🔔');
+    showToast('Real-time notifications enabled 🔔');
+    subscribePush();
     systemNotify({ title: 'Sarveik', body: 'You will now get message alerts here.', tag: 'welcome' });
   } else if (p === 'denied') {
     showToast('Blocked. Enable notifications in your browser/site settings.', 'error');
@@ -484,22 +514,25 @@ function playTone() {
 }
 function buzz() { if (prefs.vibrate && navigator.vibrate) { try { navigator.vibrate([120, 60, 120]); } catch (_) {} } }
 
-async function systemNotify({ title, body, tag, icon, friendId }) {
+async function systemNotify({ title, body, tag, icon, friendId, groupId }) {
   if (!prefs.system || permissionState() !== 'granted') return;
-  const opts = {
-    body, tag: tag || undefined, renotify: !!tag, icon: icon || undefined, badge: icon || undefined,
-    vibrate: [120, 60, 120], data: { friendId }, timestamp: Date.now()
-  };
+  const url = groupId ? 'chat.html?group=' + groupId : friendId ? 'chat.html?friend=' + friendId : 'friends.html';
+const opts = {
+  body, tag: tag || undefined, renotify: !!tag, icon: icon || undefined, badge: icon || undefined,
+  vibrate: [120, 60, 120], timestamp: Date.now(),
+  data: { friendId, groupId, src: 'page', t: Date.now(), count: 1, lines: [body], body, baseTitle: title }
+};
   try {
+    await swReady;
     if (swReg && swReg.showNotification) { await swReg.showNotification(title, opts); return; }
     const n = new Notification(title, opts);
-    n.onclick = () => { window.focus(); if (friendId) location.href = 'chat.html?friend=' + friendId; n.close(); };
+    n.onclick = () => { window.focus(); location.href = url; n.close(); };
   } catch (_) {}
 }
 
-/* WhatsApp-style popup; consecutive messages from the same person collapse into one card */
+/* popup card; consecutive messages from the same chat collapse into one card */
 const waActive = new Map();
-function waPopup({ id, name, avatarUrl, text }) {
+function waPopup({ id, name, avatarUrl, text, href, kind }) {
   const key = String(id);
   const existing = waActive.get(key);
   if (existing) {
@@ -514,14 +547,14 @@ function waPopup({ id, name, avatarUrl, text }) {
     return;
   }
   const el = document.createElement('div');
-  el.className = 'wa-pop';
+  el.className = 'wa-pop' + (kind === 'req' ? ' req' : '');
   el.setAttribute('role', 'alert');
   el.innerHTML = `${avatar(avatarUrl, name)}
     <div class="wa-body">
       <div class="wa-top"><span class="wa-name">${esc(name)}</span><span class="wa-app"><i class="fas fa-comment-dots"></i> Sarveik</span></div>
       <div class="wa-msg">${esc(text)}</div>
     </div><div class="wa-bar"></div>`;
-  el.addEventListener('click', () => { location.href = 'chat.html?friend=' + id; });
+  el.addEventListener('click', () => { if (href) location.href = href; else closeWa(key); });
   $('waStack').prepend(el);
   const entry = { el, count: 1, timer: setTimeout(() => closeWa(key), 6000) };
   waActive.set(key, entry);
@@ -533,7 +566,7 @@ function closeWa(key) {
   e.el.classList.add('out'); setTimeout(() => e.el.remove(), 320);
 }
 
-function totalUnread() { let n = 0; unread.forEach(v => n += v); return n; }
+function totalUnread() { let n = 0; unread.forEach(v => n += Number(v) || 0); return n; }
 function updateTitle() {
   const n = totalUnread();
   clearInterval(titleTimer);
@@ -546,77 +579,24 @@ function updateTitle() {
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { waActive.forEach((_, k) => closeWa(k)); } updateTitle(); });
 
-function addNotif(type, title, message, friendId) {
-  notifs.unshift({ type, title, message, friendId: friendId || null, ts: Date.now(), read: false });
-  if (notifs.length > 40) notifs.length = 40;
-  saveNotifs(); renderNC();
-  document.querySelectorAll('#bellIcon').forEach(i => { i.classList.remove('bell-shake'); void i.offsetWidth; i.classList.add('bell-shake'); });
+/* single entry point: popup if the tab is visible, system notification if hidden */
+function notify({ key, title, body, avatarUrl, icon, friendId, groupId, kind }) {
+  const href = groupId ? 'chat.html?group=' + groupId : friendId ? 'chat.html?friend=' + friendId : null;
+  playTone(); buzz();
+  if (document.hidden) systemNotify({ title, body, tag: key, icon, friendId, groupId });
+  else waPopup({ id: key, name: title, avatarUrl, text: body, href, kind });
 }
 
-function ncHTML() {
-  const unr = notifs.filter(n => !n.read).length;
-  const perm = permissionState();
-  const items = notifs.slice(0, 25).map((n, i) => `
-    <div class="nc-item ${n.read ? '' : 'unread'}" data-i="${i}">
-      <div class="nc-ic ${n.type}"><i class="fas ${n.type === 'msg' ? 'fa-comment' : n.type === 'req' ? 'fa-user-clock' : 'fa-users'}"></i></div>
-      <div><div class="nc-t">${esc(n.title)}</div><div class="nc-m">${esc(n.message)}</div><div class="nc-time">${timeAgo(n.ts)}</div></div>
-    </div>`).join('') || '<div class="empty">No notifications yet.</div>';
-  return `
-    <div class="nc-head"><span><i class="fas fa-bell"></i> Notifications ${unr ? `<span class="badge">${unr}</span>` : ''}</span>
-      <span><button data-act="read">Mark read</button> · <button data-act="clear">Clear</button></span></div>
-    <div class="nc-settings">
-      ${perm === 'default' ? '<button class="btn btn-wa btn-xs" data-act="perm"><i class="fas fa-bell"></i> Enable phone / desktop alerts</button>' : ''}
-      ${perm === 'denied' ? '<div style="font-size:.74rem;color:var(--red)">Alerts are blocked in browser settings.</div>' : ''}
-      <label class="sw">Sound<input type="checkbox" data-pref="sound" ${prefs.sound ? 'checked' : ''}><span class="tg"></span></label>
-      <label class="sw">Vibration<input type="checkbox" data-pref="vibrate" ${prefs.vibrate ? 'checked' : ''}><span class="tg"></span></label>
-      <label class="sw">Phone / desktop push<input type="checkbox" data-pref="system" ${prefs.system ? 'checked' : ''}><span class="tg"></span></label>
-    </div>${items}`;
-}
-function renderNC() {
-  const html = ncHTML();
-  [$('nc'), $('mmNc')].forEach(box => { box.innerHTML = html; bindNC(box); });
-  const unr = notifs.filter(n => !n.read).length;
-  [['bellBadge'], ['mBellBadge']].forEach(([id]) => {
-    const b = $(id); b.textContent = unr > 99 ? '99+' : unr; b.style.display = unr ? 'inline-block' : 'none';
-  });
-}
-function bindNC(box) {
-  box.addEventListener('click', e => e.stopPropagation());
-  box.querySelectorAll('[data-act]').forEach(b => b.addEventListener('click', () => {
-    const a = b.dataset.act;
-    if (a === 'read') { notifs.forEach(n => n.read = true); saveNotifs(); renderNC(); }
-    if (a === 'clear') { notifs = []; saveNotifs(); renderNC(); }
-    if (a === 'perm') askPermission();
-  }));
-  box.querySelectorAll('[data-pref]').forEach(c => c.addEventListener('change', () => { prefs[c.dataset.pref] = c.checked; savePrefs(); if (c.dataset.pref === 'sound' && c.checked) playTone(); }));
-  box.querySelectorAll('.nc-item').forEach(it => it.addEventListener('click', () => {
-    const n = notifs[+it.dataset.i]; if (!n) return;
-    n.read = true; saveNotifs(); renderNC();
-    if (n.friendId) location.href = 'chat.html?friend=' + n.friendId;
-  }));
-}
-$('bellBtn').addEventListener('click', e => {
-  e.preventDefault(); e.stopPropagation();
-  $('nc').classList.toggle('open');
-});
-$('mBell').addEventListener('click', () => $('mmNc').classList.toggle('open'));
-document.addEventListener('click', e => { if (!$('nc').contains(e.target)) $('nc').classList.remove('open'); });
-
-/* one entry point for every incoming chat message */
 function onIncomingMessage(data) {
   const fromId = data.from;
-  const text = data.message || data.content || data.text || (data.attachment ? '📎 Attachment' : 'New message');
+  const text = data.message || data.content || data.text || (data.fileType ? (data.fileType.startsWith('audio/') ? '🎤 Voice message' : '📷 Photo') : 'New message');
   const f = friends.find(x => String(x.id) === String(fromId));
   const name = (f && (f.display_name || f.username)) || data.fromUsername || 'New message';
   touchChat(fromId, text, data.timestamp ? new Date(data.timestamp).getTime() : Date.now());
-  unread.set(fromId, (unread.get(fromId) || 0) + 1);
+  unread.set(Number(fromId), (unread.get(Number(fromId)) || 0) + 1);
   renderFriends(); updateBadges(); updateTitle();
   flashCard(fromId);
-
-  addNotif('msg', name, text, fromId);
-  playTone(); buzz();
-  if (document.hidden) systemNotify({ title: name, body: text, tag: 'msg-' + fromId, icon: f && f.avatar_url, friendId: fromId });
-  else waPopup({ id: fromId, name, avatarUrl: f && f.avatar_url, text });
+  notify({ key: 'm-' + fromId, title: name, body: text, avatarUrl: f && f.avatar_url, icon: f && f.avatar_url, friendId: fromId });
 }
 
 /* =========================================================
@@ -631,7 +611,7 @@ function updateBadges() {
 async function loadUnread() {
   try {
     const d = await api('/api/unread');
-    unread.clear(); (d.unread || []).forEach(u => unread.set(u.friend_id, u.count));
+    unread.clear(); (d.unread || []).forEach(u => unread.set(Number(u.friend_id), Number(u.count) || 0));
     updateBadges(); updateTitle(); renderFriends();
   } catch (_) {}
 }
@@ -644,7 +624,7 @@ async function loadStats() {
 }
 
 /* =========================================================
-   FRIENDS — recent chats always on top
+   FRIENDS — recent chats (last 10 days) always on top
    ========================================================= */
 async function loadFriends() {
   const box = $('friendsList'); if (!friends.length) skeleton(box);
@@ -665,12 +645,9 @@ function sorted() {
   const byName = (a, b) => (a.display_name || a.username).localeCompare(b.display_name || b.username);
   const order = { online: 0, away: 1, busy: 2, offline: 3 };
   arr.sort((a, b) => {
-    /* anyone you've chatted with always comes first (unless sorted by name) */
     if (sortMode === 'recent') {
-      const ua = unread.get(a.id) || 0, ub = unread.get(b.id) || 0;
       const ta = chatTs(a), tb = chatTs(b);
       if (ta || tb) { if (tb !== ta) return tb - ta; }
-      if (!ta && !tb && !!ub !== !!ua) return ub - ua;
       return (order[statusOf(a)] ?? 3) - (order[statusOf(b)] ?? 3) || byName(a, b);
     }
     if (sortMode === 'status') return (order[statusOf(a)] ?? 3) - (order[statusOf(b)] ?? 3) || (chatTs(b) - chatTs(a)) || byName(a, b);
@@ -684,7 +661,7 @@ function renderFriends() {
   $('netCount').textContent = list.length ? list.length + ' connection' + (list.length > 1 ? 's' : '') : '';
   if (!list.length) { box.innerHTML = '<div class="empty" style="grid-column:1/-1">No connections found. Add some professionals below!</div>'; return; }
   box.innerHTML = list.map((f, i) => {
-    const u = unread.get(f.id) || 0, ts = chatTs(f), txt = chatText(f), st = statusOf(f);
+    const u = unread.get(f.id) || 0, ts = chatTs(f), txt = ts ? chatText(f) : '', st = statusOf(f);
     const stCls = ['online', 'away', 'busy'].includes(st) ? st : '';
     return `
     <div class="card ${ts ? 'recent' : ''} ${u ? 'has-unread' : ''}" data-id="${f.id}" style="animation-delay:${Math.min(i, 12) * .03}s">
@@ -692,7 +669,7 @@ function renderFriends() {
         <div class="av-wrap">${avatar(f.avatar_url, f.display_name || f.username)}<span class="dot ${stCls}"></span></div>
         <div class="meta">
           <div class="name-row">
-            <span class="name">${esc(f.display_name || f.username)}</span>
+            <span class="name" title="${esc(f.display_name || f.username)}">${esc(f.display_name || f.username)}</span>
             ${f.is_pro ? '<span class="pro">PRO</span>' : ''}${f.is_verified ? '<span class="ver"><i class="fas fa-check"></i></span>' : ''}
             ${ts ? `<span class="time">${timeAgo(ts)}</span>` : ''}
           </div>
@@ -702,7 +679,7 @@ function renderFriends() {
       </div>
       <div class="actions">
         <button class="btn btn-sm btn-primary chat-btn" data-id="${f.id}"><i class="fas fa-comments"></i> Chat</button>
-        <button class="btn btn-sm btn-outline prof-btn" data-id="${f.id}"><i class="fas fa-user-circle"></i></button>
+        <button class="btn btn-sm btn-outline prof-btn" data-id="${f.id}" aria-label="View profile"><i class="fas fa-user-circle"></i></button>
         <button class="btn btn-sm btn-danger unf-btn" data-id="${f.id}" aria-label="Remove"><i class="fas fa-user-minus"></i></button>
       </div>
     </div>`;
@@ -712,20 +689,19 @@ function flashCard(id) {
   const el = document.querySelector(`.card[data-id="${id}"]`);
   if (el) { el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
 }
-/* event delegation — works after every re-render */
 $('friendsList').addEventListener('click', async e => {
   const chat = e.target.closest('.chat-btn'), prof = e.target.closest('.prof-btn'), unf = e.target.closest('.unf-btn');
   if (chat) {
     const id = chat.dataset.id;
     touchChat(id, undefined, Date.now());
     try { await api('/api/messages/read/' + id, { method: 'POST' }); } catch (_) {}
-    unread.delete(Number(id)); unread.delete(id); updateTitle();
+    unread.delete(Number(id)); updateTitle();
     location.href = 'chat.html?friend=' + id;
   } else if (prof) showProfile(prof.dataset.id);
   else if (unf) unfriend(unf.dataset.id, unf);
 });
 async function unfriend(id, btn) {
-  if (!confirm('Remove this connection?')) return;
+  if (!(await askConfirm('Remove this connection?', 'Remove'))) return;
   const orig = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner spin"></i>';
   try {
     await api('/api/friends/' + id, { method: 'DELETE' });
@@ -737,17 +713,19 @@ async function unfriend(id, btn) {
 }
 
 /* =========================================================
-   REQUESTS
+   REQUESTS (only the last 10 days are shown)
    ========================================================= */
 async function loadRequests() {
   const box = $('requestsList'); skeleton(box, 1);
   try {
-    requests = await api('/api/friends/requests'); updateBadges();
+    const all = await api('/api/friends/requests');
+    requests = all.filter(r => !r.created_at || Date.now() - new Date(r.created_at).getTime() <= RECENT_MS);
+    updateBadges();
     if (!requests.length) { box.innerHTML = '<div class="empty">No pending requests.</div>'; return; }
     box.innerHTML = requests.map(r => `
       <div class="card request-card" style="margin-bottom:.7rem">
         <div class="info"><div class="av-wrap">${avatar(r.avatar_url, r.display_name || r.username)}</div>
-          <div class="meta"><div class="name-row"><span class="name">${esc(r.display_name || r.username)}</span>${r.is_pro ? '<span class="pro">PRO</span>' : ''}</div>
+          <div class="meta"><div class="name-row"><span class="name">${esc(r.display_name || r.username)}</span>${r.is_pro ? '<span class="pro">PRO</span>' : ''}${r.created_at ? `<span class="time">${timeAgo(new Date(r.created_at).getTime())}</span>` : ''}</div>
           <div class="sub">@${esc(r.username)} · ${esc(r.profession || 'Professional')}</div></div></div>
         <div class="actions">
           <button class="btn btn-sm btn-success acc-btn" data-id="${r.id}"><i class="fas fa-check"></i> Accept</button>
@@ -776,7 +754,6 @@ async function sendRequest(username, btn) {
     await api('/api/friends/request', { method: 'POST', body: { friendUsername: username } });
     showToast(`Request sent to @${username}!`);
     if (btn) btn.innerHTML = '<i class="fas fa-check"></i> Sent';
-    api('/api/notifications/email', { method: 'POST', body: { toUsername: username, subject: 'New Friend Request', message: `You received a new friend request from @${me.username || 'a Sarveik user'}.` } }).catch(() => {});
     return true;
   } catch (e) {
     showToast(e.message || 'Failed to send request', 'error');
@@ -847,17 +824,17 @@ async function loadGroups() {
     box.innerHTML = groups.map(g => `
       <div class="card group-card">
         <div class="info"><div class="av-ph" style="color:#0a8a60;border-color:rgba(16,185,129,.4)"><i class="fas fa-users"></i></div>
-        <div class="meta"><div class="name">${esc(g.name)}</div><div class="sub">${g.member_count} members</div></div></div>
+        <div class="meta"><div class="name" title="${esc(g.name)}">${esc(g.name)}</div><div class="sub">${Number(g.member_count) || 0} members</div></div></div>
         <div class="actions">
           <button class="btn btn-sm btn-primary open-grp" data-id="${g.id}"><i class="fas fa-comments"></i> Open</button>
-          <button class="btn btn-sm btn-outline leave-grp" data-id="${g.id}"><i class="fas fa-sign-out-alt"></i></button>
+          <button class="btn btn-sm btn-outline leave-grp" data-id="${g.id}" aria-label="Leave group"><i class="fas fa-sign-out-alt"></i></button>
         </div></div>`).join('');
   } catch (e) { box.innerHTML = `<div class="empty" style="grid-column:1/-1">Failed to load groups: ${esc(e.message)}</div>`; }
 }
 $('groupsList').addEventListener('click', async e => {
   const o = e.target.closest('.open-grp'), l = e.target.closest('.leave-grp');
   if (o) location.href = 'chat.html?group=' + o.dataset.id;
-  if (l && confirm('Leave this group?')) {
+  if (l && await askConfirm('Leave this group? If you created it, the group is deleted for everyone.', 'Leave')) {
     try { await api(`/api/groups/${l.dataset.id}/leave`, { method: 'POST' }); showToast('Left group', 'info'); loadGroups(); }
     catch (err) { showToast(err.message || 'Failed', 'error'); }
   }
@@ -865,8 +842,8 @@ $('groupsList').addEventListener('click', async e => {
 
 function renderMembers() {
   const box = $('memberList');
-  if (!friends.length) { box.innerHTML = '<div class="empty">No friends to add</div>'; return; }
-  box.innerHTML = friends.map(f => `<div class="mem ${selected.some(m => m.id === f.id) ? 'selected' : ''}" data-id="${f.id}"><div class="mem-av">${esc(initial(f.username))}</div><div>${esc(f.display_name || f.username)}</div></div>`).join('');
+  if (!pickerFriends.length) { box.innerHTML = '<div class="empty">Add connections first, then you can group them.</div>'; return; }
+  box.innerHTML = pickerFriends.map(f => `<div class="mem ${selected.some(m => m.id === f.id) ? 'selected' : ''}" data-id="${f.id}"><div class="mem-av">${esc(initial(f.username))}</div><div>${esc(f.display_name || f.username)}</div></div>`).join('');
 }
 function renderSelected() {
   const c = $('selMembers');
@@ -874,7 +851,7 @@ function renderSelected() {
 }
 $('memberList').addEventListener('click', e => {
   const el = e.target.closest('.mem'); if (!el) return;
-  const id = Number(el.dataset.id), f = friends.find(x => x.id === id); if (!f) return;
+  const id = Number(el.dataset.id), f = pickerFriends.find(x => x.id === id); if (!f) return;
   selected = selected.some(m => m.id === id) ? selected.filter(m => m.id !== id) : [...selected, { id, username: f.username }];
   renderMembers(); renderSelected();
 });
@@ -882,14 +859,20 @@ $('selMembers').addEventListener('click', e => {
   const i = e.target.closest('i[data-id]'); if (!i) return;
   selected = selected.filter(m => m.id !== Number(i.dataset.id)); renderMembers(); renderSelected();
 });
-$('createGroupBtn').addEventListener('click', () => {
-  selected = []; $('groupName').value = ''; renderMembers(); renderSelected();
-  $('groupModal').style.display = 'block'; $('groupName').focus();
+$('createGroupBtn').addEventListener('click', async () => {
+  selected = []; $('groupName').value = '';
+  $('groupModal').style.display = 'block';
+  $('memberList').innerHTML = '<div class="empty"><i class="fas fa-spinner spin"></i> Loading connections…</div>';
+  renderSelected();
+  /* always load the full list — the main list may be filtered by search / status */
+  try { pickerFriends = await api('/api/friends'); } catch (_) { pickerFriends = friends; }
+  renderMembers(); $('groupName').focus();
 });
 $('groupClose').onclick = () => $('groupModal').style.display = 'none';
 $('confirmGroup').addEventListener('click', async () => {
   const name = $('groupName').value.trim();
   if (!name) { showToast('Please enter a group name', 'error'); return; }
+  if (!selected.length) { showToast('Select at least one member', 'error'); return; }
   const b = $('confirmGroup'), o = b.innerHTML; b.disabled = true; b.innerHTML = '<i class="fas fa-spinner spin"></i> Creating…';
   try {
     await api('/api/groups', { method: 'POST', body: { name, members: selected.map(m => m.id) } });
@@ -912,21 +895,20 @@ async function showProfile(userId) {
   const socials = [['github', 'fab fa-github', 'GitHub'], ['twitter', 'fab fa-twitter', 'Twitter'], ['linkedin', 'fab fa-linkedin', 'LinkedIn'], ['website', 'fas fa-globe', 'Website']]
     .filter(([k]) => safeUrl(p[k])).map(([k, ic, l]) => `<a href="${esc(p[k])}" target="_blank" rel="noopener noreferrer"><i class="${ic}"></i> ${l}</a>`);
   const joined = p.created_at ? new Date(p.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A';
-  const last = p.last_active ? timeAgo(new Date(p.last_active).getTime()) + ' ago' : 'Unknown';
   const row = (ic, l, v) => `<div class="prow"><i class="fas ${ic}"></i><span class="l">${l}</span><span class="v">${esc(v)}</span></div>`;
   c.innerHTML = `
     <div class="ph">${avatar(p.avatar_url, p.display_name || p.username, 'pav', 'pav-ph')}
       <div class="pname">${esc(p.display_name || p.username)}</div><div class="puser">@${esc(p.username)}</div>
       <div class="pbadges">
         ${p.is_pro ? '<span><i class="fas fa-crown"></i> PRO</span>' : ''}${p.is_verified ? '<span><i class="fas fa-check-circle"></i> Verified</span>' : ''}
+        ${p.level ? `<span><i class="fas fa-star"></i> Level ${esc(p.level)}</span>` : ''}
         ${p.is_online !== undefined ? `<span><i class="fas fa-circle" style="color:${p.is_online ? 'var(--green)' : 'var(--muted)'};font-size:.5rem"></i> ${p.is_online ? 'Online' : 'Offline'}</span>` : ''}
       </div></div>
     ${p.bio ? `<div class="pbio">${esc(p.bio)}</div>` : ''}
     <div class="psec"><div class="psec-t">Professional</div>
       ${row('fa-briefcase', 'Profession', p.profession || 'Not specified')}${row('fa-map-marker-alt', 'Location', p.location || 'Not specified')}
       ${p.company ? row('fa-building', 'Company', p.company) : ''}${p.skills ? row('fa-tags', 'Skills', p.skills) : ''}</div>
-    <div class="psec"><div class="psec-t">Activity</div>
-      ${p.connection_count != null ? row('fa-user-friends', 'Connections', p.connection_count) : ''}${row('fa-calendar-plus', 'Joined', joined)}${row('fa-clock', 'Last active', last)}</div>
+    <div class="psec"><div class="psec-t">Activity</div>${row('fa-calendar-plus', 'Joined', joined)}</div>
     ${socials.length ? `<div class="psec"><div class="psec-t">Social &amp; Web</div><div class="plinks">${socials.join('')}</div></div>` : ''}
     <div class="pact"><button class="btn btn-primary" id="pMsg"><i class="fas fa-comment"></i> Message</button>
       <button class="btn btn-outline" id="pClose"><i class="fas fa-times"></i> Close</button></div>`;
@@ -940,41 +922,53 @@ window.addEventListener('click', e => {
 });
 document.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
-  $('profileModal').style.display = 'none'; $('groupModal').style.display = 'none'; $('nc').classList.remove('open'); closeMenu();
+  if (cfResolve) { cfResolve(false); return; }
+  $('profileModal').style.display = 'none'; $('groupModal').style.display = 'none'; closeMenu();
 });
 
 /* =========================================================
    REAL-TIME (socket)
    ========================================================= */
-socket.on('connect', () => { if (socket.recovered === undefined) {} loadUnread(); loadStats(); });
+socket.on('connect', () => { loadUnread(); loadStats(); loadFriends(); loadRequests(); });
 socket.on('disconnect', () => { setTimeout(() => { if (!socket.connected) socket.connect(); }, 5000); });
 
 socket.on('private_message', data => {
   if (me.id != null && String(data.from) === String(me.id)) {
-    /* message I sent (from another tab/device) — bump that chat to top */
+    /* message I sent from another tab/device — bump that chat to top */
     if (data.to != null) { touchChat(data.to, data.message || data.content || '', Date.now()); renderFriends(); }
     return;
   }
   onIncomingMessage(data);
 });
+socket.on('group_message', data => {
+  if (me.id != null && String(data.from) === String(me.id)) return;
+  const g = groups.find(x => String(x.id) === String(data.groupId));
+  const gName = data.groupName || (g && g.name) || 'Group';
+  const who = data.fromName || 'Someone';
+  notify({ key: 'g-' + data.groupId, title: gName, body: `${who}: ${data.message || 'New message'}`, groupId: data.groupId });
+});
 socket.on('friend_request_notification', data => {
   const who = data.fromUsername || data.from || 'Someone';
-  addNotif('req', 'New connection request', `@${who} wants to connect with you.`);
-  playTone(); buzz();
-  if (document.hidden) systemNotify({ title: 'New connection request', body: `@${who} wants to connect with you.`, tag: 'req-' + who });
-  else showToast(`New request from @${who}`, 'info');
+  notify({ key: 'r-' + who, title: 'New connection request', body: `@${who} wants to connect with you.`, kind: 'req' });
   loadRequests(); loadStats();
 });
+socket.on('connection_accepted', data => {
+  const who = data.fromUsername || 'Someone';
+  notify({ key: 'a-' + who, title: 'Request accepted', body: `@${who} is now in your network.`, kind: 'req' });
+  loadFriends(); loadStats();
+});
 socket.on('user_status', d => { online.set(d.userId, d.status); renderFriends(); loadStats(); });
-socket.on('group_created', () => { addNotif('grp', 'New group', 'You were added to a new group.'); loadGroups(); showToast('You were added to a new group', 'info'); });
-/* chat page in another tab updates the recent order instantly */
+socket.on('group_created', d => {
+  notify({ key: 'gc-' + ((d && d.groupId) || Date.now()), title: 'New group', body: d && d.name ? `You were added to “${d.name}”.` : 'You were added to a new group.', groupId: d && d.groupId });
+  loadGroups();
+});
+socket.on('group_deleted', () => { loadGroups(); });
 window.addEventListener('storage', e => {
   if (e.key === 'sarveik_lastchat') { lastChat = store.get('sarveik_lastchat', {}); renderFriends(); }
-  if (e.key === 'sarveik_notifs') { notifs = store.get('sarveik_notifs', []); renderNC(); }
 });
 
 /* =========================================================
-   MOBILE MENU
+   MOBILE MENU + LOGOUT
    ========================================================= */
 function openMenu() {
   $('mobileMenu').classList.add('open'); $('navOverlay').classList.add('active'); $('hamburger').classList.add('active'); document.body.style.overflow = 'hidden';
@@ -986,18 +980,29 @@ $('hamburger').addEventListener('click', e => { e.stopPropagation(); $('mobileMe
 $('hamburger').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.currentTarget.click(); } });
 $('navOverlay').addEventListener('click', closeMenu);
 $('mmClose').addEventListener('click', closeMenu);
-async function doLogout(e) { e.preventDefault(); if (confirm('Logout?')) { try { await api('/logout', { method: 'POST' }); } catch (_) {} location.href = 'index.html'; } }
+async function doLogout(e) {
+  e.preventDefault(); closeMenu();
+  if (await askConfirm('Log out of Sarveik?', 'Log out')) { try { await api('/logout', { method: 'POST' }); } catch (_) {} location.href = 'index.html'; }
+}
+try {
+  const reg = await navigator.serviceWorker.getRegistration();
+  const sub = reg && await reg.pushManager.getSubscription();
+  if (sub) { await api('/api/push/unsubscribe', { method: 'POST', body: { endpoint: sub.endpoint } }); await sub.unsubscribe(); }
+  if (reg && reg.active) reg.active.postMessage({ type: 'logout' });
+} catch (_) {}
+$('logoutBtn').addEventListener('click', doLogout);
 $('mLogoutBtn').addEventListener('click', doLogout);
 
 /* =========================================================
    INIT
    ========================================================= */
 setInterval(() => { if (!document.hidden && me.id) { loadUnread(); loadStats(); } }, 30000);
-setInterval(() => { renderFriends(); }, 60000); // keep "5m / 1h" labels fresh
+setInterval(() => { pruneLast(); renderFriends(); }, 60000);   // keep "5m / 1h" labels fresh and drop chats older than 10 days
 (async () => {
+  pruneLast();
   await fetchCsrf();
   try { const u = await api('/profile'); me = { id: u.id, username: u.username }; } catch (_) {}
-  refreshBanner(); renderNC();
+  refreshBanner(); subscribePush();
   await Promise.all([loadFriends(), loadRequests(), loadStats(), loadGroups()]);
   await loadUnread();
 })();

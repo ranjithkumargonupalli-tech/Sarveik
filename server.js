@@ -1495,13 +1495,19 @@ app.post('/api/push/subscribe', isAuthenticated, async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
+app.post('/api/push/unsubscribe', isAuthenticated, async (req, res) => {
+    const { endpoint } = req.body;
+    if (!endpoint) return res.status(400).json({ error: 'endpoint required' });
+    await pool.query('DELETE FROM push_subs WHERE endpoint = $1 AND user_id = $2', [endpoint, req.session.userId]);
+    res.json({ ok: true });
+});
 
 async function pushTo(userId, payload) {
     if (!process.env.VAPID_PUBLIC || !process.env.VAPID_PRIVATE) return;
     try {
         const { rows } = await pool.query('SELECT endpoint, data FROM push_subs WHERE user_id = $1', [userId]);
         await Promise.all(rows.map(async r => {
-            try { await webpush.sendNotification(r.data, JSON.stringify(payload)); }
+            try { await webpush.sendNotification(r.data, JSON.stringify(payload), { TTL: 3600, urgency: 'high' }); }
             catch (e) {
                 if (e.statusCode === 404 || e.statusCode === 410)   // device unsubscribed or expired
                     await pool.query('DELETE FROM push_subs WHERE endpoint = $1', [r.endpoint]);
@@ -1589,54 +1595,66 @@ io.on('connection', (socket) => {
         } catch (err) { console.error('Error broadcasting online status:', err); }
     })();
 
-    socket.on('private_message', async (data) => {
-        const { to, message, tempId } = data;
-        const toId = parseInt(to);
-        if (!toId || !message || typeof message !== 'string' || message.length > 1000) return;
-        try {
-            const friendship = await pool.query(
-                `SELECT 1 FROM friendships WHERE status = 'accepted'
-                   AND ((user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1))`,
-                [userId, toId]
-            );
-            if (friendship.rows.length === 0) return;
+  socket.on('private_message', async (data) => {
+    const { to, message, tempId } = data;
+    const toId = parseInt(to);
+    if (!toId || !message || typeof message !== 'string' || message.length > 1000) return;
+    try {
+        const friendship = await pool.query(
+            `SELECT 1 FROM friendships WHERE status = 'accepted'
+               AND ((user_id = $1 AND friend_id = $2) OR (user_id = $2 AND friend_id = $1))`,
+            [userId, toId]
+        );
+        if (friendship.rows.length === 0) return;
 
-            let media = null;
-            if (data.fileData) {
-                media = await parseMedia(data);
-                if (!media) { socket.emit('message_failed', { tempId, reason: 'Invalid or too large file' }); return; }
-            }
-            const result = await pool.query(
-                'INSERT INTO messages (sender_id, receiver_id, content) VALUES ($1, $2, $3) RETURNING id',
-                [userId, toId, message]
-            );
-            const newMessageId = result.rows[0]?.id;
-            let fileInfo = {};
-            if (media) {
-                await pool.query(
-                     `INSERT INTO message_files (kind, message_id, file_type, file_name, file_size, data)
-                      VALUES ('m', $1, $2, $3, $4, $5)`,
-                      [newMessageId, media.mime, media.name, media.size, media.dataUrl]
-                    );
-                    fileInfo = { fileUrl: `/api/media/m/${newMessageId}`, fileType: media.mime, fileName: media.name, fileSize: media.size };
-                }
-                const realMessage = {
-                    id: newMessageId, sender_id: userId, content: message,
-                    created_at: new Date().toISOString(), is_boosted: false, ...fileInfo
-                };
-                const toEntry = onlineUsers.get(toId);
-                if (toEntry && toEntry.socketId) {
+        let media = null;
+        if (data.fileData) {
+            media = await parseMedia(data);
+            if (!media) { socket.emit('message_failed', { tempId, reason: 'Invalid or too large file' }); return; }
+        }
 
-                    io.to(toEntry.socketId).emit('private_message', {
-                        from: userId, message, timestamp: new Date().toISOString(), id: newMessageId, ...fileInfo
-                    });
-                } else {
-                    const body = media ? (media.mime.startsWith('audio/') ? '🎤 Voice message' : '📷 Photo') : message.slice(0, 80);
-                    pushTo(toId, { title: session.username, body, friendId: userId });
-                }
-                if (tempId) socket.emit('message_confirmed', { tempId, realMessage });
-        } catch (err) { console.error('Error saving message:', err); }
-    });
+        const result = await pool.query(
+            'INSERT INTO messages (sender_id, receiver_id, content) VALUES ($1, $2, $3) RETURNING id',
+            [userId, toId, message]
+        );
+        const newMessageId = result.rows[0]?.id;
+
+        let fileInfo = {};
+        if (media) {
+            await pool.query(
+                `INSERT INTO message_files (kind, message_id, file_type, file_name, file_size, data)
+                 VALUES ('m', $1, $2, $3, $4, $5)`,
+                [newMessageId, media.mime, media.name, media.size, media.dataUrl]
+            );
+            fileInfo = { fileUrl: `/api/media/m/${newMessageId}`, fileType: media.mime, fileName: media.name, fileSize: media.size };
+        }
+
+        const timestamp = new Date().toISOString();
+        const realMessage = {
+            id: newMessageId, sender_id: userId, content: message,
+            created_at: timestamp, is_boosted: false, ...fileInfo
+        };
+
+        // 1) push always (the service worker hides it if the chat is on screen)
+        const body = media ? (media.mime.startsWith('audio/') ? '🎤 Voice message' : '📷 Photo') : message.slice(0, 80);
+        pushTo(toId, { title: session.username, body, friendId: userId, msgId: newMessageId });
+
+        // 2) live delivery to every open tab/device of the recipient
+        if (onlineUsers.has(toId)) {
+            io.to(`user_${toId}`).emit('private_message', {
+                from: userId, fromUsername: session.username, message,
+                timestamp, id: newMessageId, ...fileInfo
+            });
+        }
+
+        // 3) keep the sender's other tabs/devices in sync
+        io.to(`user_${userId}`).except(socket.id).emit('private_message', {
+            from: userId, to: toId, message, timestamp, id: newMessageId, ...fileInfo
+        });
+
+        if (tempId) socket.emit('message_confirmed', { tempId, realMessage });
+    } catch (err) { console.error('Error saving message:', err); }
+});
 
     socket.on('join_group', async (groupId) => {
         socket.join(`group_${groupId}`);
@@ -1658,8 +1676,8 @@ io.on('connection', (socket) => {
                 'INSERT INTO group_messages (group_id, sender_id, content) VALUES ($1, $2, $3) RETURNING id',
                 [groupId, userId, message]
             );
-            const payload = { groupId, from: userId, message, timestamp: new Date().toISOString(), id: result.rows[0].id };
-            io.to(`group_${groupId}`).emit('group_message', payload);
+            const payload = { groupId, from: userId, fromName: session.username, groupName,
+                message, timestamp: new Date().toISOString(), id: result.rows[0].id };
 
             // everyone else in the group who is NOT looking at it right now
             const room = io.sockets.adapter.rooms.get(`group_${groupId}`) || new Set();
@@ -1749,6 +1767,40 @@ app.get('/api/media/:kind/:id', isAuthenticated, async (req, res) => {
     } catch (err) { console.error(err); res.status(500).end(); }
 });
 // ==================== GROUP CHAT REST ENDPOINTS ====================
+app.post('/api/groups', isAuthenticated, async (req, res) => {
+    const uid = req.session.userId;
+    const name = String(req.body.name || '').trim().slice(0, 100);
+    const members = [...new Set((Array.isArray(req.body.members) ? req.body.members : [])
+        .map(Number).filter(Number.isInteger))].filter(id => id !== uid);
+    if (!name) return res.status(400).json({ error: 'Group name is required' });
+    if (!members.length) return res.status(400).json({ error: 'Select at least one member' });
+    if (members.length > 99) return res.status(400).json({ error: 'Too many members' });
+
+    const client = await pool.connect();
+    let began = false;
+    try {
+        const fr = await client.query(
+            `SELECT CASE WHEN user_id = $1 THEN friend_id ELSE user_id END AS fid
+             FROM friendships WHERE status = 'accepted' AND (user_id = $1 OR friend_id = $1)`, [uid]);
+        const friendIds = new Set(fr.rows.map(r => r.fid));
+        if (members.some(id => !friendIds.has(id)))
+            return res.status(403).json({ error: 'You can only add your connections to a group' });
+
+        await client.query('BEGIN'); began = true;
+        const g = await client.query('INSERT INTO groups (name, created_by) VALUES ($1, $2) RETURNING id', [name, uid]);
+        const groupId = g.rows[0].id;
+        await client.query('INSERT INTO group_members (group_id, user_id) SELECT $1, UNNEST($2::int[])', [groupId, [uid, ...members]]);
+        await client.query('COMMIT');
+
+        members.forEach(id => io.to(`user_${id}`).emit('group_created', { groupId, name }));
+        members.forEach(id => { if (!onlineUsers.has(id)) pushTo(id, { title: 'New group', body: `You were added to "${name}"`, groupId }); });
+        res.status(201).json({ success: true, groupId, name });
+    } catch (err) {
+        if (began) await client.query('ROLLBACK').catch(() => {});
+        console.error('Group creation error:', err);
+        res.status(500).json({ error: 'Failed to create group' });
+    } finally { client.release(); }
+});
 app.get('/api/groups/:id/messages', isAuthenticated, async (req, res) => {
     const groupId = parseInt(req.params.id);
     const offset = parseInt(req.query.offset) || 0;
@@ -3639,7 +3691,7 @@ app.get('/api/support/tickets', isAuthenticated, async (req, res) => {
         let countQuery = `SELECT COUNT(*) FROM support_tickets t`;
         if (!isModOrAdmin) countQuery += ` WHERE t.user_id = $1`;
         const countRes = await pool.query(countQuery, !isModOrAdmin ? [req.session.userId] : []);
-        const total = parseInt(countRes.rows[0].count);
+        const total = parseInt(unread.rows[0]?.count || 0) + parseInt(pending.rows[0]?.count || 0);
 
         res.json({ tickets, total, limit: parseInt(limit), offset: parseInt(offset) });
     } catch (err) {
@@ -4014,6 +4066,29 @@ app.get('/api/usage/analytics', isAuthenticated, async (req, res) => {
 });
 
 // ==================== FRIEND & NETWORK ENDPOINTS ====================
+app.get('/api/friends', isAuthenticated, async (req, res) => {
+    try {
+        const uid = req.session.userId, { search, status } = req.query;
+        const params = [uid]; let extra = '';
+        if (search) { params.push(`%${search}%`); extra = ` AND (u.username ILIKE $2 OR u.display_name ILIKE $2)`; }
+        const result = await pool.query(`
+            SELECT u.id, u.username, u.display_name, u.avatar_url, u.status,
+                   lm.content AS last_message, lm.created_at AS last_message_at
+            FROM friendships f
+            JOIN users u ON u.id = CASE WHEN f.user_id = $1 THEN f.friend_id ELSE f.user_id END
+            LEFT JOIN LATERAL (
+                SELECT content, created_at FROM messages m
+                WHERE (m.sender_id = $1 AND m.receiver_id = u.id) OR (m.sender_id = u.id AND m.receiver_id = $1)
+                ORDER BY created_at DESC LIMIT 1) lm ON true
+            WHERE (f.user_id = $1 OR f.friend_id = $1) AND f.status = 'accepted'${extra}`, params);
+        let rows = result.rows.map(r => ({
+            ...r,
+            status: onlineUsers.has(r.id) ? (r.status && r.status !== 'offline' ? r.status : 'online') : 'offline'
+        }));
+        if (status) rows = rows.filter(r => r.status === status);
+        res.json(rows);
+    } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
+});
 app.post('/api/friends/request', isAuthenticated, async (req, res) => {
     const { friendUsername } = req.body;
     if (!friendUsername) return res.status(400).send('Username required');
@@ -4038,7 +4113,7 @@ app.post('/api/friends/request', isAuthenticated, async (req, res) => {
             if (row.status === 'pending') return res.status(409).send('Friend request already pending');
         }
  
-        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+        const expiresAt = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000);
         await pool.query(
             `INSERT INTO friendships (user_id, friend_id, status, expires_at)
              VALUES ($1, $2, 'pending', $3)`,
@@ -4121,9 +4196,10 @@ app.get('/api/friends', isAuthenticated, async (req, res) => {
 app.get('/api/friends/requests', isAuthenticated, async (req, res) => {
     try {
         const result = await pool.query(
-            `SELECT f.id, u.id as sender_id, u.username, u.display_name, u.avatar_url
-             FROM friendships f JOIN users u ON f.user_id = u.id
-             WHERE f.friend_id = $1 AND f.status = 'pending'`,
+           `SELECT f.id, f.created_at, u.id AS sender_id, u.username, u.display_name, u.avatar_url
+           FROM friendships f JOIN users u ON f.user_id = u.id
+           WHERE f.friend_id = $1 AND f.status = 'pending' AND f.created_at > NOW() - INTERVAL '10 days'
+           ORDER BY f.created_at DESC`,
             [req.session.userId]
         );
         res.json(result.rows);
@@ -4205,6 +4281,12 @@ app.post('/api/messages/read/:friendId', isAuthenticated, async (req, res) => {
 app.get('/api/network/stats', isAuthenticated, async (req, res) => {
     try {
         const userId = req.session.userId;
+        const ids = await pool.query(
+            `SELECT CASE WHEN user_id=$1 THEN friend_id ELSE user_id END AS fid FROM friendships
+            WHERE (user_id=$1 OR friend_id=$1) AND status='accepted'`, [userId]);
+        const onlineCount = ids.rows.filter(r => onlineUsers.has(r.fid)).length;
+// pending query: add  AND created_at > NOW() - INTERVAL '10 days'
+// response:  online: onlineCount
         const total = await pool.query(
             `SELECT COUNT(*) as count FROM friendships
              WHERE (user_id = $1 OR friend_id = $1) AND status = 'accepted'`,
@@ -4267,9 +4349,15 @@ app.get('/api/trending/professionals', isAuthenticated, async (req, res) => {
 app.get('/api/network/unread', isAuthenticated, async (req, res) => {
     try {
         const userId = req.session.userId;
-        const unread = await pool.query('SELECT COUNT(*) as count FROM messages WHERE receiver_id = $1 AND is_read = false', [userId]);
+        const unread = await pool.query(
+             `SELECT sender_id AS friend_id, COUNT(*)::int AS count
+             FROM messages WHERE receiver_id = $1 AND is_read = false
+             GROUP BY sender_id`,
+             [req.session.userId]
+            );
         const pending = await pool.query('SELECT COUNT(*) as count FROM friendships WHERE friend_id = $1 AND status = $2', [userId, 'pending']);
-        const total = (unread.rows[0]?.count || 0) + (pending.rows[0]?.count || 0);
+          const total = parseInt(unread.rows[0]?.count || 0) + parseInt(pending.rows[0]?.count || 0);
+        
         res.json({ total });
     } catch (err) {
         console.error(err);
@@ -5139,6 +5227,17 @@ app.post('/api/user-notes/:userId', isAdminOrModerator, async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+});
+app.get('/api/users/:id', isAuthenticated, async (req, res, next) => {
+    if (!/^\d+$/.test(req.params.id)) return next();
+    try {
+        const id = parseInt(req.params.id);
+        const r = await pool.query(
+            `SELECT id, username, display_name, avatar_url, bio, github, twitter, linkedin, created_at, level
+             FROM users WHERE id = $1`, [id]);
+        if (!r.rows.length) return res.status(404).json({ error: 'User not found' });
+        res.json({ ...r.rows[0], is_online: onlineUsers.has(id) });
+    } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
 });
 
 app.post('/api/users/:id/suspend', isAdminOrModerator, async (req, res) => {
