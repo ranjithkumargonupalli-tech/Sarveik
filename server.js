@@ -2319,16 +2319,21 @@ app.get('/check-session', (req, res) => {
 
 // ==================== GOOGLE OAUTH ====================
 app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/' }), (req, res) => {
-    req.session.regenerate((err) => {
-        if (err) return res.redirect('/');
-        req.session.userId = req.user.id;
-        req.session.username = req.user.username;
-        req.session.email = req.user.email;
-        req.session.role = req.user.role;
-        if (req.user.role === 'admin') res.redirect('/admin-dashboard.html');
-        else res.redirect('/main.html');
-    });
+app.get('/auth/google/callback', (req, res, next) => {
+    passport.authenticate('google', (err, user) => {
+        if (err || !user) {
+            console.error('Google login failed:', err && (err.code || err.message));
+            return res.redirect('/?error=google');
+        }
+        req.session.regenerate((e) => {
+            if (e) return res.redirect('/');
+            req.session.userId = user.id;
+            req.session.username = user.username;
+            req.session.email = user.email;
+            req.session.role = user.role;
+            res.redirect(user.role === 'admin' ? '/admin-dashboard.html' : '/main.html');
+        });
+    })(req, res, next);
 });
 
 // ==================== TOOL USAGE TRACKING ====================
