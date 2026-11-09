@@ -1544,6 +1544,34 @@ async function getFriendsList(userId) {
         return [];
     }
 }
+const ACTIVE_WINDOW_MS = 15 * 60 * 1000;   // 10 * 60 * 1000 for 10 minutes
+const lastActive = new Map();              // userId -> last chat activity (ms)
+
+function isActive(id) { const t = lastActive.get(id); return !!t && Date.now() - t < ACTIVE_WINDOW_MS; }
+function presenceOf(id, manual) {
+    const other = (manual === 'away' || manual === 'busy') ? manual : null;
+    if (isActive(id)) return other || 'online';
+    if (onlineUsers.has(id) && other) return other;
+    return 'offline';
+}
+async function broadcastStatus(userId, status) {
+    try {
+        const friends = await getFriendsList(userId);
+        friends.forEach(f => io.to(`user_${f.id}`).emit('user_status', { userId, status, at: Date.now() }));
+    } catch (e) { console.error('broadcastStatus error:', e); }
+}
+function markActive(userId) {
+    const was = isActive(userId);
+    lastActive.set(userId, Date.now());
+    if (!was) broadcastStatus(userId, 'online');
+}
+// expire people who stopped chatting
+setInterval(() => {
+    const now = Date.now();
+    for (const [id, t] of lastActive) {
+        if (now - t >= ACTIVE_WINDOW_MS) { lastActive.delete(id); broadcastStatus(id, 'offline'); }
+    }
+}, 60 * 1000);
 
 async function getTotalUsersCount() {
     const result = await pool.query('SELECT COUNT(*) as count FROM users');
@@ -1618,6 +1646,7 @@ io.on('connection', (socket) => {
             [userId, toId, message]
         );
         const newMessageId = result.rows[0]?.id;
+        socket.on('presence_ping', () => markActive(userId));
 
         let fileInfo = {};
         if (media) {
@@ -1725,15 +1754,8 @@ io.on('connection', (socket) => {
             userEntry.socketIds.delete(socket.id);
             if (userEntry.socketIds.size === 0) {
                 onlineUsers.delete(userId);
-                (async () => {
-                    try {
-                        const friends = await getFriendsList(userId);
-                        friends.forEach(friend => {
-                            const friendEntry = onlineUsers.get(friend.id);
-                            if (friendEntry && friendEntry.socketId) io.to(friendEntry.socketId).emit('user_status', { userId, status: 'offline' });
-                        });
-                    } catch (err) { console.error('Error broadcasting offline status:', err); }
-                })();
+               lastActive.delete(userId);
+               broadcastStatus(userId, 'offline');
             } else {
                 userEntry.socketId = Array.from(userEntry.socketIds)[0];
             }
@@ -4081,10 +4103,12 @@ app.get('/api/friends', isAuthenticated, async (req, res) => {
                 WHERE (m.sender_id = $1 AND m.receiver_id = u.id) OR (m.sender_id = u.id AND m.receiver_id = $1)
                 ORDER BY created_at DESC LIMIT 1) lm ON true
             WHERE (f.user_id = $1 OR f.friend_id = $1) AND f.status = 'accepted'${extra}`, params);
-        let rows = result.rows.map(r => ({
-            ...r,
-            status: onlineUsers.has(r.id) ? (r.status && r.status !== 'offline' ? r.status : 'online') : 'offline'
-        }));
+            let rows = result.rows.map(r => ({
+                 ...r,
+                 status: presenceOf(r.id, r.status),
+                 last_active: lastActive.get(r.id) || null
+                }));
+if (status) rows = rows.filter(r => r.status === status);
         if (status) rows = rows.filter(r => r.status === status);
         res.json(rows);
     } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
@@ -4284,7 +4308,7 @@ app.get('/api/network/stats', isAuthenticated, async (req, res) => {
         const ids = await pool.query(
             `SELECT CASE WHEN user_id=$1 THEN friend_id ELSE user_id END AS fid FROM friendships
             WHERE (user_id=$1 OR friend_id=$1) AND status='accepted'`, [userId]);
-        const onlineCount = ids.rows.filter(r => onlineUsers.has(r.fid)).length;
+        const onlineCount = ids.rows.filter(r => presenceOf(r.fid, null) === 'online').length;
 // pending query: add  AND created_at > NOW() - INTERVAL '10 days'
 // response:  online: onlineCount
         const total = await pool.query(
