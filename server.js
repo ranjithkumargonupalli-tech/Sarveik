@@ -193,7 +193,7 @@ setInterval(async () => {
         await pool.query('DELETE FROM password_resets WHERE expires_at < NOW()');
     } catch (err) { console.error('OTP cleanup error:', err); }
 }, 10 * 60 * 1000);
-
+setInterval(() => pool.query("DELETE FROM message_files WHERE created_at < NOW() - INTERVAL '24 hours'").catch(console.error), 60 * 60 * 1000);
 // ==================== RATE LIMITING ====================
 const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -215,6 +215,29 @@ const otpVerificationLimiter = rateLimit({
     },
     message: 'Too many OTP verification attempts, please try again later.'
 });
+
+const MEDIA_MAX_BYTES = 25 * 1024 * 1024;
+const MEDIA_OK = /^(image\/(jpeg|png|gif|webp|avif|bmp)|audio\/(webm|ogg|mp4|mpeg|aac|x-m4a))$/;
+
+async function parseMedia(data) {
+    const { fileData, fileName } = data;
+    if (typeof fileData !== 'string') return null;
+    const m = fileData.match(/^data:([a-z0-9.+\/-]+)(?:;codecs=[^;,]+)?;base64,/i);
+    if (!m) return null;
+    const mime = m[1].toLowerCase();
+    if (!MEDIA_OK.test(mime)) return null;
+    const b64 = fileData.slice(m[0].length);
+    const bytes = Math.floor(b64.length * 3 / 4);
+    if (bytes > MEDIA_MAX_BYTES) return null;
+    if (mime.startsWith('image/')) {                       // check the real file header, not just the label
+        const ft = await fileTypeFromBuffer(Buffer.from(b64.slice(0, 8192), 'base64'));
+        if (!ft || !ft.mime.startsWith('image/')) return null;
+    }
+    return {
+        mime, size: bytes, dataUrl: fileData,
+        name: String(fileName || 'file').replace(/[^\w.\- ()]/g, '_').slice(0, 120)
+    };
+}
 
 // ==================== SETUP MONETIZATION TABLES ====================
 // (Functionality removed — nothing references it. No action needed.)
@@ -242,6 +265,19 @@ async function ensureStaffLoungeGroup() {
     } catch (err) {
         console.error('Error ensuring Staff Lounge group:', err);
     }
+}
+async function setupChatMediaTable() {
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS message_files (
+            kind CHAR(1) NOT NULL,          -- 'm' = private message, 'g' = group message
+            message_id INT NOT NULL,
+            file_type VARCHAR(100) NOT NULL,
+            file_name VARCHAR(255),
+            file_size INT,
+            data TEXT NOT NULL,             -- the data: URL from the client
+            created_at TIMESTAMP DEFAULT NOW(),
+            PRIMARY KEY (kind, message_id)
+        )`);
 }
 
 // ==================== GAMIFICATION TABLES SETUP ====================
@@ -1476,7 +1512,11 @@ async function pushTo(userId, payload) {
 
 // ==================== SOCKET.IO SETUP ====================
 const server = http.createServer(app);
-const io = socketIo(server, { cors: { origin: allowedOrigins, credentials: true } });
+const io = socketIo(server, {
+    cors: { origin: allowedOrigins, credentials: true },
+    maxHttpBufferSize: 30e6,   // photos up to 24 MB as base64 text, plus overhead
+    pingTimeout: 60000         // keeps big uploads on slow phones from timing out
+});
 io.use(sharedsession(sessionMiddleware, { autoSave: true }));
 
 const onlineUsers = new Map();
@@ -1561,23 +1601,40 @@ io.on('connection', (socket) => {
             );
             if (friendship.rows.length === 0) return;
 
+            let media = null;
+            if (data.fileData) {
+                media = await parseMedia(data);
+                if (!media) { socket.emit('message_failed', { tempId, reason: 'Invalid or too large file' }); return; }
+            }
             const result = await pool.query(
                 'INSERT INTO messages (sender_id, receiver_id, content) VALUES ($1, $2, $3) RETURNING id',
                 [userId, toId, message]
             );
             const newMessageId = result.rows[0]?.id;
-            const realMessage = {
-                id: newMessageId, sender_id: userId, content: message,
-                created_at: new Date().toISOString(), is_boosted: false
-            };
-            const toEntry = onlineUsers.get(toId);
-            if (toEntry && toEntry.socketId) {
-                io.to(toEntry.socketId).emit('private_message', { from: userId, message, timestamp: new Date().toISOString(), id: newMessageId });
-            } else {
-                // receiver has no open connection → phone / closed app notification
-                pushTo(toId, { title: session.username, body: message.slice(0, 80), friendId: userId });
-            }
-            if (tempId) socket.emit('message_confirmed', { tempId, realMessage });
+            let fileInfo = {};
+            if (media) {
+                await pool.query(
+                     `INSERT INTO message_files (kind, message_id, file_type, file_name, file_size, data)
+                      VALUES ('m', $1, $2, $3, $4, $5)`,
+                      [newMessageId, media.mime, media.name, media.size, media.dataUrl]
+                    );
+                    fileInfo = { fileUrl: `/api/media/m/${newMessageId}`, fileType: media.mime, fileName: media.name, fileSize: media.size };
+                }
+                const realMessage = {
+                    id: newMessageId, sender_id: userId, content: message,
+                    created_at: new Date().toISOString(), is_boosted: false, ...fileInfo
+                };
+                const toEntry = onlineUsers.get(toId);
+                if (toEntry && toEntry.socketId) {
+
+                    io.to(toEntry.socketId).emit('private_message', {
+                        from: userId, message, timestamp: new Date().toISOString(), id: newMessageId, ...fileInfo
+                    });
+                } else {
+                    const body = media ? (media.mime.startsWith('audio/') ? '🎤 Voice message' : '📷 Photo') : message.slice(0, 80);
+                    pushTo(toId, { title: session.username, body, friendId: userId });
+                }
+                if (tempId) socket.emit('message_confirmed', { tempId, realMessage });
         } catch (err) { console.error('Error saving message:', err); }
     });
 
@@ -1626,6 +1683,7 @@ io.on('connection', (socket) => {
             console.error('Group message error:', err);
         }
     });
+    
 
     // 🟡 MINOR: Orphaned socket handler — kept for backward compatibility.
     // Harmless (only updates user lat/lng). Safe to remove if no delivery features remain.
@@ -1664,8 +1722,32 @@ io.on('connection', (socket) => {
         }
         console.log(`User ${userId} disconnected`);
     });
+    socket.on('typing', ({ to, isTyping }) => {
+    const toId = parseInt(to);
+    if (!toId) return;
+    io.to(`user_${toId}`).emit('typing', { from: userId, isTyping: !!isTyping });
 });
-
+});
+app.get('/api/media/:kind/:id', isAuthenticated, async (req, res) => {
+    const kind = req.params.kind, id = parseInt(req.params.id);
+    if (!['m', 'g'].includes(kind) || isNaN(id)) return res.status(400).end();
+    try {
+        const access = kind === 'm'
+            ? await pool.query('SELECT 1 FROM messages WHERE id = $1 AND (sender_id = $2 OR receiver_id = $2)', [id, req.session.userId])
+            : await pool.query('SELECT 1 FROM group_messages gm JOIN group_members m ON m.group_id = gm.group_id WHERE gm.id = $1 AND m.user_id = $2', [id, req.session.userId]);
+        if (!access.rows.length) return res.status(403).end();
+        const f = await pool.query('SELECT file_type, data FROM message_files WHERE kind = $1 AND message_id = $2', [kind, id]);
+        if (!f.rows.length) return res.status(404).end();
+        const d = f.rows[0].data;
+        res.set({
+            'Content-Type': f.rows[0].file_type,
+            'X-Content-Type-Options': 'nosniff',
+            'Content-Security-Policy': "sandbox; default-src 'none'",
+            'Cache-Control': 'private, max-age=86400'
+        });
+        res.send(Buffer.from(d.slice(d.indexOf(',') + 1), 'base64'));
+    } catch (err) { console.error(err); res.status(500).end(); }
+});
 // ==================== GROUP CHAT REST ENDPOINTS ====================
 app.get('/api/groups/:id/messages', isAuthenticated, async (req, res) => {
     const groupId = parseInt(req.params.id);
@@ -4074,11 +4156,12 @@ app.get('/api/messages/:friendId', isAuthenticated, async (req, res) => {
     const limit = parseInt(req.query.limit) || 30;
     try {
         const result = await pool.query(
-            `SELECT * FROM messages
-             WHERE (sender_id = $1 AND receiver_id = $2)
-                OR (sender_id = $2 AND receiver_id = $1)
-             ORDER BY created_at DESC
-             LIMIT $3 OFFSET $4`,
+            `SELECT m.*, f.file_type, f.file_name, f.file_size,
+            CASE WHEN f.message_id IS NOT NULL THEN '/api/media/m/' || m.id END AS file_url
+            FROM messages m
+            LEFT JOIN message_files f ON f.kind = 'm' AND f.message_id = m.id
+            WHERE (m.sender_id = $1 AND m.receiver_id = $2) OR (m.sender_id = $2 AND m.receiver_id = $1)
+            ORDER BY m.created_at DESC LIMIT $3 OFFSET $4`,
             [req.session.userId, friendId, limit, offset]
         );
         res.json(result.rows);
@@ -5394,7 +5477,8 @@ app.get('/api/csrf-token', (req, res) => {
         await pool.query('SELECT NOW()');
         console.log('✅ Database connection verified');
         await ensureStaffLoungeGroup();
-        await setupGamificationTables(); // <-- NEW: Creates all gamification tables and seeds data
+        await setupGamificationTables();
+        await setupChatMediaTable(); // <-- NEW: Creates all gamification tables and seeds data
     } catch (err) {
         console.error('❌ Database connection failed:', err.message);
         process.exit(1);
