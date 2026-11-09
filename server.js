@@ -1495,6 +1495,27 @@ app.post('/api/push/subscribe', isAuthenticated, async (req, res) => {
         res.status(500).json({ error: 'Server error' });
     }
 });
+app.post('/api/push/test', isAuthenticated, async (req, res) => {
+    if (!process.env.VAPID_PUBLIC || !process.env.VAPID_PRIVATE)
+        return res.status(503).json({ error: 'Push is not configured on the server (VAPID keys missing)' });
+    const { rows } = await pool.query('SELECT endpoint, data FROM push_subs WHERE user_id = $1', [req.session.userId]);
+    if (!rows.length)
+        return res.status(404).json({ error: 'This device is not subscribed yet. Tap Enable and allow notifications.' });
+    let sent = 0; const failed = [];
+    for (const r of rows) {
+        try {
+            await webpush.sendNotification(r.data, JSON.stringify({
+                title: 'Sarveik', body: 'Test notification. It works! 🎉', kind: 'info', url: '/friends.html', force: true
+            }), { TTL: 60, urgency: 'high' });
+            sent++;
+        } catch (e) {
+            failed.push(e.statusCode || e.message);
+            console.error('Push test failed:', e.statusCode, e.body);
+            if (e.statusCode === 404 || e.statusCode === 410) await pool.query('DELETE FROM push_subs WHERE endpoint = $1', [r.endpoint]);
+        }
+    }
+    res.json({ sent, failed });
+});
 app.post('/api/push/unsubscribe', isAuthenticated, async (req, res) => {
     const { endpoint } = req.body;
     if (!endpoint) return res.status(400).json({ error: 'endpoint required' });
@@ -1513,7 +1534,11 @@ async function pushTo(userId, payload) {
                     await pool.query('DELETE FROM push_subs WHERE endpoint = $1', [r.endpoint]);
             }
         }));
-    } catch (err) { console.error('pushTo error:', err.message); }
+    } catch (e) {
+        console.error('Push failed:', e.statusCode, e.body || e.message);
+        if (e.statusCode === 404 || e.statusCode === 410)
+        await pool.query('DELETE FROM push_subs WHERE endpoint = $1', [r.endpoint]);
+    }
 }
 
 // ==================== SOCKET.IO SETUP ====================
@@ -5601,7 +5626,8 @@ app.get('/api/csrf-token', (req, res) => {
         console.log('✅ Database connection verified');
         await ensureStaffLoungeGroup();
         await setupGamificationTables();
-        await setupChatMediaTable(); // <-- NEW: Creates all gamification tables and seeds data
+        await setupChatMediaTable();
+        await setupPushTable(); // <-- NEW: Creates all gamification tables and seeds data
     } catch (err) {
         console.error('❌ Database connection failed:', err.message);
         process.exit(1);

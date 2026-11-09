@@ -248,8 +248,12 @@ hr{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--bor
 
   <div class="notif-banner" id="notifBanner">
     <i class="fab fa-whatsapp big"></i>
-    <div class="t"><strong>Turn on real-time notifications</strong>Get new messages, group messages and connection requests instantly on your phone and desktop, even when this tab is closed.</div>
+    <div class="t" id="notifText"><strong>Turn on real-time notifications</strong>Get new messages, group messages and connection requests instantly on your phone and desktop, even when this tab is closed.</div>
     <button class="btn btn-wa btn-sm" id="enableNotifBtn"><i class="fas fa-bell"></i> Enable</button>
+  </div>
+
+  <div id="pushTools" style="display:none;margin-bottom:1rem;text-align:right">
+    <button class="btn btn-outline btn-xs" id="testPushBtn"><i class="fas fa-paper-plane"></i> Send test notification</button>
   </div>
 
   <div class="stats">
@@ -459,7 +463,29 @@ const swReady = (async function initSW() {
 })();
 
 function permissionState() { return 'Notification' in window ? Notification.permission : 'unsupported'; }
-function refreshBanner() { $('notifBanner').classList.toggle('show', permissionState() === 'default'); }
+const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isStandalone = !!(navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches));
+const notifDefaultHTML = $('notifText').innerHTML;
+function refreshBanner() {
+  /* iPhone only allows notifications for apps added to the Home Screen */
+  const needInstall = isIOS && !isStandalone;
+  $('notifBanner').classList.toggle('show', needInstall || permissionState() === 'default');
+  $('enableNotifBtn').style.display = needInstall ? 'none' : '';
+  $('notifText').innerHTML = needInstall
+    ? '<strong>Install Sarveik to get notifications on iPhone</strong>Tap the Share button, choose “Add to Home Screen”, then open Sarveik from the new icon and tap Enable.'
+    : notifDefaultHTML;
+  $('pushTools').style.display = permissionState() === 'granted' ? 'block' : 'none';
+}
+async function testPush() {
+  const b = $('testPushBtn'), o = b.innerHTML; b.disabled = true; b.innerHTML = '<i class="fas fa-spinner spin"></i> Sending…';
+  try {
+    await subscribePush();   // make sure this device is registered first
+    const r = await api('/api/push/test', { method: 'POST' });
+    showToast(`Test sent to ${r.sent} device(s). Lock your phone to see it.` + (r.failed && r.failed.length ? ` (failed: ${r.failed.join(', ')})` : ''), r.sent ? 'success' : 'error');
+  } catch (e) { showToast(e.message || 'Test failed', 'error'); }
+  b.disabled = false; b.innerHTML = o;
+}
+$('testPushBtn').addEventListener('click', testPush);
 
 function urlB64(b64) {
   const pad = '='.repeat((4 - b64.length % 4) % 4);
@@ -484,6 +510,7 @@ async function askPermission() {
   refreshBanner();
   if (p === 'granted') {
     showToast('Real-time notifications enabled 🔔');
+    refreshBanner();
     subscribePush();
     systemNotify({ title: 'Sarveik', body: 'You will now get message alerts here.', tag: 'welcome' });
   } else if (p === 'denied') {
@@ -587,7 +614,7 @@ document.addEventListener('visibilitychange', () => {
 function notify({ key, title, body, avatarUrl, icon, friendId, groupId, kind }) {
   const href = groupId ? 'chat.html?group=' + groupId : friendId ? 'chat.html?friend=' + friendId : null;
   playTone(); buzz();
-  if (document.hidden) systemNotify({ title, body, tag: key, icon, friendId, groupId });
+  if (document.hidden || !document.hasFocus()) systemNotify({ title, body, tag: key, icon, friendId, groupId });
   else waPopup({ id: key, name: title, avatarUrl, text: body, href, kind });
 }
 
