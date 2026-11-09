@@ -7,9 +7,9 @@
 <title>Sarveik – Network</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  <link rel="manifest" href="/manifest.json">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
 <style>
 :root{
   --bg:#eef8ff;--card:rgba(255,255,255,.92);--border:rgba(14,165,233,.18);--border-h:rgba(14,165,233,.45);
@@ -324,6 +324,7 @@ hr{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--bor
    ========================================================= */
 const $ = id => document.getElementById(id);
 const RECENT_MS = 10 * 24 * 60 * 60 * 1000;   // names / chats / requests only count for 10 days
+const PRESENCE_MS = 15 * 60 * 1000;           // someone shows as Online only if they chatted in the last 15 min (use 10 * 60 * 1000 for 10 min)
 const safeParse = (raw, fb) => { try { const v = JSON.parse(raw); return v == null ? fb : v; } catch (_) { return fb; } };
 const store = {
   get: (k, fb) => safeParse(localStorage.getItem(k), fb),
@@ -407,6 +408,7 @@ let filters = { status: '', search: '' };
 let sortMode = store.get('sarveik_sort', 'recent');
 const online = new Map();        // id -> status
 const unread = new Map();        // id -> count
+const seen = new Map();          // id -> last chat activity (ms)
 let lastChat = store.get('sarveik_lastchat', {});   // id -> { ts, text }
 let selected = [];
 
@@ -448,16 +450,12 @@ const swReady = (async function initSW() {
   if (!('serviceWorker' in navigator)) return null;
   try { swReg = await navigator.serviceWorker.register('/sw.js'); }
   catch (_) { try { swReg = await navigator.serviceWorker.getRegistration(); } catch (_) {} }
-navigator.serviceWorker && navigator.serviceWorker.addEventListener('message', e => {
-  if (e.data && e.data.type === 'marked-read') {
-    unread.delete(Number(e.data.friendId)); renderFriends(); updateBadges(); updateTitle();
-  }
-});
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden && navigator.serviceWorker && navigator.serviceWorker.controller)
-    navigator.serviceWorker.controller.postMessage({ type: 'clear-notifications' });
-});
-return swReg;
+  navigator.serviceWorker.addEventListener('message', e => {
+    const m = e.data || {};
+    if (m.type === 'open-chat' && m.friendId) location.href = 'chat.html?friend=' + m.friendId;
+    if (m.type === 'marked-read') { unread.delete(Number(m.friendId)); renderFriends(); updateBadges(); updateTitle(); }
+  });
+  return swReg;
 })();
 
 function permissionState() { return 'Notification' in window ? Notification.permission : 'unsupported'; }
@@ -517,11 +515,11 @@ function buzz() { if (prefs.vibrate && navigator.vibrate) { try { navigator.vibr
 async function systemNotify({ title, body, tag, icon, friendId, groupId }) {
   if (!prefs.system || permissionState() !== 'granted') return;
   const url = groupId ? 'chat.html?group=' + groupId : friendId ? 'chat.html?friend=' + friendId : 'friends.html';
-const opts = {
-  body, tag: tag || undefined, renotify: !!tag, icon: icon || undefined, badge: icon || undefined,
-  vibrate: [120, 60, 120], timestamp: Date.now(),
-  data: { friendId, groupId, src: 'page', t: Date.now(), count: 1, lines: [body], body, baseTitle: title }
-};
+  const opts = {
+    body, tag: tag || undefined, renotify: !!tag, icon: icon || undefined, badge: icon || undefined,
+    vibrate: [120, 60, 120], timestamp: Date.now(),
+    data: { friendId, groupId, src: 'page', t: Date.now(), count: 1, lines: [body], body, baseTitle: title }
+  };
   try {
     await swReady;
     if (swReg && swReg.showNotification) { await swReg.showNotification(title, opts); return; }
@@ -577,7 +575,13 @@ function updateTitle() {
     document.title = n > 0 ? `(${n}) ${baseTitle}` : baseTitle;
   }
 }
-document.addEventListener('visibilitychange', () => { if (!document.hidden) { waActive.forEach((_, k) => closeWa(k)); } updateTitle(); });
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) {
+    waActive.forEach((_, k) => closeWa(k));
+    if (navigator.serviceWorker && navigator.serviceWorker.controller) navigator.serviceWorker.controller.postMessage({ type: 'clear-notifications' });
+  }
+  updateTitle();
+});
 
 /* single entry point: popup if the tab is visible, system notification if hidden */
 function notify({ key, title, body, avatarUrl, icon, friendId, groupId, kind }) {
@@ -594,9 +598,11 @@ function onIncomingMessage(data) {
   const name = (f && (f.display_name || f.username)) || data.fromUsername || 'New message';
   touchChat(fromId, text, data.timestamp ? new Date(data.timestamp).getTime() : Date.now());
   unread.set(Number(fromId), (unread.get(Number(fromId)) || 0) + 1);
+  if (!['away', 'busy'].includes(online.get(Number(fromId)))) online.set(Number(fromId), 'online');   // they are chatting right now
+  seen.set(Number(fromId), Date.now());
   renderFriends(); updateBadges(); updateTitle();
   flashCard(fromId);
-  notify({ key: 'm-' + fromId, title: name, body: text, avatarUrl: f && f.avatar_url, icon: f && f.avatar_url, friendId: fromId });
+  notify({ key: 'msg-f' + fromId, title: name, body: text, avatarUrl: f && f.avatar_url, icon: f && f.avatar_url, friendId: fromId });
 }
 
 /* =========================================================
@@ -630,18 +636,25 @@ async function loadFriends() {
   const box = $('friendsList'); if (!friends.length) skeleton(box);
   try {
     const p = new URLSearchParams();
-    if (filters.status) p.append('status', filters.status);
-    if (filters.search) p.append('search', filters.search);
+    if (filters.search) p.append('search', filters.search);      // status filter is applied locally (see sorted())
     friends = await api('/api/friends?' + p);
-    friends.forEach(f => { if (!online.has(f.id)) online.set(f.id, f.status || 'offline'); });
+    friends.forEach(f => {
+      online.set(f.id, f.status || 'offline');                   // server is the source of truth
+      if (f.last_active) seen.set(f.id, Number(f.last_active)); else seen.delete(f.id);
+    });
     renderFriends();
   } catch (e) {
     box.innerHTML = `<div class="empty">Couldn't load your network: ${esc(e.message)} <button class="btn btn-sm btn-outline" onclick="loadFriends()">Retry</button></div>`;
   }
 }
-function statusOf(f) { return online.get(f.id) || f.status || 'offline'; }
+/* Online = chatted within PRESENCE_MS. Away / Busy are kept as set by the user. Everyone else = Offline. */
+function statusOf(f) {
+  const st = online.get(f.id) || f.status || 'offline';
+  if (st === 'online' && Date.now() - (seen.get(f.id) || 0) > PRESENCE_MS) return 'offline';
+  return st;
+}
 function sorted() {
-  const arr = [...friends];
+  const arr = friends.filter(f => !filters.status || statusOf(f) === filters.status);
   const byName = (a, b) => (a.display_name || a.username).localeCompare(b.display_name || b.username);
   const order = { online: 0, away: 1, busy: 2, offline: 3 };
   arr.sort((a, b) => {
@@ -659,6 +672,7 @@ function renderFriends() {
   const box = $('friendsList');
   const list = sorted();
   $('netCount').textContent = list.length ? list.length + ' connection' + (list.length > 1 ? 's' : '') : '';
+  if (!filters.status && !filters.search) setStat('sOnline', friends.filter(f => statusOf(f) === 'online').length);
   if (!list.length) { box.innerHTML = '<div class="empty" style="grid-column:1/-1">No connections found. Add some professionals below!</div>'; return; }
   box.innerHTML = list.map((f, i) => {
     const u = unread.get(f.id) || 0, ts = chatTs(f), txt = ts ? chatText(f) : '', st = statusOf(f);
@@ -666,7 +680,7 @@ function renderFriends() {
     return `
     <div class="card ${ts ? 'recent' : ''} ${u ? 'has-unread' : ''}" data-id="${f.id}" style="animation-delay:${Math.min(i, 12) * .03}s">
       <div class="info">
-        <div class="av-wrap">${avatar(f.avatar_url, f.display_name || f.username)}<span class="dot ${stCls}"></span></div>
+        <div class="av-wrap">${avatar(f.avatar_url, f.display_name || f.username)}<span class="dot ${stCls}" title="${st === 'online' ? 'Active now' : st === 'away' ? 'Away' : st === 'busy' ? 'Busy' : 'Offline'}"></span></div>
         <div class="meta">
           <div class="name-row">
             <span class="name" title="${esc(f.display_name || f.username)}">${esc(f.display_name || f.username)}</span>
@@ -798,7 +812,7 @@ $('searchUser').addEventListener('keydown', e => { if (e.key === 'Enter') { e.pr
 /* =========================================================
    FILTERS + SORT
    ========================================================= */
-$('statusFilter').addEventListener('change', e => { filters.status = e.target.value; loadFriends(); });
+$('statusFilter').addEventListener('change', e => { filters.status = e.target.value; renderFriends(); });
 $('quickSearch').addEventListener('input', debounce(() => { filters.search = $('quickSearch').value; loadFriends(); }, 350));
 $('refreshBtn').addEventListener('click', async () => {
   const i = $('refreshBtn').querySelector('i'); i.classList.add('spin');
@@ -942,10 +956,13 @@ socket.on('private_message', data => {
 });
 socket.on('group_message', data => {
   if (me.id != null && String(data.from) === String(me.id)) return;
+  if (!['away', 'busy'].includes(online.get(Number(data.from)))) online.set(Number(data.from), 'online');
+  seen.set(Number(data.from), Date.now());
+  renderFriends();
   const g = groups.find(x => String(x.id) === String(data.groupId));
   const gName = data.groupName || (g && g.name) || 'Group';
   const who = data.fromName || 'Someone';
-  notify({ key: 'g-' + data.groupId, title: gName, body: `${who}: ${data.message || 'New message'}`, groupId: data.groupId });
+  notify({ key: 'msg-g' + data.groupId, title: gName, body: `${who}: ${data.message || 'New message'}`, groupId: data.groupId });
 });
 socket.on('friend_request_notification', data => {
   const who = data.fromUsername || data.from || 'Someone';
@@ -957,7 +974,11 @@ socket.on('connection_accepted', data => {
   notify({ key: 'a-' + who, title: 'Request accepted', body: `@${who} is now in your network.`, kind: 'req' });
   loadFriends(); loadStats();
 });
-socket.on('user_status', d => { online.set(d.userId, d.status); renderFriends(); loadStats(); });
+socket.on('user_status', d => {
+  online.set(d.userId, d.status);
+  if (d.status === 'offline') seen.delete(d.userId); else seen.set(d.userId, d.at || Date.now());
+  renderFriends(); loadStats();
+});
 socket.on('group_created', d => {
   notify({ key: 'gc-' + ((d && d.groupId) || Date.now()), title: 'New group', body: d && d.name ? `You were added to “${d.name}”.` : 'You were added to a new group.', groupId: d && d.groupId });
   loadGroups();
@@ -982,14 +1003,16 @@ $('navOverlay').addEventListener('click', closeMenu);
 $('mmClose').addEventListener('click', closeMenu);
 async function doLogout(e) {
   e.preventDefault(); closeMenu();
-  if (await askConfirm('Log out of Sarveik?', 'Log out')) { try { await api('/logout', { method: 'POST' }); } catch (_) {} location.href = 'index.html'; }
+  if (!(await askConfirm('Log out of Sarveik?', 'Log out'))) return;
+  try {   // stop push for this device so the next person on this phone does not get your messages
+    const reg = await navigator.serviceWorker.getRegistration();
+    const sub = reg && reg.pushManager ? await reg.pushManager.getSubscription() : null;
+    if (sub) { await api('/api/push/unsubscribe', { method: 'POST', body: { endpoint: sub.endpoint } }); await sub.unsubscribe(); }
+    if (reg && reg.active) reg.active.postMessage({ type: 'logout' });
+  } catch (_) {}
+  try { await api('/logout', { method: 'POST' }); } catch (_) {}
+  location.href = 'index.html';
 }
-try {
-  const reg = await navigator.serviceWorker.getRegistration();
-  const sub = reg && await reg.pushManager.getSubscription();
-  if (sub) { await api('/api/push/unsubscribe', { method: 'POST', body: { endpoint: sub.endpoint } }); await sub.unsubscribe(); }
-  if (reg && reg.active) reg.active.postMessage({ type: 'logout' });
-} catch (_) {}
 $('logoutBtn').addEventListener('click', doLogout);
 $('mLogoutBtn').addEventListener('click', doLogout);
 
