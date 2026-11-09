@@ -2322,7 +2322,10 @@ app.get('/auth/google', passport.authenticate('google', { scope: ['profile', 'em
 app.get('/auth/google/callback', (req, res, next) => {
     passport.authenticate('google', (err, user) => {
         if (err || !user) {
-            console.error('Google login failed:', err && (err.code || err.message));
+            console.error('GOOGLE LOGIN FAILED →',
+                'code:', err && err.code,
+                '| message:', err && err.message,
+                '| detail:', err && err.oauthError && err.oauthError.data);
             return res.redirect('/?error=google');
         }
         req.session.regenerate((e) => {
