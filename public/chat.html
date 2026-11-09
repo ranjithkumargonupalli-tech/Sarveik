@@ -326,7 +326,7 @@ select.form-input[multiple]{height:110px}
           <option value="dark">🌙 Dark</option><option value="light">☀️ Light</option><option value="ocean">🌊 Ocean</option><option value="forest">🌲 Forest</option><option value="sunset">🌅 Sunset</option>
         </select>
         <select id="typingSelect" class="theme-select" title="Typing animation">
-          <option value="random">⌨️ Typing: Random</option><option value="bounce">⚪ Bounce dots</option><option value="wave">📶 Wave bars</option><option value="pulse">💓 Pulse dots</option><option value="pen">✒️ Pen writing</option><option value="letters">🔤 Jumping letters</option>
+          <option value="random">🔀 Typing: Change every message</option><option value="bounce">⚪ Bounce dots</option><option value="wave">📶 Wave bars</option><option value="pulse">💓 Pulse dots</option><option value="pen">✒️ Pen writing</option><option value="letters">🔤 Jumping letters</option>
         </select>
         <span class="chip" id="creditsChip" title="Credits"><i class="fas fa-coins"></i> <span id="creditsAmt">0</span></span>
         <span class="chip" id="xpChip" title="Level"><i class="fas fa-star"></i> Lv.<span id="userLvl">1</span></span>
@@ -380,7 +380,7 @@ select.form-input[multiple]{height:110px}
         <div class="input-row">
           <div class="input-tools-left">
             <button class="tool-btn" id="emojiBtn" title="Emoji"><i class="far fa-smile-wink"></i></button>
-            <button class="tool-btn" title="Send photo (up to 200 MB)"><i class="fas fa-image"></i><input type="file" id="fileInput" multiple accept="image/*" /></button>
+            <button class="tool-btn" title="Send photo (up to 25 MB)"><i class="fas fa-image"></i><input type="file" id="fileInput" multiple accept="image/*" /></button>
             <button class="tool-btn mic" id="micBtn" title="Record voice message"><i class="fas fa-microphone"></i></button>
           </div>
           <div class="textarea-wrap"><textarea id="msgInput" placeholder="Type a message…" rows="1" disabled maxlength="1000" enterkeyhint="send"></textarea></div>
@@ -425,25 +425,28 @@ const isMobile = () => window.matchMedia('(max-width:768px)').matches;
 let socket = null, currentUserId = +localStorage.getItem('nc_uid') || null, currentFriendId = null, currentGroupId = null;
 let friends = [], groups = [];
 const soundOn = true;   // notification sound is always on (toggle button was replaced by the mic)
-let typingTimeout = null, msgOffset = 0, hasMore = true, loading = false;
+let typingTimeout = null, lastTypingSent = 0, msgOffset = 0, hasMore = true, loading = false;
 let boostsLeft = 0, credits = 0, csrfToken = null, searchQ = '', typingEl = null, replyToId = null, expireInterval = null, isSending = false;
 let lastSwipe = 0;
 const MSG_LIMIT = 30, EXPIRE_HOURS = 24;
-const MAX_FILE = 200 * 1024 * 1024;       // largest photo / voice note allowed (200 MB) – sent as the ORIGINAL file, no compression
+const MAX_FILE = 25 * 1024 * 1024;        // largest photo / voice note you can pick (25 MB)
+const MAX_PAYLOAD = 24 * 1024 * 1024;     // biggest message body (base64 text) pushed through the socket – stays under a 25 MB server limit
 const MAX_VOICE_SEC = 90;                 // longest voice message
 const ACTIVE_WINDOW = 2 * 60 * 1000;      // a friend counts as "online" only if active in chat within the last 2 minutes
 const SEEN_REFRESH = 2000;                // "Seen …" label + read-receipt check refresh (ms)
 const lsGet = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch (e) { return d; } };
 const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} };
+/* The biggest message this server really accepts. Starts at 24 MB and is lowered automatically (and remembered) if the server drops a big upload. */
+let payloadLimit = Math.min(MAX_PAYLOAD, +lsGet('nc_payload', MAX_PAYLOAD) || MAX_PAYLOAD);
 /* wipe cached chats/friends so the next person on this device never sees them */
-const wipeLocal = () => { try { Object.keys(localStorage).filter(k => k.startsWith('nc_') && k !== 'nc_theme' && k !== 'nc_typing').forEach(k => localStorage.removeItem(k)); } catch (e) {} };
+const wipeLocal = () => { try { Object.keys(localStorage).filter(k => k.startsWith('nc_') && k !== 'nc_theme' && k !== 'nc_typing' && k !== 'nc_payload').forEach(k => localStorage.removeItem(k)); } catch (e) {} };
 
 /* Accept both camelCase and snake_case file fields from the server */
 function norm(m) {
   if (!m) return m;
   return { ...m,
-    fileData: m.fileData ?? m.file_data,
-    fileType: m.fileType ?? m.file_type,
+    fileData: m.fileData ?? m.file_data ?? m.fileUrl ?? m.file_url ?? m.media_url,
+    fileType: m.fileType ?? m.file_type ?? m.mime_type,
     fileName: m.fileName ?? m.file_name,
     fileSize: m.fileSize ?? m.file_size };
 }
@@ -830,7 +833,7 @@ function resetReply() { replyToId = null; $('replyPreview').classList.remove('vi
 async function selectFriend(id) {
   showChatView();
   if (currentFriendId === id && !currentGroupId) { clearUnread('f', id); renderFriends(); markRead(id); return; }
-  cancelRec(); voiceStop();
+  cancelRec(); voiceStop(); newTypingStyle();
   if (currentGroupId) { socket?.emit('leave_group', currentGroupId); currentGroupId = null; }
   currentFriendId = id; resetReply(); hideTyping();
   clearUnread('f', id); clearNotifs('msg-f' + id);
@@ -843,7 +846,7 @@ async function selectFriend(id) {
 async function selectGroup(id) {
   showChatView();
   if (currentGroupId === id) return;
-  cancelRec(); voiceStop();
+  cancelRec(); voiceStop(); newTypingStyle();
   if (currentGroupId) socket?.emit('leave_group', currentGroupId);
   currentGroupId = id; currentFriendId = null; resetReply(); hideTyping();
   clearUnread('g', id); clearNotifs('msg-g' + id);
@@ -1184,6 +1187,8 @@ function downloadFile(url, name) { const a = document.createElement('a'); a.href
 
 /* ============ SENDING ============ */
 const pendingMedia = new Set();   // temp ids of photos / voice notes still travelling to the server
+const mediaJobs = {};             // tempId -> { len, tries, file?, conv } (lets us resend a photo smaller if the server drops it)
+let retryQueue = [];
 function emitMessage(payload) {
   if (!socket || !socket.connected) return false;
   if (currentGroupId) socket.emit('group_message', { groupId: currentGroupId, ...payload });
@@ -1194,12 +1199,17 @@ function emitMessage(payload) {
 /* after `ms` the message is treated as delivered (big files get more time) */
 function settleTemp(tempId, ms = 6000) {
   setTimeout(() => {
-    pendingMedia.delete(tempId);
+    pendingMedia.delete(tempId); delete mediaJobs[tempId];
     const el = document.querySelector(`.msg[data-temp="${tempId}"]`);
     if (el) { el.classList.remove('sending'); const s = el.querySelector('.msg-status'); if (s) s.innerHTML = '<i class="fas fa-check"></i>'; }
   }, ms);
 }
 function autoGrow() { const ta = $('msgInput'); ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 110) + 'px'; }
+/* tell the friend I stopped typing (and reset the throttle so the NEXT message announces itself immediately) */
+function stopTypingSignal() {
+  clearTimeout(typingTimeout); lastTypingSent = 0;
+  if (currentFriendId && socket) socket.emit('typing', { to: currentFriendId, isTyping: false });
+}
 function sendMsg() {
   if (isSending) return;
   const ta = $('msgInput'), txt = ta.value.trim();
@@ -1214,19 +1224,23 @@ function sendMsg() {
   touch(curType(), curId(), 'You: ' + txt);
   ta.value = ''; updateChar(); autoGrow(); resetReply();
   isSending = true; setTimeout(() => isSending = false, 300);
-  if (currentFriendId && socket) socket.emit('typing', { to: currentFriendId, isTyping: false });
+  stopTypingSignal();
   ta.focus();
 }
 $('sendBtn').addEventListener('click', sendMsg);
 $('sendBtn').addEventListener('mousedown', e => e.preventDefault()); // keep keyboard open on mobile
 $('msgInput').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && !isMobile()) { e.preventDefault(); sendMsg(); } });
 $('msgInput').addEventListener('focus', () => setTimeout(() => { setAppHeight(); const c = $('messagesArea'); c.scrollTop = c.scrollHeight; }, 300));
+/* "typing" is sent at most once every 2 s (a heartbeat) instead of once per keystroke – servers with a rate limit
+   used to start ignoring it after the first message. "stopped typing" goes out 1.5 s after the last key, or when the message is sent. */
 $('msgInput').addEventListener('input', () => {
   updateChar(); autoGrow();
   if (currentFriendId && socket) {
-    socket.emit('typing', { to: currentFriendId, isTyping: true });
+    const to = currentFriendId, now = Date.now();
+    if (!$('msgInput').value.length) { stopTypingSignal(); return; }
+    if (now - lastTypingSent > 2000) { socket.emit('typing', { to, isTyping: true }); lastTypingSent = now; }
     clearTimeout(typingTimeout);
-    typingTimeout = setTimeout(() => socket.emit('typing', { to: currentFriendId, isTyping: false }), 1000);
+    typingTimeout = setTimeout(() => { lastTypingSent = 0; socket && socket.emit('typing', { to, isTyping: false }); }, 1500);
   }
 });
 function updateChar() {
@@ -1235,16 +1249,47 @@ function updateChar() {
   $('charCount').className = 'char-count' + (n > 900 ? ' over' : n > 700 ? ' warn' : '');
 }
 
-/* ============ PHOTOS (photos only, ORIGINAL quality, up to 200 MB) ============ */
+/* ============ PHOTOS (photos only, up to 25 MB) ============ */
 const readAsDataURL = f => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(new Error('Could not read file')); r.readAsDataURL(f); });
 const IMG_EXT = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', gif: 'image/gif', webp: 'image/webp', bmp: 'image/bmp', avif: 'image/avif', heic: 'image/heic', heif: 'image/heif' };
 const extOf = f => ((f.name || '').split('.').pop() || '').toLowerCase();
 const isPhoto = f => (f.type && f.type.startsWith('image/')) || (!f.type && !!IMG_EXT[extOf(f)]);
 const photoType = f => (f.type && f.type.startsWith('image/')) ? f.type : (IMG_EXT[extOf(f)] || 'image/jpeg');
+const b64len = bytes => Math.ceil(bytes / 3) * 4 + 256;   // size of a base64 data URL for `bytes` bytes
+
+const loadImg = file => new Promise((res, rej) => {
+  const url = URL.createObjectURL(file), img = new Image();
+  img.onload = () => res(img);
+  img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('This photo format cannot be read here – try a JPG or PNG')); };
+  img.src = url;
+});
+const toJpeg = (img, maxDim, q) => new Promise((res, rej) => {
+  const sc = Math.min(1, maxDim / Math.max(img.naturalWidth, img.naturalHeight));
+  const w = Math.max(1, Math.round(img.naturalWidth * sc)), h = Math.max(1, Math.round(img.naturalHeight * sc));
+  const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+  const cx = cv.getContext('2d'); cx.fillStyle = '#fff'; cx.fillRect(0, 0, w, h); cx.drawImage(img, 0, 0, w, h);
+  cv.toBlob(b => b ? res(b) : rej(new Error('Could not compress photo')), 'image/jpeg', q);
+});
+/* The ORIGINAL file is sent whenever it fits the server limit; otherwise the best JPEG that does fit */
+async function preparePhoto(file, limit) {
+  const type = photoType(file);
+  if (b64len(file.size) <= limit) return { blob: file, type, name: file.name || 'photo.jpg', resized: false };
+  const img = await loadImg(file);
+  try {
+    const top = Math.max(img.naturalWidth, img.naturalHeight);
+    const dims = [...new Set([Math.min(top, 4096), ...[3000, 2200, 1600, 1200, 900, 640, 480, 360, 280].filter(d => d < top)])];
+    const base = (file.name || 'photo').replace(/\.[^.]+$/, '') + '.jpg';
+    for (const dim of dims) for (const q of [0.9, 0.75, 0.6]) {
+      const b = await toJpeg(img, dim, q);
+      if (b64len(b.size) <= limit) return { blob: b, type: 'image/jpeg', name: base, resized: true };
+    }
+  } finally { URL.revokeObjectURL(img.src); }
+  throw new Error('Could not shrink this photo enough to send');
+}
 
 /* One place that sends any media message (photo or voice note).
    `localUrl` = light blob: URL used for my own bubble so huge files don't freeze the page. */
-function sendFileMessage(dataUrl, type, name, size, localUrl) {
+function sendFileMessage(dataUrl, type, name, size, localUrl, job) {
   const tempId = -Date.now() - Math.random();
   const rid = replyToId;
   appendMsg({ id: tempId, sender_id: currentUserId, content: name, created_at: new Date().toISOString(), is_boosted: false,
@@ -1253,9 +1298,28 @@ function sendFileMessage(dataUrl, type, name, size, localUrl) {
   const ok = emitMessage({ message: encodeReply(rid, name), fileData: dataUrl, fileType: type, fileName: name, fileSize: size, replyTo: rid || null, replyContent: rid ? (msgText(rid) || 'media').slice(0, 40) : null, tempId });
   if (!ok) { document.querySelector(`.msg[data-temp="${tempId}"]`)?.remove(); throw new Error('Not connected – try again in a moment'); }
   pendingMedia.add(tempId);
-  settleTemp(tempId, Math.max(6000, Math.round(size / 150)));   // ~150 KB/s worst case before we stop showing the spinner
+  mediaJobs[tempId] = job || { len: dataUrl.length, tries: 99, conv: [curType(), curId()] };
+  settleTemp(tempId, Math.max(8000, Math.round(size / 100)));   // long enough for the server to answer before we stop watching
   touch(curType(), curId(), 'You: ' + filePreviewText(type, name));
   resetReply();
+}
+async function sendPhoto(file, tries = 0, bar, label) {
+  const conv = [curType(), curId()];
+  const p = await preparePhoto(file, payloadLimit);
+  if (bar) { bar.style.width = '60%'; if (label) label.textContent = 'Sending…'; }
+  const dataUrl = await readAsDataURL(p.blob);
+  if (bar) bar.style.width = '85%';
+  sendFileMessage(dataUrl, p.type, p.name, p.blob.size, URL.createObjectURL(p.blob), { file, tries, len: dataUrl.length, conv });
+  if (p.resized && file.size > 700 * 1024) toast(`Photo optimised to ${fmtSize(p.blob.size)} to fit the server limit`, 'info');
+}
+/* the server dropped a big upload → resend the same photo smaller, once the socket is back */
+function flushRetries() {
+  if (!retryQueue.length) return;
+  const q = retryQueue; retryQueue = [];
+  q.forEach(async j => {
+    if (curType() !== j.conv[0] || curId() !== j.conv[1]) return toast('A photo could not be sent – the conversation changed. Please send it again.', 'error');
+    try { await sendPhoto(j.file, j.tries + 1); } catch (err) { toast(err.message || 'Could not resend photo', 'error'); }
+  });
 }
 async function handleFiles(files) {
   files = [...files];
@@ -1264,14 +1328,10 @@ async function handleFiles(files) {
   const progress = $('uploadProgress'), bar = $('uploadBar'), label = $('uploadLabel');
   for (const file of files) {
     if (!isPhoto(file)) { toast('Only photos can be sent here', 'error'); continue; }
-    if (file.size > MAX_FILE) { toast(`"${file.name}" is ${fmtSize(file.size)} – the limit is 200 MB`, 'error'); continue; }
-    progress.classList.add('visible'); bar.style.width = '25%'; label.textContent = `Reading ${fmtSize(file.size)}…`;
-    try {
-      const dataUrl = await readAsDataURL(file);                 // original bytes, untouched
-      bar.style.width = '70%'; label.textContent = 'Sending…';
-      sendFileMessage(dataUrl, photoType(file), file.name || 'photo.jpg', file.size, URL.createObjectURL(file));
-      bar.style.width = '100%';
-    } catch (err) { toast(err.message || 'Error sending photo', 'error'); }
+    if (file.size > MAX_FILE) { toast(`"${file.name}" is ${fmtSize(file.size)} – the limit is 25 MB`, 'error'); continue; }
+    progress.classList.add('visible'); bar.style.width = '25%'; label.textContent = `Preparing ${fmtSize(file.size)}…`;
+    try { await sendPhoto(file, 0, bar, label); bar.style.width = '100%'; }
+    catch (err) { toast(err.message || 'Error sending photo', 'error'); }
   }
   setTimeout(() => { progress.classList.remove('visible'); bar.style.width = '0'; }, 600);
 }
@@ -1338,7 +1398,7 @@ async function finishRec(r) {
     if (blob.size > MAX_FILE) return toast('Voice message too large', 'error');
     const dataUrl = await readAsDataURL(blob);
     const ext = base.includes('mp4') ? 'm4a' : base.includes('ogg') ? 'ogg' : 'webm';
-    sendFileMessage(dataUrl, base, `voice_${secs}s.${ext}`, blob.size, URL.createObjectURL(blob));
+    sendFileMessage(dataUrl, base, `voice_${secs}s.${ext}`, blob.size, URL.createObjectURL(blob), { len: dataUrl.length, tries: 99, conv: r.conv });
   } catch (err) { toast(err.message || 'Could not send voice message', 'error'); }
 }
 $('micBtn').addEventListener('click', () => { rec ? stopRec(false) : startRec(); });
@@ -1473,15 +1533,26 @@ const TYPING_HTML = {
   letters: '<div class="tp-letters">' + [...'typing...'].map((c, i) => `<span style="--i:${i}">${c}</span>`).join('') + '</div>'
 };
 let typingStyle = localStorage.getItem('nc_typing') || 'random', typingKill = 0;
+/* "Change every message": every NEW message gets a different animation (a shuffled cycle – never the same one twice in a row).
+   The animation is kept while that same message is still being typed (pauses don't change it) and is reset when the message arrives. */
+let typingMsgKey = null, typingQueue = [], lastTypingKey = '';
+function nextTypingKey() {
+  if (!typingQueue.length) {
+    typingQueue = [...TYPING_KEYS].sort(() => Math.random() - 0.5);
+    if (typingQueue[0] === lastTypingKey) typingQueue.push(typingQueue.shift());
+  }
+  return (lastTypingKey = typingQueue.shift());
+}
+const newTypingStyle = () => { typingMsgKey = null; };
 $('typingSelect').value = TYPING_KEYS.includes(typingStyle) ? typingStyle : 'random';
 $('typingSelect').addEventListener('change', e => {
   typingStyle = e.target.value; localStorage.setItem('nc_typing', typingStyle);
-  if (curType() && !typingEl) { showTyping(); setTimeout(() => { if (typingEl && !typingEl.dataset.live) hideTyping(); }, 2500); }   // quick preview
+  if (curType() && !typingEl) { newTypingStyle(); showTyping(); setTimeout(() => { if (typingEl && !typingEl.dataset.live) { hideTyping(); newTypingStyle(); } }, 2500); }   // quick preview
   else toast('Typing animation updated', 'info');
 });
 function showTyping(live) {
   if (typingEl && typingEl.isConnected) { if (live) { typingEl.dataset.live = '1'; clearTimeout(typingKill); typingKill = setTimeout(hideTyping, 5000); } return; }
-  const key = typingStyle === 'random' || !TYPING_HTML[typingStyle] ? TYPING_KEYS[Math.floor(Math.random() * TYPING_KEYS.length)] : typingStyle;
+  const key = (typingStyle !== 'random' && TYPING_HTML[typingStyle]) ? typingStyle : (typingMsgKey = typingMsgKey || nextTypingKey());
   const c = $('messagesArea');
   typingEl = document.createElement('div'); typingEl.className = 'typing-indicator';
   if (live) typingEl.dataset.live = '1';
@@ -1504,27 +1575,42 @@ function initSocket() {
     if (currentGroupId) socket.emit('join_group', currentGroupId);
     if (!firstConnect) { loadConv(true); loadFriends(); }   // catch up on anything missed while the phone slept
     firstConnect = false;
+    setTimeout(flushRetries, 400);                          // resend any photo the server dropped for being too big
   });
   socket.on('disconnect', () => {
     $('connPulse').className = 'pulse off'; $('connLabel').textContent = 'Reconnecting…';
-    /* Socket.IO drops the connection when a message is bigger than the server's maxHttpBufferSize → the file never arrived */
+    /* Socket.IO drops the connection when a message is bigger than the server's limit (maxHttpBufferSize) → that upload never arrived */
     if (pendingMedia.size) {
-      pendingMedia.forEach(id => document.querySelector(`.msg[data-temp="${id}"]`)?.remove());
+      const jobs = [];
+      pendingMedia.forEach(id => { const j = mediaJobs[id]; if (j) jobs.push(j); delete mediaJobs[id]; document.querySelector(`.msg[data-temp="${id}"]`)?.remove(); });
       pendingMedia.clear();
-      toast('File not sent – the connection dropped while uploading. If it keeps happening, the server limit (maxHttpBufferSize) is smaller than the file.', 'error');
+      const again = jobs.filter(j => j.file && j.tries < 4);
+      if (again.length) {
+        const biggest = Math.max(...again.map(j => j.len));
+        if (biggest > 900 * 1024) {                          // too big for the server → learn a smaller limit and remember it
+          payloadLimit = Math.max(80 * 1024, Math.floor(Math.min(...again.map(j => j.len)) * 0.5));
+          lsSet('nc_payload', payloadLimit);
+        }
+        retryQueue.push(...again);
+        toast(`Server refused a big upload – resending the photo smaller (limit now ~${fmtSize(payloadLimit)})…`, 'info');
+      } else if (jobs.length) {
+        toast('File not sent – the connection dropped while uploading. If it keeps happening, the server message limit (maxHttpBufferSize) is smaller than the file.', 'error');
+      }
     }
   });
 
   socket.on('private_message', msg => {
     if (msg.from === currentUserId) return;
-    const text = msg.fileType ? filePreviewText(msg.fileType, msg.fileName) : (splitReply(msg.message).text || '📎 File');
+    newTypingStyle();                                       // next message from them gets a fresh typing animation
+    const nm = norm(msg);
+    const text = nm.fileType ? filePreviewText(nm.fileType, nm.fileName) : (splitReply(msg.message).text || '📎 File');
     const isCurrent = currentFriendId === msg.from && !currentGroupId;
     touch('f', msg.from, text, null, true);
     markActive(msg.from);                                   // they just messaged → online
     flashRow('f', msg.from);
     if (isCurrent) {
       appendMsg({ id: msg.id || Date.now(), sender_id: msg.from, content: msg.message || '', created_at: msg.timestamp || new Date().toISOString(),
-        is_boosted: false, fileData: msg.fileData, fileType: msg.fileType, fileName: msg.fileName, fileSize: msg.fileSize || 0,
+        is_boosted: false, fileData: nm.fileData, fileType: nm.fileType, fileName: nm.fileName, fileSize: nm.fileSize || 0,
         replyTo: msg.replyTo || msg.reply_to || null, reply_content: msg.replyContent });
       if (viewingChat()) markRead(msg.from);
     }
@@ -1539,13 +1625,14 @@ function initSocket() {
   });
 
   socket.on('group_message', data => {
-    const text = data.fileType ? filePreviewText(data.fileType, data.fileName) : (splitReply(data.message).text || '📎 File');
+    const nd = norm(data);
+    const text = nd.fileType ? filePreviewText(nd.fileType, nd.fileName) : (splitReply(data.message).text || '📎 File');
     const mine = data.from === currentUserId;
     const isCurrent = data.groupId === currentGroupId;
     if (!mine) { touch('g', data.groupId, text); flashRow('g', data.groupId); }
     if (isCurrent && !mine) {
       appendMsg({ id: data.id || Date.now(), sender_id: data.from, content: data.message || '', created_at: data.timestamp || new Date().toISOString(),
-        is_boosted: false, fileData: data.fileData, fileType: data.fileType, fileName: data.fileName, fileSize: data.fileSize || 0,
+        is_boosted: false, fileData: nd.fileData, fileType: nd.fileType, fileName: nd.fileName, fileSize: nd.fileSize || 0,
         replyTo: data.replyTo || data.reply_to || null, reply_content: data.replyContent });
     }
     if (!mine && (!isCurrent || document.hidden || (isMobile() && !$('app').classList.contains('in-chat')))) {
@@ -1588,6 +1675,7 @@ function initSocket() {
 /* Swap the temporary bubble for the server's copy – and keep the quoted reply + media even if the server doesn't echo them */
 function replaceTempMsg(tempId, real) {
   pendingMedia.delete(tempId);
+  const job = mediaJobs[tempId]; delete mediaJobs[tempId];
   const el = document.querySelector(`.msg[data-temp="${tempId}"]`); if (!el) return;
   const ri = el.querySelector('.reply-indicator');
   const prev = ri ? { id: ri.dataset.rid, content: ri.querySelector('.ri-text')?.textContent || 'media' } : null;
@@ -1600,6 +1688,7 @@ function replaceTempMsg(tempId, real) {
     fileData: n.fileData, fileType: n.fileType, fileName: n.fileName, fileSize: n.fileSize || 0,
     replyTo: real.replyTo ?? real.reply_to ?? null };
   if (!rm.fileData && (oldPhoto || oldVoice)) {          // server did not echo the media → keep what we already show
+    if (job) toast('Heads-up: the server confirmed your message without the photo/voice data. If your friend only sees the file name, the server is not forwarding fileData.', 'info');
     rm.fileData = oldPhoto ? oldPhoto.dataset.open : oldVoice.dataset.src;
     rm.fileType = rm.fileType || (oldPhoto ? 'image/jpeg' : 'audio/webm');
     rm.fileName = rm.fileName || (oldPhoto ? oldPhoto.dataset.name : '');
