@@ -150,6 +150,7 @@ app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use('/api/phonepe-webhook', express.raw({ type: 'application/json' }));
 app.use(express.static('public'));
+app.use('/.well-known', express.static(path.join(__dirname, 'public', '.well-known'), { dotfiles: 'allow' }));
 
 // ==================== SESSION MIDDLEWARE ====================
 const sessionMiddleware = session({
@@ -4348,7 +4349,7 @@ app.get('/api/network/stats', isAuthenticated, async (req, res) => {
         );
         res.json({
             total: parseInt(total.rows[0].count),
-            online: 0,
+            online: onlineCount,
             requests: parseInt(pending.rows[0].count)
         });
     } catch (err) {

@@ -1,22 +1,24 @@
-/* Sarveik Chat service worker  (v4)
+/* Sarveik Chat service worker  (v5)
    - Web Push (VAPID) notifications for background / closed-app / mobile
    - No alert while the chat is open, focused and visible
    - Per-chat stacking: "Ravi (3 new messages)" with the last 3 lines in the body; app-icon badge
    - De-duplicates the page's own notification vs the server push (same message never counts twice)
    - Actions: Open / Mark read (friend chats) / Dismiss
    - Taps open the exact chat, even if the app is on another page; payload URLs are same-origin only
+   - Requests / non-chat notifications open /friends.html
    - Fast loads: precached shell + icons, query-insensitive page cache, stale-while-revalidate assets,
      CDN fonts/icons cached too (works offline), caches size-capped, live data never cached
    - 'logout' message wipes caches + notifications
    Serve from the ROOT of the site:  /sw.js  */
 
-const VERSION = 'v4';
+const VERSION = 'v5';
 const CACHE = 'sarveik-' + VERSION;
 const CDN_CACHE = 'sarveik-cdn-' + VERSION;
 const SHELL = ['/chat.html', '/manifest.json', '/icons/icon-192.png'];
 const DEFAULT_URL = '/chat.html';
+const FALLBACK_URL = '/friends.html';           // used when a notification has no chat target (e.g. connection request)
 const ICON = '/icons/icon-192.png';
-const BADGE = '/icons/badge-72.png';            // optional monochrome white-on-transparent PNG
+const BADGE = '/icons/badge-72.png';            // monochrome white-on-transparent PNG (72x72). Create this file!
 const CDN_HOSTS = ['cdnjs.cloudflare.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 const MAX_PAGES = 20, MAX_ASSETS = 80, MAX_CDN = 60;
 const MAX_LINES = 3;                             // message lines shown in a stacked notification
@@ -74,7 +76,12 @@ self.addEventListener('fetch', e => {
     if (CDN_HOSTS.includes(url.hostname)) e.respondWith(swr(e, req, CDN_CACHE, MAX_CDN));
     return;
   }
-  if (url.pathname === '/sw.js' || url.pathname.startsWith('/api/') || url.pathname.startsWith('/socket.io/')) return;
+  if (url.pathname === '/sw.js' ||
+      url.pathname.startsWith('/api/') ||
+      url.pathname.startsWith('/socket.io/') ||
+      url.pathname.startsWith('/.well-known/') ||      // never cache assetlinks.json
+      url.pathname.startsWith('/uploads/') ||          // private avatars: auth-protected, never cache
+      url.pathname.startsWith('/auth/')) return;
 
   // Pages: network-first (always fresh), cached copy when offline
   if (req.mode === 'navigate') {
@@ -108,7 +115,7 @@ function chatUrl(d) {
   if (d.url && sameOrigin(d.url)) return d.url;
   if (d.groupId) return DEFAULT_URL + '?group=' + encodeURIComponent(d.groupId);
   if (d.friendId) return DEFAULT_URL + '?friend=' + encodeURIComponent(d.friendId);
-  return DEFAULT_URL;
+  return FALLBACK_URL;
 }
 function chatTag(d) {
   if (d.tag) return String(d.tag);
@@ -130,11 +137,11 @@ async function csrf() {
 }
 async function markRead(friendId) {
   try {
-    await fetch('/api/messages/read/' + encodeURIComponent(friendId), {
+    const r = await fetch('/api/messages/read/' + encodeURIComponent(friendId), {
       method: 'POST', credentials: 'include',
       headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': await csrf() }
     });
-    return true;
+    return r.ok;
   } catch (_) { return false; }
 }
 const broadcast = async msg => (await self.clients.matchAll({ type: 'window', includeUncontrolled: true })).forEach(c => c.postMessage(msg));
@@ -163,7 +170,7 @@ self.addEventListener('push', event => {
     const dupById = d.msgId && prev.lastId === d.msgId;
     const isDup = !!(existing.length && (dupOfPage || dupById));
 
-    const baseTitle = d.title || prev.baseTitle || 'Sarveik Chat';
+    const baseTitle = d.title || prev.baseTitle || 'Sarveik';
     const line = (d.sender && d.groupId ? d.sender + ': ' : '') + (d.body || 'You have a new message');
     let lines = existing.length ? (prev.lines || (prev.body ? [prev.body] : [])) : [];
     if (isDup) lines = lines.slice(0, -1);              // replace the duplicate line instead of adding one
@@ -174,7 +181,9 @@ self.addEventListener('push', event => {
 
     const actions = d.groupId
       ? [{ action: 'open', title: 'Open' }, { action: 'dismiss', title: 'Dismiss' }]
-      : [{ action: 'open', title: 'Open' }, { action: 'read', title: 'Mark read' }];
+      : d.friendId
+        ? [{ action: 'open', title: 'Open' }, { action: 'read', title: 'Mark read' }]
+        : [{ action: 'open', title: 'Open' }, { action: 'dismiss', title: 'Dismiss' }];
 
     await self.registration.showNotification(count > 1 ? `${baseTitle} (${count} new messages)` : baseTitle, {
       body: count > 1 ? lines.join('\n') : line,
@@ -207,16 +216,19 @@ self.addEventListener('notificationclick', event => {
   }
 
   const url = chatUrl(data);
+  const targetPath = new URL(url, location.origin).pathname;
   event.waitUntil((async () => {
     const list = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
-    const onChat = list.find(c => new URL(c.url).pathname === DEFAULT_URL);
-    const target = onChat || list.find(c => c.visibilityState === 'visible') || list[0];
+    const onTarget = list.find(c => new URL(c.url).pathname === targetPath);
+    const target = onTarget || list.find(c => c.visibilityState === 'visible') || list[0];
     try {
       if (target) {
         await target.focus();
-        if (onChat) target.postMessage({ type: 'open-chat', open: url, friendId: data.friendId, groupId: data.groupId });
-        else if ('navigate' in target) await target.navigate(url);   // app is on another page: bring it to the chat
-        else if (self.clients.openWindow) await self.clients.openWindow(url);
+        if (onTarget && targetPath === DEFAULT_URL) target.postMessage({ type: 'open-chat', open: url, friendId: data.friendId, groupId: data.groupId });
+        else if (!onTarget || targetPath !== DEFAULT_URL) {
+          if ('navigate' in target) await target.navigate(url);   // app is on another page: bring it to the right one
+          else if (self.clients.openWindow) await self.clients.openWindow(url);
+        }
       } else if (self.clients.openWindow) {
         await self.clients.openWindow(url);
       }
