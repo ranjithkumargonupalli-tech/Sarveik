@@ -6,6 +6,15 @@
     <meta name="description" content="Sarveik brings powerful digital tools, intelligent workflows and collaboration into one unified workspace.">
     <meta name="theme-color" content="#eaf7ff">
     <title>Sarveik | Your Digital Workspace</title>
+    <script>
+        /* Apply saved theme immediately (prevents flash + makes dark theme work from first paint) */
+        (function(){
+            try{
+                var t = localStorage.getItem('nova_theme');
+                if(t === 'dark' || t === 'light'){ document.documentElement.setAttribute('data-theme', t); }
+            }catch(e){}
+        })();
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="manifest" href="/manifest.json">
@@ -65,7 +74,7 @@
             --lite-grad: linear-gradient(135deg, #9bd8f5 0%, #a8ebc9 100%);
             --lite-ink: #1f4a5e;
         }
-        [data-theme="dark"], [data-theme="light"] { color-scheme: light; }
+        [data-theme="light"] { color-scheme: light; }
 
         /* ===== RESET & BASE ===== */
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -553,6 +562,135 @@
         @keyframes entranceAurora { from { transform: scale(1) rotate(0); opacity: .7; } to { transform: scale(1.18) rotate(8deg); opacity: 1; } }
         @keyframes starDrift { from { transform: translateY(0); } to { transform: translateY(-34px); } }
 
+        /* =========================================================
+           DARK THEME  (activated by <html data-theme="dark">)
+           ========================================================= */
+        [data-theme="dark"] {
+            color-scheme: dark;
+            --page: #0a1520;
+            --body-bg: #0a1520;
+            --surface: #112230;
+            --ink: #e2f1f9;
+            --muted: #8fb0c2;
+            --line: #1e3546;
+            --shadow: 0 8px 26px rgba(0,0,0,.35);
+            --card-hover-shadow: 0 12px 28px rgba(0,0,0,.45);
+            --card-hover-border: #2f5a73;
+            --scrollbar-track: #0d1b27;
+            --scrollbar-thumb: #2a4a5f;
+            --scrollbar-thumb-hover: #3b6783;
+            --lite-grad: linear-gradient(135deg, #3b86b0 0%, #3f9e7e 100%);
+            --lite-ink: #f2fbff;
+        }
+        [data-theme="dark"] body { background: var(--page); color: var(--ink); }
+        [data-theme="dark"] ::selection { color: #ffffff; background: #2a6d92; }
+
+        [data-theme="dark"] .theme-toggle { background: #112230; border-color: #27475c; }
+        [data-theme="dark"] .theme-toggle:hover { background: #17303f; }
+        [data-theme="dark"] .theme-toggle i { color: #f5c542; }
+
+        [data-theme="dark"] .header { background: #0f1f2c; border-color: #1e3546; }
+        [data-theme="dark"] .logo-icon { background: linear-gradient(145deg, #16303f, #112230); border-color: #2a5068; box-shadow: 0 0 0 3px rgba(124,198,236,.12), 0 4px 14px rgba(0,0,0,.4); }
+        [data-theme="dark"] .logo h1 { color: #9fd6f0; }
+        [data-theme="dark"] #authHeaderBtn { color: #a9cde0; }
+
+        [data-theme="dark"] .hero-eyebrow { background: #12293a; border-color: #25495f; color: #7cc6ec; }
+        [data-theme="dark"] .hero-content h1 { color: #eaf6fc; }
+        [data-theme="dark"] .hero-content h1 .gradient-word { background: linear-gradient(135deg, #6cc6f2, #6fe0b0); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; color: #6cc6f2; }
+        [data-theme="dark"] .hero-content p { color: #94b4c5; }
+        [data-theme="dark"] .btn-primary-hero { border-color: #3a7fa3; }
+        [data-theme="dark"] .btn-secondary-hero { background: #112230; border-color: #27475c; color: #b5d6e6; }
+        [data-theme="dark"] .btn-secondary-hero:hover { background: #17303f; }
+        [data-theme="dark"] .stat { border-right-color: #1e3546; }
+        [data-theme="dark"] .stat-number { color: #7cc6ec; }
+        [data-theme="dark"] .stat-label { color: #86a8ba; }
+
+        [data-theme="dark"] .hero-3d-stage { border-color: #1f3b4d; background: linear-gradient(145deg, #0f2231, #0e2420); }
+        [data-theme="dark"] .logo-center-wrap { background: #112230; border-color: #2a5068; box-shadow: 0 0 0 5px rgba(124,198,236,.1), 0 8px 26px rgba(0,0,0,.45); }
+        [data-theme="dark"] .float-card { background: #112230; border-color: #24445a; color: #b5d6e6; box-shadow: 0 6px 20px rgba(0,0,0,.4); }
+
+        [data-theme="dark"] .section-tag { background: #10281f; border-color: #1f4a39; color: #6fd3a8; }
+        [data-theme="dark"] .section-title { color: #e2f1f9; }
+        [data-theme="dark"] .section-title .accent { color: #7cc6ec; }
+        [data-theme="dark"] .section-sub { color: #8fb0c2; }
+
+        [data-theme="dark"] .feature-card,
+        [data-theme="dark"] .tool-card,
+        [data-theme="dark"] .top-user-card { background: #112230; border-color: #1e3a4c; color: #d6eaf4; }
+        [data-theme="dark"] .feature-card:hover,
+        [data-theme="dark"] .tool-card:hover,
+        [data-theme="dark"] .top-user-card:hover { border-color: #2f5a73; }
+        [data-theme="dark"] .feature-icon { background: #12293a; border-color: #25495f; color: #7cc6ec; }
+        [data-theme="dark"] .fi-green, [data-theme="dark"] .fi-amber { background: #10281f; border-color: #1f4a39; color: #6fd3a8; }
+        [data-theme="dark"] .feature-card h3, [data-theme="dark"] .tool-card h4 { color: #bfe3f5; }
+        [data-theme="dark"] .feature-card p, [data-theme="dark"] .tool-card p { color: #8fb0be; }
+        [data-theme="dark"] .tool-icon { background: #10281f; border-color: #1f4a39; }
+        [data-theme="dark"] .tool-link { color: #7cc6ec; }
+        [data-theme="dark"] .top-user-card:first-child { background: #12293a; border-color: #2a5068; }
+        [data-theme="dark"] .top-user-name { color: #bfe3f5; }
+        [data-theme="dark"] .top-user-stats { color: #8fb0be; }
+        [data-theme="dark"] .top-user-stats i { color: #7cc6ec; }
+
+        [data-theme="dark"] .cta { background: linear-gradient(110deg, #0f2535, #0f2a22); border-color: #1f4a39; color: #e2f1f9; }
+        [data-theme="dark"] .cta h2 { color: #e8f5fb; }
+        [data-theme="dark"] .cta p { color: #94b4c5; }
+        [data-theme="dark"] .cta-btn { border-color: #3a7fa3; }
+
+        [data-theme="dark"] .auth-modal { background: rgba(2,10,16,.65); }
+        [data-theme="dark"] .auth-container { background: #0f1f2c; border-color: #25465b; color: #e2f1f9; box-shadow: 0 18px 55px rgba(0,0,0,.6); }
+        [data-theme="dark"] .auth-header h2 { color: #e8f5fb; }
+        [data-theme="dark"] .auth-header p { color: #8fb0be; }
+        [data-theme="dark"] .auth-tabs { background: #0b1823; border-color: #1e3546; }
+        [data-theme="dark"] .auth-tab { color: #8fb0be; }
+        [data-theme="dark"] .auth-tab.active { background: #18364a; color: #8fd0f2; }
+        [data-theme="dark"] .form-group input { background: #0b1823; border-color: #27475c; color: #e2f1f9; }
+        [data-theme="dark"] .form-group input::placeholder { color: #6f8fa1; }
+        [data-theme="dark"] .form-group input:focus { background: #0f2230; border-color: #7cc6ec; box-shadow: 0 0 0 3px rgba(124,198,236,.18); }
+        [data-theme="dark"] .toggle-password { color: #7f9fb1; }
+        [data-theme="dark"] .toggle-password:hover { color: #7cc6ec; }
+        [data-theme="dark"] .validation-message.error { color: #f08c94; }
+        [data-theme="dark"] .validation-message.success { color: #6fd3a8; }
+        [data-theme="dark"] .strength-bar { background: #1e3546; }
+        [data-theme="dark"] .strength-text { color: #8fb0be; }
+        [data-theme="dark"] .google-btn { background: #112230 !important; border-color: #27475c !important; color: #cfe6f2 !important; }
+        [data-theme="dark"] .google-btn:hover { background: #17303f !important; }
+        [data-theme="dark"] .close-modal { background: #12293a; border-color: #27475c; color: #a9cde0; }
+        [data-theme="dark"] .close-modal:hover { color: #f08c94; }
+        [data-theme="dark"] .auth-message.error { background: #2d1519; border-color: #5c2a31; color: #f4a1a8; }
+        [data-theme="dark"] .auth-message.success { background: #0f2a20; border-color: #1f4a39; color: #6fd3a8; }
+        [data-theme="dark"] .forgot-link a { color: #7cc6ec; }
+        [data-theme="dark"] .checkbox-remember { color: #8fb0be; }
+        [data-theme="dark"] #referral-bonus-notice { background: #0f2a20; border-color: #1f4a39; color: #6fd3a8; }
+        [data-theme="dark"] .otp-send-btn.is-timing { background: #0b1823; border-color: #27475c; color: #8fb0be; }
+        [data-theme="dark"] .otp-timer-ring .prog { stroke: #7cc6ec; }
+        [data-theme="dark"] .otp-helper-text { color: #8fb0be; }
+
+        [data-theme="dark"] .loading { color: #8fb0be; }
+        [data-theme="dark"] .spinner { border-color: #1e3546; border-top-color: #7cc6ec; }
+        [data-theme="dark"] .empty-state { background: #112230; border-color: #1e3a4c; color: #8fb0be; }
+        [data-theme="dark"] .user-greeting span { color: #bfe0f0; }
+        [data-theme="dark"] .logout-btn { background: #112230; border-color: #27475c; color: #cfe6f2; }
+        [data-theme="dark"] .logout-btn:hover { background: #17303f; }
+        [data-theme="dark"] .dashboard-link { background: #12293a; border-color: #25495f; color: #8fd0f2; }
+        [data-theme="dark"] .dashboard-link:hover { background: #18364a; }
+        [data-theme="dark"] .loading-spinner { border-color: rgba(255,255,255,.25); border-top-color: #ffffff; }
+
+        [data-theme="dark"] .footer { color: #7f9fb1; border-top-color: #1e3546; }
+        [data-theme="dark"] .footer a { color: #7cc6ec; }
+
+        [data-theme="dark"] :focus-visible { outline-color: #7cc6ec; }
+
+        [data-theme="dark"] #entranceOverlay { background: linear-gradient(135deg, #07121b 0%, #0a1c1b 55%, #08141f 100%); }
+        [data-theme="dark"] #entranceOverlay::before {
+            background:
+                radial-gradient(circle at 18% 25%, rgba(60,140,190,.35), transparent 34%),
+                radial-gradient(circle at 82% 75%, rgba(70,170,130,.3), transparent 36%);
+        }
+        [data-theme="dark"] .entrance-logo-ring::before { background: linear-gradient(145deg, #12293a, #0f2231); border-color: #2a5068; }
+        [data-theme="dark"] .entrance-logo-ring .entrance-logo-img { background: #112230; border-color: #2a5068; }
+        [data-theme="dark"] .entrance-title { background: linear-gradient(135deg, #6cc6f2, #6fe0b0); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        [data-theme="dark"] .entrance-sub { color: #9fc0d1; }
+
         /* ===== REDUCED MOTION ===== */
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; scroll-behavior: auto !important; }
@@ -1006,6 +1144,35 @@
         let resetEmailGlobal = '';
         let usernameFormatOk = false;
 
+        /* ── 45-DAY PERSISTENT LOGIN SETTINGS ── */
+        const AUTH_DAYS = 45;
+        const AUTH_MAX_AGE_MS = AUTH_DAYS * 24 * 60 * 60 * 1000;
+
+        function getRoleRedirectUrl(role){
+            if (role === 'admin') return '/admin-dashboard.html';
+            if (role === 'moderator') return '/moderator-dashboard.html';
+            if (role === 'business_owner') return '/business-owner.html';
+            if (role === 'delivery_partner') return '/delivery-login.html';
+            if (role === 'support_staff') return '/support-dashboard.html';
+            return '/main.html';
+        }
+        function getStoredAuth(){
+            try{
+                const raw = localStorage.getItem('nova_auth');
+                if(!raw) return null;
+                const data = JSON.parse(raw);
+                if(!data || !data.timestamp || (Date.now() - data.timestamp) > AUTH_MAX_AGE_MS){
+                    localStorage.removeItem('nova_auth');
+                    return null;
+                }
+                return data;
+            }catch(e){ return null; }
+        }
+        function saveAuth(profile){
+            /* timestamp = original login time; kept for 45 days, refreshed on every verified visit (rolling) */
+            localStorage.setItem('nova_auth', JSON.stringify({username:profile.username,role:profile.role,timestamp:Date.now()}));
+        }
+
         function togglePasswordVisibility(inputId, btn) {
             const inp = document.getElementById(inputId);
             const icon = btn.querySelector('i');
@@ -1013,10 +1180,22 @@
             else { inp.type='password'; icon.classList.replace('fa-eye','fa-eye-slash'); }
         }
 
-        /* ── THEME TOGGLE with ripple effect ── */
-        function toggleTheme(event){
+        /* ── THEME (light / dark) ── */
+        function applyTheme(mode){
             const html = document.documentElement;
             const icon = document.querySelector('.theme-toggle i');
+            html.setAttribute('data-theme', mode);
+            /* moon icon in light mode (click → dark), sun icon in dark mode (click → light) */
+            if(icon) icon.className = mode === 'dark' ? 'fas fa-sun' : 'fas fa-moon';
+            document.querySelectorAll('meta[name="theme-color"]').forEach(m=>{
+                m.setAttribute('content', mode === 'dark' ? '#0a1520' : '#eaf7ff');
+            });
+            updateParticleColors(mode === 'dark');
+            if(window.__sarveikScene) window.__sarveikScene.setTheme(mode);
+        }
+
+        function toggleTheme(event){
+            const html = document.documentElement;
             const isDark = html.getAttribute('data-theme') === 'dark';
 
             if(event){
@@ -1033,20 +1212,9 @@
                 setTimeout(()=>ripple.remove(), 700);
             }
 
-            if(isDark){
-                html.setAttribute('data-theme','light');
-                icon.classList.replace('fa-sun','fa-moon');
-                icon.className = 'fas fa-sun';
-                localStorage.setItem('nova_theme','light');
-                updateParticleColors(false);
-                if(window.__sarveikScene) window.__sarveikScene.setTheme('light');
-            } else {
-                html.setAttribute('data-theme','dark');
-                icon.className = 'fas fa-moon';
-                localStorage.setItem('nova_theme','dark');
-                updateParticleColors(true);
-                if(window.__sarveikScene) window.__sarveikScene.setTheme('dark');
-            }
+            const next = isDark ? 'light' : 'dark';
+            try{ localStorage.setItem('nova_theme', next); }catch(e){}
+            applyTheme(next);
         }
 
         function updateParticleColors(isDark){
@@ -1355,7 +1523,7 @@
             }finally{ btn.disabled=false; btn.innerHTML='Create Account'; }
         }
 
-        /* ── LOGIN — ENHANCED ROLE-BASED REDIRECT (FIXED) ── */
+        /* ── LOGIN — 45-DAY SESSION + ROLE-BASED REDIRECT ── */
         async function handleLogin(){
             const id = document.getElementById('login-username').value;
             const pwd = document.getElementById('login-password').value;
@@ -1364,22 +1532,14 @@
             if(!id||!pwd) return showMessage('Enter credentials');
             btn.disabled=true; btn.innerHTML='Logging in... <span class="loading-spinner"></span>';
             try{
-                await apiCall('/login',{method:'POST',body:JSON.stringify({username:id,password:pwd})});
+                /* remember + rememberDays tell the server to issue a 45-day session cookie */
+                await apiCall('/login',{method:'POST',body:JSON.stringify({username:id,password:pwd,remember:true,rememberDays:AUTH_DAYS})});
                 const profile=await apiCall('/profile');
                 if(remember){ localStorage.setItem('nova_remember',JSON.stringify({username:id,role:profile.role})); }
                 else localStorage.removeItem('nova_remember');
-                localStorage.setItem('nova_auth',JSON.stringify({username:profile.username,role:profile.role,timestamp:Date.now()}));
+                saveAuth(profile);
 
-                // ✅ ROLE-BASED REDIRECT – handles ALL roles
-                let redirectUrl = '/main.html';
-                if (profile.role === 'admin') redirectUrl = '/admin-dashboard.html';
-                else if (profile.role === 'moderator') redirectUrl = '/moderator-dashboard.html';
-                else if (profile.role === 'business_owner') redirectUrl = '/business-owner.html';
-                else if (profile.role === 'delivery_partner') redirectUrl = '/delivery-login.html';
-                else if (profile.role === 'support_staff') redirectUrl = '/support-dashboard.html';
-                // default (user) goes to businessdirectory.html
-
-                window.location.href = redirectUrl;
+                window.location.href = getRoleRedirectUrl(profile.role);
             }catch(err){
                 showMessage(err.message);
                 btn.disabled=false; btn.innerHTML='Login';
@@ -1389,18 +1549,35 @@
         async function requestResetOtp(){ const email=document.getElementById('forgot-email').value; const btn=document.getElementById('request-otp-btn'); if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showMessage('Valid email required'); btn.disabled=true; btn.innerHTML='Sending...'; try{ await apiCall('/api/forgot-password',{method:'POST',body:JSON.stringify({email})}); resetEmailGlobal=email; showMessage('OTP sent!',false); document.getElementById('forgot-step1').style.display='none'; document.getElementById('forgot-step2').style.display='block'; resetOtpTimer.reset(); const store=loadOtpTimerStore(); store.reset={resendCount:1,cooldownUntil:Date.now()+30000}; saveOtpTimerStore(store); resetOtpTimer.init(); }catch(e){ showMessage(e.message); }finally{ btn.disabled=false; btn.innerHTML='Send Reset OTP'; } }
         async function resetPassword(){ const otp=document.getElementById('reset-otp').value; const newPwd=document.getElementById('new-password').value; const confirmPwd=document.getElementById('confirm-password').value; const btn=document.getElementById('reset-password-btn'); if(!otp||!newPwd||!confirmPwd) return showMessage('Fill all fields'); if(newPwd!==confirmPwd) return showMessage('Passwords mismatch'); if(newPwd.length<8) return showMessage('Min 8 chars'); btn.disabled=true; btn.innerHTML='Resetting...'; try{ await apiCall('/api/reset-password',{method:'POST',body:JSON.stringify({email:resetEmailGlobal,otp,newPassword:newPwd})}); showMessage('Password reset! Please login.',false); resetOtpTimer.reset(); setTimeout(()=>{ switchAuthTab('login'); },2000); }catch(e){ showMessage(e.message); }finally{ btn.disabled=false; btn.innerHTML='Reset Password'; } }
 
-        /* ── SESSION CHECK — NO REDIRECT, JUST UPDATE UI ── */
+        /* ── SESSION CHECK — if logged in (within 45 days) go straight to the dashboard / main.html ── */
+        let _redirectingLoggedIn = false;
         async function checkSession(){
             try{
                 const profile = await apiCall('/profile');
                 if (profile && profile.id) {
-                    localStorage.setItem('nova_auth', JSON.stringify({username:profile.username,role:profile.role,timestamp:Date.now()}));
+                    saveAuth(profile); /* rolling: renews the 45-day window on each visit */
                     updateHeaderUI();
+                    _redirectingLoggedIn = true;
+                    window.location.replace(getRoleRedirectUrl(profile.role));
                     return true;
                 }
+                localStorage.removeItem('nova_auth');
+                updateHeaderUI();
                 return false;
             }catch(e){
+                /* Network error (not a server "not logged in" answer): trust local 45-day record */
+                if (e instanceof TypeError) {
+                    const stored = getStoredAuth();
+                    if (stored) {
+                        updateHeaderUI();
+                        _redirectingLoggedIn = true;
+                        window.location.replace(getRoleRedirectUrl(stored.role));
+                        return true;
+                    }
+                }
+                /* Server says session invalid/expired → logged out */
                 localStorage.removeItem('nova_auth');
+                updateHeaderUI();
                 return false;
             }
         }
@@ -1408,9 +1585,8 @@
         /* ── UPDATE HEADER UI WITH ROLE-BASED DASHBOARD LINK ── */
         function updateHeaderUI(){
             const authBtnDiv=document.getElementById('authHeaderBtn');
-            const stored=localStorage.getItem('nova_auth');
-            if(stored){
-                const data=JSON.parse(stored);
+            const data=getStoredAuth();
+            if(data){
                 let dashboardLink = '';
                 // ✅ Determine correct dashboard based on role
                 if (data.role === 'admin') dashboardLink = '/admin-dashboard.html';
@@ -1422,7 +1598,7 @@
 
                 authBtnDiv.innerHTML = `
                     <div class="user-greeting">
-                        <span>👋 ${data.username}</span>
+                        <span>👋 ${escapeHtml(data.username)}</span>
                         <a href="${dashboardLink}" class="dashboard-link"><i class="fas fa-th-large"></i> Dashboard</a>
                         <button class="logout-btn" onclick="logoutUser()"><i class="fas fa-sign-out-alt"></i> Logout</button>
                     </div>
@@ -1432,11 +1608,12 @@
             }
         }
 
+        /* Logout is the ONLY way (besides 45-day expiry) the user is asked to log in again */
         async function logoutUser(){
             try{ await apiCall('/logout',{method:'POST'}); }catch(e){}
             localStorage.removeItem('nova_auth');
             localStorage.removeItem('nova_remember');
-            window.location.reload();
+            window.location.href = '/';
         }
 
         function loadTopUsers(){
@@ -1527,7 +1704,7 @@
                 return;
             }
 
-            const isDarkInitial = document.documentElement.getAttribute('data-theme') !== 'light';
+            const isDarkInitial = document.documentElement.getAttribute('data-theme') === 'dark';
 
             const wrap = document.getElementById('hero-canvas-wrap');
             const heroW = wrap.clientWidth || 340, heroH = wrap.clientHeight || 340;
@@ -1757,17 +1934,16 @@
 
         /* ── DOMContentLoaded ── */
         document.addEventListener('DOMContentLoaded', async () => {
-            const theme=localStorage.getItem('nova_theme');
-            if(theme==='dark'){
-                document.documentElement.setAttribute('data-theme','dark');
-                document.querySelector('.theme-toggle i').className='fas fa-moon';
-            } else if(theme==='light'){
-                document.documentElement.setAttribute('data-theme','light');
-                document.querySelector('.theme-toggle i').className='fas fa-sun';
-                updateParticleColors(false);
-            }
-            // Check session and update UI – NO REDIRECT
+            /* Apply saved theme (light is default) */
+            let savedTheme = null;
+            try{ savedTheme = localStorage.getItem('nova_theme'); }catch(e){}
+            applyTheme(savedTheme === 'dark' ? 'dark' : 'light');
+
+            /* Already logged in (45-day session)? → go straight to main.html / role dashboard.
+               The login page is shown only after logout or when the 45 days expire. */
             await checkSession();
+            if(_redirectingLoggedIn) return;
+
             // Start maintenance polling
             checkMaintenance();
             startPoll();
