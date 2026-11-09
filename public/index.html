@@ -1144,9 +1144,13 @@
         let resetEmailGlobal = '';
         let usernameFormatOk = false;
 
-        /* ── 45-DAY PERSISTENT LOGIN SETTINGS ── */
-        const AUTH_DAYS = 45;
+        /* ── PERSISTENT LOGIN SETTINGS ── */
+        const AUTH_DAYS = 30;
         const AUTH_MAX_AGE_MS = AUTH_DAYS * 24 * 60 * 60 * 1000;
+
+        /* ── MAINTENANCE STORAGE KEYS (declared early so logout can clear them) ── */
+        const MAINT_KEY='nova_maintenance_mode';
+        const MAINT_META_KEY='nova_maintenance_meta';
 
         function getRoleRedirectUrl(role){
             if (role === 'admin') return '/admin-dashboard.html';
@@ -1169,7 +1173,7 @@
             }catch(e){ return null; }
         }
         function saveAuth(profile){
-            /* timestamp = original login time; kept for 45 days, refreshed on every verified visit (rolling) */
+            /* timestamp = original login time; refreshed on every verified visit (rolling) */
             localStorage.setItem('nova_auth', JSON.stringify({username:profile.username,role:profile.role,timestamp:Date.now()}));
         }
 
@@ -1523,7 +1527,7 @@
             }finally{ btn.disabled=false; btn.innerHTML='Create Account'; }
         }
 
-        /* ── LOGIN — 45-DAY SESSION + ROLE-BASED REDIRECT ── */
+        /* ── LOGIN — PERSISTENT SESSION + ROLE-BASED REDIRECT ── */
         async function handleLogin(){
             const id = document.getElementById('login-username').value;
             const pwd = document.getElementById('login-password').value;
@@ -1532,7 +1536,7 @@
             if(!id||!pwd) return showMessage('Enter credentials');
             btn.disabled=true; btn.innerHTML='Logging in... <span class="loading-spinner"></span>';
             try{
-                /* remember + rememberDays tell the server to issue a 45-day session cookie */
+                /* remember + rememberDays tell the server to issue a long-lived session cookie */
                 await apiCall('/login',{method:'POST',body:JSON.stringify({username:id,password:pwd,remember:true,rememberDays:AUTH_DAYS})});
                 const profile=await apiCall('/profile');
                 if(remember){ localStorage.setItem('nova_remember',JSON.stringify({username:id,role:profile.role})); }
@@ -1549,13 +1553,13 @@
         async function requestResetOtp(){ const email=document.getElementById('forgot-email').value; const btn=document.getElementById('request-otp-btn'); if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showMessage('Valid email required'); btn.disabled=true; btn.innerHTML='Sending...'; try{ await apiCall('/api/forgot-password',{method:'POST',body:JSON.stringify({email})}); resetEmailGlobal=email; showMessage('OTP sent!',false); document.getElementById('forgot-step1').style.display='none'; document.getElementById('forgot-step2').style.display='block'; resetOtpTimer.reset(); const store=loadOtpTimerStore(); store.reset={resendCount:1,cooldownUntil:Date.now()+30000}; saveOtpTimerStore(store); resetOtpTimer.init(); }catch(e){ showMessage(e.message); }finally{ btn.disabled=false; btn.innerHTML='Send Reset OTP'; } }
         async function resetPassword(){ const otp=document.getElementById('reset-otp').value; const newPwd=document.getElementById('new-password').value; const confirmPwd=document.getElementById('confirm-password').value; const btn=document.getElementById('reset-password-btn'); if(!otp||!newPwd||!confirmPwd) return showMessage('Fill all fields'); if(newPwd!==confirmPwd) return showMessage('Passwords mismatch'); if(newPwd.length<8) return showMessage('Min 8 chars'); btn.disabled=true; btn.innerHTML='Resetting...'; try{ await apiCall('/api/reset-password',{method:'POST',body:JSON.stringify({email:resetEmailGlobal,otp,newPassword:newPwd})}); showMessage('Password reset! Please login.',false); resetOtpTimer.reset(); setTimeout(()=>{ switchAuthTab('login'); },2000); }catch(e){ showMessage(e.message); }finally{ btn.disabled=false; btn.innerHTML='Reset Password'; } }
 
-        /* ── SESSION CHECK — if logged in (within 45 days) go straight to the dashboard / main.html ── */
+        /* ── SESSION CHECK — if logged in go straight to the dashboard / main.html ── */
         let _redirectingLoggedIn = false;
         async function checkSession(){
             try{
                 const profile = await apiCall('/profile');
                 if (profile && profile.id) {
-                    saveAuth(profile); /* rolling: renews the 45-day window on each visit */
+                    saveAuth(profile); /* rolling: renews the window on each visit */
                     updateHeaderUI();
                     _redirectingLoggedIn = true;
                     window.location.replace(getRoleRedirectUrl(profile.role));
@@ -1565,7 +1569,7 @@
                 updateHeaderUI();
                 return false;
             }catch(e){
-                /* Network error (not a server "not logged in" answer): trust local 45-day record */
+                /* Network error (not a server "not logged in" answer): trust local record */
                 if (e instanceof TypeError) {
                     const stored = getStoredAuth();
                     if (stored) {
@@ -1588,7 +1592,6 @@
             const data=getStoredAuth();
             if(data){
                 let dashboardLink = '';
-                // ✅ Determine correct dashboard based on role
                 if (data.role === 'admin') dashboardLink = '/admin-dashboard.html';
                 else if (data.role === 'moderator') dashboardLink = '/moderator-dashboard.html';
                 else if (data.role === 'business_owner') dashboardLink = '/business-owner.html';
@@ -1608,11 +1611,19 @@
             }
         }
 
-        /* Logout is the ONLY way (besides 45-day expiry) the user is asked to log in again */
+        /* Logout — clears ALL saved state, including the maintenance banner flags,
+           so no stale notification is shown after logging out */
         async function logoutUser(){
             try{ await apiCall('/logout',{method:'POST'}); }catch(e){}
-            localStorage.removeItem('nova_auth');
-            localStorage.removeItem('nova_remember');
+            try{
+                localStorage.removeItem('nova_auth');
+                localStorage.removeItem('nova_remember');
+                localStorage.removeItem(MAINT_KEY);
+                localStorage.removeItem(MAINT_META_KEY);
+            }catch(e){}
+            /* hide the banner immediately and stop polling */
+            if(typeof _maintPollTimer !== 'undefined' && _maintPollTimer){ clearInterval(_maintPollTimer); _maintPollTimer = null; }
+            try{ applyBanner(false, null); }catch(e){}
             window.location.href = '/';
         }
 
@@ -1682,14 +1693,52 @@
             animateCounters();
         });
 
-        /* maintenance mode */
-        const MAINT_KEY='nova_maintenance_mode';
-        const MAINT_META_KEY='nova_maintenance_meta';
+        /* ── MAINTENANCE MODE ──
+           FIX: the banner now reflects ONLY the live server status.
+           Stale localStorage flags are never trusted when the status request fails
+           (e.g. after logout the admin endpoint returns 401/403), so the banner
+           can no longer "stick" after logging out. */
         const POLL_INTERVAL=5000;
         let _maintTimer=null; let _maintPollTimer=null;
-        function applyBanner(active,meta){ const banner=document.getElementById('maintenanceWarning'); const spacer=document.getElementById('maintSpacer'); const subText=document.getElementById('maintSubText'); const adminLk=document.getElementById('maintAdminLink'); if(!active){ banner.classList.remove('visible'); spacer.classList.remove('active'); spacer.style.height='0px'; if(_maintTimer){ clearInterval(_maintTimer); _maintTimer=null; } return; } banner.classList.add('visible'); requestAnimationFrame(()=>{ const h=banner.offsetHeight; spacer.style.height=h+'px'; spacer.classList.add('active'); }); if(meta&&meta.message) subText.textContent=meta.message; try{ const auth=JSON.parse(localStorage.getItem('nova_auth')||'{}'); if(auth.role==='admin') adminLk.classList.add('visible'); }catch(e){} const startTime=(meta&&meta.enabledAt)?new Date(meta.enabledAt).getTime():Date.now(); startElapsed(startTime); }
+        function applyBanner(active,meta){
+            const banner=document.getElementById('maintenanceWarning');
+            const spacer=document.getElementById('maintSpacer');
+            const subText=document.getElementById('maintSubText');
+            const adminLk=document.getElementById('maintAdminLink');
+            if(!active){
+                banner.classList.remove('visible');
+                spacer.classList.remove('active');
+                spacer.style.height='0px';
+                if(_maintTimer){ clearInterval(_maintTimer); _maintTimer=null; }
+                return;
+            }
+            banner.classList.add('visible');
+            requestAnimationFrame(()=>{ const h=banner.offsetHeight; spacer.style.height=h+'px'; spacer.classList.add('active'); });
+            if(meta&&meta.message) subText.textContent=meta.message;
+            try{ const auth=JSON.parse(localStorage.getItem('nova_auth')||'{}'); if(auth.role==='admin') adminLk.classList.add('visible'); else adminLk.classList.remove('visible'); }catch(e){}
+            const startTime=(meta&&meta.enabledAt)?new Date(meta.enabledAt).getTime():Date.now();
+            startElapsed(startTime);
+        }
         function startElapsed(startMs){ if(_maintTimer) clearInterval(_maintTimer); const el=document.getElementById('maintElapsed'); function tick(){ const s=Math.floor((Date.now()-startMs)/1000); const hh=Math.floor(s/3600); const mm=Math.floor((s%3600)/60); const ss=s%60; el.textContent=(hh>0?String(hh).padStart(2,'0')+':':'')+String(mm).padStart(2,'0')+':'+String(ss).padStart(2,'0'); } tick(); _maintTimer=setInterval(tick,1000); }
-        function checkMaintenance(){ const localOn=localStorage.getItem(MAINT_KEY)==='1'; let meta=null; try{ meta=JSON.parse(localStorage.getItem(MAINT_META_KEY)||'null'); }catch(e){} fetch('/api/admin/maintenance/status',{credentials:'include'}).then(r=>r.ok?r.json():null).then(data=>{ if(!data){ applyBanner(localOn,meta); return; } const serverOn=!!data.enabled; localStorage.setItem(MAINT_KEY,serverOn?'1':'0'); if(serverOn){ const m={enabledAt:data.enabledAt||new Date().toISOString(),message:data.message||null}; localStorage.setItem(MAINT_META_KEY,JSON.stringify(m)); applyBanner(true,m); } else { localStorage.removeItem(MAINT_META_KEY); applyBanner(false,null); } }).catch(()=>applyBanner(localOn,meta)); }
+        function clearMaintStorage(){ try{ localStorage.removeItem(MAINT_KEY); localStorage.removeItem(MAINT_META_KEY); }catch(e){} }
+        function checkMaintenance(){
+            fetch('/api/admin/maintenance/status',{credentials:'include'})
+                .then(r=>r.ok?r.json():null)
+                .then(data=>{
+                    /* Not authorised / no data (logged out) → hide banner, drop stale flags */
+                    if(!data){ clearMaintStorage(); applyBanner(false,null); return; }
+                    const serverOn=!!data.enabled;
+                    if(serverOn){
+                        const m={enabledAt:data.enabledAt||new Date().toISOString(),message:data.message||null};
+                        try{ localStorage.setItem(MAINT_KEY,'1'); localStorage.setItem(MAINT_META_KEY,JSON.stringify(m)); }catch(e){}
+                        applyBanner(true,m);
+                    } else {
+                        clearMaintStorage();
+                        applyBanner(false,null);
+                    }
+                })
+                .catch(()=>{ /* network error → don't show a stale banner */ clearMaintStorage(); applyBanner(false,null); });
+        }
         window.addEventListener('storage',e=>{ if(e.key===MAINT_KEY||e.key===MAINT_META_KEY) checkMaintenance(); });
         function startPoll(){ if(_maintPollTimer) clearInterval(_maintPollTimer); _maintPollTimer=setInterval(checkMaintenance,POLL_INTERVAL); }
         window.addEventListener('resize',()=>{ const banner=document.getElementById('maintenanceWarning'); const spacer=document.getElementById('maintSpacer'); if(banner.classList.contains('visible')){ spacer.style.height=banner.offsetHeight+'px'; } });
@@ -1939,12 +1988,16 @@
             try{ savedTheme = localStorage.getItem('nova_theme'); }catch(e){}
             applyTheme(savedTheme === 'dark' ? 'dark' : 'light');
 
-            /* Already logged in (45-day session)? → go straight to main.html / role dashboard.
-               The login page is shown only after logout or when the 45 days expire. */
+            /* Already logged in? → go straight to main.html / role dashboard.
+               The login page is shown only after logout or when the session expires. */
             await checkSession();
             if(_redirectingLoggedIn) return;
 
-            // Start maintenance polling
+            /* Logged out: start from a clean slate — no stale maintenance banner */
+            clearMaintStorage();
+            applyBanner(false, null);
+
+            // Start maintenance polling (banner shows only if the live server status says so)
             checkMaintenance();
             startPoll();
 
