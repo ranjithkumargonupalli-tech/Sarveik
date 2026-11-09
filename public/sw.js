@@ -1,4 +1,4 @@
-/* Sarveik Chat service worker  (v6)
+/* Sarveik Chat service worker  (v7)
    - Web Push (VAPID) notifications for background / closed-app / mobile
    - No alert while the chat is open, focused and visible
    - Per-chat stacking: "Ravi (3 new messages)" with the last 3 lines in the body; app-icon badge
@@ -11,7 +11,7 @@
    - 'logout' message wipes caches + notifications
    Serve from the ROOT of the site:  /sw.js  */
 
-const VERSION = 'v6';
+const VERSION = 'v7';
 const CACHE = 'sarveik-' + VERSION;
 const CDN_CACHE = 'sarveik-cdn-' + VERSION;
 const SHELL = ['/chat.html', '/manifest.json', '/icons/icon-192.png'];
@@ -43,7 +43,8 @@ self.addEventListener('activate', e => {
     const keep = new Set([CACHE, CDN_CACHE]);
     const keys = await caches.keys();
     await Promise.all(keys.filter(k => k.startsWith('sarveik-') && !keep.has(k)).map(k => caches.delete(k)));
-    if (self.registration.navigationPreload) await self.registration.navigationPreload.enable().catch(() => {});
+    // navigation preload is deliberately OFF: it can fire a duplicate request, which breaks one-time URLs (Google OAuth callback)
+    if (self.registration.navigationPreload) await self.registration.navigationPreload.disable().catch(() => {});
     await self.clients.claim();
   })());
 });
@@ -87,7 +88,7 @@ self.addEventListener('fetch', e => {
   if (req.mode === 'navigate') {
     e.respondWith((async () => {
       try {
-        const res = (await e.preloadResponse) || (await fetch(req));
+        const res = await fetch(req);
         // never cache redirects / login pages: a redirected response can't be replayed for navigations
         if (res.ok && res.type === 'basic' && !res.redirected) {
           const c = await caches.open(CACHE);
