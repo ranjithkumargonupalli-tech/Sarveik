@@ -1,4 +1,4 @@
-/* Sarveik Chat service worker  (v5)
+/* Sarveik Chat service worker  (v6)
    - Web Push (VAPID) notifications for background / closed-app / mobile
    - No alert while the chat is open, focused and visible
    - Per-chat stacking: "Ravi (3 new messages)" with the last 3 lines in the body; app-icon badge
@@ -11,7 +11,7 @@
    - 'logout' message wipes caches + notifications
    Serve from the ROOT of the site:  /sw.js  */
 
-const VERSION = 'v5';
+const VERSION = 'v6';
 const CACHE = 'sarveik-' + VERSION;
 const CDN_CACHE = 'sarveik-cdn-' + VERSION;
 const SHELL = ['/chat.html', '/manifest.json', '/icons/icon-192.png'];
@@ -256,7 +256,7 @@ self.addEventListener('message', event => {
       await updateBadge();
     })());
   }
-  if (m.type === 'skip-waiting') self.skipWaiting();
+  if (m.type === 'skip-waiting' || m.type === 'SKIP_WAITING') self.skipWaiting();   // also accepts PWABuilder's message name
   if (m.type === 'get-version' && event.source) event.source.postMessage({ type: 'version', version: VERSION });
 });
 
