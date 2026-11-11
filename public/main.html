@@ -13,11 +13,12 @@
 
   <style>
     /* =============================================
-       Sarveik — LIGHT BLUE & LIGHT GREEN 3D EDITION v4.1
+       Sarveik — LIGHT BLUE & LIGHT GREEN 3D EDITION v4.2
        Typography: Syne (display) + DM Sans (body) + JetBrains Mono (HUD/data)
        Signature: real 3D-tilting tool cards inside a perspective
        "control-deck" scene, with a depth-grid floor
        and drifting parallax particles behind everything.
+       v4.2: Section-wise announcements (Internships / Workshops & Events / Jobs)
     ============================================= */
 
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; text-decoration: none; }
@@ -307,6 +308,8 @@
       backdrop-filter: blur(12px);
       transition: all 0.25s ease;
       white-space: nowrap;
+      position: relative;
+      font-family: inherit;
     }
     .nav-pill:hover {
       background: var(--gradient-main);
@@ -318,6 +321,28 @@
     .nav-pill.announce { border-color: rgba(14, 165, 233, 0.4); }
     .nav-pill.review { border-color: rgba(245, 184, 46, 0.5); }
     .nav-pill i { font-size: 0.8rem; }
+
+    /* Unread announcements badge */
+    .pill-badge {
+      min-width: 18px;
+      height: 18px;
+      padding: 0 5px;
+      border-radius: 999px;
+      background: var(--pink);
+      color: #fff;
+      font-size: 0.65rem;
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+      box-shadow: 0 0 0 0 rgba(244,63,94,0.5);
+      animation: badge-ping 2s ease-out infinite;
+    }
+    .pill-badge[hidden] { display: none; }
+    @keyframes badge-ping { 0% { box-shadow: 0 0 0 0 rgba(244,63,94,0.55); } 70%, 100% { box-shadow: 0 0 0 8px rgba(244,63,94,0); } }
+    .nav-pill.ring i { animation: bell-ring 1.4s ease-in-out 3; transform-origin: top center; }
+    @keyframes bell-ring { 0%,100% { transform: rotate(0); } 15% { transform: rotate(18deg); } 30% { transform: rotate(-16deg); } 45% { transform: rotate(10deg); } 60% { transform: rotate(-8deg); } 75% { transform: rotate(3deg); } }
 
     .nav-links {
       display: flex;
@@ -969,6 +994,7 @@
       font-size: 0.95rem;
       color: var(--text-secondary);
       transition: all 0.2s;
+      z-index: 5;
     }
     .modal-close:hover { color: var(--pink); background: rgba(244,63,94,0.1); border-color: rgba(244,63,94,0.3); }
 
@@ -1041,19 +1067,248 @@
     }
     .btn-ghost:hover { background: rgba(14,165,233,0.1); color: var(--text-primary); }
 
-    /* Announcement items */
-    .announcement-list { display: flex; flex-direction: column; gap: 0.75rem; }
-    .announcement-item {
-      padding: 1.1rem 1.25rem;
-      border-radius: 16px;
+    /* ═══════════════════════════════════════════════
+       ANNOUNCEMENTS CENTER (section-wise)
+       Internships • Workshops & Events • Job Opportunities
+    ═══════════════════════════════════════════════ */
+    .modal-box.modal-ann {
+      max-width: 900px;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      height: 90vh;
+      max-height: 800px;
+    }
+
+    .ann-head {
+      position: relative;
+      padding: 1.6rem 2rem 1.1rem;
+      background:
+        radial-gradient(ellipse 60% 120% at 0% 0%, rgba(14,165,233,0.16), transparent 60%),
+        radial-gradient(ellipse 50% 120% at 100% 0%, rgba(16,185,129,0.16), transparent 60%),
+        var(--bg-glass);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .ann-head .modal-title { display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.2rem; padding-right: 2.5rem; }
+    .ann-head .modal-title i { -webkit-text-fill-color: initial; color: var(--cyan); font-size: 1.2rem; }
+    .ann-head .modal-sub { margin-bottom: 0; }
+
+    .ann-toolbar { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-top: 1rem; }
+    .ann-search { flex: 1; min-width: 180px; position: relative; }
+    .ann-search i { position: absolute; left: 0.9rem; top: 50%; transform: translateY(-50%); color: var(--text-muted); font-size: 0.8rem; pointer-events: none; }
+    .ann-search input {
+      width: 100%;
+      padding: 0.6rem 1rem 0.6rem 2.3rem;
+      border-radius: 50px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-bright);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.85rem;
+      outline: none;
+      transition: border-color 0.25s, box-shadow 0.25s;
+    }
+    .ann-search input:focus { border-color: var(--cyan); box-shadow: 0 0 0 3px rgba(14,165,233,0.14); }
+    .ann-select {
+      padding: 0.6rem 1rem;
+      border-radius: 50px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-bright);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 600;
+      outline: none;
+      cursor: pointer;
+    }
+    .ann-select option { background: var(--bg-secondary); }
+
+    .ann-tabs {
+      display: flex;
+      gap: 0.5rem;
+      padding: 0.9rem 2rem 0.3rem;
+      overflow-x: auto;
+      flex-shrink: 0;
+      scrollbar-width: none;
+    }
+    .ann-tabs::-webkit-scrollbar { display: none; }
+    .ann-tab {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.55rem 1rem;
+      border-radius: 999px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.25s ease;
+    }
+    .ann-tab:hover { border-color: var(--border-bright); color: var(--text-primary); transform: translateY(-1px); }
+    .ann-tab .cnt {
+      min-width: 20px;
+      padding: 0.05rem 0.45rem;
+      border-radius: 999px;
+      background: var(--bg-glass);
+      color: var(--cyan);
+      font-size: 0.68rem;
+      font-weight: 800;
+      text-align: center;
+    }
+    .ann-tab.active {
+      background: var(--gradient-main);
+      color: #0b3a4a;
+      border-color: transparent;
+      box-shadow: 0 6px 18px var(--glow-cyan);
+    }
+    .ann-tab.active .cnt { background: rgba(255,255,255,0.55); color: #0b3a4a; }
+
+    .ann-chips { display: flex; gap: 0.4rem; flex-wrap: wrap; padding: 0.6rem 2rem 0; flex-shrink: 0; min-height: 6px; }
+    .ann-chip {
+      padding: 0.3rem 0.8rem;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: var(--bg-glass);
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 0.74rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .ann-chip:hover { border-color: var(--border-bright); color: var(--text-primary); }
+    .ann-chip.active { background: rgba(16,185,129,0.16); border-color: rgba(16,185,129,0.5); color: var(--green); }
+
+    .ann-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 0.4rem 2rem 1.75rem; }
+
+    /* Section headers (All view) */
+    .ann-section-head {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      margin: 1.4rem 0 0.8rem;
+      color: var(--c);
+    }
+    .ann-section-head:first-child { margin-top: 0.8rem; }
+    .ann-section-ico {
+      width: 34px; height: 34px;
+      border-radius: 11px;
+      background: var(--cs);
+      border: 1px solid var(--c);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem;
+      flex-shrink: 0;
+    }
+    .ann-section-name { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.05rem; letter-spacing: -0.02em; color: var(--text-primary); }
+    .ann-section-count { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; font-weight: 700; padding: 0.15rem 0.6rem; border-radius: 999px; background: var(--cs); color: var(--c); }
+    .ann-section-line { flex: 1; height: 1px; background: linear-gradient(90deg, var(--c), transparent); opacity: 0.4; }
+
+    /* Category colours */
+    .cat-internship { --c: #0ea5e9; --cs: rgba(14,165,233,0.12); }
+    .cat-workshop   { --c: #8b5cf6; --cs: rgba(139,92,246,0.12); }
+    .cat-job        { --c: #10b981; --cs: rgba(16,185,129,0.12); }
+    .cat-general    { --c: #f5b82e; --cs: rgba(245,184,46,0.14); }
+
+    /* Announcement card */
+    .an-card {
+      position: relative;
+      display: flex;
+      gap: 1rem;
+      padding: 1.15rem 1.25rem;
+      margin-bottom: 0.8rem;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--cs), transparent 55%), var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--c);
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s;
+      animation: an-in 0.45s cubic-bezier(0.16,1,0.3,1) both;
+    }
+    @keyframes an-in { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+    .an-card:hover { transform: translateY(-3px); box-shadow: 0 14px 30px rgba(14,90,130,0.14); border-color: var(--c); }
+    .an-card.expired { opacity: 0.62; filter: grayscale(0.35); }
+    .an-card.is-urgent { box-shadow: 0 0 0 1px rgba(244,63,94,0.35), 0 8px 24px rgba(244,63,94,0.12); }
+    .an-icon {
+      width: 46px; height: 46px;
+      border-radius: 14px;
+      background: var(--cs);
+      border: 1px solid var(--c);
+      color: var(--c);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.15rem;
+      flex-shrink: 0;
+    }
+    .an-main { flex: 1; min-width: 0; }
+    .an-tags { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.55rem; }
+    .an-badge {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      padding: 0.18rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.66rem; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.05em;
+      background: var(--cs); color: var(--c);
+    }
+    .an-badge.muted { background: var(--bg-glass); color: var(--text-secondary); }
+    .an-badge.urgent { background: rgba(244,63,94,0.14); color: var(--pink); animation: blink 1.4s ease-in-out infinite; }
+    .an-badge.important { background: rgba(245,184,46,0.18); color: #b7840f; }
+    body.dark-mode .an-badge.important { color: var(--gold); }
+    .an-badge.new { background: var(--gradient-main); color: #0b3a4a; }
+    .an-title { font-family: 'Syne', sans-serif; font-size: 1.05rem; font-weight: 700; letter-spacing: -0.02em; color: var(--text-primary); margin-bottom: 0.4rem; line-height: 1.3; word-break: break-word; }
+    .an-body { font-size: 0.86rem; color: var(--text-secondary); line-height: 1.6; white-space: pre-line; word-break: break-word; }
+    .an-body.clamp { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    .an-more { background: none; border: none; color: var(--c); font-family: inherit; font-weight: 700; font-size: 0.78rem; cursor: pointer; margin-top: 0.25rem; padding: 0; }
+    .an-more:hover { text-decoration: underline; }
+
+    .an-meta { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.85rem; }
+    .an-chip {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.3rem 0.7rem;
+      border-radius: 10px;
       background: var(--bg-glass);
       border: 1px solid var(--border);
-      transition: background 0.2s, transform 0.2s;
+      font-size: 0.76rem; font-weight: 600; color: var(--text-primary);
     }
-    .announcement-item:hover { background: rgba(16,185,129,0.08); transform: translateX(4px); }
-    .ann-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 0.4rem; color: var(--cyan); }
-    .ann-body { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.55; margin-bottom: 0.5rem; }
-    .ann-date { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
+    .an-chip i { color: var(--c); font-size: 0.75rem; }
+    .an-chip.deadline.soon { background: rgba(245,184,46,0.16); border-color: rgba(245,184,46,0.5); }
+    .an-chip.deadline.today, .an-chip.deadline.closed { background: rgba(244,63,94,0.1); border-color: rgba(244,63,94,0.4); }
+    .an-chip.deadline.soon i { color: #d99412; }
+    .an-chip.deadline.today i, .an-chip.deadline.closed i { color: var(--pink); }
+    .an-chip .left { font-weight: 800; color: var(--text-secondary); }
+
+    .an-foot { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin-top: 0.9rem; }
+    .an-posted { font-family: 'JetBrains Mono', monospace; font-size: 0.68rem; color: var(--text-muted); display: flex; gap: 0.9rem; flex-wrap: wrap; align-items: center; }
+    .an-posted i { margin-right: 0.3rem; }
+    .an-apply {
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      padding: 0.5rem 1.1rem;
+      border-radius: 999px;
+      background: var(--gradient-main);
+      color: #0b3a4a;
+      font-weight: 800; font-size: 0.8rem;
+      transition: transform 0.25s, box-shadow 0.25s;
+    }
+    .an-apply:hover { transform: translateY(-2px); box-shadow: 0 8px 18px var(--glow-cyan); }
+    .an-apply.disabled { background: var(--bg-glass); color: var(--text-muted); pointer-events: none; }
+
+    .an-empty { text-align: center; padding: 3.5rem 1rem; color: var(--text-muted); }
+    .an-empty i { font-size: 2.4rem; display: block; margin-bottom: 0.8rem; opacity: 0.45; }
+    .an-skeleton { height: 110px; border-radius: 18px; margin-bottom: 0.8rem; background: linear-gradient(90deg, var(--bg-glass) 25%, rgba(14,165,233,0.12) 50%, var(--bg-glass) 75%); background-size: 200% 100%; animation: skel 1.3s linear infinite; }
+    @keyframes skel { to { background-position: -200% 0; } }
+
+    @media (max-width: 640px) {
+      .modal-box.modal-ann { height: 94vh; border-radius: 20px; }
+      .ann-head { padding: 1.25rem 1.1rem 0.9rem; }
+      .ann-tabs { padding: 0.8rem 1.1rem 0.3rem; }
+      .ann-chips { padding: 0.6rem 1.1rem 0; }
+      .ann-scroll { padding: 0.4rem 1.1rem 1.5rem; }
+      .an-card { padding: 1rem; gap: 0.75rem; }
+      .an-icon { width: 38px; height: 38px; font-size: 1rem; border-radius: 12px; }
+    }
 
     /* ───── NOTIFICATIONS ───── */
     #notifContainer {
@@ -1084,6 +1339,7 @@
     .notif.error { border-left: 3px solid #ef4444; }
     .notif.info { border-left: 3px solid var(--cyan); }
     .notif.warning { border-left: 3px solid var(--gold); }
+    .notif.clickable { cursor: pointer; }
     .notif-icon { font-size: 1rem; margin-top: 1px; flex-shrink: 0; }
     .notif.success .notif-icon { color: #10b981; }
     .notif.error .notif-icon { color: #ef4444; }
@@ -1185,8 +1441,9 @@
         <div class="brand-icon-wrap"><div class="brand-icon"><i class="fas fa-shield-alt"></i></div></div>
         <span>Sarveik</span>
       </a>
-      <button id="announcementBtn" class="nav-pill announce">
+      <button id="announcementBtn" class="nav-pill announce" aria-haspopup="dialog">
         <i class="fas fa-bullhorn"></i> Announcements
+        <span class="pill-badge" id="annBadge" hidden>0</span>
       </button>
       <button id="reviewBtn" class="nav-pill review">
         <i class="fas fa-star"></i> Write a Review
@@ -1515,16 +1772,28 @@
     </div>
   </div>
 
-  <!-- ───── ANNOUNCEMENT MODAL ───── -->
-  <div id="announcementModal" class="modal-overlay">
-    <div class="modal-box modal-wide">
-      <div class="modal-close" id="closeAnnouncement">&times;</div>
-      <div class="modal-title"><i class="fas fa-bullhorn"></i> &nbsp;Announcements</div>
-      <p class="modal-sub">Latest updates from the Sarveik team</p>
-      <div class="announcement-list" id="announcementsList">
-        <div style="text-align:center;padding:2rem;color:var(--text-muted);">
-          <i class="fas fa-spinner fa-spin"></i> &nbsp;Loading...
+  <!-- ───── ANNOUNCEMENTS CENTER (section-wise) ───── -->
+  <div id="announcementModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="annModalTitle">
+    <div class="modal-box modal-ann">
+      <div class="ann-head">
+        <div class="modal-close" id="closeAnnouncement" role="button" aria-label="Close announcements" tabindex="0">&times;</div>
+        <div class="modal-title" id="annModalTitle"><i class="fas fa-bullhorn"></i> Announcements</div>
+        <p class="modal-sub">Internships, workshops & events, and job openings — fresh from the Sarveik team</p>
+        <div class="ann-toolbar">
+          <div class="ann-search">
+            <i class="fas fa-search"></i>
+            <input type="text" id="annSearch" placeholder="Search title, company, keyword…" autocomplete="off" aria-label="Search announcements">
+          </div>
+          <select class="ann-select" id="annSort" aria-label="Sort announcements">
+            <option value="new">Newest first</option>
+            <option value="deadline">Deadline soonest</option>
+          </select>
         </div>
+      </div>
+      <div class="ann-tabs" id="annTabs" role="tablist"></div>
+      <div class="ann-chips" id="annChips"></div>
+      <div class="ann-scroll" id="announcementsList">
+        <div class="an-skeleton"></div><div class="an-skeleton"></div><div class="an-skeleton"></div>
       </div>
     </div>
   </div>
@@ -1547,46 +1816,59 @@
     </div>
   </footer>
 
+  <!-- Live updates (optional: page works without it) -->
+  <script src="/socket.io/socket.io.js"></script>
   <script>
     // ═══════════════════════════════════════════════
-    //   Sarveik – SCRIPT v4.1
+    //   Sarveik – SCRIPT v4.2
+    //   Section-wise announcements center
     // ═══════════════════════════════════════════════
+
+    // ── UTILITIES ──
+    function escapeHtml(s) {
+      if (s === null || s === undefined) return '';
+      return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+    function safeUrl(u) {
+      try { const x = new URL(u); return (x.protocol === 'http:' || x.protocol === 'https:') ? x.href : ''; }
+      catch (e) { return ''; }
+    }
 
     // ── API HELPER FUNCTION ──
     async function apiCall(url, options = {}) {
       try {
-        const fetchOptions = { 
-          ...options, 
-          headers: { 'Content-Type': 'application/json', ...options.headers }, 
-          credentials: 'include' 
+        const fetchOptions = {
+          ...options,
+          headers: { 'Content-Type': 'application/json', ...options.headers },
+          credentials: 'include'
         };
         if (options.body && typeof options.body === 'object') {
           fetchOptions.body = JSON.stringify(options.body);
         }
         const response = await fetch(url, fetchOptions);
-        if (!response.ok) { 
-          const text = await response.text(); 
-          throw new Error(text || `HTTP ${response.status}`); 
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(text || `HTTP ${response.status}`);
         }
         const contentType = response.headers.get('content-type');
         return contentType?.includes('application/json') ? response.json() : response.text();
-      } catch (e) { 
-        throw e; 
+      } catch (e) {
+        throw e;
       }
     }
 
     // ── SESSION CHECK ──
     async function checkSession() {
-      try { 
-        const session = await apiCall('/check-session'); 
-        if (!session.loggedIn) { 
-          window.location.href = '/'; 
-          return false; 
-        } 
-        return true; 
-      } catch { 
-        window.location.href = '/'; 
-        return false; 
+      try {
+        const session = await apiCall('/check-session');
+        if (!session.loggedIn) {
+          window.location.href = '/';
+          return false;
+        }
+        return true;
+      } catch {
+        window.location.href = '/';
+        return false;
       }
     }
 
@@ -1597,6 +1879,7 @@
       setTimeout(() => {
         document.getElementById('loadingScreen').classList.add('hidden');
       }, 1100);
+      initAnnouncements();
     });
 
     // ── THEME ──
@@ -1640,21 +1923,23 @@
       }
     });
 
-    // ── NOTIFICATIONS ──
-    function showToast(msg, type = 'success') {
+    // ── NOTIFICATIONS (toasts) ──
+    function showToast(msg, type = 'success', opts = {}) {
       const c = document.getElementById('notifContainer');
       const el = document.createElement('div');
-      el.className = `notif ${type}`;
+      el.className = `notif ${type}${opts.onClick ? ' clickable' : ''}`;
       const icons = { success: 'check-circle', error: 'exclamation-circle', info: 'info-circle', warning: 'exclamation-triangle' };
+      const title = opts.title || (type[0].toUpperCase() + type.slice(1));
       el.innerHTML = `<i class="fas fa-${icons[type] || 'info-circle'} notif-icon"></i>
-        <div><div class="notif-title">${type[0].toUpperCase() + type.slice(1)}</div>
-        <div class="notif-msg">${msg}</div></div>`;
+        <div><div class="notif-title">${escapeHtml(title)}</div>
+        <div class="notif-msg">${escapeHtml(msg)}</div></div>`;
+      if (opts.onClick) el.addEventListener('click', () => { opts.onClick(); el.remove(); });
       c.appendChild(el);
       requestAnimationFrame(() => { requestAnimationFrame(() => el.classList.add('show')); });
       setTimeout(() => {
         el.classList.remove('show');
         setTimeout(() => el.remove(), 400);
-      }, 5000);
+      }, opts.duration || 5000);
     }
 
     // ── STATS COUNTER ──
@@ -1784,7 +2069,7 @@
 
     // Keyboard shortcut: / to focus search
     document.addEventListener('keydown', e => {
-      if (e.key === '/' && e.target !== searchInput && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA') {
+      if (e.key === '/' && e.target !== searchInput && document.activeElement?.tagName !== 'INPUT' && document.activeElement?.tagName !== 'TEXTAREA' && document.activeElement?.tagName !== 'SELECT') {
         e.preventDefault();
         searchInput?.focus();
       }
@@ -1796,13 +2081,14 @@
     btt?.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
 
     // ── MODAL HELPERS ──
-    function openModal(id) { 
+    function openModal(id) {
       const modal = document.getElementById(id);
-      if (modal) modal.classList.add('open'); 
+      if (modal) modal.classList.add('open');
     }
-    function closeModal(id) { 
+    function closeModal(id) {
       const modal = document.getElementById(id);
-      if (modal) modal.classList.remove('open'); 
+      if (modal) modal.classList.remove('open');
+      if (id === 'announcementModal') onAnnouncementsClosed();
     }
 
     // Close modals when clicking outside
@@ -1810,6 +2096,15 @@
       ['feedbackModal', 'reviewModal', 'announcementModal'].forEach(id => {
         const modal = document.getElementById(id);
         if (e.target === modal) closeModal(id);
+      });
+    });
+
+    // Close modals with Escape
+    document.addEventListener('keydown', e => {
+      if (e.key !== 'Escape') return;
+      ['feedbackModal', 'reviewModal', 'announcementModal'].forEach(id => {
+        const modal = document.getElementById(id);
+        if (modal?.classList.contains('open')) closeModal(id);
       });
     });
 
@@ -1836,7 +2131,7 @@
       });
       return { getVal: () => selected, reset: () => {
         selected = 0;
-        stars.forEach(s => { 
+        stars.forEach(s => {
           s.classList.add('far');
           s.classList.remove('fas');
           s.classList.remove('active');
@@ -1869,9 +2164,9 @@
         document.getElementById('feedbackText').value = '';
       } catch (error) {
         showToast(error.message || 'Failed to submit feedback.', 'error');
-      } finally { 
-        btn.disabled = false; 
-        btn.textContent = 'Submit Feedback'; 
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Submit Feedback';
       }
     });
 
@@ -1882,24 +2177,19 @@
       try {
         const tools = await apiCall('/api/tools?page=all');
         if (tools?.length) {
-          sel.innerHTML = '<option value="">Select a tool...</option>' + 
-            tools.map(t => `<option value="${t.id}">${escapeHtml(t.name)}</option>`).join('');
+          sel.innerHTML = '<option value="">Select a tool...</option>' +
+            tools.map(t => `<option value="${escapeHtml(t.id)}">${escapeHtml(t.name)}</option>`).join('');
         } else {
           sel.innerHTML = '<option value="">No tools available</option>';
         }
-      } catch { 
+      } catch {
         sel.innerHTML = '<option value="">Error loading tools</option>';
       }
     }
 
-    function escapeHtml(s) { 
-      if (!s) return '';
-      return s.replace(/[&<>]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[m])); 
-    }
-
-    document.getElementById('reviewBtn')?.addEventListener('click', () => { 
-      loadToolsForReview(); 
-      openModal('reviewModal'); 
+    document.getElementById('reviewBtn')?.addEventListener('click', () => {
+      loadToolsForReview();
+      openModal('reviewModal');
     });
     document.getElementById('closeReview')?.addEventListener('click', () => closeModal('reviewModal'));
     document.getElementById('cancelReview')?.addEventListener('click', () => closeModal('reviewModal'));
@@ -1913,7 +2203,7 @@
       const btn = document.getElementById('submitReviewBtn');
       btn.disabled = true; btn.textContent = 'Submitting...';
       try {
-        const data = await apiCall(`/api/tools/${toolId}/review`, {
+        const data = await apiCall(`/api/tools/${encodeURIComponent(toolId)}/review`, {
           method: 'POST',
           body: { rating: r, comment: comment || null }
         });
@@ -1924,38 +2214,310 @@
         document.getElementById('toolSelect').value = '';
       } catch (error) {
         showToast(error.message || 'Failed to submit review.', 'error');
-      } finally { 
-        btn.disabled = false; 
-        btn.textContent = 'Submit Review'; 
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Submit Review';
       }
     });
 
-    // ── ANNOUNCEMENTS ──
-    async function loadAnnouncements() {
-      const list = document.getElementById('announcementsList');
-      list.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted)"><i class="fas fa-spinner fa-spin"></i> Loading announcements...</div>';
-      try {
-        const items = await apiCall('/api/announcements');
-        if (!items?.length) {
-          list.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted)"><i class="fas fa-newspaper" style="font-size:2rem;opacity:0.4;display:block;margin-bottom:0.75rem"></i>No announcements yet.</div>';
-          return;
-        }
-        list.innerHTML = items.map(a => `
-          <div class="announcement-item">
-            <div class="ann-title">${escapeHtml(a.title)}</div>
-            <div class="ann-body">${escapeHtml(a.content)}</div>
-            <div class="ann-date"><i class="fas fa-clock"></i> ${new Date(a.created_at).toLocaleString()}</div>
-          </div>`).join('');
-      } catch {
-        list.innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-muted)"><i class="fas fa-exclamation-triangle"></i> Failed to load announcements.</div>';
+    // ═══════════════════════════════════════════════
+    //   ANNOUNCEMENTS CENTER — section-wise
+    //   Categories mirror the moderator panel:
+    //   Internships • Workshops & Events • Job Opportunities
+    // ═══════════════════════════════════════════════
+    const ANN_CATS = {
+      internship: {
+        label: 'Internships', icon: 'fa-user-graduate', cta: 'Apply now',
+        subs: { short: 'Short (1–2 months)', moderate: 'Moderate (3–4 months)', long: 'Long (5+ months)' }
+      },
+      workshop: {
+        label: 'Workshops & Events', icon: 'fa-chalkboard-teacher', cta: 'Register',
+        subs: { workshop: 'Workshop', hackathon: 'Hackathon', symposium: 'Symposium', seminar: 'Seminar', conference: 'Conference', webinar: 'Webinar', other: 'Other Event' }
+      },
+      job: {
+        label: 'Job Opportunities', icon: 'fa-briefcase', cta: 'Apply now',
+        subs: { fulltime: 'Full-time', parttime: 'Part-time', contract: 'Contract / Freelance', campus: 'Campus Drive', other: 'Other' }
+      },
+      general: {
+        label: 'General Updates', icon: 'fa-bullhorn', cta: 'More info',
+        subs: {}
       }
+    };
+    const ANN_ORDER = ['internship', 'workshop', 'job', 'general'];
+    const MODE_ICONS = { 'Remote': 'fa-laptop-house', 'On-site': 'fa-building', 'Hybrid': 'fa-people-arrows' };
+
+    let annItems = [];
+    let annCat = 'all', annSub = 'all', annTerm = '', annSort = 'new';
+    let annLoaded = false, annSocket = null;
+    let annSeenAtOpen = 0;
+    const SEEN_KEY = 'sarveik_ann_seen';
+    const getLastSeen = () => parseInt(localStorage.getItem(SEEN_KEY) || '0', 10) || 0;
+    const setLastSeen = (t) => { try { localStorage.setItem(SEEN_KEY, String(t)); } catch (e) {} };
+
+    // Date helpers (server timestamps without a timezone are treated as UTC)
+    function parseTs(s) {
+      if (!s) return 0;
+      if (typeof s === 'string' && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}(:\d{2})?$/.test(s)) s = s.replace(' ', 'T') + 'Z';
+      const t = new Date(s).getTime();
+      return isNaN(t) ? 0 : t;
+    }
+    function relTime(ts) {
+      const m = Math.floor((Date.now() - ts) / 60000);
+      if (m < 1) return 'just now';
+      if (m < 60) return `${m}m ago`;
+      const h = Math.floor(m / 60);
+      if (h < 24) return `${h}h ago`;
+      const d = Math.floor(h / 24);
+      if (d < 7) return `${d}d ago`;
+      return new Date(ts).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+    }
+    function deadlineInfo(d) {
+      if (!d) return null;
+      const dt = /^\d{4}-\d{2}-\d{2}$/.test(d) ? new Date(d + 'T23:59:59') : new Date(d);
+      if (isNaN(dt)) return { label: String(d), left: '', state: 'ok', days: 9999 };
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const endDay = new Date(dt); endDay.setHours(0, 0, 0, 0);
+      const days = Math.round((endDay - today) / 86400000);
+      const label = dt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+      if (days < 0) return { label, left: 'Closed', state: 'closed', days };
+      if (days === 0) return { label, left: 'Last day — today!', state: 'today', days };
+      if (days === 1) return { label, left: '1 day left', state: 'soon', days };
+      if (days <= 7) return { label, left: `${days} days left`, state: 'soon', days };
+      return { label, left: `${days} days left`, state: 'ok', days };
     }
 
-    document.getElementById('announcementBtn')?.addEventListener('click', () => { 
-      loadAnnouncements(); 
-      openModal('announcementModal'); 
+    // Normalise one announcement from the API
+    function normAnn(a) {
+      const cat = ANN_CATS[a.category] ? a.category : 'general';
+      return {
+        id: a.id,
+        title: a.title || 'Untitled',
+        content: a.content || '',
+        priority: a.priority || 'normal',
+        author: a.author || a.created_by_name || 'Sarveik Team',
+        ts: parseTs(a.created_at),
+        cat,
+        sub: a.subcategory || '',
+        org: a.organization || '',
+        mode: a.mode || '',
+        deadline: a.deadline || '',
+        link: safeUrl(a.link || '')
+      };
+    }
+
+    // Badge on the navbar button
+    function updateAnnBadge() {
+      const badge = document.getElementById('annBadge');
+      const btn = document.getElementById('announcementBtn');
+      if (!badge) return;
+      const seen = getLastSeen();
+      const unread = annItems.filter(a => a.ts > seen).length;
+      badge.textContent = unread > 99 ? '99+' : unread;
+      badge.hidden = unread === 0;
+      if (unread > 0) { btn.classList.add('ring'); setTimeout(() => btn.classList.remove('ring'), 4500); }
+    }
+
+    async function fetchAnnouncements() {
+      const raw = await apiCall('/api/announcements');
+      annItems = (Array.isArray(raw) ? raw : []).map(normAnn);
+      annLoaded = true;
+      updateAnnBadge();
+      if (document.getElementById('announcementModal').classList.contains('open')) renderAnnouncements();
+    }
+
+    function isAnnOpen() { return document.getElementById('announcementModal').classList.contains('open'); }
+
+    function openAnnouncements() {
+      annSeenAtOpen = getLastSeen();
+      annCat = 'all'; annSub = 'all'; annTerm = '';
+      const s = document.getElementById('annSearch'); if (s) s.value = '';
+      openModal('announcementModal');
+      if (annLoaded) { renderAnnouncements(); markAnnSeen(); }
+      else {
+        fetchAnnouncements().then(markAnnSeen).catch(() => {
+          document.getElementById('announcementsList').innerHTML =
+            '<div class="an-empty"><i class="fas fa-exclamation-triangle"></i>Couldn\'t load announcements. Please try again.</div>';
+        });
+      }
+    }
+    function markAnnSeen() {
+      const newest = annItems.reduce((m, a) => Math.max(m, a.ts), 0);
+      setLastSeen(Math.max(newest, Date.now()));
+      updateAnnBadge();
+    }
+    function onAnnouncementsClosed() { annSeenAtOpen = getLastSeen(); }
+
+    function matchesTerm(a) {
+      if (!annTerm) return true;
+      const hay = `${a.title} ${a.content} ${a.org} ${a.mode} ${ANN_CATS[a.cat].label} ${ANN_CATS[a.cat].subs[a.sub] || ''}`.toLowerCase();
+      return hay.includes(annTerm);
+    }
+
+    function sortItems(list) {
+      const arr = [...list];
+      if (annSort === 'deadline') {
+        const rank = a => {
+          const d = deadlineInfo(a.deadline);
+          if (!d) return 1e8;               // no deadline → after dated ones
+          if (d.days < 0) return 2e8 + (-d.days); // closed → last
+          return d.days;
+        };
+        arr.sort((a, b) => rank(a) - rank(b) || b.ts - a.ts);
+      } else {
+        arr.sort((a, b) => b.ts - a.ts);
+      }
+      return arr;
+    }
+
+    function cardHtml(a, i) {
+      const cat = ANN_CATS[a.cat];
+      const subLabel = cat.subs[a.sub] || '';
+      const dl = deadlineInfo(a.deadline);
+      const expired = dl && dl.state === 'closed';
+      const isNew = a.ts > annSeenAtOpen;
+      const long = a.content.length > 190 || a.content.split('\n').length > 3;
+      const ctaLabel = cat.cta;
+      const modeIcon = MODE_ICONS[a.mode] || 'fa-map-marker-alt';
+      return `
+      <article class="an-card cat-${a.cat} ${expired ? 'expired' : ''} ${a.priority === 'urgent' ? 'is-urgent' : ''}" style="animation-delay:${Math.min(i, 8) * 55}ms">
+        <div class="an-icon"><i class="fas ${cat.icon}"></i></div>
+        <div class="an-main">
+          <div class="an-tags">
+            ${isNew ? '<span class="an-badge new"><i class="fas fa-sparkles"></i> New</span>' : ''}
+            <span class="an-badge"><i class="fas ${cat.icon}"></i> ${escapeHtml(cat.label)}</span>
+            ${subLabel ? `<span class="an-badge muted">${escapeHtml(subLabel)}</span>` : ''}
+            ${a.priority === 'urgent' ? '<span class="an-badge urgent"><i class="fas fa-bolt"></i> Urgent</span>' : ''}
+            ${a.priority === 'important' ? '<span class="an-badge important"><i class="fas fa-star"></i> Important</span>' : ''}
+          </div>
+          <h3 class="an-title">${escapeHtml(a.title)}</h3>
+          <p class="an-body ${long ? 'clamp' : ''}">${escapeHtml(a.content)}</p>
+          ${long ? '<button class="an-more" type="button" data-more>Read more ▾</button>' : ''}
+          ${(a.org || a.mode || dl) ? `
+          <div class="an-meta">
+            ${a.org ? `<span class="an-chip"><i class="fas fa-building"></i>${escapeHtml(a.org)}</span>` : ''}
+            ${a.mode ? `<span class="an-chip"><i class="fas ${modeIcon}"></i>${escapeHtml(a.mode)}</span>` : ''}
+            ${dl ? `<span class="an-chip deadline ${dl.state}"><i class="fas fa-hourglass-half"></i>${a.cat === 'workshop' ? 'On' : 'Apply by'} ${escapeHtml(dl.label)}${dl.left ? ` · <span class="left">${escapeHtml(dl.left)}</span>` : ''}</span>` : ''}
+          </div>` : ''}
+          <div class="an-foot">
+            <div class="an-posted">
+              <span><i class="fas fa-clock"></i>${escapeHtml(a.ts ? relTime(a.ts) : '')}</span>
+              <span><i class="fas fa-user"></i>${escapeHtml(a.author)}</span>
+            </div>
+            ${a.link
+              ? `<a class="an-apply ${expired ? 'disabled' : ''}" href="${escapeHtml(a.link)}" target="_blank" rel="noopener noreferrer">${expired ? 'Closed' : escapeHtml(ctaLabel)} <i class="fas fa-arrow-up-right-from-square"></i></a>`
+              : ''}
+          </div>
+        </div>
+      </article>`;
+    }
+
+    function renderAnnouncements() {
+      const tabsEl = document.getElementById('annTabs');
+      const chipsEl = document.getElementById('annChips');
+      const listEl = document.getElementById('announcementsList');
+
+      const base = annItems.filter(matchesTerm);
+      const counts = { all: base.length, internship: 0, workshop: 0, job: 0, general: 0 };
+      base.forEach(a => counts[a.cat]++);
+
+      // Tabs
+      const tabs = [['all', 'All', 'fa-layer-group']]
+        .concat(ANN_ORDER.filter(k => k !== 'general' || counts.general > 0).map(k => [k, ANN_CATS[k].label, ANN_CATS[k].icon]));
+      if (annCat !== 'all' && !tabs.some(t => t[0] === annCat)) annCat = 'all';
+      tabsEl.innerHTML = tabs.map(([k, label, icon]) =>
+        `<button type="button" role="tab" aria-selected="${annCat === k}" class="ann-tab ${annCat === k ? 'active' : ''}" data-cat="${k}"><i class="fas ${icon}"></i>${escapeHtml(label)}<span class="cnt">${counts[k]}</span></button>`
+      ).join('');
+
+      // Sub-type chips
+      if (annCat !== 'all' && Object.keys(ANN_CATS[annCat].subs).length) {
+        const sc = {};
+        base.filter(a => a.cat === annCat).forEach(a => { sc[a.sub] = (sc[a.sub] || 0) + 1; });
+        chipsEl.innerHTML =
+          `<button type="button" class="ann-chip ${annSub === 'all' ? 'active' : ''}" data-sub="all">All types</button>` +
+          Object.entries(ANN_CATS[annCat].subs).map(([k, v]) =>
+            `<button type="button" class="ann-chip ${annSub === k ? 'active' : ''}" data-sub="${k}">${escapeHtml(v)}${sc[k] ? ` (${sc[k]})` : ''}</button>`
+          ).join('');
+      } else { chipsEl.innerHTML = ''; annSub = 'all'; }
+
+      // Filter + sort
+      let items = base;
+      if (annCat !== 'all') items = items.filter(a => a.cat === annCat);
+      if (annCat !== 'all' && annSub !== 'all') items = items.filter(a => a.sub === annSub);
+
+      if (!items.length) {
+        listEl.innerHTML = `<div class="an-empty"><i class="fas fa-newspaper"></i>${annTerm ? 'No announcements match your search.' : 'No announcements here yet — check back soon!'}</div>`;
+        return;
+      }
+
+      let html = '';
+      if (annCat === 'all') {
+        // Section-wise: one block per category, in fixed order
+        let idx = 0;
+        ANN_ORDER.forEach(k => {
+          const group = sortItems(items.filter(a => a.cat === k));
+          if (!group.length) return;
+          html += `
+            <div class="ann-section-head cat-${k}">
+              <div class="ann-section-ico"><i class="fas ${ANN_CATS[k].icon}"></i></div>
+              <span class="ann-section-name">${escapeHtml(ANN_CATS[k].label)}</span>
+              <span class="ann-section-count">${group.length}</span>
+              <span class="ann-section-line"></span>
+            </div>`;
+          html += group.map(a => cardHtml(a, idx++)).join('');
+        });
+      } else {
+        html = sortItems(items).map((a, i) => cardHtml(a, i)).join('');
+      }
+      listEl.innerHTML = html;
+    }
+
+    // Delegated interactions inside the modal
+    document.getElementById('annTabs')?.addEventListener('click', e => {
+      const b = e.target.closest('[data-cat]'); if (!b) return;
+      annCat = b.dataset.cat; annSub = 'all'; renderAnnouncements();
+      document.getElementById('announcementsList').scrollTop = 0;
     });
+    document.getElementById('annChips')?.addEventListener('click', e => {
+      const b = e.target.closest('[data-sub]'); if (!b) return;
+      annSub = b.dataset.sub; renderAnnouncements();
+    });
+    document.getElementById('announcementsList')?.addEventListener('click', e => {
+      const b = e.target.closest('[data-more]'); if (!b) return;
+      const body = b.parentElement.querySelector('.an-body');
+      const open = body.classList.toggle('clamp') === false;
+      b.textContent = open ? 'Show less ▴' : 'Read more ▾';
+    });
+    let annSearchTimer;
+    document.getElementById('annSearch')?.addEventListener('input', e => {
+      clearTimeout(annSearchTimer);
+      annSearchTimer = setTimeout(() => { annTerm = e.target.value.toLowerCase().trim(); renderAnnouncements(); }, 200);
+    });
+    document.getElementById('annSort')?.addEventListener('change', e => { annSort = e.target.value; renderAnnouncements(); });
+
+    document.getElementById('announcementBtn')?.addEventListener('click', openAnnouncements);
     document.getElementById('closeAnnouncement')?.addEventListener('click', () => closeModal('announcementModal'));
+    document.getElementById('closeAnnouncement')?.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') closeModal('announcementModal'); });
+
+    // Load in background (badge) + live pop-ups + gentle refresh
+    function initAnnouncements() {
+      fetchAnnouncements().catch(() => {});
+      try {
+        if (typeof io === 'function') {
+          annSocket = io();
+          annSocket.on('new_announcement', d => {
+            const catKey = ANN_CATS[d?.category] ? d.category : 'general';
+            showToast(d?.title || 'A new announcement was posted', 'info', {
+              title: `New · ${ANN_CATS[catKey].label}`,
+              duration: 7000,
+              onClick: openAnnouncements
+            });
+            fetchAnnouncements().catch(() => {});
+          });
+        }
+      } catch (e) { /* live updates are optional */ }
+      // Fallback refresh every 2 minutes (keeps badge fresh if sockets are unavailable)
+      setInterval(() => { if (!document.hidden) fetchAnnouncements().catch(() => {}); }, 120000);
+    }
 
     // ── VOICE CONTROL ──
     const voiceBtn = document.getElementById('voiceBtn');
