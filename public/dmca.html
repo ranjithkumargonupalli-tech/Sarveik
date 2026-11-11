@@ -8,15 +8,16 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
     :root {
-      --bg: #0b0c10;
-      --surface: #111318;
-      --surface2: #181b22;
-      --border: rgba(255,255,255,0.07);
-      --accent: #e8633a;
-      --accent2: #f0a57a;
-      --text: #e8e9ef;
-      --muted: #7a7d8c;
-      --line: rgba(232,99,58,0.35);
+      --bg: #f3faf8;
+      --surface: #ffffff;
+      --surface2: #eef7fc;
+      --border: rgba(42,139,191,0.16);
+      --accent: #2a8bbf;
+      --accent2: #27906a;
+      --text: #1b3342;
+      --muted: #5f7885;
+      --line: rgba(42,139,191,0.35);
+      --grad: linear-gradient(135deg, #7cc8f0 0%, #9be3c3 100%);
     }
 
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
@@ -25,21 +26,12 @@
 
     body {
       font-family: 'DM Sans', sans-serif;
-      background: var(--bg);
+      background: linear-gradient(180deg, #eaf6fd 0%, var(--bg) 45%, #eefaf3 100%);
+      background-attachment: fixed;
       color: var(--text);
       min-height: 100vh;
       padding: 0;
       overflow-x: hidden;
-    }
-
-    /* ─── Noise overlay ─── */
-    body::before {
-      content: '';
-      position: fixed; inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
-      opacity: 0.03;
-      pointer-events: none;
-      z-index: 999;
     }
 
     /* ─── Ambient glow blobs ─── */
@@ -51,9 +43,9 @@
       z-index: 0;
       animation: drift 18s ease-in-out infinite alternate;
     }
-    .blob-1 { width: 520px; height: 520px; background: rgba(232,99,58,0.1); top: -120px; right: -80px; animation-delay: 0s; }
-    .blob-2 { width: 380px; height: 380px; background: rgba(80,120,220,0.08); bottom: 60px; left: -100px; animation-delay: -6s; }
-    .blob-3 { width: 260px; height: 260px; background: rgba(232,99,58,0.06); bottom: 200px; right: 100px; animation-delay: -12s; }
+    .blob-1 { width: 520px; height: 520px; background: rgba(124,200,240,0.35); top: -120px; right: -80px; animation-delay: 0s; }
+    .blob-2 { width: 380px; height: 380px; background: rgba(155,227,195,0.35); bottom: 60px; left: -100px; animation-delay: -6s; }
+    .blob-3 { width: 260px; height: 260px; background: rgba(124,200,240,0.25); bottom: 200px; right: 100px; animation-delay: -12s; }
 
     @keyframes drift {
       from { transform: translate(0, 0) scale(1); }
@@ -66,7 +58,7 @@
       z-index: 100;
       padding: 18px 48px;
       display: flex; align-items: center; justify-content: space-between;
-      background: rgba(11,12,16,0.7);
+      background: rgba(255,255,255,0.8);
       backdrop-filter: blur(20px);
       border-bottom: 1px solid var(--border);
     }
@@ -90,8 +82,8 @@
     }
 
     @keyframes pulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(232,99,58,0.5); }
-      50%       { box-shadow: 0 0 0 6px rgba(232,99,58,0); }
+      0%, 100% { box-shadow: 0 0 0 0 rgba(42,139,191,0.5); }
+      50%       { box-shadow: 0 0 0 6px rgba(42,139,191,0); }
     }
 
     .topbar-back {
@@ -127,8 +119,8 @@
       letter-spacing: 0.12em;
       text-transform: uppercase;
       color: var(--accent);
-      background: rgba(232,99,58,0.1);
-      border: 1px solid rgba(232,99,58,0.2);
+      background: rgba(42,139,191,0.1);
+      border: 1px solid rgba(42,139,191,0.22);
       padding: 6px 14px;
       border-radius: 100px;
       margin-bottom: 24px;
@@ -146,7 +138,7 @@
 
     h1 em {
       font-style: normal;
-      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      background: linear-gradient(90deg, #2a8bbf, #27906a);
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
@@ -157,7 +149,7 @@
       color: var(--muted);
       line-height: 1.7;
       max-width: 520px;
-      font-weight: 300;
+      font-weight: 400;
     }
 
     /* ─── Divider ─── */
@@ -165,6 +157,65 @@
       height: 1px;
       background: linear-gradient(90deg, transparent, var(--line), transparent);
       margin: 48px 0;
+    }
+
+    /* ─── Founder (new) ─── */
+    .founder {
+      display: grid;
+      grid-template-columns: 250px 1fr;
+      gap: 36px;
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: 28px;
+      box-shadow: 0 10px 30px rgba(42,139,191,0.10);
+      opacity: 0;
+      animation: fadeUp 0.6s 0.25s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+    .founder-photo {
+      width: 100%; aspect-ratio: 1 / 1;
+      border-radius: 20px; padding: 5px;
+      background: var(--grad);
+    }
+    .founder-photo img {
+      width: 100%; height: 100%;
+      object-fit: cover; object-position: center 20%;
+      border-radius: 16px; display: block;
+    }
+    .founder-role {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 0.85rem; font-weight: 500;
+      color: var(--accent2);
+      background: rgba(141,220,180,0.28);
+      padding: 6px 14px; border-radius: 100px;
+      margin-bottom: 14px;
+    }
+    .founder h2.founder-name {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(1.5rem, 3.6vw, 2.1rem);
+      font-weight: 800;
+      letter-spacing: -0.8px;
+      line-height: 1.15;
+      margin-bottom: 20px;
+    }
+    .founder-links { display: flex; flex-direction: column; gap: 10px; }
+    .f-link {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 14px; border-radius: 14px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 0.92rem; font-weight: 500;
+      word-break: break-all;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .f-link:hover { border-color: #5ab9ea; background: #e4f3fb; text-decoration: none; }
+    .f-link i {
+      width: 32px; height: 32px; flex-shrink: 0;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--grad); color: #17475e; font-size: 0.85rem;
     }
 
     /* ─── Sections ─── */
@@ -191,10 +242,9 @@
     .section-icon {
       width: 40px; height: 40px;
       border-radius: 12px;
-      background: rgba(232,99,58,0.12);
-      border: 1px solid rgba(232,99,58,0.2);
+      background: var(--grad);
       display: flex; align-items: center; justify-content: center;
-      color: var(--accent);
+      color: #17475e;
       font-size: 0.9rem;
       flex-shrink: 0;
     }
@@ -213,9 +263,9 @@
 
     p {
       line-height: 1.75;
-      color: #b0b3c0;
+      color: #3f5a69;
       font-size: 0.975rem;
-      font-weight: 300;
+      font-weight: 400;
       margin-bottom: 14px;
     }
 
@@ -230,19 +280,19 @@
 
     .req-list li {
       display: flex; align-items: flex-start; gap: 12px;
-      background: var(--surface2);
+      background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 12px;
       padding: 14px 18px;
       font-size: 0.915rem;
-      color: #b0b3c0;
+      color: #3f5a69;
       line-height: 1.6;
       transition: border-color 0.2s, background 0.2s;
     }
 
     .req-list li:hover {
-      border-color: rgba(232,99,58,0.25);
-      background: rgba(232,99,58,0.04);
+      border-color: rgba(42,139,191,0.4);
+      background: #f1f9fd;
     }
 
     .req-list li::before { display: none; }
@@ -252,7 +302,7 @@
       font-size: 0.7rem;
       font-weight: 700;
       color: var(--accent);
-      background: rgba(232,99,58,0.15);
+      background: rgba(90,185,234,0.2);
       border-radius: 6px;
       padding: 2px 7px;
       flex-shrink: 0;
@@ -269,16 +319,17 @@
     }
 
     .contact-card {
-      background: var(--surface2);
+      background: var(--surface);
       border: 1px solid var(--border);
       border-radius: 14px;
       padding: 20px 22px;
       transition: border-color 0.2s, transform 0.2s;
       text-decoration: none;
+      box-shadow: 0 8px 24px rgba(42,139,191,0.08);
     }
 
     .contact-card:hover {
-      border-color: rgba(232,99,58,0.35);
+      border-color: rgba(39,144,106,0.45);
       transform: translateY(-2px);
       text-decoration: none;
     }
@@ -296,7 +347,8 @@
       font-family: 'Syne', sans-serif;
       font-size: 0.92rem;
       font-weight: 600;
-      color: var(--accent2);
+      color: var(--accent);
+      word-break: break-all;
     }
 
     .contact-card-desc {
@@ -307,8 +359,8 @@
 
     /* ─── Info callout ─── */
     .callout {
-      background: rgba(232,99,58,0.06);
-      border: 1px solid rgba(232,99,58,0.18);
+      background: rgba(141,220,180,0.2);
+      border: 1px solid rgba(39,144,106,0.25);
       border-radius: 14px;
       padding: 18px 22px;
       display: flex; gap: 14px; align-items: flex-start;
@@ -316,7 +368,7 @@
     }
 
     .callout i {
-      color: var(--accent);
+      color: var(--accent2);
       font-size: 1rem;
       margin-top: 2px;
       flex-shrink: 0;
@@ -325,7 +377,7 @@
     .callout p {
       margin: 0;
       font-size: 0.9rem;
-      color: #a0a3b0;
+      color: #2f5a49;
     }
 
     /* ─── Footer actions ─── */
@@ -347,9 +399,9 @@
 
     .btn-back {
       display: inline-flex; align-items: center; gap: 9px;
-      background: var(--surface2);
+      background: var(--grad);
       border: 1px solid var(--border);
-      color: var(--text);
+      color: #17475e;
       padding: 11px 22px;
       border-radius: 100px;
       font-size: 0.88rem;
@@ -359,22 +411,21 @@
     }
 
     .btn-back:hover {
-      border-color: rgba(232,99,58,0.4);
-      background: rgba(232,99,58,0.06);
-      color: var(--accent2);
+      color: #17475e;
       text-decoration: none;
       transform: translateX(-2px);
     }
 
     .btn-back i { font-size: 0.75rem; }
 
-    a { color: var(--accent2); text-decoration: none; }
+    a { color: var(--accent); text-decoration: none; }
     a:hover { text-decoration: underline; }
+    a:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
 
     /* ─── Scrollbar ─── */
     ::-webkit-scrollbar { width: 5px; }
     ::-webkit-scrollbar-track { background: var(--bg); }
-    ::-webkit-scrollbar-thumb { background: rgba(232,99,58,0.3); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb { background: rgba(42,139,191,0.35); border-radius: 4px; }
 
     @media (max-width: 600px) {
       .topbar { padding: 14px 20px; }
@@ -383,7 +434,10 @@
       .contact-cards { grid-template-columns: 1fr; }
       .section-body { padding-left: 0; }
       .footer-actions { flex-direction: column; align-items: flex-start; }
+      .founder { grid-template-columns: 1fr; padding: 22px; gap: 22px; }
+      .founder-photo { max-width: 240px; margin: 0 auto; }
     }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; opacity: 1 !important; } }
   </style>
 </head>
 <body>
@@ -411,6 +465,25 @@
       <h1>DMCA &amp; <em>Contact</em><br>Information</h1>
       <p class="hero-sub">Sarveik respects intellectual property rights. If you believe content on this site infringes your copyright, follow the procedure outlined below.</p>
     </div>
+
+    <div class="divider"></div>
+
+    <!-- NEW: Founder details -->
+    <section class="founder" aria-label="Founder">
+      <div class="founder-photo">
+        <img src="founder.jpg" alt="Gonupalli Ranjith Kumar, founder of Sarveik">
+      </div>
+      <div class="founder-info">
+        <span class="founder-role"><i class="fas fa-star"></i> Founder</span>
+        <h2 class="founder-name">Gonupalli Ranjith Kumar</h2>
+        <div class="founder-links">
+          <a class="f-link" href="mailto:ranjithkumar@sarveik.com"><i class="fas fa-envelope"></i> ranjithkumar@sarveik.com</a>
+          <a class="f-link" href="mailto:ranjithkumargonupalli@gmail.com"><i class="fas fa-at"></i> ranjithkumargonupalli@gmail.com</a>
+          <!-- Replace YOUR-LINKEDIN-USERNAME with your real LinkedIn profile name -->
+          <a class="f-link" href="https://www.linkedin.com/in/YOUR-LINKEDIN-USERNAME" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin-in"></i> Ranjithkumar Gonupalli on LinkedIn</a>
+        </div>
+      </div>
+    </section>
 
     <div class="divider"></div>
 
