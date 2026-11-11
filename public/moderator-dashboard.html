@@ -1,858 +1,380 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Moderator Dashboard | Sarveik</title>
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <style>
-        /* ===== RESET & CSS VARS ===== */
-        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moderator Dashboard | Sarveik</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-        :root {
-            --bg: #0b0f1a;
-            --bg2: #111827;
-            --bg3: #1a2035;
-            --sidebar-bg: #070b14;
-            --card: rgba(17,24,37,0.95);
-            --card-hover: rgba(26,32,53,0.98);
-            --border: rgba(255,255,255,0.07);
-            --border-bright: rgba(99,179,237,0.25);
-            --text: #e2e8f0;
-            --text2: #94a3b8;
-            --text3: #64748b;
-            --accent: #63b3ed;
-            --accent2: #4fd1c5;
-            --accent3: #f6ad55;
-            --danger: #fc8181;
-            --success: #68d391;
-            --warning: #f6ad55;
-            --purple: #b794f4;
-            --pink: #f687b3;
-            --glow: rgba(99,179,237,0.15);
-            --sidebar-w: 270px;
-            --radius: 14px;
-            --radius-sm: 8px;
-            --shadow: 0 8px 32px rgba(0,0,0,0.4);
-            --font-head: 'Syne', sans-serif;
-            --font-body: 'DM Sans', sans-serif;
-            --transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
-        }
-        [data-theme="light"] {
-            --bg: #f0f4f8; --bg2: #ffffff; --bg3: #e8edf5;
-            --sidebar-bg: #1a2035;
-            --card: rgba(255,255,255,0.97); --card-hover: #f8fbff;
-            --border: rgba(0,0,0,0.08); --border-bright: rgba(99,130,200,0.3);
-            --text: #1a202c; --text2: #4a5568; --text3: #718096;
-            --glow: rgba(99,130,200,0.1);
-        }
-        [data-theme="ocean"] {
-            --bg: #0a1929; --bg2: #0d2137; --bg3: #102848;
-            --accent: #00e5ff; --accent2: #00bfa5;
-            --glow: rgba(0,229,255,0.12);
-        }
-        [data-theme="aurora"] {
-            --bg: #0d0f1f; --bg2: #141626; --bg3: #1a1e38;
-            --accent: #a78bfa; --accent2: #34d399; --accent3: #fb7185;
-            --glow: rgba(167,139,250,0.15);
-        }
-        [data-theme="copper"] {
-            --bg: #1a0f0a; --bg2: #221410; --bg3: #2d1a12;
-            --sidebar-bg: #120a06;
-            --accent: #f59e0b; --accent2: #ef4444; --accent3: #fbbf24;
-            --glow: rgba(245,158,11,0.15);
-        }
+/* ===== LIGHT BLUE + LIGHT GREEN THEMES ===== */
+:root {
+    --bg: #eaf6fb; --bg2: #ffffff; --bg3: #def1f6;
+    --sidebar-bg: #e3f4f0;
+    --card: rgba(255,255,255,0.96); --card-hover: #f4fbfd;
+    --border: rgba(30,90,120,0.12); --border-bright: rgba(56,160,200,0.4);
+    --text: #12354a; --text2: #3d6277; --text3: #6b8a9b;
+    --accent: #2b9fd8; --accent2: #3cc08a; --accent3: #f0b24a;
+    --danger: #e5605f; --success: #2fae6d; --warning: #e0962f;
+    --purple: #8a7be0; --pink: #e0709a;
+    --glow: rgba(43,159,216,0.16);
+    --soft: rgba(43,159,216,0.07); --soft2: rgba(43,159,216,0.13);
+    --on-accent: #ffffff;
+    --sidebar-w: 270px; --radius: 14px; --radius-sm: 8px;
+    --shadow: 0 8px 28px rgba(30,100,140,0.15);
+    --font-head: 'Syne', sans-serif; --font-body: 'DM Sans', sans-serif;
+    --transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+}
+[data-theme="sky"] { --bg:#e8f4fd; --bg3:#d9ecfa; --sidebar-bg:#e0f0fb; --accent:#2a8fe0; --accent2:#4cb8e8; --glow:rgba(42,143,224,0.16); --soft:rgba(42,143,224,0.07); --soft2:rgba(42,143,224,0.13); }
+[data-theme="mint"] { --bg:#eaf8f0; --bg3:#d9f1e4; --sidebar-bg:#e0f5ea; --accent:#2fb67c; --accent2:#5ccfa0; --glow:rgba(47,182,124,0.16); --soft:rgba(47,182,124,0.07); --soft2:rgba(47,182,124,0.13); --border-bright:rgba(47,182,124,0.4); }
 
-        body {
-            font-family: var(--font-body);
-            background: var(--bg);
-            color: var(--text);
-            overflow: hidden;
-            height: 100vh;
-        }
+body { font-family: var(--font-body); background: var(--bg); color: var(--text); overflow: hidden; height: 100vh; }
+.wrapper { display: flex; height: 100vh; }
 
-        /* ===== LAYOUT ===== */
-        .wrapper { display: flex; height: 100vh; }
+/* SIDEBAR */
+.sidebar { width: var(--sidebar-w); background: linear-gradient(180deg, var(--sidebar-bg), #e6f6ee); display: flex; flex-direction: column; flex-shrink: 0; border-right: 1px solid var(--border); position: relative; z-index: 100; overflow: hidden; }
+.sidebar::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at top left, rgba(43,159,216,0.10) 0%, transparent 60%), radial-gradient(ellipse at bottom right, rgba(60,192,138,0.10) 0%, transparent 60%); pointer-events: none; }
+.sidebar-logo { padding: 1.75rem 1.5rem 1.25rem; border-bottom: 1px solid var(--border); }
+.logo-mark { display: flex; align-items: center; gap: 0.75rem; }
+.logo-icon-wrap { width: 42px; height: 42px; border-radius: 12px; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; box-shadow: 0 0 20px var(--glow); flex-shrink: 0; }
+.logo-text { font-family: var(--font-head); }
+.logo-text h3 { font-size: 1.1rem; font-weight: 800; color: var(--text); line-height: 1.1; }
+.logo-text span { font-size: 0.7rem; color: var(--text2); letter-spacing: 0.05em; }
+.sidebar-mod-card { margin: 1rem 1rem 0.5rem; background: rgba(255,255,255,0.65); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem; position: relative; }
+.mod-avatar-sm { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-family: var(--font-head); font-weight: 700; font-size: 0.9rem; color: #fff; flex-shrink: 0; border: 2px solid rgba(255,255,255,0.8); }
+.mod-card-info { flex: 1; min-width: 0; }
+.mod-card-name { font-size: 0.85rem; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mod-card-role { font-size: 0.7rem; color: var(--accent); }
+.mod-online-badge { width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 6px var(--success); }
+.sidebar-nav { flex: 1; overflow-y: auto; padding: 0.75rem 0; scrollbar-width: none; position: relative; }
+.sidebar-nav::-webkit-scrollbar { display: none; }
+.nav-section-label { font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text3); padding: 0.75rem 1.5rem 0.25rem; font-weight: 600; }
+.nav-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 1.25rem; margin: 1px 0.75rem; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition); color: var(--text2); position: relative; font-size: 0.875rem; font-weight: 500; }
+.nav-item:hover { background: var(--soft); color: var(--text); }
+.nav-item.active { background: var(--soft2); color: var(--accent); border: 1px solid var(--border-bright); }
+.nav-item.active .nav-icon { color: var(--accent); }
+.nav-icon { width: 18px; font-size: 0.9rem; flex-shrink: 0; text-align: center; }
+.nav-badge { margin-left: auto; background: var(--accent); color: var(--on-accent); font-size: 0.65rem; font-weight: 700; padding: 0.1rem 0.45rem; border-radius: 999px; min-width: 18px; text-align: center; }
+.nav-badge.red { background: var(--danger); }
+.sidebar-quick-stats { padding: 0.75rem 1rem; border-top: 1px solid var(--border); display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; position: relative; }
+.qs-item { background: rgba(255,255,255,0.65); border-radius: var(--radius-sm); padding: 0.5rem 0.75rem; text-align: center; }
+.qs-val { font-family: var(--font-head); font-size: 1.1rem; font-weight: 700; color: var(--accent); }
+.qs-label { font-size: 0.6rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; }
 
-        /* ===== SIDEBAR ===== */
-        .sidebar {
-            width: var(--sidebar-w);
-            background: var(--sidebar-bg);
-            display: flex;
-            flex-direction: column;
-            flex-shrink: 0;
-            border-right: 1px solid var(--border);
-            position: relative;
-            z-index: 100;
-            overflow: hidden;
-        }
-        .sidebar::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: 
-                radial-gradient(ellipse at top left, rgba(99,179,237,0.08) 0%, transparent 60%),
-                radial-gradient(ellipse at bottom right, rgba(79,209,197,0.06) 0%, transparent 60%);
-            pointer-events: none;
-        }
-        .sidebar-logo {
-            padding: 1.75rem 1.5rem 1.25rem;
-            border-bottom: 1px solid var(--border);
-        }
-        .logo-mark {
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        .logo-icon-wrap {
-            width: 42px; height: 42px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, var(--accent), var(--accent2));
-            display: flex; align-items: center; justify-content: center;
-            font-size: 1.2rem;
-            box-shadow: 0 0 20px var(--glow);
-            flex-shrink: 0;
-        }
-        .logo-text { font-family: var(--font-head); }
-        .logo-text h3 { font-size: 1.1rem; font-weight: 800; color: #fff; line-height: 1.1; }
-        .logo-text span { font-size: 0.7rem; color: var(--text2); letter-spacing: 0.05em; }
+/* MAIN */
+.main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+.topbar { display: flex; align-items: center; justify-content: space-between; padding: 0.85rem 2rem; background: rgba(234,246,251,0.88); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); flex-shrink: 0; gap: 1rem; flex-wrap: wrap; }
+.topbar-left { display: flex; align-items: center; gap: 1rem; }
+.page-breadcrumb { font-size: 0.75rem; color: var(--text3); }
+.page-title { font-family: var(--font-head); font-size: 1.4rem; font-weight: 800; color: var(--text); }
+.topbar-right { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.tb-btn { display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.5rem 0.9rem; border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(255,255,255,0.7); color: var(--text); font-size: 0.8rem; font-weight: 500; cursor: pointer; transition: var(--transition); font-family: var(--font-body); }
+.tb-btn:hover { background: #fff; border-color: var(--border-bright); }
+.tb-btn.danger { background: rgba(229,96,95,0.1); border-color: rgba(229,96,95,0.3); color: var(--danger); }
+.tb-btn.accent { background: var(--soft2); border-color: var(--border-bright); color: var(--accent); }
+.global-search { display: flex; align-items: center; gap: 0.5rem; background: rgba(255,255,255,0.7); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.4rem 0.9rem; min-width: 220px; transition: var(--transition); }
+.global-search:focus-within { border-color: var(--border-bright); background: #fff; }
+.global-search i { color: var(--text3); font-size: 0.8rem; }
+.global-search input { background: none; border: none; outline: none; color: var(--text); font-size: 0.85rem; font-family: var(--font-body); width: 100%; }
+.global-search input::placeholder { color: var(--text3); }
+.notif-bell { position: relative; width: 36px; height: 36px; border-radius: var(--radius-sm); background: rgba(255,255,255,0.7); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: var(--transition); color: var(--text2); }
+.notif-bell:hover { background: #fff; color: var(--text); }
+.notif-dot { position: absolute; top: 5px; right: 5px; width: 8px; height: 8px; background: var(--danger); border-radius: 50%; border: 2px solid #fff; }
+.theme-select { background: rgba(255,255,255,0.7); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.4rem 0.75rem; color: var(--text); font-size: 0.8rem; cursor: pointer; outline: none; font-family: var(--font-body); }
 
-        /* Sidebar mod card */
-        .sidebar-mod-card {
-            margin: 1rem 1rem 0.5rem;
-            background: rgba(255,255,255,0.04);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            padding: 0.75rem 1rem;
-            display: flex;
-            align-items: center;
-            gap: 0.75rem;
-        }
-        .mod-avatar-sm {
-            width: 36px; height: 36px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent), var(--purple));
-            display: flex; align-items: center; justify-content: center;
-            font-family: var(--font-head);
-            font-weight: 700; font-size: 0.9rem;
-            color: #fff; flex-shrink: 0;
-            border: 2px solid rgba(255,255,255,0.15);
-        }
-        .mod-card-info { flex: 1; min-width: 0; }
-        .mod-card-name { font-size: 0.85rem; font-weight: 600; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .mod-card-role { font-size: 0.7rem; color: var(--accent); }
-        .mod-online-badge { width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 6px var(--success); }
+.page-area { flex: 1; overflow-y: auto; padding: 1.75rem 2rem; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+.tab-content { display: none; animation: fadeIn 0.2s ease; }
+.tab-content.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* Sidebar nav */
-        .sidebar-nav { flex: 1; overflow-y: auto; padding: 0.75rem 0; scrollbar-width: none; }
-        .sidebar-nav::-webkit-scrollbar { display: none; }
-        .nav-section-label {
-            font-size: 0.65rem;
-            letter-spacing: 0.12em;
-            text-transform: uppercase;
-            color: var(--text3);
-            padding: 0.75rem 1.5rem 0.25rem;
-            font-weight: 600;
-        }
-        .nav-item {
-            display: flex; align-items: center;
-            gap: 0.75rem;
-            padding: 0.65rem 1.25rem;
-            margin: 1px 0.75rem;
-            border-radius: var(--radius-sm);
-            cursor: pointer;
-            transition: var(--transition);
-            color: var(--text2);
-            position: relative;
-            font-size: 0.875rem;
-            font-weight: 500;
-        }
-        .nav-item:hover { background: rgba(255,255,255,0.06); color: var(--text); }
-        .nav-item.active {
-            background: rgba(99,179,237,0.12);
-            color: var(--accent);
-            border: 1px solid rgba(99,179,237,0.2);
-        }
-        .nav-item.active .nav-icon { color: var(--accent); }
-        .nav-icon { width: 18px; font-size: 0.9rem; flex-shrink: 0; text-align: center; }
-        .nav-badge {
-            margin-left: auto;
-            background: var(--accent);
-            color: var(--bg);
-            font-size: 0.65rem;
-            font-weight: 700;
-            padding: 0.1rem 0.45rem;
-            border-radius: 999px;
-            min-width: 18px;
-            text-align: center;
-        }
-        .nav-badge.red { background: var(--danger); }
+.section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+.section-title { font-family: var(--font-head); font-size: 1.1rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 0.6rem; }
+.section-title i { color: var(--accent); font-size: 0.9rem; }
 
-        /* Sidebar quick stats */
-        .sidebar-quick-stats {
-            padding: 0.75rem 1rem;
-            border-top: 1px solid var(--border);
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 0.5rem;
-        }
-        .qs-item {
-            background: rgba(255,255,255,0.04);
-            border-radius: var(--radius-sm);
-            padding: 0.5rem 0.75rem;
-            text-align: center;
-        }
-        .qs-val { font-family: var(--font-head); font-size: 1.1rem; font-weight: 700; color: var(--accent); }
-        .qs-label { font-size: 0.6rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.stat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem 1.5rem; position: relative; overflow: hidden; transition: var(--transition); cursor: default; }
+.stat-card:hover { border-color: var(--border-bright); transform: translateY(-2px); box-shadow: var(--shadow); }
+.stat-card::before { content: ''; position: absolute; top: 0; right: 0; width: 80px; height: 80px; border-radius: 50%; background: radial-gradient(circle, var(--glow) 0%, transparent 70%); transform: translate(30%, -30%); }
+.stat-label { font-size: 0.72rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin-bottom: 0.5rem; }
+.stat-value { font-family: var(--font-head); font-size: 2rem; font-weight: 800; color: var(--text); line-height: 1; }
+.stat-sub { font-size: 0.72rem; color: var(--text2); margin-top: 0.35rem; }
+.stat-icon-bg { position: absolute; right: 1.25rem; top: 50%; transform: translateY(-50%); font-size: 2.5rem; color: var(--accent); opacity: 0.12; }
+.stat-trend { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.7rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 999px; }
+.stat-trend.up { background: rgba(47,174,109,0.15); color: var(--success); }
+.stat-trend.down { background: rgba(229,96,95,0.15); color: var(--danger); }
 
-        /* ===== MAIN CONTENT ===== */
-        .main-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-            min-width: 0;
-        }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: var(--transition); }
+.card:hover { border-color: var(--border-bright); }
+.card-header { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem; }
+.card-title { font-family: var(--font-head); font-size: 0.95rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 0.5rem; }
+.card-title i { color: var(--accent); }
+.card-body { padding: 1.25rem 1.5rem; }
 
-        /* Top bar */
-        .topbar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.85rem 2rem;
-            background: rgba(11,15,26,0.8);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--border);
-            flex-shrink: 0;
-            gap: 1rem;
-            flex-wrap: wrap;
-        }
-        [data-theme="light"] .topbar { background: rgba(240,244,248,0.9); }
-        .topbar-left { display: flex; align-items: center; gap: 1rem; }
-        .page-breadcrumb { font-size: 0.75rem; color: var(--text3); }
-        .page-title { font-family: var(--font-head); font-size: 1.4rem; font-weight: 800; color: var(--text); }
-        .topbar-right { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 500px; }
+thead th { padding: 0.75rem 1rem; text-align: left; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); font-weight: 700; border-bottom: 1px solid var(--border); white-space: nowrap; }
+tbody td { padding: 0.85rem 1rem; border-bottom: 1px solid var(--border); color: var(--text2); vertical-align: middle; }
+tbody tr:hover { background: var(--soft); }
+tbody tr:last-child td { border-bottom: none; }
 
-        /* Topbar controls */
-        .tb-btn {
-            display: inline-flex; align-items: center; gap: 0.45rem;
-            padding: 0.5rem 0.9rem;
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--border);
-            background: rgba(255,255,255,0.05);
-            color: var(--text);
-            font-size: 0.8rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: var(--transition);
-            font-family: var(--font-body);
-        }
-        .tb-btn:hover { background: rgba(255,255,255,0.1); border-color: var(--border-bright); }
-        .tb-btn.danger { background: rgba(252,129,129,0.1); border-color: rgba(252,129,129,0.3); color: var(--danger); }
-        .tb-btn.accent { background: rgba(99,179,237,0.1); border-color: rgba(99,179,237,0.3); color: var(--accent); }
+.badge { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.6rem; border-radius: 999px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+.badge-success { background: rgba(47,174,109,0.15); color: var(--success); }
+.badge-warning { background: rgba(224,150,47,0.15); color: var(--warning); }
+.badge-danger { background: rgba(229,96,95,0.15); color: var(--danger); }
+.badge-info { background: rgba(43,159,216,0.15); color: var(--accent); }
+.badge-purple { background: rgba(138,123,224,0.15); color: var(--purple); }
+.badge-muted { background: rgba(30,90,120,0.08); color: var(--text3); }
 
-        /* Search bar in topbar */
-        .global-search {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            padding: 0.4rem 0.9rem;
-            min-width: 220px;
-            transition: var(--transition);
-        }
-        .global-search:focus-within { border-color: var(--border-bright); background: rgba(99,179,237,0.05); }
-        .global-search i { color: var(--text3); font-size: 0.8rem; }
-        .global-search input { background: none; border: none; outline: none; color: var(--text); font-size: 0.85rem; font-family: var(--font-body); width: 100%; }
-        .global-search input::placeholder { color: var(--text3); }
+.btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.5rem 1.1rem; border-radius: var(--radius-sm); font-size: 0.82rem; font-weight: 600; cursor: pointer; border: none; transition: var(--transition); font-family: var(--font-body); white-space: nowrap; }
+.btn-sm { padding: 0.3rem 0.7rem; font-size: 0.75rem; }
+.btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: var(--on-accent); }
+.btn-primary:hover { filter: brightness(1.07); transform: translateY(-1px); }
+.btn-secondary { background: rgba(255,255,255,0.8); color: var(--text); border: 1px solid var(--border); }
+.btn-secondary:hover { background: #fff; border-color: var(--border-bright); }
+.btn-danger { background: rgba(229,96,95,0.12); color: var(--danger); border: 1px solid rgba(229,96,95,0.3); }
+.btn-danger:hover { background: rgba(229,96,95,0.22); }
+.btn-warning { background: rgba(224,150,47,0.13); color: var(--warning); border: 1px solid rgba(224,150,47,0.3); }
+.btn-warning:hover { background: rgba(224,150,47,0.24); }
+.btn-success { background: rgba(47,174,109,0.14); color: var(--success); border: 1px solid rgba(47,174,109,0.3); }
+.btn-icon { background: rgba(255,255,255,0.8); color: var(--text2); border: 1px solid var(--border); padding: 0.35rem 0.7rem; }
+.btn-icon:hover { background: #fff; color: var(--text); }
 
-        /* Notification bell */
-        .notif-bell {
-            position: relative;
-            width: 36px; height: 36px;
-            border-radius: var(--radius-sm);
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border);
-            display: flex; align-items: center; justify-content: center;
-            cursor: pointer;
-            transition: var(--transition);
-            color: var(--text2);
-        }
-        .notif-bell:hover { background: rgba(255,255,255,0.1); color: var(--text); }
-        .notif-dot {
-            position: absolute; top: 5px; right: 5px;
-            width: 8px; height: 8px;
-            background: var(--danger);
-            border-radius: 50%;
-            border: 2px solid var(--sidebar-bg);
-        }
+input[type="text"], input[type="email"], input[type="date"], input[type="url"], select, textarea { background: #fff; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 0.55rem 0.9rem; color: var(--text); font-size: 0.85rem; font-family: var(--font-body); outline: none; transition: var(--transition); width: 100%; }
+input:focus, select:focus, textarea:focus { border-color: var(--border-bright); box-shadow: 0 0 0 3px var(--glow); }
+select { cursor: pointer; }
+textarea { resize: vertical; min-height: 90px; }
 
-        /* Theme selector */
-        .theme-select {
-            background: rgba(255,255,255,0.05);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            padding: 0.4rem 0.75rem;
-            color: var(--text);
-            font-size: 0.8rem;
-            cursor: pointer;
-            outline: none;
-            font-family: var(--font-body);
-        }
+.search-row { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; }
+.search-row .search-field, .search-field { flex: 1; min-width: 180px; position: relative; }
+.search-field i { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 0.8rem; pointer-events: none; }
+.search-field input { padding-left: 2.2rem; }
 
-        /* ===== PAGE AREA ===== */
-        .page-area { flex: 1; overflow-y: auto; padding: 1.75rem 2rem; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+.pagination { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+.pagination button { min-width: 30px; height: 30px; border: 1px solid var(--border); background: var(--card); border-radius: var(--radius-sm); color: var(--text2); font-size: 0.8rem; cursor: pointer; transition: var(--transition); font-family: var(--font-body); }
+.pagination button:hover { background: var(--soft2); color: var(--accent); border-color: var(--border-bright); }
+.pagination button.active { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 
-        /* ===== TAB CONTENT ===== */
-        .tab-content { display: none; animation: fadeIn 0.2s ease; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(18,53,74,0.45); backdrop-filter: blur(6px); z-index: 9999; align-items: center; justify-content: center; }
+.modal-overlay.open { display: flex; }
+.modal-box { background: var(--bg2); border: 1px solid var(--border-bright); border-radius: var(--radius); padding: 2rem; max-width: 560px; width: 92%; max-height: 88vh; overflow-y: auto; box-shadow: 0 24px 80px rgba(18,53,74,0.3); animation: modalIn 0.25s cubic-bezier(0.4,0,0.2,1); }
+@keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+.modal-title { font-family: var(--font-head); font-size: 1.1rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+.modal-title i { color: var(--accent); }
+.form-group { margin-bottom: 1rem; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.form-label { display: block; font-size: 0.78rem; color: var(--text2); margin-bottom: 0.4rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+.modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; }
+.check-row { display: flex; align-items: center; gap: 0.5rem; font-size: 0.82rem; color: var(--text2); }
 
-        /* ===== SECTION HEADER ===== */
-        .section-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 1.5rem;
-            flex-wrap: wrap;
-            gap: 1rem;
-        }
-        .section-title { font-family: var(--font-head); font-size: 1.1rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 0.6rem; }
-        .section-title i { color: var(--accent); font-size: 0.9rem; }
+.toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; z-index: 99999; }
+.toast { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 1.25rem; background: var(--bg2); border: 1px solid var(--border-bright); border-radius: var(--radius-sm); font-size: 0.85rem; color: var(--text); box-shadow: 0 8px 24px rgba(18,53,74,0.18); animation: toastIn 0.3s ease; min-width: 240px; max-width: 340px; }
+@keyframes toastIn { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
+.toast.toast-success { border-color: rgba(47,174,109,0.5); }
+.toast.toast-error { border-color: rgba(229,96,95,0.5); }
+.toast.toast-warning { border-color: rgba(224,150,47,0.5); }
+.toast i { flex-shrink: 0; }
+.toast-success i { color: var(--success); } .toast-error i { color: var(--danger); } .toast-warning i { color: var(--warning); } .toast-info i { color: var(--accent); }
 
-        /* ===== CARDS & GRIDS ===== */
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
-        .stat-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 1.25rem 1.5rem;
-            position: relative;
-            overflow: hidden;
-            transition: var(--transition);
-            cursor: default;
-        }
-        .stat-card:hover { border-color: var(--border-bright); transform: translateY(-2px); box-shadow: var(--shadow); }
-        .stat-card::before {
-            content: '';
-            position: absolute;
-            top: 0; right: 0;
-            width: 80px; height: 80px;
-            border-radius: 50%;
-            background: radial-gradient(circle, var(--glow) 0%, transparent 70%);
-            transform: translate(30%, -30%);
-        }
-        .stat-label { font-size: 0.72rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin-bottom: 0.5rem; }
-        .stat-value { font-family: var(--font-head); font-size: 2rem; font-weight: 800; color: var(--text); line-height: 1; }
-        .stat-sub { font-size: 0.72rem; color: var(--text2); margin-top: 0.35rem; }
-        .stat-icon-bg {
-            position: absolute;
-            right: 1.25rem; top: 50%;
-            transform: translateY(-50%);
-            font-size: 2.5rem;
-            color: var(--accent);
-            opacity: 0.1;
-        }
-        .stat-trend { display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.7rem; font-weight: 600; padding: 0.15rem 0.5rem; border-radius: 999px; }
-        .stat-trend.up { background: rgba(104,211,145,0.15); color: var(--success); }
-        .stat-trend.down { background: rgba(252,129,129,0.15); color: var(--danger); }
+.charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem; }
+.chart-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; height: 320px; }
+.chart-card canvas { width: 100% !important; height: 100% !important; }
+.sparkline-row { display: flex; gap: 0.25rem; align-items: flex-end; height: 36px; }
+.spark-bar { flex: 1; border-radius: 3px 3px 0 0; background: var(--accent); opacity: 0.4; transition: var(--transition); min-height: 4px; }
+.sparkline-row:hover .spark-bar { opacity: 0.7; }
 
-        /* ===== CARD ===== */
-        .card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            overflow: hidden;
-            transition: var(--transition);
-        }
-        .card:hover { border-color: rgba(99,179,237,0.15); }
-        .card-header {
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 0.75rem;
-        }
-        .card-title { font-family: var(--font-head); font-size: 0.95rem; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 0.5rem; }
-        .card-title i { color: var(--accent); }
-        .card-body { padding: 1.25rem 1.5rem; }
+.widgets-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem; }
+.widget-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.widget-card .card-header { background: var(--soft); }
 
-        /* ===== TABLE ===== */
-        .table-wrap { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; min-width: 500px; }
-        thead th {
-            padding: 0.75rem 1rem;
-            text-align: left;
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.08em;
-            color: var(--text3);
-            font-weight: 700;
-            border-bottom: 1px solid var(--border);
-            white-space: nowrap;
-        }
-        tbody td {
-            padding: 0.85rem 1rem;
-            border-bottom: 1px solid var(--border);
-            color: var(--text2);
-            vertical-align: middle;
-        }
-        tbody tr:hover { background: rgba(99,179,237,0.04); }
-        tbody tr:last-child td { border-bottom: none; }
+.activity-item { display: flex; align-items: flex-start; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+.activity-item:last-child { border-bottom: none; }
+.activity-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-top: 0.3rem; flex-shrink: 0; }
+.activity-text { font-size: 0.82rem; color: var(--text2); line-height: 1.4; }
+.activity-time { font-size: 0.7rem; color: var(--text3); margin-top: 0.15rem; }
 
-        /* ===== BADGES ===== */
-        .badge {
-            display: inline-flex; align-items: center; gap: 0.3rem;
-            padding: 0.2rem 0.6rem;
-            border-radius: 999px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.04em;
-        }
-        .badge-success { background: rgba(104,211,145,0.15); color: var(--success); }
-        .badge-warning { background: rgba(246,173,85,0.15); color: var(--warning); }
-        .badge-danger { background: rgba(252,129,129,0.15); color: var(--danger); }
-        .badge-info { background: rgba(99,179,237,0.15); color: var(--accent); }
-        .badge-purple { background: rgba(183,148,244,0.15); color: var(--purple); }
-        .badge-muted { background: rgba(255,255,255,0.06); color: var(--text3); }
+.user-av { width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, var(--accent), var(--accent2)); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: #fff; flex-shrink: 0; }
 
-        /* ===== BUTTONS ===== */
-        .btn {
-            display: inline-flex; align-items: center; gap: 0.4rem;
-            padding: 0.5rem 1.1rem;
-            border-radius: var(--radius-sm);
-            font-size: 0.82rem;
-            font-weight: 600;
-            cursor: pointer;
-            border: none;
-            transition: var(--transition);
-            font-family: var(--font-body);
-            white-space: nowrap;
-        }
-        .btn-sm { padding: 0.3rem 0.7rem; font-size: 0.75rem; }
-        .btn-primary { background: var(--accent); color: var(--bg); }
-        .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
-        .btn-secondary { background: rgba(255,255,255,0.07); color: var(--text); border: 1px solid var(--border); }
-        .btn-secondary:hover { background: rgba(255,255,255,0.12); }
-        .btn-danger { background: rgba(252,129,129,0.15); color: var(--danger); border: 1px solid rgba(252,129,129,0.3); }
-        .btn-danger:hover { background: rgba(252,129,129,0.25); }
-        .btn-warning { background: rgba(246,173,85,0.15); color: var(--warning); border: 1px solid rgba(246,173,85,0.3); }
-        .btn-warning:hover { background: rgba(246,173,85,0.25); }
-        .btn-success { background: rgba(104,211,145,0.15); color: var(--success); border: 1px solid rgba(104,211,145,0.3); }
-        .btn-icon { background: rgba(255,255,255,0.06); color: var(--text2); border: 1px solid var(--border); padding: 0.35rem 0.7rem; }
-        .btn-icon:hover { background: rgba(255,255,255,0.12); color: var(--text); }
+.ticket-list-wrap { max-height: 480px; overflow-y: auto; }
+.ticket-item { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; gap: 1rem; align-items: flex-start; cursor: pointer; transition: var(--transition); }
+.ticket-item:hover { background: var(--soft); }
+.ticket-item.selected { background: var(--soft2); border-left: 3px solid var(--accent); }
+.ticket-content { flex: 1; min-width: 0; }
+.ticket-subject { font-weight: 600; font-size: 0.9rem; color: var(--text); margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.ticket-meta-row { font-size: 0.75rem; color: var(--text3); display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.ticket-preview { font-size: 0.78rem; color: var(--text2); margin-top: 0.2rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 500px; }
+.assign-badge { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.25rem 0.65rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; background: rgba(60,192,138,0.14); border: 1px solid rgba(60,192,138,0.3); color: var(--success); }
+.assign-badge i { font-size: 0.65rem; }
 
-        /* ===== INPUTS ===== */
-        input[type="text"], input[type="email"], input[type="date"], select, textarea {
-            background: var(--bg2);
-            border: 1px solid var(--border);
-            border-radius: var(--radius-sm);
-            padding: 0.55rem 0.9rem;
-            color: var(--text);
-            font-size: 0.85rem;
-            font-family: var(--font-body);
-            outline: none;
-            transition: var(--transition);
-            width: 100%;
-        }
-        input:focus, select:focus, textarea:focus { border-color: var(--border-bright); box-shadow: 0 0 0 3px var(--glow); }
-        select { cursor: pointer; }
-        textarea { resize: vertical; min-height: 90px; }
+.reply-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-top: 1rem; }
+.convo-wrap { max-height: 380px; overflow-y: auto; padding: 0.5rem; background: var(--soft); border-radius: var(--radius-sm); margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
+.msg-bubble { max-width: 78%; }
+.msg-bubble.user { align-self: flex-end; }
+.msg-bubble.mod { align-self: flex-start; }
+.msg-inner { padding: 0.65rem 1rem; border-radius: 16px; font-size: 0.85rem; line-height: 1.5; }
+.msg-bubble.user .msg-inner { background: var(--accent); color: var(--on-accent); border-bottom-right-radius: 4px; }
+.msg-bubble.mod .msg-inner { background: var(--bg2); color: var(--text); border-bottom-left-radius: 4px; border: 1px solid var(--border); }
+.msg-meta-row { font-size: 0.66rem; color: var(--text3); margin-top: 0.2rem; padding: 0 0.25rem; }
+.assign-banner { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 1rem; background: rgba(60,192,138,0.12); border: 1px solid rgba(60,192,138,0.3); border-radius: var(--radius-sm); margin-bottom: 1rem; font-size: 0.82rem; color: var(--success); }
+.assign-banner i { flex-shrink: 0; }
+.assign-banner strong { color: var(--text); }
 
-        /* ===== SEARCH ROW ===== */
-        .search-row {
-            display: flex;
-            gap: 0.75rem;
-            flex-wrap: wrap;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-        .search-row .search-field { flex: 1; min-width: 180px; position: relative; }
-        .search-row .search-field i { position: absolute; left: 0.75rem; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 0.8rem; pointer-events: none; }
-        .search-row .search-field input { padding-left: 2.2rem; }
+/* ===== ANNOUNCEMENTS (enhanced) ===== */
+.cat-tabs { display: flex; gap: 0.6rem; flex-wrap: wrap; margin-bottom: 0.9rem; }
+.cat-tab { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.6rem 1.1rem; border-radius: 999px; background: var(--card); border: 1px solid var(--border); color: var(--text2); font-size: 0.84rem; font-weight: 600; cursor: pointer; transition: var(--transition); font-family: var(--font-body); }
+.cat-tab:hover { border-color: var(--border-bright); color: var(--text); }
+.cat-tab.active { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; border-color: transparent; box-shadow: 0 4px 14px var(--glow); }
+.cat-tab .cnt { font-size: 0.68rem; padding: 0.05rem 0.45rem; border-radius: 999px; background: var(--soft2); color: var(--accent); font-weight: 700; }
+.cat-tab.active .cnt { background: rgba(255,255,255,0.3); color: #fff; }
+.sub-chips { display: flex; gap: 0.45rem; flex-wrap: wrap; margin-bottom: 1.1rem; min-height: 4px; }
+.chip { padding: 0.3rem 0.8rem; border-radius: 999px; border: 1px solid var(--border); background: rgba(255,255,255,0.7); color: var(--text2); font-size: 0.76rem; font-weight: 600; cursor: pointer; transition: var(--transition); font-family: var(--font-body); }
+.chip:hover { border-color: var(--border-bright); }
+.chip.active { background: rgba(60,192,138,0.18); border-color: rgba(60,192,138,0.5); color: var(--success); }
+.ann-card { background: var(--card); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-bottom: 0.75rem; transition: var(--transition); }
+.ann-card.cat-internship { border-left-color: var(--accent); }
+.ann-card.cat-workshop { border-left-color: var(--purple); }
+.ann-card.cat-job { border-left-color: var(--accent2); }
+.ann-card:hover { border-color: var(--border-bright); box-shadow: var(--shadow); }
+.ann-tags { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+.ann-title { font-family: var(--font-head); font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 0.4rem; }
+.ann-body { font-size: 0.85rem; color: var(--text2); line-height: 1.6; }
+.ann-meta { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 0.7rem; font-size: 0.78rem; color: var(--text2); }
+.ann-meta span i { color: var(--accent); margin-right: 0.3rem; }
+.ann-meta a { color: var(--accent); font-weight: 600; text-decoration: none; }
+.ann-meta a:hover { text-decoration: underline; }
+.ann-footer { display: flex; align-items: center; gap: 1rem; margin-top: 0.75rem; font-size: 0.72rem; color: var(--text3); flex-wrap: wrap; }
 
-        /* ===== PAGINATION ===== */
-        .pagination { display: flex; gap: 0.35rem; flex-wrap: wrap; }
-        .pagination button {
-            min-width: 30px; height: 30px;
-            border: 1px solid var(--border);
-            background: var(--card);
-            border-radius: var(--radius-sm);
-            color: var(--text2);
-            font-size: 0.8rem;
-            cursor: pointer;
-            transition: var(--transition);
-            font-family: var(--font-body);
-        }
-        .pagination button:hover { background: rgba(99,179,237,0.1); color: var(--accent); border-color: var(--border-bright); }
-        .pagination button.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+/* ===== STAFF CHAT ===== */
+.staff-layout { display: grid; grid-template-columns: 1fr 260px; gap: 1.25rem; height: calc(100vh - 220px); min-height: 480px; }
+.chat-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); display: flex; flex-direction: column; overflow: hidden; position: relative; }
+.chat-header { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
+.chat-title { font-family: var(--font-head); font-weight: 700; font-size: 0.95rem; }
+.chat-subtitle { font-size: 0.72rem; color: var(--text3); }
+.chat-status-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 0.35rem; background: var(--text3); }
+.chat-status-dot.on { background: var(--success); box-shadow: 0 0 6px var(--success); }
+.messages-area { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+.chat-msg { display: flex; flex-direction: column; max-width: 75%; }
+.chat-msg.own { align-self: flex-end; align-items: flex-end; }
+.chat-msg.other { align-self: flex-start; align-items: flex-start; }
+.chat-msg.fresh .chat-bubble { animation: pop 0.35s ease; }
+@keyframes pop { from { transform: scale(0.92); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+.chat-bubble { padding: 0.55rem 1rem; border-radius: 18px; font-size: 0.85rem; line-height: 1.5; word-break: break-word; }
+.own .chat-bubble { background: var(--accent); color: var(--on-accent); border-bottom-right-radius: 4px; }
+.other .chat-bubble { background: var(--bg3); color: var(--text); border-bottom-left-radius: 4px; border: 1px solid var(--border); }
+.chat-sender { font-size: 0.7rem; font-weight: 700; color: var(--accent2); margin-bottom: 0.15rem; padding-left: 0.4rem; }
+.chat-msg-meta { font-size: 0.66rem; color: var(--text3); margin-top: 0.2rem; }
+.day-sep { align-self: center; font-size: 0.68rem; color: var(--text3); background: var(--soft); padding: 0.15rem 0.8rem; border-radius: 999px; }
+.typing-line { height: 18px; padding: 0 1.25rem; font-size: 0.72rem; color: var(--accent2); font-style: italic; flex-shrink: 0; }
+.jump-pill { position: absolute; bottom: 74px; left: 50%; transform: translateX(-50%); background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; padding: 0.4rem 1rem; border-radius: 999px; font-size: 0.76rem; font-weight: 700; cursor: pointer; box-shadow: var(--shadow); display: none; border: none; font-family: var(--font-body); }
+.jump-pill.show { display: inline-flex; gap: 0.4rem; align-items: center; }
+.chat-input-row { padding: 0.85rem 1rem; border-top: 1px solid var(--border); display: flex; gap: 0.75rem; flex-shrink: 0; align-items: flex-end; }
+.chat-input-row input { border-radius: 999px; padding: 0.55rem 1rem; }
+.chat-input-row .btn { border-radius: 999px; padding: 0.55rem 1.1rem; flex-shrink: 0; }
+.members-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow-y: auto; }
+.members-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); font-family: var(--font-head); font-size: 0.9rem; font-weight: 700; }
+.member-item { padding: 0.65rem 1.25rem; display: flex; align-items: center; gap: 0.6rem; border-bottom: 1px solid var(--border); font-size: 0.83rem; }
+.member-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 
-        /* ===== MODAL ===== */
-        .modal-overlay {
-            display: none;
-            position: fixed; inset: 0;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(6px);
-            z-index: 9999;
-            align-items: center;
-            justify-content: center;
-        }
-        .modal-overlay.open { display: flex; }
-        .modal-box {
-            background: var(--bg2);
-            border: 1px solid var(--border-bright);
-            border-radius: var(--radius);
-            padding: 2rem;
-            max-width: 520px;
-            width: 92%;
-            max-height: 85vh;
-            overflow-y: auto;
-            box-shadow: 0 24px 80px rgba(0,0,0,0.6);
-            animation: modalIn 0.25s cubic-bezier(0.4,0,0.2,1);
-        }
-        @keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-        .modal-title { font-family: var(--font-head); font-size: 1.1rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
-        .modal-title i { color: var(--accent); }
-        .form-group { margin-bottom: 1rem; }
-        .form-label { display: block; font-size: 0.78rem; color: var(--text2); margin-bottom: 0.4rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-        .modal-actions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; }
+.leaderboard-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0; border-bottom: 1px solid var(--border); }
+.rank-badge { width: 22px; height: 22px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.68rem; font-weight: 800; flex-shrink: 0; }
+.rank-1 { background: rgba(240,178,74,0.25); color: var(--warning); }
+.rank-2 { background: rgba(148,163,184,0.25); color: #64748b; }
+.rank-3 { background: rgba(205,127,50,0.2); color: #b06a28; }
+.rank-other { background: var(--soft); color: var(--text3); }
+.lb-name { flex: 1; font-size: 0.85rem; font-weight: 600; }
+.lb-score { font-family: var(--font-head); font-size: 0.9rem; font-weight: 700; color: var(--accent); }
+.lb-bar { height: 4px; border-radius: 2px; background: var(--soft2); margin-top: 0.2rem; overflow: hidden; }
+.lb-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; transition: width 0.5s ease; }
 
-        /* ===== TOAST ===== */
-        .toast-container { position: fixed; bottom: 1.5rem; right: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; z-index: 99999; }
-        .toast {
-            display: flex; align-items: center; gap: 0.75rem;
-            padding: 0.75rem 1.25rem;
-            background: var(--bg2);
-            border: 1px solid var(--border-bright);
-            border-radius: var(--radius-sm);
-            font-size: 0.85rem;
-            color: var(--text);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-            animation: toastIn 0.3s ease;
-            min-width: 240px;
-            max-width: 340px;
-        }
-        @keyframes toastIn { from { opacity: 0; transform: translateX(100%); } to { opacity: 1; transform: translateX(0); } }
-        .toast.toast-success { border-color: rgba(104,211,145,0.4); }
-        .toast.toast-error { border-color: rgba(252,129,129,0.4); }
-        .toast.toast-warning { border-color: rgba(246,173,85,0.4); }
-        .toast i { flex-shrink: 0; }
-        .toast-success i { color: var(--success); }
-        .toast-error i { color: var(--danger); }
-        .toast-warning i { color: var(--warning); }
-        .toast-info i { color: var(--accent); }
+.filters-bar { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem; padding: 1rem; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); align-items: flex-end; }
+.fg { display: flex; flex-direction: column; gap: 0.3rem; min-width: 130px; }
+.fg label { font-size: 0.68rem; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; }
+.fg input, .fg select { padding: 0.4rem 0.7rem; font-size: 0.82rem; }
 
-        /* ===== CHARTS ===== */
-        .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.25rem; margin-bottom: 1.5rem; }
-        .chart-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; height: 320px; }
-        .chart-card canvas { width: 100% !important; height: 100% !important; }
+.quick-actions-bar { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.quick-action-btn { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; padding: 0.85rem 1.1rem; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); cursor: pointer; transition: var(--transition); min-width: 90px; }
+.quick-action-btn:hover { border-color: var(--border-bright); background: var(--card-hover); transform: translateY(-2px); box-shadow: var(--shadow); }
+.quick-action-btn i { font-size: 1.3rem; color: var(--accent); }
+.quick-action-btn span { font-size: 0.7rem; color: var(--text2); font-weight: 600; text-align: center; }
 
-        /* ===== MINI CHART ===== */
-        .sparkline-row { display: flex; gap: 0.25rem; align-items: flex-end; height: 36px; }
-        .spark-bar { flex: 1; border-radius: 3px 3px 0 0; background: var(--accent); opacity: 0.4; transition: var(--transition); min-height: 4px; }
-        .sparkline-row:hover .spark-bar { opacity: 0.7; }
+.ip-entry { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0; border-bottom: 1px solid var(--border); font-size: 0.84rem; }
+.ip-addr { font-family: monospace; color: var(--accent); flex: 1; }
+.ip-reason { color: var(--text3); font-size: 0.78rem; flex: 1; }
 
-        /* ===== DASHBOARD WIDGETS ===== */
-        .widgets-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.25rem; margin-bottom: 1.5rem; }
-        .widget-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-        .widget-card .card-header { background: rgba(99,179,237,0.04); }
+.notes-item { padding: 0.75rem; background: rgba(240,178,74,0.1); border: 1px solid rgba(240,178,74,0.3); border-radius: var(--radius-sm); margin-bottom: 0.5rem; }
+.notes-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem; }
+.notes-item-user { font-size: 0.8rem; font-weight: 600; color: var(--warning); }
+.notes-item-time { font-size: 0.7rem; color: var(--text3); }
+.notes-item-text { font-size: 0.82rem; color: var(--text2); }
 
-        /* ===== ACTIVITY ITEMS ===== */
-        .activity-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 0.75rem;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid var(--border);
-        }
-        .activity-item:last-child { border-bottom: none; }
-        .activity-dot {
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            background: var(--accent);
-            margin-top: 0.3rem;
-            flex-shrink: 0;
-        }
-        .activity-text { font-size: 0.82rem; color: var(--text2); line-height: 1.4; }
-        .activity-time { font-size: 0.7rem; color: var(--text3); margin-top: 0.15rem; }
+.health-metric { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
+.health-metric:last-child { border-bottom: none; }
+.health-label { flex: 1; font-size: 0.85rem; color: var(--text2); }
+.health-bar-wrap { width: 120px; height: 6px; background: rgba(30,90,120,0.1); border-radius: 3px; overflow: hidden; }
+.health-bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+.health-val { font-size: 0.8rem; font-weight: 700; color: var(--text); min-width: 40px; text-align: right; }
 
-        /* ===== USER TABLE AVATAR ===== */
-        .user-av {
-            width: 30px; height: 30px;
-            border-radius: 50%;
-            background: linear-gradient(135deg, var(--accent), var(--accent2));
-            display: flex; align-items: center; justify-content: center;
-            font-size: 0.75rem; font-weight: 700; color: var(--bg);
-        }
+.bulk-bar { display: flex; gap: 0.75rem; align-items: center; padding: 0.65rem 1rem; background: var(--soft2); border: 1px solid var(--border-bright); border-radius: var(--radius-sm); margin-bottom: 0.75rem; flex-wrap: wrap; }
+.bulk-bar-count { font-size: 0.8rem; font-weight: 600; color: var(--accent); }
 
-        /* ===== SUPPORT TICKETS ===== */
-        .ticket-list-wrap { max-height: 480px; overflow-y: auto; }
-        .ticket-item {
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            gap: 1rem;
-            align-items: flex-start;
-            cursor: pointer;
-            transition: var(--transition);
-        }
-        .ticket-item:hover { background: rgba(99,179,237,0.04); }
-        .ticket-item.selected { background: rgba(99,179,237,0.07); border-left: 3px solid var(--accent); }
-        .ticket-content { flex: 1; min-width: 0; }
-        .ticket-subject { font-weight: 600; font-size: 0.9rem; color: var(--text); margin-bottom: 0.25rem; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
-        .ticket-meta-row { font-size: 0.75rem; color: var(--text3); display: flex; gap: 0.75rem; flex-wrap: wrap; }
-        .ticket-preview { font-size: 0.78rem; color: var(--text2); margin-top: 0.2rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 500px; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(30,90,120,0.2); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-bright); }
 
-        /* Assign badge */
-        .assign-badge {
-            display: inline-flex; align-items: center; gap: 0.35rem;
-            padding: 0.25rem 0.65rem;
-            border-radius: 999px;
-            font-size: 0.7rem;
-            font-weight: 600;
-            background: rgba(79,209,197,0.12);
-            border: 1px solid rgba(79,209,197,0.25);
-            color: var(--accent2);
-        }
-        .assign-badge i { font-size: 0.65rem; }
+.empty-state { padding: 3rem; text-align: center; color: var(--text3); font-size: 0.88rem; }
+.empty-state i { font-size: 2.5rem; display: block; margin-bottom: 0.75rem; opacity: 0.4; }
+hr { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+.status-online { background: var(--success); box-shadow: 0 0 6px var(--success); }
+.status-offline { background: var(--text3); }
+.status-busy { background: var(--warning); box-shadow: 0 0 6px var(--warning); }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+.three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
 
-        /* Reply panel */
-        .reply-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-top: 1rem; }
-        .convo-wrap { max-height: 380px; overflow-y: auto; padding: 0.5rem; background: rgba(0,0,0,0.2); border-radius: var(--radius-sm); margin-bottom: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
-        .msg-bubble { max-width: 78%; }
-        .msg-bubble.user { align-self: flex-end; }
-        .msg-bubble.mod { align-self: flex-start; }
-        .msg-inner { padding: 0.65rem 1rem; border-radius: 16px; font-size: 0.85rem; line-height: 1.5; }
-        .msg-bubble.user .msg-inner { background: var(--accent); color: var(--bg); border-bottom-right-radius: 4px; }
-        .msg-bubble.mod .msg-inner { background: var(--bg3); color: var(--text); border-bottom-left-radius: 4px; border: 1px solid var(--border); }
-        .msg-meta-row { font-size: 0.66rem; color: var(--text3); margin-top: 0.2rem; padding: 0 0.25rem; }
+@media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } .two-col { grid-template-columns: 1fr; } .staff-layout { grid-template-columns: 1fr; } }
+@media (max-width: 640px) {
+    .sidebar { width: 60px; }
+    .sidebar .logo-text, .sidebar .sidebar-mod-card, .sidebar-quick-stats, .nav-section-label, .nav-item span, .nav-badge { display: none; }
+    .nav-item { justify-content: center; padding: 0.75rem; }
+    .nav-icon { width: auto; }
+    .page-area { padding: 1rem; }
+    .topbar { padding: 0.75rem 1rem; }
+    .form-row { grid-template-columns: 1fr; }
+}
+input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-color: var(--accent); }
+.fg select, .fg input { width: auto; min-width: 130px; }
 
-        /* Auto-assign banner */
-        .assign-banner {
-            display: flex; align-items: center; gap: 0.75rem;
-            padding: 0.65rem 1rem;
-            background: rgba(79,209,197,0.08);
-            border: 1px solid rgba(79,209,197,0.2);
-            border-radius: var(--radius-sm);
-            margin-bottom: 1rem;
-            font-size: 0.82rem;
-            color: var(--accent2);
-        }
-        .assign-banner i { flex-shrink: 0; }
-        .assign-banner strong { color: var(--text); }
+.notif-dropdown { position: absolute; top: 100%; right: 0; margin-top: 0.5rem; background: var(--bg2); border: 1px solid var(--border-bright); border-radius: var(--radius); width: 320px; box-shadow: var(--shadow); z-index: 9998; overflow: hidden; }
+.notif-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); font-family: var(--font-head); font-size: 0.9rem; font-weight: 700; display: flex; align-items: center; justify-content: space-between; }
+.notif-item { padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; gap: 0.75rem; align-items: flex-start; cursor: pointer; transition: var(--transition); }
+.notif-item:hover { background: var(--soft); }
+.notif-item.unread { border-left: 3px solid var(--accent); }
+.notif-icon { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; }
+.notif-text { font-size: 0.8rem; color: var(--text2); line-height: 1.4; flex: 1; }
+.notif-time { font-size: 0.68rem; color: var(--text3); margin-top: 0.2rem; }
+.notif-bell { position: relative; }
+.notif-panel { display: none; }
+.notif-bell:hover .notif-panel { display: block; }
 
-        /* ===== ANNOUNCEMENTS ===== */
-        .ann-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-left: 3px solid var(--accent);
-            border-radius: var(--radius);
-            padding: 1.25rem 1.5rem;
-            margin-bottom: 0.75rem;
-            transition: var(--transition);
-        }
-        .ann-card:hover { border-color: var(--border-bright); border-left-color: var(--accent); }
-        .ann-title { font-family: var(--font-head); font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 0.4rem; }
-        .ann-body { font-size: 0.85rem; color: var(--text2); line-height: 1.6; }
-        .ann-footer { display: flex; align-items: center; gap: 1rem; margin-top: 0.75rem; font-size: 0.72rem; color: var(--text3); flex-wrap: wrap; }
+.tool-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem 1.25rem; display: flex; align-items: center; gap: 1rem; margin-bottom: 0.75rem; transition: var(--transition); }
+.tool-card:hover { border-color: var(--border-bright); }
+.tool-thumb { width: 48px; height: 48px; border-radius: var(--radius-sm); background: var(--bg3); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; }
+.tool-info { flex: 1; min-width: 0; }
+.tool-name { font-weight: 700; font-size: 0.9rem; }
+.tool-meta { font-size: 0.75rem; color: var(--text3); margin-top: 0.15rem; }
+.tool-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
 
-        /* ===== STAFF CHAT ===== */
-        .staff-layout { display: grid; grid-template-columns: 1fr 260px; gap: 1.25rem; height: calc(100vh - 220px); min-height: 480px; }
-        .chat-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); display: flex; flex-direction: column; overflow: hidden; }
-        .chat-header { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
-        .chat-title { font-family: var(--font-head); font-weight: 700; font-size: 0.95rem; }
-        .chat-subtitle { font-size: 0.72rem; color: var(--text3); }
-        .messages-area { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
-        .chat-msg { display: flex; flex-direction: column; max-width: 75%; }
-        .chat-msg.own { align-self: flex-end; align-items: flex-end; }
-        .chat-msg.other { align-self: flex-start; align-items: flex-start; }
-        .chat-bubble { padding: 0.55rem 1rem; border-radius: 18px; font-size: 0.85rem; line-height: 1.5; word-break: break-word; }
-        .own .chat-bubble { background: var(--accent); color: var(--bg); border-bottom-right-radius: 4px; }
-        .other .chat-bubble { background: var(--bg3); color: var(--text); border-bottom-left-radius: 4px; border: 1px solid var(--border); }
-        .chat-msg-meta { font-size: 0.66rem; color: var(--text3); margin-top: 0.2rem; }
-        .chat-input-row { padding: 0.85rem 1rem; border-top: 1px solid var(--border); display: flex; gap: 0.75rem; flex-shrink: 0; align-items: flex-end; }
-        .chat-input-row input { border-radius: 999px; padding: 0.55rem 1rem; }
-        .chat-input-row .btn { border-radius: 999px; padding: 0.55rem 1.1rem; flex-shrink: 0; }
-        .members-panel { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow-y: auto; }
-        .members-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); font-family: var(--font-head); font-size: 0.9rem; font-weight: 700; }
-        .member-item { padding: 0.65rem 1.25rem; display: flex; align-items: center; gap: 0.6rem; border-bottom: 1px solid var(--border); font-size: 0.83rem; }
-        .member-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-
-        /* ===== MOD STATS ===== */
-        .leaderboard-item {
-            display: flex; align-items: center; gap: 0.75rem;
-            padding: 0.65rem 0; border-bottom: 1px solid var(--border);
-        }
-        .rank-badge {
-            width: 22px; height: 22px;
-            border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 0.68rem; font-weight: 800;
-            flex-shrink: 0;
-        }
-        .rank-1 { background: rgba(246,173,85,0.2); color: var(--warning); }
-        .rank-2 { background: rgba(203,213,225,0.2); color: #94a3b8; }
-        .rank-3 { background: rgba(205,127,50,0.2); color: #cd7f32; }
-        .rank-other { background: rgba(255,255,255,0.05); color: var(--text3); }
-        .lb-name { flex: 1; font-size: 0.85rem; font-weight: 600; }
-        .lb-score { font-family: var(--font-head); font-size: 0.9rem; font-weight: 700; color: var(--accent); }
-        .lb-bar { height: 4px; border-radius: 2px; background: rgba(99,179,237,0.15); margin-top: 0.2rem; overflow: hidden; }
-        .lb-bar-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.5s ease; }
-
-        /* ===== ACTIVITY LOG FILTERS ===== */
-        .filters-bar { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem; padding: 1rem; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); align-items: flex-end; }
-        .fg { display: flex; flex-direction: column; gap: 0.3rem; min-width: 130px; }
-        .fg label { font-size: 0.68rem; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; }
-        .fg input, .fg select { padding: 0.4rem 0.7rem; font-size: 0.82rem; }
-
-        /* ===== NEW FEATURES ===== */
-        /* Quick Action Panel */
-        .quick-actions-bar { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
-        .quick-action-btn {
-            display: flex; flex-direction: column; align-items: center; gap: 0.4rem;
-            padding: 0.85rem 1.1rem;
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            cursor: pointer;
-            transition: var(--transition);
-            min-width: 90px;
-        }
-        .quick-action-btn:hover { border-color: var(--border-bright); background: var(--card-hover); transform: translateY(-2px); box-shadow: var(--shadow); }
-        .quick-action-btn i { font-size: 1.3rem; color: var(--accent); }
-        .quick-action-btn span { font-size: 0.7rem; color: var(--text2); font-weight: 600; text-align: center; }
-
-        /* IP Banning */
-        .ip-entry { display: flex; align-items: center; gap: 0.75rem; padding: 0.65rem 0; border-bottom: 1px solid var(--border); font-size: 0.84rem; }
-        .ip-addr { font-family: monospace; color: var(--accent); flex: 1; }
-        .ip-reason { color: var(--text3); font-size: 0.78rem; flex: 1; }
-
-        /* Notes panel */
-        .notes-item { padding: 0.75rem; background: rgba(246,173,85,0.06); border: 1px solid rgba(246,173,85,0.15); border-radius: var(--radius-sm); margin-bottom: 0.5rem; }
-        .notes-item-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.3rem; }
-        .notes-item-user { font-size: 0.8rem; font-weight: 600; color: var(--warning); }
-        .notes-item-time { font-size: 0.7rem; color: var(--text3); }
-        .notes-item-text { font-size: 0.82rem; color: var(--text2); }
-
-        /* Platform Health */
-        .health-metric { display: flex; align-items: center; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid var(--border); }
-        .health-metric:last-child { border-bottom: none; }
-        .health-label { flex: 1; font-size: 0.85rem; color: var(--text2); }
-        .health-bar-wrap { width: 120px; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
-        .health-bar-fill { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
-        .health-val { font-size: 0.8rem; font-weight: 700; color: var(--text); min-width: 40px; text-align: right; }
-
-        /* Bulk actions bar */
-        .bulk-bar { display: flex; gap: 0.75rem; align-items: center; padding: 0.65rem 1rem; background: rgba(99,179,237,0.08); border: 1px solid rgba(99,179,237,0.2); border-radius: var(--radius-sm); margin-bottom: 0.75rem; flex-wrap: wrap; }
-        .bulk-bar-count { font-size: 0.8rem; font-weight: 600; color: var(--accent); }
-
-        /* Scrollbar styling */
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--border-bright); }
-
-        /* Empty state */
-        .empty-state { padding: 3rem; text-align: center; color: var(--text3); font-size: 0.88rem; }
-        .empty-state i { font-size: 2.5rem; display: block; margin-bottom: 0.75rem; opacity: 0.4; }
-
-        /* Divider */
-        hr { border: none; border-top: 1px solid var(--border); margin: 1.25rem 0; }
-
-        /* Status indicator */
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
-        .status-online { background: var(--success); box-shadow: 0 0 6px var(--success); }
-        .status-offline { background: var(--text3); }
-        .status-busy { background: var(--warning); box-shadow: 0 0 6px var(--warning); }
-
-        /* Grid helpers */
-        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
-        .three-col { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
-
-        @media (max-width: 900px) {
-            .charts-grid { grid-template-columns: 1fr; }
-            .two-col { grid-template-columns: 1fr; }
-            .staff-layout { grid-template-columns: 1fr; }
-        }
-        @media (max-width: 640px) {
-            .sidebar { width: 60px; }
-            .sidebar .logo-text, .sidebar .sidebar-mod-card, .sidebar-quick-stats, .nav-section-label, .nav-item span, .nav-badge { display: none; }
-            .nav-item { justify-content: center; padding: 0.75rem; }
-            .nav-icon { width: auto; }
-            .page-area { padding: 1rem; }
-            .topbar { padding: 0.75rem 1rem; }
-        }
-
-        /* Checkbox */
-        input[type="checkbox"] {
-            width: 15px; height: 15px; cursor: pointer;
-            accent-color: var(--accent);
-        }
-
-        /* Override select width in form group */
-        .fg select, .fg input { width: auto; min-width: 130px; }
-
-        /* Notification dropdown */
-        .notif-dropdown {
-            position: absolute;
-            top: 100%;
-            right: 0;
-            margin-top: 0.5rem;
-            background: var(--bg2);
-            border: 1px solid var(--border-bright);
-            border-radius: var(--radius);
-            width: 320px;
-            box-shadow: var(--shadow);
-            z-index: 9998;
-            overflow: hidden;
-        }
-        .notif-header { padding: 1rem 1.25rem; border-bottom: 1px solid var(--border); font-family: var(--font-head); font-size: 0.9rem; font-weight: 700; display: flex; align-items: center; justify-content: space-between; }
-        .notif-item { padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; gap: 0.75rem; align-items: flex-start; cursor: pointer; transition: var(--transition); }
-        .notif-item:hover { background: rgba(99,179,237,0.06); }
-        .notif-item.unread { border-left: 3px solid var(--accent); }
-        .notif-icon { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0; }
-        .notif-text { font-size: 0.8rem; color: var(--text2); line-height: 1.4; flex: 1; }
-        .notif-time { font-size: 0.68rem; color: var(--text3); margin-top: 0.2rem; }
-        .notif-bell { position: relative; }
-        .notif-panel { display: none; }
-        .notif-bell:hover .notif-panel { display: block; }
-
-        /* ===== TOOL CARD ===== */
-        .tool-card {
-            background: var(--card);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            padding: 1rem 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            margin-bottom: 0.75rem;
-            transition: var(--transition);
-        }
-        .tool-card:hover { border-color: var(--border-bright); }
-        .tool-thumb { width: 48px; height: 48px; border-radius: var(--radius-sm); background: var(--bg3); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; }
-        .tool-info { flex: 1; min-width: 0; }
-        .tool-name { font-weight: 700; font-size: 0.9rem; }
-        .tool-meta { font-size: 0.75rem; color: var(--text3); margin-top: 0.15rem; }
-        .tool-actions { display: flex; gap: 0.5rem; flex-shrink: 0; }
-
-        /* ===== PLATFORM HEALTH ===== */
-        .health-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
-        .health-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; text-align: center; }
-        .health-ring { position: relative; width: 70px; height: 70px; margin: 0 auto 0.75rem; }
-        .health-ring svg { transform: rotate(-90deg); }
-        .health-ring-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--font-head); font-size: 0.85rem; font-weight: 800; }
-        .health-name { font-size: 0.78rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
-    </style>
+.health-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.health-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.25rem; text-align: center; }
+.health-ring { position: relative; width: 70px; height: 70px; margin: 0 auto 0.75rem; }
+.health-ring svg { transform: rotate(-90deg); }
+.health-ring-label { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: var(--font-head); font-size: 0.85rem; font-weight: 800; }
+.health-name { font-size: 0.78rem; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 600; }
+</style>
 </head>
 <body>
-<!-- TOAST CONTAINER -->
 <div class="toast-container" id="toastContainer"></div>
 
 <div class="wrapper">
@@ -861,10 +383,7 @@
         <div class="sidebar-logo">
             <div class="logo-mark">
                 <div class="logo-icon-wrap"><i class="fas fa-shield-alt" style="color:#fff;"></i></div>
-                <div class="logo-text">
-                    <h3>Sarveik</h3>
-                    <span>MODERATOR PANEL</span>
-                </div>
+                <div class="logo-text"><h3>Sarveik</h3><span>MODERATOR PANEL</span></div>
             </div>
         </div>
 
@@ -879,50 +398,24 @@
 
         <nav class="sidebar-nav">
             <div class="nav-section-label">Overview</div>
-            <div class="nav-item active" data-tab="dashboard">
-                <i class="fas fa-tachometer-alt nav-icon"></i><span>Dashboard</span>
-            </div>
+            <div class="nav-item active" data-tab="dashboard"><i class="fas fa-tachometer-alt nav-icon"></i><span>Dashboard</span></div>
 
             <div class="nav-section-label">Management</div>
-            <div class="nav-item" data-tab="users">
-                <i class="fas fa-users nav-icon"></i><span>Users</span>
-                <span class="nav-badge" id="navUserCount">-</span>
-            </div>
-            <div class="nav-item" data-tab="tools">
-                <i class="fas fa-tools nav-icon"></i><span>Tools</span>
-                <span class="nav-badge" id="navPendingTools">-</span>
-            </div>
-            <div class="nav-item" data-tab="ipbans">
-                <i class="fas fa-ban nav-icon"></i><span>IP Bans</span>
-            </div>
+            <div class="nav-item" data-tab="tools"><i class="fas fa-tools nav-icon"></i><span>Tools</span><span class="nav-badge" id="navPendingTools">-</span></div>
+            <div class="nav-item" data-tab="ipbans"><i class="fas fa-ban nav-icon"></i><span>IP Bans</span></div>
 
             <div class="nav-section-label">Support</div>
-            <div class="nav-item" data-tab="support">
-                <i class="fas fa-headset nav-icon"></i><span>Tickets</span>
-                <span class="nav-badge red" id="navOpenTickets">-</span>
-            </div>
-            <div class="nav-item" data-tab="announcements">
-                <i class="fas fa-bullhorn nav-icon"></i><span>Announcements</span>
-            </div>
-            <div class="nav-item" data-tab="notes">
-                <i class="fas fa-sticky-note nav-icon"></i><span>User Notes</span>
-            </div>
+            <div class="nav-item" data-tab="support"><i class="fas fa-headset nav-icon"></i><span>Tickets</span><span class="nav-badge red" id="navOpenTickets">-</span></div>
+            <div class="nav-item" data-tab="announcements"><i class="fas fa-bullhorn nav-icon"></i><span>Announcements</span></div>
+            <div class="nav-item" data-tab="notes"><i class="fas fa-sticky-note nav-icon"></i><span>User Notes</span></div>
 
             <div class="nav-section-label">Analytics</div>
-            <div class="nav-item" data-tab="activity">
-                <i class="fas fa-history nav-icon"></i><span>Activity Log</span>
-            </div>
-            <div class="nav-item" data-tab="modstats">
-                <i class="fas fa-chart-bar nav-icon"></i><span>Mod Stats</span>
-            </div>
-            <div class="nav-item" data-tab="health">
-                <i class="fas fa-heartbeat nav-icon"></i><span>Platform Health</span>
-            </div>
+            <div class="nav-item" data-tab="activity"><i class="fas fa-history nav-icon"></i><span>Activity Log</span></div>
+            <div class="nav-item" data-tab="modstats"><i class="fas fa-chart-bar nav-icon"></i><span>Mod Stats</span></div>
+            <div class="nav-item" data-tab="health"><i class="fas fa-heartbeat nav-icon"></i><span>Platform Health</span></div>
 
             <div class="nav-section-label">Communication</div>
-            <div class="nav-item" data-tab="staffconference">
-                <i class="fas fa-comments nav-icon"></i><span>Staff Chat</span>
-            </div>
+            <div class="nav-item" data-tab="staffconference"><i class="fas fa-comments nav-icon"></i><span>Staff Chat</span><span class="nav-badge red" id="navStaffUnread" style="display:none;">0</span></div>
         </nav>
 
         <div class="sidebar-quick-stats">
@@ -935,7 +428,6 @@
 
     <!-- ===== MAIN ===== -->
     <div class="main-content">
-        <!-- TOP BAR -->
         <header class="topbar">
             <div class="topbar-left">
                 <div>
@@ -946,7 +438,7 @@
             <div class="topbar-right">
                 <div class="global-search">
                     <i class="fas fa-search"></i>
-                    <input type="text" id="globalSearchInput" placeholder="Search users, tickets..." oninput="globalSearch(this.value)">
+                    <input type="text" id="globalSearchInput" placeholder="Search tickets..." oninput="globalSearch(this.value)">
                 </div>
                 <div class="notif-bell" id="notifBell">
                     <i class="fas fa-bell"></i>
@@ -957,25 +449,22 @@
                     </div>
                 </div>
                 <select class="theme-select" id="themeSelector">
-                    <option value="dark">🌙 Dark</option>
-                    <option value="light">☀️ Light</option>
-                    <option value="ocean">🌊 Ocean</option>
-                    <option value="aurora">✨ Aurora</option>
-                    <option value="copper">🔥 Copper</option>
+                    <option value="lagoon">🌊 Blue + Green</option>
+                    <option value="sky">💧 Light Blue</option>
+                    <option value="mint">🌿 Light Green</option>
                 </select>
                 <button class="tb-btn accent" onclick="refreshAllData()"><i class="fas fa-sync-alt"></i> Refresh</button>
                 <button class="tb-btn danger" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Logout</button>
             </div>
         </header>
 
-        <!-- PAGE AREA -->
         <main class="page-area">
 
             <!-- ===== DASHBOARD ===== -->
             <div id="dashboard-tab" class="tab-content active">
                 <div class="quick-actions-bar">
                     <div class="quick-action-btn" onclick="switchTab('support')"><i class="fas fa-ticket-alt"></i><span>New Ticket</span></div>
-                    <div class="quick-action-btn" onclick="openModal('announcementModal')"><i class="fas fa-bullhorn"></i><span>Announce</span></div>
+                    <div class="quick-action-btn" onclick="openAnnouncementModal()"><i class="fas fa-bullhorn"></i><span>Announce</span></div>
                     <div class="quick-action-btn" onclick="openModal('ipBanModal')"><i class="fas fa-ban"></i><span>Ban IP</span></div>
                     <div class="quick-action-btn" onclick="openModal('bulkEmailModal')"><i class="fas fa-envelope"></i><span>Email Users</span></div>
                     <div class="quick-action-btn" onclick="switchTab('health')"><i class="fas fa-heartbeat"></i><span>Health Check</span></div>
@@ -997,18 +486,9 @@
                 </div>
 
                 <div class="widgets-row">
-                    <div class="widget-card">
-                        <div class="card-header"><span class="card-title"><i class="fas fa-clock"></i>Recent Tickets</span></div>
-                        <div style="padding: 0 1rem;"><div id="recentTicketsWidget"></div></div>
-                    </div>
-                    <div class="widget-card">
-                        <div class="card-header"><span class="card-title"><i class="fas fa-fire"></i>Top Tools</span></div>
-                        <div style="padding: 0 1rem;"><div id="topToolsWidget"></div></div>
-                    </div>
-                    <div class="widget-card">
-                        <div class="card-header"><span class="card-title"><i class="fas fa-comment-dots"></i>Recent Feedback</span></div>
-                        <div style="padding: 0 1rem;"><div id="recentFeedbackWidget"></div></div>
-                    </div>
+                    <div class="widget-card"><div class="card-header"><span class="card-title"><i class="fas fa-clock"></i>Recent Tickets</span></div><div style="padding: 0 1rem;"><div id="recentTicketsWidget"></div></div></div>
+                    <div class="widget-card"><div class="card-header"><span class="card-title"><i class="fas fa-fire"></i>Top Tools</span></div><div style="padding: 0 1rem;"><div id="topToolsWidget"></div></div></div>
+                    <div class="widget-card"><div class="card-header"><span class="card-title"><i class="fas fa-comment-dots"></i>Recent Feedback</span></div><div style="padding: 0 1rem;"><div id="recentFeedbackWidget"></div></div></div>
                 </div>
 
                 <div class="card">
@@ -1025,61 +505,12 @@
                 </div>
             </div>
 
-            <!-- ===== USERS ===== -->
-            <div id="users-tab" class="tab-content">
-                <div class="search-row">
-                    <div class="search-field"><i class="fas fa-search"></i><input type="text" id="userSearch" placeholder="Search users by name or email..." oninput="debounceSearch('users')"></div>
-                    <select id="userFilter" onchange="filterUsers()">
-                        <option value="all">All Status</option>
-                        <option value="active">Active</option>
-                        <option value="banned">Banned</option>
-                        <option value="suspended">Suspended</option>
-                    </select>
-                    <select id="userRoleFilter" onchange="filterUsers()">
-                        <option value="all">All Roles</option>
-                        <option value="user">User</option>
-                        <option value="moderator">Moderator</option>
-                        <option value="admin">Admin</option>
-                    </select>
-                    <button class="btn btn-secondary" onclick="loadAllUsers()"><i class="fas fa-sync-alt"></i> Refresh</button>
-                    <button class="btn btn-secondary" onclick="exportUsersCSV()"><i class="fas fa-download"></i> Export CSV</button>
-                    <button class="btn btn-primary" onclick="openModal('bulkEmailModal')"><i class="fas fa-envelope"></i> Email Selected</button>
-                </div>
-
-                <div class="bulk-bar" id="userBulkBar" style="display:none;">
-                    <span class="bulk-bar-count"><span id="selectedCount">0</span> selected</span>
-                    <button class="btn btn-sm btn-secondary" onclick="bulkEmailSelected()"><i class="fas fa-envelope"></i> Email</button>
-                    <button class="btn btn-sm btn-warning" onclick="suspendSelectedUsers()"><i class="fas fa-hourglass-half"></i> Suspend</button>
-                    <button class="btn btn-sm btn-danger" onclick="banSelectedUsers()"><i class="fas fa-ban"></i> Ban</button>
-                    <button class="btn btn-sm btn-secondary" onclick="exportSelectedUsersJSON()"><i class="fas fa-download"></i> Export JSON</button>
-                    <button class="btn btn-sm btn-secondary" onclick="clearUserSelection()"><i class="fas fa-times"></i> Clear</button>
-                </div>
-
-                <div class="card">
-                    <div class="card-header">
-                        <span class="card-title"><i class="fas fa-users"></i>Registered Users</span>
-                        <div class="pagination" id="usersPagination"></div>
-                    </div>
-                    <div class="table-wrap">
-                        <table id="usersTable">
-                            <thead><tr>
-                                <th><input type="checkbox" id="selectAllUsersCheckbox" onchange="toggleSelectAllUsers()"></th>
-                                <th>ID</th><th>User</th><th>Email</th><th>Role</th><th>Status</th><th>Joined</th><th>Actions</th>
-                            </tr></thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
             <!-- ===== TOOLS ===== -->
             <div id="tools-tab" class="tab-content">
                 <div class="search-row">
                     <div class="search-field"><i class="fas fa-search"></i><input type="text" id="toolSearch" placeholder="Search tools..." oninput="debounceSearch('tools')"></div>
-                    <select id="toolFilter" onchange="filterTools()">
-                        <option value="all">All</option>
-                        <option value="pending">Pending</option>
-                        <option value="approved">Approved</option>
+                    <select id="toolFilter" onchange="filterTools()" style="width:auto;">
+                        <option value="all">All</option><option value="pending">Pending</option><option value="approved">Approved</option>
                     </select>
                     <button class="btn btn-secondary" onclick="loadAllTools()"><i class="fas fa-sync-alt"></i> Refresh</button>
                     <button class="btn btn-secondary" onclick="exportToolsCSV()"><i class="fas fa-download"></i> CSV</button>
@@ -1104,7 +535,7 @@
             <div id="support-tab" class="tab-content">
                 <div class="search-row">
                     <div class="search-field"><i class="fas fa-search"></i><input type="text" id="ticketSearch" placeholder="Search tickets..." oninput="debounceSearch('tickets')"></div>
-                    <select id="ticketStatusFilter" onchange="filterTicketsByStatus()">
+                    <select id="ticketStatusFilter" onchange="filterTicketsByStatus()" style="width:auto;">
                         <option value="all">All</option><option value="open">Open</option><option value="closed">Closed</option>
                     </select>
                     <input type="date" id="dateFrom" style="width:auto;">
@@ -1125,13 +556,11 @@
                     <div class="ticket-list-wrap" id="ticketList"><div class="empty-state"><i class="fas fa-inbox"></i>Loading tickets…</div></div>
                 </div>
 
-                <!-- REPLY PANEL — AI Reply and Unassign buttons removed -->
                 <div class="reply-panel" id="replySection" style="display:none;">
                     <div style="display:flex; align-items:center; gap:1rem; margin-bottom:0.75rem; flex-wrap:wrap;">
                         <span class="card-title" style="font-family:var(--font-head);font-size:1rem;"><i class="fas fa-reply"></i>Ticket Conversation</span>
                         <span id="chatHeader" style="font-size:0.85rem;color:var(--text2);"></span>
                     </div>
-                    <!-- Auto-assign banner shows who the ticket is assigned to -->
                     <div class="assign-banner" id="assignBanner" style="display:none;">
                         <i class="fas fa-user-check"></i>
                         <span>Auto-assigned to <strong id="assignedModName">—</strong></span>
@@ -1139,7 +568,6 @@
                     </div>
                     <div class="convo-wrap" id="conversationContainer"></div>
                     <textarea id="replyMessage" placeholder="Type your reply…"></textarea>
-                    <!-- Buttons: Send, Forward, Close, Delete only — AI Reply & Unassign removed -->
                     <div style="display:flex; gap:0.75rem; justify-content:flex-end; margin-top:0.75rem; flex-wrap:wrap;">
                         <button class="btn btn-secondary" onclick="closeReplyPanel()">Cancel</button>
                         <button class="btn btn-primary" id="sendReplyBtn" onclick="sendModeratorReply()"><i class="fas fa-paper-plane"></i> Send</button>
@@ -1150,14 +578,16 @@
                 </div>
             </div>
 
-            <!-- ===== ANNOUNCEMENTS ===== -->
+            <!-- ===== ANNOUNCEMENTS (ENHANCED) ===== -->
             <div id="announcements-tab" class="tab-content">
                 <div class="section-header">
                     <div style="display:flex;gap:0.75rem;flex:1;flex-wrap:wrap;">
                         <div class="search-field" style="flex:1;min-width:200px;"><i class="fas fa-search"></i><input type="text" id="announcementSearch" placeholder="Search announcements…" oninput="filterAnnouncements()"></div>
                     </div>
-                    <button class="btn btn-primary" onclick="openModal('announcementModal')"><i class="fas fa-plus"></i> New Announcement</button>
+                    <button class="btn btn-primary" onclick="openAnnouncementModal()"><i class="fas fa-plus"></i> New Announcement</button>
                 </div>
+                <div class="cat-tabs" id="annCatTabs"></div>
+                <div class="sub-chips" id="annSubChips"></div>
                 <div id="announcementsList"></div>
             </div>
 
@@ -1217,46 +647,10 @@
             <!-- ===== PLATFORM HEALTH ===== -->
             <div id="health-tab" class="tab-content">
                 <div class="health-grid" id="healthGrid">
-                    <div class="health-card">
-                        <div class="health-ring">
-                            <svg width="70" height="70" viewBox="0 0 70 70">
-                                <circle cx="35" cy="35" r="28" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="8"/>
-                                <circle cx="35" cy="35" r="28" fill="none" stroke="var(--success)" stroke-width="8" stroke-dasharray="175.9" stroke-dashoffset="17.6" stroke-linecap="round"/>
-                            </svg>
-                            <div class="health-ring-label" style="color:var(--success);">90%</div>
-                        </div>
-                        <div class="health-name">Uptime</div>
-                    </div>
-                    <div class="health-card">
-                        <div class="health-ring">
-                            <svg width="70" height="70" viewBox="0 0 70 70">
-                                <circle cx="35" cy="35" r="28" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="8"/>
-                                <circle cx="35" cy="35" r="28" fill="none" stroke="var(--accent)" stroke-width="8" stroke-dasharray="175.9" stroke-dashoffset="52.8" stroke-linecap="round"/>
-                            </svg>
-                            <div class="health-ring-label" style="color:var(--accent);">70%</div>
-                        </div>
-                        <div class="health-name">API Health</div>
-                    </div>
-                    <div class="health-card">
-                        <div class="health-ring">
-                            <svg width="70" height="70" viewBox="0 0 70 70">
-                                <circle cx="35" cy="35" r="28" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="8"/>
-                                <circle cx="35" cy="35" r="28" fill="none" stroke="var(--warning)" stroke-width="8" stroke-dasharray="175.9" stroke-dashoffset="88" stroke-linecap="round"/>
-                            </svg>
-                            <div class="health-ring-label" style="color:var(--warning);">50%</div>
-                        </div>
-                        <div class="health-name">DB Load</div>
-                    </div>
-                    <div class="health-card">
-                        <div class="health-ring">
-                            <svg width="70" height="70" viewBox="0 0 70 70">
-                                <circle cx="35" cy="35" r="28" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="8"/>
-                                <circle cx="35" cy="35" r="28" fill="none" stroke="var(--success)" stroke-width="8" stroke-dasharray="175.9" stroke-dashoffset="26.4" stroke-linecap="round"/>
-                            </svg>
-                            <div class="health-ring-label" style="color:var(--success);">85%</div>
-                        </div>
-                        <div class="health-name">CDN Status</div>
-                    </div>
+                    <div class="health-card"><div class="health-ring"><svg width="70" height="70" viewBox="0 0 70 70"><circle cx="35" cy="35" r="28" fill="none" stroke="rgba(30,90,120,0.1)" stroke-width="8"/><circle cx="35" cy="35" r="28" fill="none" stroke="var(--success)" stroke-width="8" stroke-dasharray="175.9" stroke-dashoffset="17.6" stroke-linecap="round"/></svg><div class="health-ring-label" style="color:var(--success);">90%</div></div><div class="health-name">Uptime</div></div>
+                    <div class="health-card"><div class="health-ring"><svg width="70" height="70" viewBox="0 0 70 70"><circle cx="35" cy="35" r="28" fill="none" stroke="rgba(30,90,120,0.1)" stroke-width="8"/><circle cx="35" cy="35" r="28" fill="none" stroke="var(--accent)" stroke-width="8" stroke-dasharray="175.9" stroke-dashoffset="52.8" stroke-linecap="round"/></svg><div class="health-ring-label" style="color:var(--accent);">70%</div></div><div class="health-name">API Health</div></div>
+                    <div class="health-card"><div class="health-ring"><svg width="70" height="70" viewBox="0 0 70 70"><circle cx="35" cy="35" r="28" fill="none" stroke="rgba(30,90,120,0.1)" stroke-width="8"/><circle cx="35" cy="35" r="28" fill="none" stroke="var(--warning)" stroke-width="8" stroke-dasharray="175.9" stroke-dashoffset="88" stroke-linecap="round"/></svg><div class="health-ring-label" style="color:var(--warning);">50%</div></div><div class="health-name">DB Load</div></div>
+                    <div class="health-card"><div class="health-ring"><svg width="70" height="70" viewBox="0 0 70 70"><circle cx="35" cy="35" r="28" fill="none" stroke="rgba(30,90,120,0.1)" stroke-width="8"/><circle cx="35" cy="35" r="28" fill="none" stroke="var(--success)" stroke-width="8" stroke-dasharray="175.9" stroke-dashoffset="26.4" stroke-linecap="round"/></svg><div class="health-ring-label" style="color:var(--success);">85%</div></div><div class="health-name">CDN Status</div></div>
                 </div>
                 <div class="two-col">
                     <div class="card">
@@ -1281,22 +675,25 @@
                 </div>
             </div>
 
-            <!-- ===== STAFF CONFERENCE ===== -->
+            <!-- ===== STAFF CONFERENCE (ENHANCED RECEIVING) ===== -->
             <div id="staffconference-tab" class="tab-content">
                 <div class="staff-layout">
                     <div class="chat-panel">
                         <div class="chat-header">
                             <div class="logo-icon-wrap" style="width:32px;height:32px;font-size:0.85rem;"><i class="fas fa-comments" style="color:#fff;"></i></div>
-                            <div>
+                            <div style="flex:1;">
                                 <div class="chat-title">Staff Lounge</div>
-                                <div class="chat-subtitle" id="chatOnlineCount">Connecting…</div>
+                                <div class="chat-subtitle"><span class="chat-status-dot" id="chatStatusDot"></span><span id="chatOnlineCount">Connecting…</span></div>
                             </div>
+                            <button class="btn btn-icon btn-sm" id="soundToggleBtn" onclick="toggleChatSound()" title="Message sound"><i class="fas fa-volume-up"></i></button>
                         </div>
-                        <div class="messages-area" id="staffMessagesArea">
+                        <div class="messages-area" id="staffMessagesArea" onscroll="onStaffScroll()">
                             <div class="empty-state"><i class="fas fa-comments"></i>Loading conversation…</div>
                         </div>
+                        <button class="jump-pill" id="jumpPill" onclick="jumpToLatest()"><i class="fas fa-arrow-down"></i><span id="jumpPillText">New messages</span></button>
+                        <div class="typing-line" id="typingLine"></div>
                         <div class="chat-input-row">
-                            <input type="text" id="staffMessageInput" placeholder="Type your message…" onkeypress="if(event.key==='Enter')sendStaffMessage()">
+                            <input type="text" id="staffMessageInput" placeholder="Type your message…" oninput="emitTyping()" onkeypress="if(event.key==='Enter')sendStaffMessage()">
                             <button class="btn btn-primary" onclick="sendStaffMessage()"><i class="fas fa-paper-plane"></i></button>
                         </div>
                     </div>
@@ -1312,18 +709,35 @@
 </div>
 
 <!-- ===== MODALS ===== -->
-<!-- Announcement Modal -->
+<!-- Announcement Modal (enhanced) -->
 <div class="modal-overlay" id="announcementModal">
     <div class="modal-box">
         <div class="modal-title"><i class="fas fa-bullhorn"></i>Create Announcement</div>
+        <div class="form-row">
+            <div class="form-group"><label class="form-label">Category</label>
+                <select id="annCategory" onchange="onAnnCatChange()">
+                    <option value="internship">🎓 Internships</option>
+                    <option value="workshop">🛠️ Workshops &amp; Events</option>
+                    <option value="job">💼 Job Opportunities</option>
+                </select></div>
+            <div class="form-group"><label class="form-label">Type</label><select id="annSubcategory"></select></div>
+        </div>
         <div class="form-group"><label class="form-label">Title</label><input type="text" id="annTitle" placeholder="Announcement title…"></div>
-        <div class="form-group"><label class="form-label">Content</label><textarea id="annContent" placeholder="Write your announcement…" rows="5"></textarea></div>
+        <div class="form-group"><label class="form-label">Content</label><textarea id="annContent" placeholder="Write your announcement…" rows="4"></textarea></div>
+        <div class="form-row">
+            <div class="form-group"><label class="form-label">Organization / Company</label><input type="text" id="annOrg" placeholder="e.g. Sarveik Labs"></div>
+            <div class="form-group"><label class="form-label">Mode</label><select id="annMode"><option value="">Not specified</option><option value="Remote">Remote</option><option value="On-site">On-site</option><option value="Hybrid">Hybrid</option></select></div>
+        </div>
+        <div class="form-row">
+            <div class="form-group"><label class="form-label">Deadline / Date</label><input type="date" id="annDeadline"></div>
+            <div class="form-group"><label class="form-label">Apply / Info Link</label><input type="url" id="annLink" placeholder="https://…"></div>
+        </div>
         <div class="form-group"><label class="form-label">Priority</label><select id="annPriority"><option value="normal">Normal</option><option value="important">Important</option><option value="urgent">Urgent</option></select></div>
+        <label class="check-row"><input type="checkbox" id="annNotify" checked> Send notification to all users</label>
         <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('announcementModal')">Cancel</button><button class="btn btn-primary" onclick="createAnnouncement()"><i class="fas fa-check"></i> Publish</button></div>
     </div>
 </div>
 
-<!-- IP Ban Modal -->
 <div class="modal-overlay" id="ipBanModal">
     <div class="modal-box">
         <div class="modal-title"><i class="fas fa-ban"></i>Ban IP Address</div>
@@ -1334,18 +748,16 @@
     </div>
 </div>
 
-<!-- Bulk Email Modal -->
 <div class="modal-overlay" id="bulkEmailModal">
     <div class="modal-box">
         <div class="modal-title"><i class="fas fa-envelope"></i>Send Bulk Email</div>
-        <div class="form-group"><label class="form-label">Recipients</label><select id="emailTargetGroup"><option value="all">All Users</option><option value="selected">Selected Users</option><option value="active">Active Users</option><option value="banned">Banned Users</option></select></div>
+        <div class="form-group"><label class="form-label">Recipients</label><select id="emailTargetGroup"><option value="all">All Users</option><option value="active">Active Users</option><option value="banned">Banned Users</option></select></div>
         <div class="form-group"><label class="form-label">Subject</label><input type="text" id="emailSubject" placeholder="Email subject…"></div>
         <div class="form-group"><label class="form-label">Message</label><textarea id="emailBody" rows="5" placeholder="Email body…"></textarea></div>
         <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('bulkEmailModal')">Cancel</button><button class="btn btn-primary" onclick="sendBulkEmail()"><i class="fas fa-paper-plane"></i> Send</button></div>
     </div>
 </div>
 
-<!-- User Notes Modal -->
 <div class="modal-overlay" id="userNotesModal">
     <div class="modal-box">
         <div class="modal-title"><i class="fas fa-sticky-note"></i>User Note</div>
@@ -1356,7 +768,6 @@
     </div>
 </div>
 
-<!-- Forward Ticket Modal -->
 <div class="modal-overlay" id="forwardModal">
     <div class="modal-box">
         <div class="modal-title"><i class="fas fa-share"></i>Forward Ticket</div>
@@ -1365,37 +776,29 @@
     </div>
 </div>
 
-<!-- User Activity Modal -->
-<div class="modal-overlay" id="userActivityModal">
-    <div class="modal-box">
-        <div class="modal-title"><i class="fas fa-chart-line"></i>User Activity</div>
-        <div id="userActivityContent"></div>
-        <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('userActivityModal')">Close</button></div>
-    </div>
-</div>
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0"></script>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 /* ================================================
    Sarveik MODERATOR DASHBOARD
-   Changes vs original:
-   - Removed "Unassign" button from ticket reply panel
-   - Removed AI Reply button/logic entirely
-   - Auto-assign: when a ticket is opened and has no
-     assigned moderator, the system picks the free
-     moderator with the fewest open assigned tickets
-     and calls /api/support/tickets/:id/forward to
-     assign them, then shows an assign-banner.
+   Changes in this version:
+   - Light blue + light green UI themes
+   - "Users" removed from Management (nav + tab)
+   - Announcements: Internships (short / moderate / long),
+     Workshops & Events (workshop, hackathon, symposium...),
+     Job Opportunities - with notification sending
+   - Staff chat receiving: live unread badge, sound,
+     desktop alerts, typing indicator, jump-to-latest,
+     auto-reconnect + polling fallback, duplicate guard
    ================================================ */
 
 // ---- GLOBALS ----
 let currentUser = null;
 let socket = null;
-let allUsers = [], allTools = [], allTickets = [], allAnnouncements = [], allFeedback = [];
+let allUsers = [], allTools = [], allTickets = [], allAnnouncements = [];
 let activityLogsAll = [], activityFiltered = [];
-let selectedUserIds = new Set(), selectedTicketIds = new Set();
-let usersPage = 1, toolsPage = 1, ticketsPage = 1, activityCurrentPage = 1;
+let selectedTicketIds = new Set();
+let toolsPage = 1, ticketsPage = 1, activityCurrentPage = 1;
 const itemsPerPage = 10, activityPerPage = 15;
 let currentTicketId = null;
 let userGrowthChart = null, statusChart = null, modStatsChart = null;
@@ -1405,13 +808,13 @@ let ipBans = [], userNotes = [];
 let staffGroupId = null;
 let staffMessages = [];
 let currentTicketSearch = '', currentTicketStatus = 'all', currentDateFrom = '', currentDateTo = '';
-let announcementSearchTerm = '';
 
 // ---- UTILITIES ----
 function escapeHtml(s) {
     if (!s) return '';
     return String(s).replace(/[&<>"]/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 }
+function safeUrl(u) { try { const x = new URL(u); return (x.protocol === 'http:' || x.protocol === 'https:') ? x.href : ''; } catch(e) { return ''; } }
 
 async function apiCall(url, options = {}) {
     const res = await fetch(url, { ...options, headers: { 'Content-Type': 'application/json', ...options.headers }, credentials: 'include' });
@@ -1441,8 +844,7 @@ document.querySelectorAll('.modal-overlay').forEach(m => m.addEventListener('cli
 function debounceSearch(type) {
     clearTimeout(searchDebounceTimer);
     searchDebounceTimer = setTimeout(() => {
-        if (type === 'users') filterUsers();
-        else if (type === 'tools') filterTools();
+        if (type === 'tools') filterTools();
         else if (type === 'tickets') { currentTicketSearch = document.getElementById('ticketSearch').value; applyTicketFiltersAndRender(); }
     }, 320);
 }
@@ -1458,9 +860,7 @@ function renderPagination(containerId, current, total, onPageFn) {
     c.innerHTML = html;
 }
 
-function formatTime(d) {
-    try { return new Date(d).toLocaleString(); } catch(e) { return d; }
-}
+function formatTime(d) { try { return new Date(d).toLocaleString(); } catch(e) { return d; } }
 
 function relativeTime(d) {
     const diff = Date.now() - new Date(d).getTime();
@@ -1492,14 +892,15 @@ async function logout() {
 }
 
 // ---- THEME ----
+const THEMES = ['lagoon', 'sky', 'mint'];
 function setTheme(t) {
+    if (!THEMES.includes(t)) t = 'lagoon';
     document.documentElement.setAttribute('data-theme', t);
-    localStorage.setItem('nova_theme', t);
+    localStorage.setItem('sarveik_theme', t);
     document.getElementById('themeSelector').value = t;
 }
 function initTheme() {
-    const saved = localStorage.getItem('nova_theme') || 'dark';
-    setTheme(saved);
+    setTheme(localStorage.getItem('sarveik_theme') || 'lagoon');
     document.getElementById('themeSelector').addEventListener('change', e => setTheme(e.target.value));
 }
 
@@ -1511,11 +912,11 @@ function switchTab(tabId) {
     if (tab) tab.classList.add('active');
     const nav = document.querySelector(`.nav-item[data-tab="${tabId}"]`);
     if (nav) nav.classList.add('active');
-    const titles = { dashboard:'Dashboard', users:'User Management', tools:'Tool Management', ipbans:'IP Ban Manager', support:'Support Tickets', announcements:'Announcements', notes:'User Notes', activity:'Activity Log', modstats:'Moderator Statistics', health:'Platform Health', staffconference:'Staff Conference' };
+    const titles = { dashboard:'Dashboard', tools:'Tool Management', ipbans:'IP Ban Manager', support:'Support Tickets', announcements:'Announcements', notes:'User Notes', activity:'Activity Log', modstats:'Moderator Statistics', health:'Platform Health', staffconference:'Staff Conference' };
     const t = titles[tabId] || tabId;
     document.getElementById('pageTitle').textContent = t;
     document.getElementById('breadcrumbTab').textContent = t;
-    const loaders = { users: loadAllUsers, tools: loadAllTools, support: loadTickets, announcements: loadAnnouncements, activity: loadActivityLog, modstats: loadModeratorStats, ipbans: renderIPBans, notes: renderNotes, staffconference: loadStaffConference };
+    const loaders = { tools: loadAllTools, support: loadTickets, announcements: loadAnnouncements, activity: loadActivityLog, modstats: loadModeratorStats, ipbans: renderIPBans, notes: renderNotes, staffconference: loadStaffConference };
     if (loaders[tabId]) loaders[tabId]();
     else loadStats();
 }
@@ -1528,10 +929,8 @@ document.querySelectorAll('.nav-item[data-tab]').forEach(item => {
 function globalSearch(query) {
     if (!query || query.length < 2) return;
     const q = query.toLowerCase();
-    const matchedUser = allUsers.find(u => u.username.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
     const matchedTicket = allTickets.find(t => t.subject.toLowerCase().includes(q) || (t.user_name||'').toLowerCase().includes(q));
-    if (matchedUser) { switchTab('users'); setTimeout(() => { document.getElementById('userSearch').value = query; filterUsers(); }, 100); }
-    else if (matchedTicket) { switchTab('support'); setTimeout(() => { document.getElementById('ticketSearch').value = query; currentTicketSearch = query; applyTicketFiltersAndRender(); }, 100); }
+    if (matchedTicket) { switchTab('support'); setTimeout(() => { document.getElementById('ticketSearch').value = query; currentTicketSearch = query; applyTicketFiltersAndRender(); }, 100); }
 }
 
 // ---- NOTIFICATIONS ----
@@ -1547,7 +946,7 @@ function renderNotifications() {
     if (!notifications.length) { list.innerHTML = '<div style="padding:1.25rem;text-align:center;color:var(--text3);font-size:0.82rem;">No notifications</div>'; return; }
     list.innerHTML = notifications.slice(0, 10).map(n => `
         <div class="notif-item ${n.read ? '' : 'unread'}">
-            <div class="notif-icon" style="background:rgba(99,179,237,0.12);color:var(--accent);"><i class="fas ${n.iconClass}"></i></div>
+            <div class="notif-icon" style="background:var(--soft2);color:var(--accent);"><i class="fas ${n.iconClass}"></i></div>
             <div><div class="notif-text">${escapeHtml(n.msg)}</div><div class="notif-time">${relativeTime(n.time)}</div></div>
         </div>
     `).join('');
@@ -1582,7 +981,6 @@ async function loadStats() {
         document.getElementById('qs-pending').textContent = pendingT;
         document.getElementById('qs-tools').textContent = activeTools;
 
-        document.getElementById('navUserCount').textContent = totalU;
         document.getElementById('navPendingTools').textContent = pendingT;
         document.getElementById('navOpenTickets').textContent = openTk;
 
@@ -1595,6 +993,7 @@ async function loadStats() {
 }
 
 function initCharts(users, tools, tickets) {
+    const tick = 'rgba(61,98,119,0.9)', grid = 'rgba(30,90,120,0.08)';
     const ch1 = document.getElementById('userGrowthChart')?.getContext('2d');
     if (ch1) {
         if (userGrowthChart) userGrowthChart.destroy();
@@ -1603,24 +1002,19 @@ function initCharts(users, tools, tickets) {
             data: {
                 labels: ['Jan','Feb','Mar','Apr','May','Jun','Jul'],
                 datasets: [{
-                    label: 'New Users',
-                    data: [65, 120, 180, 140, 220, 280, 310],
-                    borderColor: 'rgba(99,179,237,1)', backgroundColor: 'rgba(99,179,237,0.1)',
+                    label: 'New Users', data: [65, 120, 180, 140, 220, 280, 310],
+                    borderColor: 'rgba(43,159,216,1)', backgroundColor: 'rgba(43,159,216,0.15)',
                     tension: 0.4, fill: true, borderWidth: 2, pointRadius: 3
                 }, {
-                    label: 'Active Users',
-                    data: [55, 100, 155, 120, 190, 240, 270],
-                    borderColor: 'rgba(79,209,197,1)', backgroundColor: 'rgba(79,209,197,0.05)',
+                    label: 'Active Users', data: [55, 100, 155, 120, 190, 240, 270],
+                    borderColor: 'rgba(60,192,138,1)', backgroundColor: 'rgba(60,192,138,0.12)',
                     tension: 0.4, fill: true, borderWidth: 2, pointRadius: 3
                 }]
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { labels: { color: 'rgba(148,163,184,0.9)', font: { size: 11 } } } },
-                scales: {
-                    x: { ticks: { color: 'rgba(100,116,139,0.9)', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } },
-                    y: { ticks: { color: 'rgba(100,116,139,0.9)', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,0.04)' } }
-                }
+                plugins: { legend: { labels: { color: tick, font: { size: 11 } } } },
+                scales: { x: { ticks: { color: tick, font: { size: 10 } }, grid: { color: grid } }, y: { ticks: { color: tick, font: { size: 10 } }, grid: { color: grid } } }
             }
         });
     }
@@ -1634,12 +1028,9 @@ function initCharts(users, tools, tickets) {
             type: 'doughnut',
             data: {
                 labels: ['Active', 'Suspended', 'Banned'],
-                datasets: [{ data: [active || 85, suspended || 10, banned2 || 5], backgroundColor: ['rgba(104,211,145,0.8)','rgba(246,173,85,0.8)','rgba(252,129,129,0.8)'], borderWidth: 0, hoverOffset: 6 }]
+                datasets: [{ data: [active || 85, suspended || 10, banned2 || 5], backgroundColor: ['rgba(60,192,138,0.85)','rgba(240,178,74,0.85)','rgba(229,96,95,0.85)'], borderWidth: 0, hoverOffset: 6 }]
             },
-            options: {
-                responsive: true, maintainAspectRatio: false, cutout: '68%',
-                plugins: { legend: { position: 'bottom', labels: { color: 'rgba(148,163,184,0.9)', font: { size: 11 }, padding: 12 } } }
-            }
+            options: { responsive: true, maintainAspectRatio: false, cutout: '68%', plugins: { legend: { position: 'bottom', labels: { color: tick, font: { size: 11 }, padding: 12 } } } }
         });
     }
 }
@@ -1685,116 +1076,9 @@ async function loadRecentActivity() {
     } catch(e) { tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No activity yet</td></tr>'; }
 }
 
-// ---- USERS ----
+// ---- USERS DATA (kept for stats, ticket assignment & forwarding; no Users tab) ----
 async function loadAllUsers() {
     try { allUsers = await apiCall('/admin/users'); } catch(e) { allUsers = []; }
-    renderUsersTable(allUsers);
-}
-
-function filterUsers() {
-    const q = (document.getElementById('userSearch')?.value || '').toLowerCase();
-    const status = document.getElementById('userFilter')?.value || 'all';
-    const role = document.getElementById('userRoleFilter')?.value || 'all';
-    let filtered = [...allUsers];
-    if (q) filtered = filtered.filter(u => u.username.toLowerCase().includes(q) || (u.email||'').toLowerCase().includes(q));
-    if (status !== 'all') {
-        if (status === 'active') filtered = filtered.filter(u => !u.is_banned && !u.is_suspended);
-        else if (status === 'banned') filtered = filtered.filter(u => u.is_banned);
-        else if (status === 'suspended') filtered = filtered.filter(u => u.is_suspended);
-    }
-    if (role !== 'all') filtered = filtered.filter(u => u.role === role);
-    usersPage = 1;
-    renderUsersTable(filtered);
-}
-
-function renderUsersTable(users) {
-    const tbody = document.querySelector('#usersTable tbody');
-    const start = (usersPage - 1) * itemsPerPage;
-    const page = users.slice(start, start + itemsPerPage);
-    if (!page.length) { tbody.innerHTML = '<tr><td colspan="8" class="empty-state"><i class="fas fa-user-slash" style="display:block;margin-bottom:0.5rem;"></i>No users found</td></tr>'; return; }
-    tbody.innerHTML = page.map(u => `
-        <tr>
-            <td><input type="checkbox" class="user-checkbox" data-id="${u.id}" onchange="toggleUserSelection(this,${u.id})"></td>
-            <td style="color:var(--text3);font-size:0.8rem;">${u.id}</td>
-            <td><div class="user-av">${(u.username||'?')[0].toUpperCase()}</div></td>
-            <td><span style="font-weight:600;color:var(--text);">${escapeHtml(u.username)}</span></td>
-            <td style="color:var(--text3);">${escapeHtml(u.email||'')}</td>
-            <td><span class="badge ${u.role==='admin'?'badge-danger':u.role==='moderator'?'badge-purple':'badge-muted'}">${u.role||'user'}</span></td>
-            <td><span class="badge ${u.is_banned?'badge-danger':u.is_suspended?'badge-warning':'badge-success'}">${u.is_banned?'Banned':u.is_suspended?'Suspended':'Active'}</span></td>
-            <td>${u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}</td>
-            <td>
-                <div style="display:flex;gap:0.35rem;">
-                    <button class="btn btn-icon btn-sm" onclick="openUserActivityModal(${u.id})" title="View activity"><i class="fas fa-chart-line"></i></button>
-                    <button class="btn btn-icon btn-sm" onclick="copyToClipboard('${escapeHtml(u.email)}')" title="Copy email"><i class="fas fa-copy"></i></button>
-                    <button class="btn btn-icon btn-sm" onclick="quickNote(${u.id},'${escapeHtml(u.username)}')" title="Add note"><i class="fas fa-sticky-note"></i></button>
-                </div>
-            </td>
-        </tr>
-    `).join('');
-    renderPagination('usersPagination', usersPage, Math.ceil(users.length / itemsPerPage), 'setUsersPage');
-}
-
-window.setUsersPage = (p) => { usersPage = p; filterUsers(); };
-
-function toggleUserSelection(cb, id) {
-    if (cb.checked) selectedUserIds.add(id); else selectedUserIds.delete(id);
-    updateUserBulkBar();
-}
-function toggleSelectAllUsers() {
-    const checked = document.getElementById('selectAllUsersCheckbox').checked;
-    document.querySelectorAll('.user-checkbox').forEach(cb => { cb.checked = checked; const id = parseInt(cb.dataset.id); if (checked) selectedUserIds.add(id); else selectedUserIds.delete(id); });
-    updateUserBulkBar();
-}
-function updateUserBulkBar() {
-    const bar = document.getElementById('userBulkBar');
-    document.getElementById('selectedCount').textContent = selectedUserIds.size;
-    bar.style.display = selectedUserIds.size > 0 ? 'flex' : 'none';
-}
-function clearUserSelection() { selectedUserIds.clear(); document.querySelectorAll('.user-checkbox').forEach(cb => cb.checked = false); document.getElementById('selectAllUsersCheckbox').checked = false; updateUserBulkBar(); }
-
-async function suspendSelectedUsers() {
-    if (!selectedUserIds.size) return;
-    const days = prompt('Suspend selected users for how many days?', '7');
-    if (!days) return;
-    for (const id of selectedUserIds) await apiCall(`/api/users/${id}/suspend`, { method: 'POST', body: JSON.stringify({ days: parseInt(days) }) }).catch(() => {});
-    await logModeratorAction('Bulk suspend', `${selectedUserIds.size} users`, `${days} days`);
-    showToast(`${selectedUserIds.size} user(s) suspended for ${days} days`, 'success');
-    clearUserSelection(); loadAllUsers(); loadStats();
-}
-
-async function banSelectedUsers() {
-    if (!selectedUserIds.size) return;
-    if (!confirm(`Ban ${selectedUserIds.size} selected user(s)?`)) return;
-    for (const id of selectedUserIds) await apiCall(`/api/users/${id}/ban`, { method: 'POST' }).catch(() => {});
-    await logModeratorAction('Bulk ban', `${selectedUserIds.size} users`);
-    showToast(`${selectedUserIds.size} user(s) banned`, 'success');
-    clearUserSelection(); loadAllUsers(); loadStats();
-}
-
-function bulkEmailSelected() { openModal('bulkEmailModal'); document.getElementById('emailTargetGroup').value = 'selected'; }
-function exportSelectedUsersJSON() {
-    const sel = allUsers.filter(u => selectedUserIds.has(u.id));
-    const blob = new Blob([JSON.stringify(sel, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `users_${Date.now()}.json`; a.click();
-    showToast('Exported JSON', 'success');
-}
-function exportUsersCSV() { exportTableToCSV('#usersTable', 'users.csv'); }
-
-async function openUserActivityModal(userId) {
-    try {
-        const acts = await apiCall(`/api/users/${userId}/activity`);
-        document.getElementById('userActivityContent').innerHTML = acts.length ? acts.map(a => `<div class="activity-item"><div class="activity-dot"></div><div><div class="activity-text">${escapeHtml(a.action)}</div><div class="activity-time">${relativeTime(a.time)}</div></div></div>`).join('') : '<div class="empty-state">No activity recorded</div>';
-    } catch(e) { document.getElementById('userActivityContent').innerHTML = '<div class="empty-state">Could not load activity</div>'; }
-    openModal('userActivityModal');
-}
-
-function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => showToast('Copied to clipboard', 'success')).catch(() => showToast('Copy failed', 'error'));
-}
-
-function quickNote(userId, username) {
-    document.getElementById('noteUserId').value = userId;
-    openModal('userNotesModal');
 }
 
 // ---- TOOLS ----
@@ -1916,28 +1200,17 @@ function renderNotes() {
 function deleteNote(i) { userNotes.splice(i, 1); localStorage.setItem('nova_usernotes', JSON.stringify(userNotes)); renderNotes(); }
 
 // ---- AUTO-ASSIGN LOGIC ----
-/**
- * Finds the free moderator with the fewest currently open assigned tickets.
- * "Free" = role is moderator or admin, not banned, not suspended.
- * Returns the moderator user object or null.
- */
 function findFreestModerator() {
     const mods = allUsers.filter(u =>
         (u.role === 'moderator' || u.role === 'admin') &&
         !u.is_banned && !u.is_suspended &&
-        u.id !== currentUser?.id  // prefer others first; fall back to self if only one
+        u.id !== currentUser?.id
     );
-
-    // Count open tickets per moderator
     const openTickets = allTickets.filter(t => t.status === 'open' && t.assigned_to);
     const loadMap = {};
     mods.forEach(m => { loadMap[m.id] = 0; });
     openTickets.forEach(t => { if (loadMap[t.assigned_to] !== undefined) loadMap[t.assigned_to]++; });
-
-    // Sort by load ascending
     const sorted = mods.sort((a, b) => (loadMap[a.id] || 0) - (loadMap[b.id] || 0));
-
-    // If no other mods, allow self
     if (!sorted.length) {
         const self = allUsers.find(u => u.id === currentUser?.id);
         return self || null;
@@ -1945,25 +1218,14 @@ function findFreestModerator() {
     return sorted[0];
 }
 
-/**
- * Auto-assigns a ticket to the freest available moderator.
- * Calls the forward/assign API endpoint.
- * Returns the moderator it assigned to, or null.
- */
 async function autoAssignTicket(ticketId) {
     const mod = findFreestModerator();
     if (!mod) return null;
     try {
-        await apiCall(`/api/support/tickets/${ticketId}/forward`, {
-            method: 'POST',
-            body: JSON.stringify({ newModeratorId: mod.id })
-        });
+        await apiCall(`/api/support/tickets/${ticketId}/forward`, { method: 'POST', body: JSON.stringify({ newModeratorId: mod.id }) });
         await logModeratorAction('Auto-assigned ticket', `#${ticketId}`, `Assigned to ${mod.username}`);
         return mod;
-    } catch(e) {
-        console.warn('Auto-assign failed:', e.message);
-        return null;
-    }
+    } catch(e) { console.warn('Auto-assign failed:', e.message); return null; }
 }
 
 // ---- SUPPORT TICKETS ----
@@ -2017,7 +1279,7 @@ function renderTicketsList(tickets) {
         for (let i = 1; i <= total; i++) {
             const b = document.createElement('button');
             b.style.cssText = 'min-width:30px;height:30px;border:1px solid var(--border);background:var(--card);border-radius:6px;color:var(--text2);cursor:pointer;font-size:0.8rem;';
-            if (i === ticketsPage) b.style.background = 'var(--accent)';
+            if (i === ticketsPage) { b.style.background = 'var(--accent)'; b.style.color = '#fff'; }
             b.textContent = i;
             b.onclick = () => { ticketsPage = i; applyTicketFiltersAndRender(); };
             pag.appendChild(b);
@@ -2035,39 +1297,27 @@ function clearTicketSelection() { selectedTicketIds.clear(); document.querySelec
 
 let currentTicketAssignedTo = null;
 
-/**
- * Opens a ticket conversation.
- * If the ticket is open and has NO assigned moderator,
- * auto-assigns it to the freest available moderator.
- */
 async function openTicketConversation(id) {
     currentTicketId = id;
     try {
         let ticket = await apiCall(`/api/support/tickets/${id}`);
         currentTicketAssignedTo = ticket.assigned_to;
 
-        // ── AUTO-ASSIGN if ticket is open and unassigned ──
         let autoAssignedMod = null;
         if (ticket.status === 'open' && !ticket.assigned_to) {
             autoAssignedMod = await autoAssignTicket(id);
             if (autoAssignedMod) {
-                // Re-fetch the ticket to reflect the new assignment
                 ticket = await apiCall(`/api/support/tickets/${id}`).catch(() => ticket);
                 currentTicketAssignedTo = autoAssignedMod.id;
             }
         }
 
-        // Resolve assigned moderator name
-        const assignedMod = ticket.assigned_to
-            ? allUsers.find(u => u.id === ticket.assigned_to)
-            : autoAssignedMod;
+        const assignedMod = ticket.assigned_to ? allUsers.find(u => u.id === ticket.assigned_to) : autoAssignedMod;
         const assignedName = assignedMod?.username || (ticket.assigned_to ? `Mod#${ticket.assigned_to}` : 'Unassigned');
 
-        // Header
         document.getElementById('chatHeader').innerHTML =
             `<strong>${escapeHtml(ticket.subject)}</strong> · <span style="color:var(--text3);">by ${escapeHtml(ticket.user_name||'Unknown')}</span>`;
 
-        // Show / hide assign banner
         const banner = document.getElementById('assignBanner');
         const bannerName = document.getElementById('assignedModName');
         const bannerStatus = document.getElementById('assignedModStatus');
@@ -2075,11 +1325,8 @@ async function openTicketConversation(id) {
             banner.style.display = 'flex';
             bannerName.textContent = assignedName;
             bannerStatus.textContent = autoAssignedMod ? '✦ Just auto-assigned' : 'Currently handling';
-        } else {
-            banner.style.display = 'none';
-        }
+        } else { banner.style.display = 'none'; }
 
-        // Build conversation
         let html = `<div class="msg-bubble user"><div class="msg-inner">${escapeHtml(ticket.message)}</div><div class="msg-meta-row">Original message · ${escapeHtml(ticket.user_name||'User')}</div></div>`;
         (ticket.replies || []).forEach(r => {
             const cls = r.sender_role === 'moderator' || r.sender_id === currentUser?.id ? 'mod' : 'user';
@@ -2093,7 +1340,6 @@ async function openTicketConversation(id) {
         document.getElementById('replySection').style.display = 'block';
         document.getElementById('replyMessage').value = '';
 
-        // Enable/disable action buttons
         const canAct = ticket.status === 'open';
         ['sendReplyBtn','closeTicketBtn','deleteTicketBtn','forwardTicketBtn'].forEach(bid => {
             const b = document.getElementById(bid);
@@ -2125,9 +1371,7 @@ async function closeTicket() {
         await apiCall(`/api/support/tickets/${currentTicketId}/close`, { method: 'POST' });
         await logModeratorAction('Closed ticket', `#${currentTicketId}`);
         showToast('Ticket closed', 'success');
-        closeReplyPanel();
-        await loadTickets();
-        await loadStats();
+        closeReplyPanel(); await loadTickets(); await loadStats();
     } catch(e) { showToast('Failed to close', 'error'); }
 }
 
@@ -2137,9 +1381,7 @@ async function deleteTicket() {
         await apiCall(`/api/support/tickets/${currentTicketId}`, { method: 'DELETE' });
         await logModeratorAction('Deleted ticket', `#${currentTicketId}`);
         showToast('Deleted', 'success');
-        closeReplyPanel();
-        await loadTickets();
-        await loadStats();
+        closeReplyPanel(); await loadTickets(); await loadStats();
     } catch(e) { showToast('Failed to delete', 'error'); }
 }
 
@@ -2154,8 +1396,7 @@ function showForwardModal() {
     const mods = allUsers.filter(u => (u.role === 'moderator' || u.role === 'admin'));
     if (!mods.length) { showToast('No moderators available', 'error'); return; }
     document.getElementById('forwardModeratorSelect').innerHTML =
-        '<option value="">— Select —</option>' +
-        mods.map(m => `<option value="${m.id}">${escapeHtml(m.username)} (${m.role})</option>`).join('');
+        '<option value="">— Select —</option>' + mods.map(m => `<option value="${m.id}">${escapeHtml(m.username)} (${m.role})</option>`).join('');
     openModal('forwardModal');
 }
 
@@ -2163,10 +1404,7 @@ async function forwardTicket() {
     const modId = document.getElementById('forwardModeratorSelect').value;
     if (!modId) { showToast('Select a moderator', 'error'); return; }
     try {
-        await apiCall(`/api/support/tickets/${currentTicketId}/forward`, {
-            method: 'POST',
-            body: JSON.stringify({ newModeratorId: parseInt(modId) })
-        });
+        await apiCall(`/api/support/tickets/${currentTicketId}/forward`, { method: 'POST', body: JSON.stringify({ newModeratorId: parseInt(modId) }) });
         const mod = allUsers.find(u => u.id == modId);
         await logModeratorAction('Forwarded ticket', `#${currentTicketId}`, `To ${mod?.username}`);
         showToast('Forwarded', 'success');
@@ -2183,9 +1421,7 @@ async function bulkCloseTickets() {
         await apiCall('/api/support/tickets/bulk-close', { method: 'POST', body: JSON.stringify({ ticketIds: [...selectedTicketIds] }) });
         await logModeratorAction('Bulk closed', `${selectedTicketIds.size} tickets`);
         showToast('Bulk close done', 'success');
-        clearTicketSelection();
-        await loadTickets();
-        await loadStats();
+        clearTicketSelection(); await loadTickets(); await loadStats();
     } catch(e) { showToast('Bulk close failed', 'error'); }
 }
 
@@ -2196,24 +1432,79 @@ async function bulkDeleteTickets() {
         await apiCall('/api/support/tickets/bulk-delete', { method: 'POST', body: JSON.stringify({ ticketIds: [...selectedTicketIds] }) });
         await logModeratorAction('Bulk deleted', `${selectedTicketIds.size} tickets`);
         showToast('Bulk delete done', 'success');
-        clearTicketSelection();
-        await loadTickets();
-        await loadStats();
+        clearTicketSelection(); await loadTickets(); await loadStats();
     } catch(e) { showToast('Bulk delete failed', 'error'); }
 }
 
 function exportTicketsCSV() { showToast('Tickets exported', 'success'); }
 
-// ---- ANNOUNCEMENTS ----
+// ================================================
+// ---- ANNOUNCEMENTS (ENHANCED: 3 categories) ----
+// ================================================
+const ANN_CATS = {
+    internship: { label: 'Internships', icon: 'fa-user-graduate', badge: 'badge-info',
+        subs: { short: 'Short Internship (1–2 months)', moderate: 'Moderate Internship (3–4 months)', long: 'Long Internship (5+ months)' } },
+    workshop: { label: 'Workshops & Events', icon: 'fa-chalkboard-teacher', badge: 'badge-purple',
+        subs: { workshop: 'Workshop', hackathon: 'Hackathon', symposium: 'Symposium', seminar: 'Seminar', conference: 'Conference', webinar: 'Webinar', other: 'Other Event' } },
+    job: { label: 'Job Opportunities', icon: 'fa-briefcase', badge: 'badge-success',
+        subs: { fulltime: 'Full-time', parttime: 'Part-time', contract: 'Contract / Freelance', campus: 'Campus Drive', other: 'Other' } }
+};
+let annCat = 'all', annSub = 'all';
+let annMeta = {};
+try { annMeta = JSON.parse(localStorage.getItem('sarveik_annmeta') || '{}'); } catch(e) { annMeta = {}; }
+
+function getAnnInfo(a) {
+    const m = annMeta[a.id] || {};
+    return {
+        category: a.category || m.category || 'general',
+        subcategory: a.subcategory || m.subcategory || '',
+        organization: a.organization || m.organization || '',
+        mode: a.mode || m.mode || '',
+        deadline: a.deadline || m.deadline || '',
+        link: a.link || m.link || ''
+    };
+}
+
+function openAnnouncementModal() { onAnnCatChange(); openModal('announcementModal'); }
+
+function onAnnCatChange() {
+    const cat = document.getElementById('annCategory').value;
+    const subs = ANN_CATS[cat].subs;
+    document.getElementById('annSubcategory').innerHTML = Object.entries(subs).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
+}
+
 async function loadAnnouncements() {
     try { allAnnouncements = await apiCall('/api/announcements'); } catch(e) { allAnnouncements = []; }
     filterAnnouncements();
 }
 
+function setAnnCat(c) { annCat = c; annSub = 'all'; filterAnnouncements(); }
+function setAnnSub(s) { annSub = s; filterAnnouncements(); }
+
 function filterAnnouncements() {
     const term = (document.getElementById('announcementSearch')?.value || '').toLowerCase();
-    let f = [...allAnnouncements];
-    if (term) f = f.filter(a => a.title.toLowerCase().includes(term) || a.content.toLowerCase().includes(term));
+    let base = [...allAnnouncements];
+    if (term) base = base.filter(a => (a.title||'').toLowerCase().includes(term) || (a.content||'').toLowerCase().includes(term) || (getAnnInfo(a).organization||'').toLowerCase().includes(term));
+
+    // category tabs with counts
+    const counts = { all: base.length, internship: 0, workshop: 0, job: 0 };
+    base.forEach(a => { const c = getAnnInfo(a).category; if (counts[c] !== undefined) counts[c]++; });
+    const tabs = [['all', 'All', 'fa-layer-group'], ...Object.entries(ANN_CATS).map(([k, v]) => [k, v.label, v.icon])];
+    document.getElementById('annCatTabs').innerHTML = tabs.map(([k, label, icon]) =>
+        `<button class="cat-tab ${annCat===k?'active':''}" onclick="setAnnCat('${k}')"><i class="fas ${icon}"></i>${label}<span class="cnt">${counts[k]}</span></button>`).join('');
+
+    // sub chips
+    const chipsEl = document.getElementById('annSubChips');
+    if (annCat !== 'all' && ANN_CATS[annCat]) {
+        const subCounts = {};
+        base.filter(a => getAnnInfo(a).category === annCat).forEach(a => { const s = getAnnInfo(a).subcategory; subCounts[s] = (subCounts[s]||0) + 1; });
+        chipsEl.innerHTML = `<button class="chip ${annSub==='all'?'active':''}" onclick="setAnnSub('all')">All types</button>` +
+            Object.entries(ANN_CATS[annCat].subs).map(([k, v]) => `<button class="chip ${annSub===k?'active':''}" onclick="setAnnSub('${k}')">${v}${subCounts[k] ? ' (' + subCounts[k] + ')' : ''}</button>`).join('');
+    } else { chipsEl.innerHTML = ''; }
+
+    let f = base;
+    if (annCat !== 'all') f = f.filter(a => getAnnInfo(a).category === annCat);
+    if (annCat !== 'all' && annSub !== 'all') f = f.filter(a => getAnnInfo(a).subcategory === annSub);
     renderAnnouncements(f);
 }
 
@@ -2221,12 +1512,28 @@ function renderAnnouncements(anns) {
     const container = document.getElementById('announcementsList');
     if (!anns.length) { container.innerHTML = '<div class="empty-state"><i class="fas fa-newspaper"></i>No announcements</div>'; return; }
     const priorityColors = { urgent: 'badge-danger', important: 'badge-warning', normal: 'badge-info' };
-    container.innerHTML = anns.map(a => `
-        <div class="ann-card">
+    container.innerHTML = anns.map(a => {
+        const info = getAnnInfo(a);
+        const cat = ANN_CATS[info.category];
+        const subLabel = cat ? (cat.subs[info.subcategory] || '') : '';
+        const link = safeUrl(info.link);
+        return `
+        <div class="ann-card cat-${info.category}">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.5rem;">
-                <div style="flex:1;">
-                    <div class="ann-title">${escapeHtml(a.title)} ${a.priority ? `<span class="badge ${priorityColors[a.priority]||'badge-muted'}" style="font-size:0.65rem;margin-left:0.5rem;">${a.priority}</span>` : ''}</div>
+                <div style="flex:1;min-width:0;">
+                    <div class="ann-tags">
+                        ${cat ? `<span class="badge ${cat.badge}"><i class="fas ${cat.icon}"></i>${cat.label}</span>` : ''}
+                        ${subLabel ? `<span class="badge badge-muted">${escapeHtml(subLabel)}</span>` : ''}
+                        ${a.priority ? `<span class="badge ${priorityColors[a.priority]||'badge-muted'}">${escapeHtml(a.priority)}</span>` : ''}
+                    </div>
+                    <div class="ann-title">${escapeHtml(a.title)}</div>
                     <div class="ann-body">${escapeHtml(a.content)}</div>
+                    ${(info.organization || info.mode || info.deadline || link) ? `<div class="ann-meta">
+                        ${info.organization ? `<span><i class="fas fa-building"></i>${escapeHtml(info.organization)}</span>` : ''}
+                        ${info.mode ? `<span><i class="fas fa-map-marker-alt"></i>${escapeHtml(info.mode)}</span>` : ''}
+                        ${info.deadline ? `<span><i class="fas fa-hourglass-half"></i>${escapeHtml(info.deadline)}</span>` : ''}
+                        ${link ? `<span><i class="fas fa-link"></i><a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">Apply / More info</a></span>` : ''}
+                    </div>` : ''}
                     <div class="ann-footer">
                         <span><i class="fas fa-calendar-alt"></i> ${new Date(a.created_at).toLocaleString()}</span>
                         <span><i class="fas fa-user"></i> ${escapeHtml(a.author||'Moderator')}</span>
@@ -2234,22 +1541,36 @@ function renderAnnouncements(anns) {
                 </div>
                 <button class="btn btn-danger btn-sm" onclick="deleteAnnouncement(${a.id})"><i class="fas fa-trash"></i></button>
             </div>
-        </div>
-    `).join('');
+        </div>`;
+    }).join('');
 }
 
 async function createAnnouncement() {
+    const category = document.getElementById('annCategory').value;
+    const subcategory = document.getElementById('annSubcategory').value;
     const title = document.getElementById('annTitle').value.trim();
     const content = document.getElementById('annContent').value.trim();
     const priority = document.getElementById('annPriority').value;
-    if (!title || !content) { showToast('Fill all fields', 'error'); return; }
+    const organization = document.getElementById('annOrg').value.trim();
+    const mode = document.getElementById('annMode').value;
+    const deadline = document.getElementById('annDeadline').value;
+    const link = document.getElementById('annLink').value.trim();
+    const notify = document.getElementById('annNotify').checked;
+    if (!title || !content) { showToast('Fill title and content', 'error'); return; }
+    if (link && !safeUrl(link)) { showToast('Enter a valid http(s) link', 'error'); return; }
+    const payload = { title, content, priority, category, subcategory, organization, mode, deadline, link, notify };
     try {
-        await apiCall('/api/announcements', { method: 'POST', body: JSON.stringify({ title, content, priority }) });
-        await logModeratorAction('Created announcement', title);
-        showToast('Announcement published', 'success');
+        const res = await apiCall('/api/announcements', { method: 'POST', body: JSON.stringify(payload) });
+        const newId = res && typeof res === 'object' ? (res.id || res.announcementId || res.insertId) : null;
+        if (newId) { annMeta[newId] = { category, subcategory, organization, mode, deadline, link }; localStorage.setItem('sarveik_annmeta', JSON.stringify(annMeta)); }
+        if (notify && socket) socket.emit('announcement_notification', { ...payload, id: newId, author: currentUser?.username });
+        const cat = ANN_CATS[category];
+        await logModeratorAction('Created announcement', title, `${cat.label} › ${cat.subs[subcategory]}${notify ? ' · notified users' : ''}`);
+        showToast(notify ? `${cat.label} announcement published & users notified` : 'Announcement published', 'success');
+        addNotification(`Published ${cat.subs[subcategory]}: ${title}`, 'info', cat.icon);
         closeModal('announcementModal');
-        document.getElementById('annTitle').value = '';
-        document.getElementById('annContent').value = '';
+        ['annTitle','annContent','annOrg','annLink','annDeadline'].forEach(id => document.getElementById(id).value = '');
+        document.getElementById('annMode').value = '';
         loadAnnouncements();
         loadStats();
     } catch(e) { showToast('Failed to create', 'error'); }
@@ -2260,6 +1581,7 @@ async function deleteAnnouncement(id) {
     try {
         await apiCall(`/api/announcements/${id}`, { method: 'DELETE' });
         await logModeratorAction('Deleted announcement', `ID ${id}`);
+        delete annMeta[id]; localStorage.setItem('sarveik_annmeta', JSON.stringify(annMeta));
         showToast('Deleted', 'success');
         loadAnnouncements();
     } catch(e) { showToast('Failed', 'error'); }
@@ -2275,10 +1597,8 @@ async function loadActivityLog() {
 function populateActivityFilters() {
     const mods = [...new Set(activityLogsAll.map(l => l.moderator_name))].sort();
     const actions = [...new Set(activityLogsAll.map(l => l.action))].sort();
-    const modSel = document.getElementById('activityModeratorFilter');
-    modSel.innerHTML = '<option value="all">All</option>' + mods.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('');
-    const actSel = document.getElementById('activityActionFilter');
-    actSel.innerHTML = '<option value="all">All</option>' + actions.map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join('');
+    document.getElementById('activityModeratorFilter').innerHTML = '<option value="all">All</option>' + mods.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('');
+    document.getElementById('activityActionFilter').innerHTML = '<option value="all">All</option>' + actions.map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join('');
 }
 
 function applyActivityFilters() {
@@ -2370,47 +1690,188 @@ async function loadModeratorStats() {
         const ctx = document.getElementById('modStatsChart')?.getContext('2d');
         if (ctx) modStatsChart = new Chart(ctx, {
             type: 'bar',
-            data: { labels: ['Replies','Closures','Notes'], datasets: [{ label: 'My Stats', data: [stats.replies||0, stats.closures||0, stats.notes||0], backgroundColor: ['rgba(99,179,237,0.7)','rgba(79,209,197,0.7)','rgba(246,173,85,0.7)'], borderRadius: 6, borderSkipped: false }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: 'rgba(100,116,139,0.9)' }, grid: { display: false } }, y: { ticks: { color: 'rgba(100,116,139,0.9)' }, grid: { color: 'rgba(255,255,255,0.04)' } } } }
+            data: { labels: ['Replies','Closures','Notes'], datasets: [{ label: 'My Stats', data: [stats.replies||0, stats.closures||0, stats.notes||0], backgroundColor: ['rgba(43,159,216,0.75)','rgba(60,192,138,0.75)','rgba(240,178,74,0.75)'], borderRadius: 6, borderSkipped: false }] },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: 'rgba(61,98,119,0.9)' }, grid: { display: false } }, y: { ticks: { color: 'rgba(61,98,119,0.9)' }, grid: { color: 'rgba(30,90,120,0.08)' } } } }
         });
     } catch(e) { console.error(e); }
 }
 
-// ---- STAFF CONFERENCE ----
-async function loadStaffConference() {
+// ================================================
+// ---- STAFF CHAT (ENHANCED RECEIVING) ----
+// ================================================
+let staffUnread = 0, staffPendingNew = 0;
+let staffSeen = new Set();
+let chatSoundOn = localStorage.getItem('sarveik_chat_sound') !== 'off';
+let typingUsers = {}, lastTypingEmit = 0, staffPollTimer = null;
+
+function staffTabActive() { return document.getElementById('staffconference-tab').classList.contains('active'); }
+function isStaffAtBottom() {
+    const c = document.getElementById('staffMessagesArea');
+    return c.scrollHeight - c.scrollTop - c.clientHeight < 60;
+}
+
+function updateStaffUnread() {
+    const el = document.getElementById('navStaffUnread');
+    el.textContent = staffUnread > 99 ? '99+' : staffUnread;
+    el.style.display = staffUnread > 0 ? 'inline-block' : 'none';
+}
+
+function setChatStatus(online, text) {
+    document.getElementById('chatStatusDot').classList.toggle('on', !!online);
+    document.getElementById('chatOnlineCount').textContent = text;
+}
+
+function updateSoundIcon() {
+    document.querySelector('#soundToggleBtn i').className = chatSoundOn ? 'fas fa-volume-up' : 'fas fa-volume-mute';
+}
+function toggleChatSound() {
+    chatSoundOn = !chatSoundOn;
+    localStorage.setItem('sarveik_chat_sound', chatSoundOn ? 'on' : 'off');
+    updateSoundIcon();
+    showToast(chatSoundOn ? 'Message sound on' : 'Message sound muted', 'info');
+}
+function playPing() {
+    if (!chatSoundOn) return;
+    try {
+        const c = new (window.AudioContext || window.webkitAudioContext)();
+        const o = c.createOscillator(), g = c.createGain();
+        o.type = 'sine'; o.frequency.value = 880;
+        g.gain.setValueAtTime(0.001, c.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.08, c.currentTime + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.25);
+        o.connect(g); g.connect(c.destination);
+        o.start(); o.stop(c.currentTime + 0.26);
+    } catch(e) {}
+}
+function desktopNotify(title, body) {
+    try {
+        if ('Notification' in window && Notification.permission === 'granted' && document.hidden) new Notification(title, { body });
+    } catch(e) {}
+}
+
+// Single entry point for every incoming staff message (socket or polling)
+function onIncomingStaffMessage(msg) {
+    if (!msg || (msg.id && staffSeen.has(String(msg.id)))) return;
+    if (msg.id) staffSeen.add(String(msg.id));
+    if (msg.sender_id === currentUser?.id) return; // own messages are already shown locally
+    staffMessages.push(msg);
+    delete typingUsers[msg.sender_name];
+    renderTyping();
+    const name = msg.sender_name || `Moderator ${msg.sender_id}`;
+    if (staffTabActive()) {
+        const atBottom = isStaffAtBottom();
+        renderStaffMessages(atBottom, true);
+        if (!atBottom) { staffPendingNew++; showJumpPill(); }
+    } else {
+        staffUnread++;
+        updateStaffUnread();
+        addNotification(`${name}: ${String(msg.content).slice(0, 60)}`, 'info', 'fa-comments');
+    }
+    playPing();
+    desktopNotify(`Staff Lounge · ${name}`, String(msg.content).slice(0, 100));
+}
+
+function showJumpPill() {
+    const p = document.getElementById('jumpPill');
+    document.getElementById('jumpPillText').textContent = staffPendingNew > 1 ? `${staffPendingNew} new messages` : 'New message';
+    p.classList.add('show');
+}
+function hideJumpPill() { staffPendingNew = 0; document.getElementById('jumpPill').classList.remove('show'); }
+function jumpToLatest() { const c = document.getElementById('staffMessagesArea'); c.scrollTo({ top: c.scrollHeight, behavior: 'smooth' }); hideJumpPill(); }
+function onStaffScroll() { if (isStaffAtBottom()) hideJumpPill(); }
+
+function emitTyping() {
+    if (!socket || !staffGroupId) return;
+    const now = Date.now();
+    if (now - lastTypingEmit < 1500) return;
+    lastTypingEmit = now;
+    socket.emit('typing', { groupId: staffGroupId, name: currentUser?.username });
+}
+function renderTyping() {
+    const names = Object.keys(typingUsers);
+    document.getElementById('typingLine').textContent = names.length ? `${names.slice(0, 2).join(', ')} ${names.length > 1 ? 'are' : 'is'} typing…` : '';
+}
+
+// Connects to the lounge in the background so messages are received even from other tabs
+async function joinStaffLounge() {
     try {
         const loungeInfo = await apiCall('/api/staff-lounge');
         if (!loungeInfo || !loungeInfo.groupId) throw new Error('Staff Lounge not found');
         staffGroupId = loungeInfo.groupId;
-        if (socket && staffGroupId) socket.emit('join_group', staffGroupId);
+        if (socket && socket.connected) socket.emit('join_group', staffGroupId);
         const messages = await apiCall(`/api/groups/${staffGroupId}/messages?limit=100`);
         staffMessages = messages.reverse();
-        renderStaffMessages();
+        staffMessages.forEach(m => m.id && staffSeen.add(String(m.id)));
+        startStaffPolling();
+        return true;
+    } catch (err) { console.warn('Staff lounge unavailable:', err.message); return false; }
+}
+
+// Fallback: fetch new messages if the socket is down
+function startStaffPolling() {
+    clearInterval(staffPollTimer);
+    staffPollTimer = setInterval(async () => {
+        if (!staffGroupId || (socket && socket.connected)) return;
+        try {
+            const msgs = (await apiCall(`/api/groups/${staffGroupId}/messages?limit=30`)).reverse();
+            msgs.forEach(m => { if (m.id && !staffSeen.has(String(m.id))) onIncomingStaffMessage(m); });
+        } catch(e) {}
+    }, 15000);
+}
+
+async function loadStaffConference() {
+    staffUnread = 0; updateStaffUnread(); updateSoundIcon();
+    try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); } catch(e) {}
+    try {
+        if (!staffGroupId) { const ok = await joinStaffLounge(); if (!ok) throw new Error('Staff Lounge not found'); }
+        else if (socket && socket.connected) socket.emit('join_group', staffGroupId);
+        const messages = await apiCall(`/api/groups/${staffGroupId}/messages?limit=100`);
+        const fresh = messages.reverse();
+        // keep any not-yet-confirmed local messages
+        const temps = staffMessages.filter(m => String(m.id).startsWith('temp_'));
+        staffMessages = fresh.concat(temps.filter(t => !fresh.some(f => f.content === t.content && f.sender_id === t.sender_id)));
+        fresh.forEach(m => m.id && staffSeen.add(String(m.id)));
+        renderStaffMessages(true);
+        hideJumpPill();
         const members = await apiCall(`/api/groups/${staffGroupId}/members`);
         renderStaffMembers(members);
-        document.getElementById('chatOnlineCount').innerHTML = `${members.length} members`;
+        setChatStatus(socket && socket.connected, `${members.length} members · ${socket && socket.connected ? 'live' : 'reconnecting…'}`);
     } catch (err) {
         console.error('Staff lounge error:', err);
         document.getElementById('staffMessagesArea').innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i>⚠️ Could not load Staff Lounge.</div>';
-        document.getElementById('chatOnlineCount').innerHTML = 'Offline';
+        setChatStatus(false, 'Offline');
     }
 }
-function renderStaffMessages() {
+
+function renderStaffMessages(forceBottom = false, markFresh = false) {
     const container = document.getElementById('staffMessagesArea');
     if (!staffMessages.length) { container.innerHTML = '<div class="empty-state"><i class="fas fa-comments"></i>No messages yet.</div>'; return; }
+    const wasAtBottom = isStaffAtBottom();
+    const prevTop = container.scrollTop;
     const currentUserId = currentUser?.id;
-    container.innerHTML = staffMessages.map(msg => {
+    let lastDay = '', html = '';
+    staffMessages.forEach((msg, idx) => {
+        const day = new Date(msg.created_at).toDateString();
+        if (day !== lastDay) {
+            lastDay = day;
+            const label = day === new Date().toDateString() ? 'Today' : new Date(msg.created_at).toLocaleDateString();
+            html += `<div class="day-sep">${label}</div>`;
+        }
         const isOwn = (msg.sender_id === currentUserId);
         const senderName = msg.sender_name || `Moderator ${msg.sender_id}`;
-        return `
-            <div class="chat-msg ${isOwn ? 'own' : 'other'}">
+        const isLast = idx === staffMessages.length - 1;
+        html += `
+            <div class="chat-msg ${isOwn ? 'own' : 'other'} ${markFresh && isLast ? 'fresh' : ''}">
+                ${isOwn ? '' : `<div class="chat-sender">${escapeHtml(senderName)}</div>`}
                 <div class="chat-bubble">${escapeHtml(msg.content)}</div>
-                <div class="chat-msg-meta">${escapeHtml(senderName)} · ${relativeTime(msg.created_at)}</div>
-            </div>
-        `;
-    }).join('');
-    container.scrollTop = container.scrollHeight;
+                <div class="chat-msg-meta">${isOwn ? 'You' : escapeHtml(senderName)} · ${relativeTime(msg.created_at)}</div>
+            </div>`;
+    });
+    container.innerHTML = html;
+    if (forceBottom || wasAtBottom) container.scrollTop = container.scrollHeight;
+    else container.scrollTop = prevTop;
 }
+
 function renderStaffMembers(members) {
     const container = document.getElementById('staffMembersList');
     if (!members.length) { container.innerHTML = '<div style="padding:1rem;color:var(--text3);font-size:0.82rem;">No members found</div>'; return; }
@@ -2422,21 +1883,23 @@ function renderStaffMembers(members) {
         </div>
     `).join('');
 }
+
 async function sendStaffMessage() {
     const input = document.getElementById('staffMessageInput');
     const msg = input.value.trim();
     if (!msg || !staffGroupId) return;
     input.value = '';
-    if (socket) {
+    if (socket && socket.connected) {
         socket.emit('group_message', { groupId: staffGroupId, message: msg });
         staffMessages.push({ id: 'temp_'+Date.now(), sender_id: currentUser.id, sender_name: currentUser.username, content: msg, created_at: new Date().toISOString() });
-        renderStaffMessages();
+        renderStaffMessages(true);
     } else {
         try {
             await apiCall(`/api/groups/${staffGroupId}/messages`, { method: 'POST', body: JSON.stringify({ content: msg }) });
             const messages = await apiCall(`/api/groups/${staffGroupId}/messages?limit=100`);
             staffMessages = messages.reverse();
-            renderStaffMessages();
+            staffMessages.forEach(m => m.id && staffSeen.add(String(m.id)));
+            renderStaffMessages(true);
         } catch (err) { showToast('Failed to send message', 'error'); }
     }
 }
@@ -2475,22 +1938,11 @@ function exportReport() {
     showToast('Report exported', 'success');
 }
 
-// ---- CSV EXPORT ----
-function exportTableToCSV(selector, filename) {
-    const rows = []; const headers = [];
-    document.querySelectorAll(`${selector} th`).forEach(th => headers.push(th.innerText));
-    rows.push(headers.join(','));
-    document.querySelectorAll(`${selector} tbody tr`).forEach(tr => { const cells = []; tr.querySelectorAll('td').forEach(td => cells.push(`"${td.innerText.replace(/"/g,'""')}"`)); if (cells.length) rows.push(cells.join(',')); });
-    const blob = new Blob([rows.join('\n')], { type: 'text/csv' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = filename; a.click();
-    showToast('Exported CSV', 'success');
-}
-
 // ---- REFRESH ALL ----
 async function refreshAllData() {
     showToast('Refreshing all data…', 'info');
     await Promise.all([ loadStats(), loadAllUsers(), loadAllTools(), loadTickets(), loadAnnouncements(), loadActivityLog(), loadModeratorStats() ]);
-    if (document.getElementById('staffconference-tab').classList.contains('active')) loadStaffConference();
+    if (staffTabActive()) loadStaffConference();
     showToast('All data refreshed', 'success');
 }
 
@@ -2498,25 +1950,39 @@ async function refreshAllData() {
 function initSocket() {
     try {
         socket = io();
+        socket.on('connect', () => {
+            if (staffGroupId) socket.emit('join_group', staffGroupId);
+            if (staffTabActive()) setChatStatus(true, 'Live');
+        });
+        socket.on('disconnect', () => { if (staffTabActive()) setChatStatus(false, 'Reconnecting…'); });
         socket.on('new_support_ticket', d => {
             addNotification(`New ticket #${d.ticketId} from ${d.fromUser}: ${d.subject}`, 'info', 'fa-ticket-alt');
-            loadTickets();
-            loadStats();
+            loadTickets(); loadStats();
         });
-        socket.on('support_reminder', d => {
-            addNotification(`⏰ Ticket #${d.ticketId} waiting ${d.minutesSince}min`, 'warning', 'fa-clock');
-        });
+        socket.on('support_reminder', d => { addNotification(`⏰ Ticket #${d.ticketId} waiting ${d.minutesSince}min`, 'warning', 'fa-clock'); });
         socket.on('ticket_reply', d => {
             if (currentTicketId === d.ticketId) openTicketConversation(currentTicketId);
             else addNotification(`New reply on ticket #${d.ticketId}`, 'info', 'fa-reply');
             loadTickets();
         });
+        socket.on('new_announcement', d => {
+            addNotification(`New announcement: ${d?.title || ''}`, 'info', 'fa-bullhorn');
+            loadAnnouncements();
+        });
         socket.on('group_message', (data) => {
-            if (staffGroupId && data.groupId === staffGroupId) {
-                staffMessages.push({ id: data.id || Date.now(), sender_id: data.from, sender_name: data.fromName || `Moderator ${data.from}`, content: data.message, created_at: data.timestamp || new Date().toISOString() });
-                if (document.getElementById('staffconference-tab').classList.contains('active')) renderStaffMessages();
-                else addNotification('New message in Staff Lounge', 'info', 'fa-comments');
-            }
+            if (!staffGroupId || data.groupId !== staffGroupId) return;
+            onIncomingStaffMessage({
+                id: data.id || null,
+                sender_id: data.from,
+                sender_name: data.fromName || `Moderator ${data.from}`,
+                content: data.message,
+                created_at: data.timestamp || new Date().toISOString()
+            });
+        });
+        socket.on('typing', (d) => {
+            if (!d || d.groupId !== staffGroupId || d.name === currentUser?.username) return;
+            typingUsers[d.name] = true; renderTyping();
+            setTimeout(() => { delete typingUsers[d.name]; renderTyping(); }, 3000);
         });
     } catch(e) { console.warn('Socket not available:', e.message); }
 }
@@ -2526,7 +1992,10 @@ async function init() {
     initTheme();
     initSocket();
     if (await checkSession()) {
+        updateSoundIcon();
+        onAnnCatChange();
         loadStats();
+        joinStaffLounge();
         setTimeout(() => {
             loadAllUsers();
             loadAllTools();
