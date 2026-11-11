@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us – Sarveik</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root {
+            --blue: #5ab9ea;
+            --blue-deep: #1f7fb0;
+            --green: #8ddcb4;
+            --green-deep: #27906a;
+            --text: #1b3342;
+            --body: #3f5a69;
+            --muted: #5f7885;
+            --border: rgba(42, 139, 191, 0.18);
+            --grad: linear-gradient(135deg, #7cc8f0 0%, #9be3c3 100%);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #e6f5fd 0%, #eefaf3 100%);
+            background-attachment: fixed;
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 2rem 1rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed; inset: 0;
+            background-image:
+                radial-gradient(circle at 10% 20%, rgba(124, 200, 240, 0.30) 0%, transparent 35%),
+                radial-gradient(circle at 90% 70%, rgba(155, 227, 195, 0.35) 0%, transparent 40%);
+            pointer-events: none;
+            z-index: -2;
+        }
+
+        body::after {
+            content: '';
+            position: fixed; inset: 0;
+            background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" opacity="0.07"><path fill="none" stroke="%232a8bbf" stroke-width="1" d="M0 400 L800 400 M400 0 L400 800 M200 200 L600 600 M200 600 L600 200"/><circle cx="400" cy="400" r="100" stroke="%232a8bbf" stroke-width="0.5" fill="none"/></svg>');
+            background-repeat: repeat;
+            background-size: 80px 80px;
+            pointer-events: none;
+            z-index: -1;
+            animation: floatGrid 60s linear infinite;
+        }
+
+        @keyframes floatGrid {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(80px, 80px); }
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(20px);
+            border-radius: 32px;
+            border: 1px solid var(--border);
+            box-shadow: 0 25px 50px -12px rgba(42, 139, 191, 0.22);
+            overflow: hidden;
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            background: linear-gradient(135deg, rgba(124, 200, 240, 0.35), rgba(155, 227, 195, 0.4));
+            padding: 2rem 2rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #1f7fb0, #27906a);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 0.5rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header h1 i {
+            background: none;
+            -webkit-background-clip: unset;
+            background-clip: unset;
+            color: var(--blue-deep);
+            font-size: 2rem;
+        }
+
+        .content { padding: 2rem; }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 1.8rem 0 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid rgba(39, 144, 106, 0.4);
+            display: inline-block;
+            color: var(--blue-deep);
+        }
+        h2 i { color: var(--green-deep); }
+        .content > h2:first-child { margin-top: 0; }
+
+        p { margin-bottom: 1rem; color: var(--body); }
+        strong { color: var(--text); }
+
+        a {
+            color: var(--blue-deep);
+            text-decoration: none;
+            transition: all 0.2s;
+            border-bottom: 1px dotted transparent;
+        }
+        a:hover { color: var(--green-deep); border-bottom-color: var(--green-deep); }
+        a:focus-visible { outline: 3px solid var(--blue-deep); outline-offset: 3px; }
+
+        /* What we offer */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        .info-card {
+            background: #f1f9fd;
+            border-radius: 16px;
+            padding: 1rem;
+            border: 1px solid var(--border);
+            transition: transform 0.2s, background 0.2s, border-color 0.2s;
+        }
+        .info-card:hover {
+            transform: translateY(-4px);
+            background: #eafaf2;
+            border-color: rgba(39, 144, 106, 0.35);
+        }
+        .info-card i {
+            font-size: 1.8rem;
+            color: var(--blue-deep);
+            margin-bottom: 0.5rem;
+            display: inline-block;
+        }
+        .info-card h4 { font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem; color: var(--text); }
+        .info-card p { font-size: 0.85rem; margin-bottom: 0; }
+
+        /* Founder */
+        .founder {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 2rem;
+            align-items: center;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 1.5rem;
+            margin: 1rem 0 1.5rem;
+            box-shadow: 0 10px 30px rgba(42, 139, 191, 0.10);
+        }
+        .founder-photo {
+            width: 100%;
+            aspect-ratio: 1 / 1;
+            border-radius: 20px;
+            padding: 5px;
+            background: var(--grad);
+        }
+        .founder-photo img {
+            width: 100%; height: 100%;
+            object-fit: cover;
+            object-position: center 20%;
+            border-radius: 16px;
+            display: block;
+        }
+        .founder-role {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            font-size: 0.8rem; font-weight: 600;
+            color: var(--green-deep);
+            background: rgba(141, 220, 180, 0.3);
+            padding: 0.25rem 0.8rem;
+            border-radius: 50px;
+            margin-bottom: 0.6rem;
+        }
+        .founder-name {
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            line-height: 1.15;
+            color: var(--text);
+            margin-bottom: 1.1rem;
+        }
+        .founder-links { display: flex; flex-direction: column; gap: 0.6rem; }
+        .f-link {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.6rem 0.85rem;
+            border-radius: 14px;
+            background: #eef7fc;
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-size: 0.92rem; font-weight: 500;
+            word-break: break-all;
+        }
+        .f-link:hover { border-color: var(--blue); background: #e4f3fb; color: var(--text); }
+        .f-link i {
+            width: 32px; height: 32px; flex-shrink: 0;
+            border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--grad); color: #17475e; font-size: 0.85rem;
+        }
+
+        .footer-links {
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        .btn-back {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            background: var(--grad);
+            color: #17475e;
+            padding: 0.75rem 1.5rem;
+            border-radius: 40px;
+            font-weight: 600;
+            transition: all 0.3s;
+            box-shadow: 0 4px 10px rgba(42, 139, 191, 0.18);
+            text-decoration: none;
+            border: none;
+        }
+        .btn-back:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(42, 139, 191, 0.3);
+            color: #17475e;
+        }
+
+        @media (max-width: 640px) {
+            .container { margin: 0; border-radius: 24px; }
+            .header h1 { font-size: 1.8rem; }
+            .content { padding: 1.5rem; }
+            h2 { font-size: 1.3rem; }
+            .founder { grid-template-columns: 1fr; gap: 1.25rem; padding: 1.25rem; }
+            .founder-photo { max-width: 240px; margin: 0 auto; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation: none !important; transition: none !important; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1><i class="fas fa-users"></i> About Us</h1>
+        <p style="margin-top: 0.5rem; font-size: 0.95rem;">Meet Sarveik and the person behind it.</p>
+    </div>
+
+    <div class="content">
+        <h2><i class="fas fa-compass"></i> Who We Are</h2>
+        <p><strong>Sarveik</strong> is a curated directory of tools for students, teachers, developers, gamers, shoppers, music enthusiasts, and more. We help you find the right tool quickly, and we add a community layer on top so you can discover, rate, and share what works.</p>
+
+        <h2><i class="fas fa-th-large"></i> What We Offer</h2>
+        <div class="card-grid">
+            <div class="info-card">
+                <i class="fas fa-folder-open"></i>
+                <h4>Tool Directory</h4>
+                <p>Browse and search a curated collection of third‑party tools across many categories.</p>
+            </div>
+            <div class="info-card">
+                <i class="fas fa-robot"></i>
+                <h4>AI Assistant</h4>
+                <p>Ask questions about tools and get quick answers to help you choose.</p>
+            </div>
+            <div class="info-card">
+                <i class="fas fa-coins"></i>
+                <h4>Credits &amp; Referrals</h4>
+                <p>Earn credits through daily login, referrals, and approved tool submissions.</p>
+            </div>
+            <div class="info-card">
+                <i class="fas fa-user-friends"></i>
+                <h4>Community</h4>
+                <p>Build a profile, connect with friends, chat, rate tools, and save favorites.</p>
+            </div>
+        </div>
+
+        <h2><i class="fas fa-user-tie"></i> Meet the Founder</h2>
+        <div class="founder">
+            <div class="founder-photo">
+                <img src="founder.jpg" alt="Gonupalli Ranjith Kumar, founder of Sarveik">
+            </div>
+            <div class="founder-info">
+                <span class="founder-role"><i class="fas fa-star"></i> Founder of Sarveik</span>
+                <div class="founder-name">Gonupalli Ranjith Kumar</div>
+                <div class="founder-links">
+                    <a class="f-link" href="mailto:ranjithkumar@sarveik.com"><i class="fas fa-envelope"></i> ranjithkumar@sarveik.com</a>
+                    <a class="f-link" href="mailto:ranjithkumargonupalli@gmail.com"><i class="fas fa-at"></i> ranjithkumargonupalli@gmail.com</a>
+                    <!-- Replace YOUR-LINKEDIN-USERNAME with your real LinkedIn profile name -->
+                    <a class="f-link" href="https://www.linkedin.com/in/YOUR-LINKEDIN-USERNAME" target="_blank" rel="noopener noreferrer"><i class="fab fa-linkedin-in"></i> Ranjithkumar Gonupalli on LinkedIn</a>
+                </div>
+            </div>
+        </div>
+
+        <h2><i class="fas fa-envelope"></i> Get in Touch</h2>
+        <p>Questions, feedback, or partnership ideas? Write to us at <a href="mailto:ranjithkumar@sarveik.com">ranjithkumar@sarveik.com</a>.</p>
+
+        <div class="footer-links">
+            <a href="/main.html" class="btn-back"><i class="fas fa-arrow-left"></i> Back to Home</a>
+            <a href="/privacy.html" class="btn-back" style="background: #e4f3fb;"><i class="fas fa-shield-alt"></i> Privacy Policy</a>
+            <a href="/terms.html" class="btn-back" style="background: #e4f3fb;"><i class="fas fa-file-contract"></i> Terms of Service</a>
+            <a href="/dmca.html" class="btn-back" style="background: #e4f3fb;"><i class="fas fa-copyright"></i> DMCA</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>

@@ -993,6 +993,7 @@
         <!-- FOOTER -->
         <div class="footer">
             <p>&copy; 2024 Sarveik. All rights reserved. &nbsp;|&nbsp;
+               <a href="about.html">About Us</a> &nbsp;|&nbsp;
                <a href="privacy.html">Privacy Policy</a> &nbsp;|&nbsp;
                <a href="terms.html">Terms of Service</a>
             </p>
@@ -1144,8 +1145,11 @@
         let resetEmailGlobal = '';
         let usernameFormatOk = false;
 
-        /* ── PERSISTENT LOGIN SETTINGS ── */
-        const AUTH_DAYS = 30;
+        /* ── PERSISTENT LOGIN SETTINGS ──
+           45-day session. Every successful login (including a re-login after logout)
+           stamps a fresh timestamp, so the 45 days restart from that moment.
+           Each verified visit also renews the window (rolling session). */
+        const AUTH_DAYS = 45;
         const AUTH_MAX_AGE_MS = AUTH_DAYS * 24 * 60 * 60 * 1000;
 
         /* ── MAINTENANCE STORAGE KEYS (declared early so logout can clear them) ── */
