@@ -1,4 +1,4 @@
-// utils/emailService.js - Resend version (drop-in replacement) - Enhanced
+// utils/emailService.js - Resend version (Enhanced Light Blue/Green UI)
 const { Resend } = require('resend');
 
 // ========== RESEND CLIENT (lazy init) ==========
@@ -13,7 +13,7 @@ function getResendClient() {
     return resend;
 }
 
-// ========== HTML ESCAPING (same as original) ==========
+// ========== HTML ESCAPING ==========
 const escapeHtml = (str) => {
     if (!str) return '';
     return str
@@ -39,7 +39,7 @@ async function withRetry(fn, retries = 3, delayMs = 500) {
     }
 }
 
-// ========== CORE SEND FUNCTION (using Resend) ==========
+// ========== CORE SEND FUNCTION ==========
 const sendEmail = async (to, subject, html) => {
     if (!process.env.RESEND_API_KEY) {
         console.error('❌ RESEND_API_KEY missing. Emails will not be sent.');
@@ -51,7 +51,7 @@ const sendEmail = async (to, subject, html) => {
         return { success: false, error: 'Missing required email fields (to, subject, html)' };
     }
 
-    const from = process.env.EMAIL_FROM || 'Acme <onboarding@resend.dev>';
+    const from = process.env.EMAIL_FROM || 'Sarveik <onboarding@resend.dev>';
 
     try {
         const client = getResendClient();
@@ -72,7 +72,28 @@ const sendEmail = async (to, subject, html) => {
     }
 };
 
-// ========== EXPORTED FUNCTIONS (exactly as original, enhanced internals) ==========
+// ========== BASE TEMPLATE WRAPPER ==========
+const wrapTemplate = (content) => `
+    <div style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f3fbff; background-image: linear-gradient(135deg, #e0f2fe 0%, #d1fae5 100%); padding: 40px 20px; min-height: 100%;">
+        <div style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 40px rgba(14, 116, 144, 0.15);">
+            <!-- Header -->
+            <div style="background: linear-gradient(135deg, #0ea5e9 0%, #10b981 100%); padding: 30px 40px; text-align: center;">
+                <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">Sarveik</h1>
+            </div>
+            <!-- Content -->
+            <div style="padding: 40px;">
+                ${content}
+            </div>
+            <!-- Footer -->
+            <div style="background: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
+                <p style="margin: 0; font-size: 13px; color: #64748b;">&copy; ${new Date().getFullYear()} Sarveik. All rights reserved.</p>
+                <p style="margin: 5px 0 0 0; font-size: 12px; color: #94a3b8;">This is an automated message, please do not reply.</p>
+            </div>
+        </div>
+    </div>
+`;
+
+// ========== EXPORTED FUNCTIONS ==========
 
 const sendWelcomeEmail = async (userEmail, username) => {
     if (!userEmail || !username) {
@@ -80,23 +101,22 @@ const sendWelcomeEmail = async (userEmail, username) => {
         return { success: false, error: 'Missing fields' };
     }
     const safeUsername = escapeHtml(username);
-    const html = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px;">
-            <div style="background: white; padding: 30px; border-radius: 10px;">
-                <h1 style="color: #667eea; margin-top: 0;">Welcome, ${safeUsername}! 🎉</h1>
-                <p style="color: #444; font-size: 16px;">Thank you for registering. We're excited to have you on board!</p>
-                <p style="color: #444;">You can now log in and explore all the features available to you.</p>
-                <div style="margin: 24px 0;">
-                    <a href="${escapeHtml(process.env.FRONTEND_URL || 'http://localhost:3000')}/dashboard.html"
-                       style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">
-                        Go to Dashboard
-                    </a>
-                </div>
-                <p style="font-size: 12px; color: #999; margin-top: 20px;">If you didn't create this account, please contact support immediately.</p>
-            </div>
+    const frontendUrl = escapeHtml(process.env.FRONTEND_URL || 'http://localhost:3000');
+    
+    const content = `
+        <h2 style="color: #0b2a3a; margin-top: 0; font-size: 24px; font-weight: 700;">Welcome aboard, ${safeUsername}! 🎉</h2>
+        <p style="color: #3f6477; font-size: 16px; line-height: 1.6;">Thank you for registering on Sarveik. We are thrilled to have you join our community.</p>
+        <p style="color: #3f6477; font-size: 16px; line-height: 1.6;">You can now explore all the AI-powered tools, connect with friends, and boost your productivity.</p>
+        <div style="text-align: center; margin: 35px 0;">
+            <a href="${frontendUrl}/dashboard.html" style="background: linear-gradient(135deg, #0ea5e9, #10b981); color: white; padding: 16px 32px; text-decoration: none; border-radius: 50px; font-weight: 700; font-size: 16px; display: inline-block; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);">
+                Go to Dashboard
+            </a>
+        </div>
+        <div style="background: #f0fdf4; border-left: 4px solid #10b981; padding: 15px; border-radius: 8px; margin-top: 30px;">
+            <p style="margin: 0; font-size: 14px; color: #047857;">If you didn't create this account, please contact our support team immediately.</p>
         </div>
     `;
-    return sendEmail(userEmail, 'Welcome to Our Platform! 🎉', html);
+    return sendEmail(userEmail, 'Welcome to Sarveik! 🎉', wrapTemplate(content));
 };
 
 const sendPasswordChangeNotification = async (userEmail, username) => {
@@ -106,71 +126,24 @@ const sendPasswordChangeNotification = async (userEmail, username) => {
     }
     const safeUsername = escapeHtml(username);
     const safeTime = escapeHtml(new Date().toLocaleString());
-    const html = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px; background: #f4f4f4; border-radius: 12px;">
-            <div style="background: white; padding: 30px; border-radius: 10px;">
-                <h2 style="color: #dc3545; margin-top: 0;">🔐 Password Changed</h2>
-                <p style="color: #444;">Hello <strong>${safeUsername}</strong>,</p>
-                <p style="color: #444;">Your password was successfully changed on <strong>${safeTime}</strong>.</p>
-                <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                    <p style="margin: 0; color: #856404;">⚠️ If you did not make this change, please reset your password immediately and contact support.</p>
-                </div>
-                <a href="${escapeHtml(process.env.FRONTEND_URL || 'http://localhost:3000')}/forgot-password.html"
-                   style="display: inline-block; background: #dc3545; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px; margin-top: 10px;">
-                    Reset Password
-                </a>
-                <p style="font-size: 12px; color: #999; margin-top: 20px;">This is an automated security notification.</p>
-            </div>
+    const frontendUrl = escapeHtml(process.env.FRONTEND_URL || 'http://localhost:3000');
+    
+    const content = `
+        <h2 style="color: #0b2a3a; margin-top: 0; font-size: 24px; font-weight: 700;">🔐 Password Changed</h2>
+        <p style="color: #3f6477; font-size: 16px; line-height: 1.6;">Hello <strong>${safeUsername}</strong>,</p>
+        <p style="color: #3f6477; font-size: 16px; line-height: 1.6;">Your password was successfully changed on <strong>${safeTime}</strong>.</p>
+        
+        <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 20px; border-radius: 8px; margin: 25px 0;">
+            <p style="margin: 0; color: #991b1b; font-size: 15px; line-height: 1.5;">⚠️ If you did not make this change, please reset your password immediately and contact support to secure your account.</p>
+        </div>
+        
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="${frontendUrl}/forgot-password.html" style="background: #ef4444; color: white; padding: 14px 28px; text-decoration: none; border-radius: 50px; font-weight: 700; font-size: 15px; display: inline-block;">
+                Reset Password
+            </a>
         </div>
     `;
-    return sendEmail(userEmail, 'Your Password Was Changed', html);
-};
-
-const sendAdminAlert = async (newUser) => {
-    const adminEmail = process.env.ADMIN_EMAIL;
-    if (!adminEmail) {
-        console.warn('⚠️ ADMIN_EMAIL not set, skipping admin alert');
-        return { success: false, error: 'ADMIN_EMAIL not configured' };
-    }
-    if (!newUser) {
-        console.error('❌ sendAdminAlert: missing newUser object');
-        return { success: false, error: 'Missing newUser' };
-    }
-
-    // Support both { subject, message } and { username, email } shapes
-    if (newUser.subject && newUser.message) {
-        const html = `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f4f4f4; border-radius: 10px;">
-                <div style="background: white; padding: 20px; border-radius: 10px;">
-                    <h2 style="color: #667eea; margin-top: 0;">🔔 Admin Alert</h2>
-                    <p style="color: #444;"><strong>${escapeHtml(newUser.subject)}</strong></p>
-                    <p style="color: #444;">${escapeHtml(newUser.message)}</p>
-                    <p style="font-size: 12px; color: #999;">Time: ${escapeHtml(new Date().toLocaleString())}</p>
-                </div>
-            </div>
-        `;
-        return sendEmail(adminEmail, `🔔 ${escapeHtml(newUser.subject)}`, html);
-    }
-
-    const safeUsername = escapeHtml(newUser.username || 'Unknown');
-    const safeEmail = escapeHtml(newUser.email || 'Unknown');
-    const html = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f4f4f4; border-radius: 10px;">
-            <div style="background: white; padding: 20px; border-radius: 10px;">
-                <h2 style="color: #667eea; margin-top: 0;">🔔 New User Registered</h2>
-                <ul style="color: #444;">
-                    <li><strong>Username:</strong> ${safeUsername}</li>
-                    <li><strong>Email:</strong> ${safeEmail}</li>
-                    <li><strong>Time:</strong> ${escapeHtml(new Date().toLocaleString())}</li>
-                </ul>
-                <a href="${escapeHtml(process.env.FRONTEND_URL || 'http://localhost:3000')}/admin-dashboard.html"
-                   style="display: inline-block; background: #667eea; color: white; padding: 10px 20px; text-decoration: none; border-radius: 8px;">
-                    View Admin Panel
-                </a>
-            </div>
-        </div>
-    `;
-    return sendEmail(adminEmail, '🔔 New User Registered', html);
+    return sendEmail(userEmail, 'Your Sarveik Password Was Changed', wrapTemplate(content));
 };
 
 const sendOtpEmail = async (userEmail, otp) => {
@@ -179,23 +152,22 @@ const sendOtpEmail = async (userEmail, otp) => {
         return { success: false, error: 'Missing fields' };
     }
     const safeOtp = escapeHtml(String(otp));
-    const html = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px;">
-            <div style="background: white; padding: 30px; border-radius: 10px; text-align: center;">
-                <h2 style="color: #667eea; margin-top: 0;">Email Verification</h2>
-                <p style="color: #444; font-size: 16px;">Your One-Time Password (OTP) is:</p>
-                <div style="background: #f0f4ff; padding: 20px; font-size: 36px; letter-spacing: 8px; font-weight: bold; color: #667eea; border-radius: 8px; border: 2px dashed #667eea; margin: 20px 0;">
-                    ${safeOtp}
-                </div>
-                <p style="color: #444;">This OTP is valid for <strong>10 minutes</strong>.</p>
-                <div style="background: #fff3cd; padding: 12px; border-radius: 8px; margin-top: 16px;">
-                    <p style="margin: 0; font-size: 13px; color: #856404;">⚠️ Never share this OTP with anyone. We will never ask for it.</p>
-                </div>
-                <p style="font-size: 12px; color: #999; margin-top: 20px;">If you didn't request this, please ignore this email.</p>
-            </div>
+    
+    const content = `
+        <h2 style="color: #0b2a3a; margin-top: 0; font-size: 24px; font-weight: 700; text-align: center;">Email Verification</h2>
+        <p style="color: #3f6477; font-size: 16px; line-height: 1.6; text-align: center;">Your One-Time Password (OTP) for registration is:</p>
+        
+        <div style="background: #f0fdf4; border: 2px dashed #10b981; padding: 25px; font-size: 42px; letter-spacing: 12px; font-weight: 800; color: #047857; border-radius: 16px; margin: 30px 0; text-align: center; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.1);">
+            ${safeOtp}
+        </div>
+        
+        <p style="color: #3f6477; font-size: 15px; line-height: 1.6; text-align: center;">This OTP is valid for <strong>10 minutes</strong>.</p>
+        
+        <div style="background: #fffbeb; border: 1px solid #fcd34d; padding: 15px; border-radius: 8px; margin-top: 25px; text-align: center;">
+            <p style="margin: 0; font-size: 14px; color: #92400e;">⚠️ Never share this OTP with anyone. Sarveik staff will never ask for it.</p>
         </div>
     `;
-    return sendEmail(userEmail, 'Your OTP for Registration', html);
+    return sendEmail(userEmail, 'Your Sarveik Verification Code', wrapTemplate(content));
 };
 
 const sendPasswordResetOtp = async (userEmail, otp) => {
@@ -204,91 +176,22 @@ const sendPasswordResetOtp = async (userEmail, otp) => {
         return { success: false, error: 'Missing fields' };
     }
     const safeOtp = escapeHtml(String(otp));
-    const html = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px;">
-            <div style="background: white; padding: 30px; border-radius: 10px; text-align: center;">
-                <h2 style="color: #667eea; margin-top: 0;">🔑 Reset Your Password</h2>
-                <p style="color: #444; font-size: 16px;">You requested to reset your password. Use the following OTP:</p>
-                <div style="background: #f0f4ff; padding: 20px; font-size: 36px; letter-spacing: 8px; font-weight: bold; color: #667eea; border-radius: 8px; border: 2px dashed #667eea; margin: 20px 0;">
-                    ${safeOtp}
-                </div>
-                <p style="color: #444;">This OTP is valid for <strong>10 minutes</strong>.</p>
-                <div style="background: #fff3cd; padding: 12px; border-radius: 8px; margin-top: 16px;">
-                    <p style="margin: 0; font-size: 13px; color: #856404;">⚠️ If you did not request a password reset, please secure your account immediately.</p>
-                </div>
-                <p style="font-size: 12px; color: #999; margin-top: 20px;">If you didn't request this, please ignore this email.</p>
-            </div>
+    
+    const content = `
+        <h2 style="color: #0b2a3a; margin-top: 0; font-size: 24px; font-weight: 700; text-align: center;">🔑 Reset Your Password</h2>
+        <p style="color: #3f6477; font-size: 16px; line-height: 1.6; text-align: center;">We received a request to reset your password. Use the following OTP to proceed:</p>
+        
+        <div style="background: #eff6ff; border: 2px dashed #0ea5e9; padding: 25px; font-size: 42px; letter-spacing: 12px; font-weight: 800; color: #0369a1; border-radius: 16px; margin: 30px 0; text-align: center; box-shadow: 0 4px 15px rgba(14, 165, 233, 0.1);">
+            ${safeOtp}
+        </div>
+        
+        <p style="color: #3f6477; font-size: 15px; line-height: 1.6; text-align: center;">This OTP is valid for <strong>10 minutes</strong>.</p>
+        
+        <div style="background: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; border-radius: 8px; margin-top: 25px;">
+            <p style="margin: 0; font-size: 14px; color: #991b1b;">⚠️ If you did not request a password reset, please ignore this email or contact support if you have concerns.</p>
         </div>
     `;
-    return sendEmail(userEmail, 'Password Reset Request', html);
-};
-
-const sendFriendRequestEmail = async (userEmail, requesterUsername) => {
-    if (!userEmail || !requesterUsername) {
-        console.error('❌ sendFriendRequestEmail: missing fields');
-        return { success: false, error: 'Missing fields' };
-    }
-    const safeRequester = escapeHtml(requesterUsername);
-    const frontendUrl = escapeHtml(process.env.FRONTEND_URL || 'http://localhost:3000');
-    const html = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px;">
-            <div style="background: white; padding: 30px; border-radius: 10px; text-align: center;">
-                <h2 style="color: #667eea; margin-top: 0;">👥 New Friend Request!</h2>
-                <p style="color: #444; font-size: 16px;"><strong>${safeRequester}</strong> has sent you a friend request.</p>
-                <p style="color: #666;">Log in to your account to accept or decline.</p>
-                <a href="${frontendUrl}/friends.html"
-                   style="display: inline-block; background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; margin-top: 16px;">
-                    View Friend Request
-                </a>
-                <p style="font-size: 12px; color: #999; margin-top: 20px;">You're receiving this because someone sent you a friend request.</p>
-            </div>
-        </div>
-    `;
-    return sendEmail(userEmail, 'New Friend Request', html);
-};
-
-const sendWeeklyDigest = async (userEmail, username, newToolsCount, pendingRequestsCount, unreadMessagesCount) => {
-    if (!userEmail || !username) {
-        console.error('❌ sendWeeklyDigest: missing userEmail or username');
-        return { success: false, error: 'Missing fields' };
-    }
-    const safeUsername = escapeHtml(username);
-    const safeTools = escapeHtml(String(newToolsCount || 0));
-    const safePending = escapeHtml(String(pendingRequestsCount || 0));
-    const safeUnread = escapeHtml(String(unreadMessagesCount || 0));
-    const frontendUrl = escapeHtml(process.env.FRONTEND_URL || 'http://localhost:3000');
-    const html = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 30px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 12px;">
-            <div style="background: white; padding: 30px; border-radius: 10px;">
-                <h2 style="color: #667eea; margin-top: 0;">📊 Your Weekly Digest</h2>
-                <p style="color: #444;">Hi <strong>${safeUsername}</strong>, here's what happened this week:</p>
-                <div style="display: flex; gap: 12px; margin: 20px 0; flex-wrap: wrap;">
-                    <div style="flex: 1; min-width: 140px; background: #f0f4ff; padding: 16px; border-radius: 8px; text-align: center;">
-                        <div style="font-size: 28px; font-weight: bold; color: #667eea;">${safeTools}</div>
-                        <div style="color: #666; font-size: 13px; margin-top: 4px;">📚 New Tools Added</div>
-                    </div>
-                    <div style="flex: 1; min-width: 140px; background: #f0fff4; padding: 16px; border-radius: 8px; text-align: center;">
-                        <div style="font-size: 28px; font-weight: bold; color: #10b981;">${safePending}</div>
-                        <div style="color: #666; font-size: 13px; margin-top: 4px;">👥 Friend Requests</div>
-                    </div>
-                    <div style="flex: 1; min-width: 140px; background: #fff5f5; padding: 16px; border-radius: 8px; text-align: center;">
-                        <div style="font-size: 28px; font-weight: bold; color: #ef4444;">${safeUnread}</div>
-                        <div style="color: #666; font-size: 13px; margin-top: 4px;">💬 Unread Messages</div>
-                    </div>
-                </div>
-                <div style="text-align: center; margin-top: 24px;">
-                    <a href="${frontendUrl}"
-                       style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; padding: 12px 28px; text-decoration: none; border-radius: 8px; font-weight: bold;">
-                        Visit Platform
-                    </a>
-                </div>
-                <p style="margin-top: 24px; font-size: 12px; color: #999; text-align: center;">
-                    If you no longer wish to receive these emails, you can disable them in your profile settings.
-                </p>
-            </div>
-        </div>
-    `;
-    return sendEmail(userEmail, 'Your Weekly Digest 📊', html);
+    return sendEmail(userEmail, 'Sarveik Password Reset Request', wrapTemplate(content));
 };
 
 const sendAccountDeletionAlert = async (deletedUser) => {
@@ -301,51 +204,48 @@ const sendAccountDeletionAlert = async (deletedUser) => {
         console.error('❌ sendAccountDeletionAlert: missing deletedUser object');
         return { success: false, error: 'Missing deletedUser' };
     }
+    
     const safeUsername = escapeHtml(deletedUser.username || 'Unknown');
     const safeEmail = escapeHtml(deletedUser.email || 'Unknown');
     const safeUserId = escapeHtml(String(deletedUser.id || 'Unknown'));
-    const html = `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #f4f4f4; border-radius: 12px;">
-            <div style="background: white; padding: 30px; border-radius: 10px;">
-                <h2 style="color: #ef4444; margin-top: 0;">⚠️ Account Deleted</h2>
-                <p style="color: #444;">A user has deleted their account:</p>
-                <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
-                    <tr style="background: #f9f9f9;">
-                        <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold; color: #555; width: 40%;">Username</td>
-                        <td style="padding: 10px; border: 1px solid #e0e0e0; color: #333;">${safeUsername}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold; color: #555;">Email</td>
-                        <td style="padding: 10px; border: 1px solid #e0e0e0; color: #333;">${safeEmail}</td>
-                    </tr>
-                    <tr style="background: #f9f9f9;">
-                        <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold; color: #555;">User ID</td>
-                        <td style="padding: 10px; border: 1px solid #e0e0e0; color: #333;">${safeUserId}</td>
-                    </tr>
-                    <tr>
-                        <td style="padding: 10px; border: 1px solid #e0e0e0; font-weight: bold; color: #555;">Deleted At</td>
-                        <td style="padding: 10px; border: 1px solid #e0e0e0; color: #333;">${escapeHtml(new Date().toLocaleString())}</td>
-                    </tr>
-                </table>
-                <p style="color: #666; font-size: 13px;">If this was not intended, please review your admin logs.</p>
-            </div>
-        </div>
+    
+    const content = `
+        <h2 style="color: #ef4444; margin-top: 0; font-size: 24px; font-weight: 700;">⚠️ Account Deleted</h2>
+        <p style="color: #3f6477; font-size: 16px; line-height: 1.6;">A user has deleted their account. Here are the details:</p>
+        
+        <table style="width: 100%; border-collapse: collapse; margin: 25px 0; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+            <tr style="background: #f3fbff; border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 15px; font-weight: 700; color: #0ea5e9; width: 40%;">Username</td>
+                <td style="padding: 15px; color: #0b2a3a;">${safeUsername}</td>
+            </tr>
+            <tr style="background: #ffffff; border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 15px; font-weight: 700; color: #0ea5e9;">Email</td>
+                <td style="padding: 15px; color: #0b2a3a;">${safeEmail}</td>
+            </tr>
+            <tr style="background: #f3fbff; border-bottom: 1px solid #e2e8f0;">
+                <td style="padding: 15px; font-weight: 700; color: #0ea5e9;">User ID</td>
+                <td style="padding: 15px; color: #0b2a3a;">${safeUserId}</td>
+            </tr>
+            <tr style="background: #ffffff;">
+                <td style="padding: 15px; font-weight: 700; color: #0ea5e9;">Deleted At</td>
+                <td style="padding: 15px; color: #0b2a3a;">${escapeHtml(new Date().toLocaleString())}</td>
+            </tr>
+        </table>
+        
+        <p style="color: #64748b; font-size: 14px; text-align: center;">This is an automated notification from the Sarveik system.</p>
     `;
-    return sendEmail(adminEmail, '⚠️ User Account Deleted', html);
+    return sendEmail(adminEmail, '⚠️ Sarveik: User Account Deleted', wrapTemplate(content));
 };
 
-// ========== UTILITY EXPORTS (matching original) ==========
+// ========== UTILITY EXPORTS ==========
 const getEmailQueueStats = () => ({ queueLength: 0, activeJobs: 0, totalResults: 0 });
 const isEmailServiceReady = () => !!process.env.RESEND_API_KEY;
 
 module.exports = {
     sendWelcomeEmail,
     sendPasswordChangeNotification,
-    sendAdminAlert,
     sendOtpEmail,
     sendPasswordResetOtp,
-    sendFriendRequestEmail,
-    sendWeeklyDigest,
     sendAccountDeletionAlert,
     getEmailQueueStats,
     isEmailServiceReady,

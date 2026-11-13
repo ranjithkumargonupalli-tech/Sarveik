@@ -41,12 +41,9 @@ const crypto = require('crypto');
 
 const { 
     sendWelcomeEmail, 
-    sendPasswordChangeNotification, 
-    sendAdminAlert, 
+    sendPasswordChangeNotification,  
     sendOtpEmail,
     sendPasswordResetOtp,
-    sendFriendRequestEmail,
-    sendWeeklyDigest,
     sendAccountDeletionAlert 
 } = require('./utils/emailService');
 
@@ -5720,6 +5717,8 @@ app.get('/api/csrf-token', (req, res) => {
     try {
         await pool.query('SELECT NOW()');
         console.log('✅ Database connection verified');
+        await pool.query(`ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS priority VARCHAR(20) DEFAULT 'medium';`);
+        await pool.query(`ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS category VARCHAR(50) DEFAULT 'general';`);
         await ensureStaffLoungeGroup();
         await setupGamificationTables();
         await setupChatMediaTable();
