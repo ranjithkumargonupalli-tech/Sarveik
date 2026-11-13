@@ -1537,19 +1537,25 @@
 
         let html = `<div>${escapeHtml(data.reply)}</div>`;
         
+// ... inside the sendToAI function ...
+
         // Render the Top 10 tools
         if (data.recommendedTools && data.recommendedTools.length > 0) {
           html += `<div class="ai-tools-list">`;
           data.recommendedTools.forEach(tool => {
+            // 👇 FIX: Added ${window.location.origin}/ to make the link absolute
+            const fullUrl = `${window.location.origin}/${safeUrl(tool.page)}`;
+            
             html += `<div class="ai-tool-card">
               <div class="ai-tool-title"><i class="fas fa-rocket"></i> ${escapeHtml(tool.name)}</div>
               <div class="ai-tool-reason">${escapeHtml(tool.reason)}</div>
-              <a href="/${safeUrl(tool.page)}" class="ai-tool-btn">Find in ${escapeHtml(tool.page)} <i class="fas fa-arrow-right"></i></a>
+              <a href="${fullUrl}" class="ai-tool-btn">Find in ${escapeHtml(tool.page)} <i class="fas fa-arrow-right"></i></a>
             </div>`;
           });
           html += `</div>`;
         }
 
+// ...
         appendMessage('ai', html);
 
       } catch (err) {
