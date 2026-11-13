@@ -1515,8 +1515,9 @@
     function removeTypingIndicator() {
       document.getElementById('typingIndicator')?.remove();
     }
-
-     async function sendToAI(message) {
+    
+    
+    async function sendToAI(message) {
       if (!message.trim()) return;
       
       appendMessage('user', escapeHtml(message));
@@ -1537,25 +1538,36 @@
 
         let html = `<div>${escapeHtml(data.reply)}</div>`;
         
-// ... inside the sendToAI function ...
-
-        // Render the Top 10 tools
+        // Map filenames to pretty names
+        const PAGE_NAMES = {
+          'student.html': 'Student Tools', 'teacher.html': 'Teacher Tools',
+          'developer.html': 'Developer Tools', 'gamer1.html': 'Gamer Tools',
+          'entertainment1.html': 'Entertainment', 'cartoons1.html': 'Cartoons',
+          'music-mega.html': 'Music Tools', 'shopping.html': 'Shopping Directory',
+          'custom1.html': 'Custom Tools', 'editing.html': 'Editing Hub',
+          'essentials.html': 'Life Essentials', 'examkit.html': 'ExamKit',
+          'career.html': 'Career Gateway', 'researcher.html': 'Researcher Tools',
+          'newtools.html': 'New Tools', 'businessdirectory.html': 'Business Directory'
+        };
+        
         if (data.recommendedTools && data.recommendedTools.length > 0) {
           html += `<div class="ai-tools-list">`;
           data.recommendedTools.forEach(tool => {
-            // 👇 FIX: Added ${window.location.origin}/ to make the link absolute
-            const fullUrl = `${window.location.origin}/${safeUrl(tool.page)}`;
+            // FIX: Don't use safeUrl here. Just build a relative path.
+            let page = tool.page || 'main.html';
+            if (page.startsWith('/')) page = page.slice(1); // Remove leading slash if present
+            
+            const friendlyName = PAGE_NAMES[page] || page.replace('.html', '');
             
             html += `<div class="ai-tool-card">
               <div class="ai-tool-title"><i class="fas fa-rocket"></i> ${escapeHtml(tool.name)}</div>
               <div class="ai-tool-reason">${escapeHtml(tool.reason)}</div>
-              <a href="${fullUrl}" class="ai-tool-btn">Find in ${escapeHtml(tool.page)} <i class="fas fa-arrow-right"></i></a>
+              <a href="/${page}" class="ai-tool-btn">Open ${friendlyName} <i class="fas fa-arrow-right"></i></a>
             </div>`;
           });
           html += `</div>`;
         }
 
-// ...
         appendMessage('ai', html);
 
       } catch (err) {
