@@ -9,6 +9,15 @@ console.log('Google Client ID:', process.env.GOOGLE_CLIENT_ID);
 console.log('Google Callback URL:', process.env.GOOGLE_CALLBACK_URL);
 
 const express = require('express');
+const { buildIndex, prefilterTools } = require('./embeddingIndex');
+const { KeyPool, KeyPoolExhaustedError } = require('keymux');
+
+const geminiKeys = (process.env.GEMINI_KEYS || '').split(',').map(k => k.trim()).filter(Boolean);
+const aiClient = new KeyPool({
+  keys: geminiKeys,
+  baseURL: 'https://generativelanguage.googleapis.com/v1beta/openai/',
+  strategy: 'least-recently-used',
+});
 const session = require('express-session');
 const pgSession = require('connect-pg-simple')(session);
 const bcrypt = require('bcrypt');
@@ -170,6 +179,13 @@ const sessionMiddleware = session({
     }
 });
 app.use(sessionMiddleware);
+function getAIHistory(req) {
+  if (!Array.isArray(req.session.aiHistory)) req.session.aiHistory = [];
+  if (req.session.aiHistory.length > 12) {
+    req.session.aiHistory = req.session.aiHistory.slice(-12);
+  }
+  return req.session.aiHistory;
+}
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -2338,7 +2354,66 @@ app.get('/auth/google/callback', (req, res, next) => {
         });
     })(req, res, next);
 });
+app.post('/api/ai/chat', limiter, isAuthenticated, async (req, res) => {
+  const { message } = req.body;
+  if (!message || typeof message !== 'string' || message.length > 1000) {
+    return res.status(400).json({ error: 'Invalid message' });
+  }
 
+  try {
+    // 1. Local prefilter (1,300+ tools → top 20)
+    const candidates = await prefilterTools(message, 20);
+    const toolListText = candidates.length
+      ? candidates.map((t) => `- ${t.name} (${t.category}): ${t.description}. Link: ${t.url}`).join('\n')
+      : '(No tools matched.)';
+
+    // 2. Ask Gemini
+    const systemPrompt = `You are the Sarveik AI Assistant. Recommend the BEST tool from the list below.
+    RULES: Only recommend tools from the list. Return JSON: {"reply": string, "recommendedTool": {"name": string, "reason": string} | null, "steps": string[]}
+    AVAILABLE TOOLS:
+    ${toolListText}`;
+
+    const history = getAIHistory(req);
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...history,
+      { role: 'user', content: message },
+    ];
+
+    const completion = await aiClient.chat.completions.create({
+      model: 'gemini-2.5-flash',
+      messages,
+      response_format: { type: 'json_object' },
+      temperature: 0.3,
+      max_tokens: 600,
+    });
+
+    let aiResponse = JSON.parse(completion.choices[0].message.content);
+
+    // 3. Validate tool exists
+    if (aiResponse.recommendedTool?.name) {
+      const match = candidates.find(t => t.name.toLowerCase() === aiResponse.recommendedTool.name.toLowerCase());
+      if (match) {
+        aiResponse.recommendedTool.url = match.url;
+      } else {
+        aiResponse.recommendedTool = null;
+      }
+    }
+
+    // 4. Save memory
+    history.push({ role: 'user', content: message });
+    history.push({ role: 'assistant', content: JSON.stringify(aiResponse) });
+    req.session.aiHistory = history.slice(-12);
+
+    res.json(aiResponse);
+  } catch (err) {
+    if (err instanceof KeyPoolExhaustedError) {
+      return res.status(429).json({ error: 'AI assistant is busy. Please try again in a few minutes.' });
+    }
+    console.error('AI chat error:', err);
+    res.status(500).json({ error: 'AI service unavailable' });
+  }
+});
 // ==================== TOOL USAGE TRACKING ====================
 app.post('/api/track-usage', isAuthenticated, async (req, res) => {
     const { tool_name, tool_category } = req.body;
@@ -5637,6 +5712,7 @@ app.get('/api/csrf-token', (req, res) => {
         await setupGamificationTables();
         await setupChatMediaTable();
         await setupPushTable(); // <-- NEW: Creates all gamification tables and seeds data
+        await buildIndex();
     } catch (err) {
         console.error('❌ Database connection failed:', err.message);
         process.exit(1);
