@@ -497,6 +497,9 @@
       .navbar { padding: 0.7rem 1rem; }
       .nav-brand { font-size: 1.1rem; }
     }
+    .ai-tools-list { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+    .ai-tool-btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; background: rgba(14,165,233,0.1); border: 1px solid var(--cyan); color: var(--cyan); border-radius: 20px; font-weight: 700; font-size: 0.8rem; text-decoration: none; transition: 0.2s; margin-top: 8px; }
+    .ai-tool-btn:hover { background: var(--cyan); color: #fff; }
 
     .no-results { grid-column: 1 / -1; text-align: center; padding: 4rem 2rem; color: var(--text-muted); font-size: 1rem; display: none; }
     .no-results i { font-size: 2.5rem; display: block; margin-bottom: 1rem; opacity: 0.5; }
@@ -1513,7 +1516,7 @@
       document.getElementById('typingIndicator')?.remove();
     }
 
-    async function sendToAI(message) {
+     async function sendToAI(message) {
       if (!message.trim()) return;
       
       appendMessage('user', escapeHtml(message));
@@ -1527,40 +1530,33 @@
           body: JSON.stringify({ message: message })
         });
         
-        if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-          throw new Error(errData.error || 'AI service unavailable');
-        }
+        if (!response.ok) throw new Error('AI service unavailable');
 
         const data = await response.json();
         removeTypingIndicator();
 
         let html = `<div>${escapeHtml(data.reply)}</div>`;
         
-        if (data.recommendedTool && data.recommendedTool.name) {
-          html += `<div class="ai-tool-card">
-            <div class="ai-tool-title"><i class="fas fa-rocket"></i> ${escapeHtml(data.recommendedTool.name)}</div>
-            <div class="ai-tool-reason">${escapeHtml(data.recommendedTool.reason)}</div>
-            <a href="${safeUrl(data.recommendedTool.url)}" target="_blank" class="ai-tool-btn">Open Tool <i class="fas fa-external-link-alt"></i></a>
-          </div>`;
-        }
-
-        if (data.steps && data.steps.length > 0) {
-          html += `<div class="ai-steps"><strong>How to use it:</strong><ol>`;
-          data.steps.forEach(step => {
-            html += `<li>${escapeHtml(step)}</li>`;
+        // Render the Top 10 tools
+        if (data.recommendedTools && data.recommendedTools.length > 0) {
+          html += `<div class="ai-tools-list">`;
+          data.recommendedTools.forEach(tool => {
+            html += `<div class="ai-tool-card">
+              <div class="ai-tool-title"><i class="fas fa-rocket"></i> ${escapeHtml(tool.name)}</div>
+              <div class="ai-tool-reason">${escapeHtml(tool.reason)}</div>
+              <a href="/${safeUrl(tool.page)}" class="ai-tool-btn">Find in ${escapeHtml(tool.page)} <i class="fas fa-arrow-right"></i></a>
+            </div>`;
           });
-          html += `</ol></div>`;
+          html += `</div>`;
         }
 
         appendMessage('ai', html);
 
       } catch (err) {
         removeTypingIndicator();
-        appendMessage('ai', `<span style="color: var(--pink);">${escapeHtml(err.message || 'Connection error. Please try again.')}</span>`);
+        appendMessage('ai', `<span style="color: var(--pink);">${escapeHtml(err.message || 'Connection error.')}</span>`);
       }
     }
-
     chatSendBtn?.addEventListener('click', () => sendToAI(chatInput.value));
     chatInput?.addEventListener('keypress', (e) => {
       if (e.key === 'Enter') sendToAI(chatInput.value);

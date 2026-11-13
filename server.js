@@ -2361,68 +2361,57 @@ app.post('/api/ai/chat', limiter, isAuthenticated, async (req, res) => {
   }
 
   try {
-    console.time('Total AI Request');
-    
     // 1. Local prefilter
-    console.time('Embedding Prefilter');
     const candidates = await prefilterTools(message, 20);
-    console.timeEnd('Embedding Prefilter'); // Will show in logs how long this takes
-
+    
+    // Include the page name in the prompt so the AI knows it
     const toolListText = candidates.length
-      ? candidates.map((t) => `- ${t.name} (${t.category}): ${t.description}. Link: ${t.url}`).join('\n')
+      ? candidates.map((t) => `- ${t.name} (${t.category}) [Page: ${t.sourcePage || 'main.html'}]: ${t.description}`).join('\n')
       : '(No tools matched.)';
 
-    // 2. Ask Gemini
-    const systemPrompt = `You are the Sarveik AI Assistant. Recommend the BEST tool from the list below.
-    RULES: Only recommend tools from the list. Return JSON: {"reply": string, "recommendedTool": {"name": string, "reason": string} | null, "steps": string[]}
+    // 2. Ask Gemini (Optimized for speed and Top 10)
+    const systemPrompt = `You are the Sarveik AI Assistant. Recommend the TOP 10 most relevant tools from the list below based on the user's request.
+    RULES:
+    - Only recommend tools from the list.
+    - Return a JSON object with: {"reply": string, "recommendedTools": [{"name": string, "reason": string, "page": string}]}
+    - "page" must be the exact [Page: ...] value from the list (e.g., "editing.html").
+    - Return up to 10 tools. If fewer match, return only the ones that do.
+    
     AVAILABLE TOOLS:
     ${toolListText}`;
 
     const history = getAIHistory(req);
+    // Only send the last 6 messages (3 turns) to speed up generation
+    const recentHistory = history.slice(-6); 
+    
     const messages = [
       { role: 'system', content: systemPrompt },
-      ...history,
+      ...recentHistory,
       { role: 'user', content: message },
     ];
 
-    // Inside /api/ai/chat
-    console.time('Gemini API Call');
-    
-    let completion;
-    let retries = 3;
-    while (retries > 0) {
-      try {
-        completion = await aiClient.chat.completions.create({
-          model: 'gemini-3.8-flash',
-          messages,
-          response_format: { type: 'json_object' },
-          temperature: 0.3,
-          max_tokens: 600,
-        });
-        break; // Success! Exit the loop.
-      } catch (err) {
-        if (err.status === 500 || err.status === 503) {
-          console.warn(`Gemini server error (500/503). Retrying... (${retries} attempts left)`);
-          retries--;
-          if (retries === 0) throw err; // No more retries, throw the error.
-          await new Promise(res => setTimeout(res, 2000)); // Wait 2 seconds before retrying
-        } else {
-          throw err; // Not a server error (e.g., 400, 401), throw immediately.
-        }
-      }
-    }
-    console.timeEnd('Gemini API Call');// Will show in logs how long this takes
+    // Added timeout and optimized model
+    const completion = await aiClient.chat.completions.create({
+      model: 'gemini-3.8-flash-lite', // Switched to Lite for speed
+      messages,
+      response_format: { type: 'json_object' },
+      temperature: 0.3,
+      max_tokens: 1200,
+    });
 
     let aiResponse = JSON.parse(completion.choices[0].message.content);
 
-    // 3. Validate tool exists
-    if (aiResponse.recommendedTool?.name) {
-      const match = candidates.find(t => t.name.toLowerCase() === aiResponse.recommendedTool.name.toLowerCase());
-      if (match) {
-        aiResponse.recommendedTool.url = match.url;
-      } else {
-        aiResponse.recommendedTool = null;
-      }
+    // 3. Validate tools and attach internal pages
+    if (aiResponse.recommendedTools && Array.isArray(aiResponse.recommendedTools)) {
+      aiResponse.recommendedTools = aiResponse.recommendedTools.map(t => {
+        const match = candidates.find(c => c.name.toLowerCase() === t.name.toLowerCase());
+        if (match) {
+          return { ...t, page: match.sourcePage || 'main.html' };
+        }
+        return null;
+      }).filter(Boolean); // Remove any hallucinations
+    } else {
+      aiResponse.recommendedTools = [];
     }
 
     // 4. Save memory
@@ -2430,17 +2419,11 @@ app.post('/api/ai/chat', limiter, isAuthenticated, async (req, res) => {
     history.push({ role: 'assistant', content: JSON.stringify(aiResponse) });
     req.session.aiHistory = history.slice(-12);
 
-    console.timeEnd('Total AI Request');
     res.json(aiResponse);
     
   } catch (err) {
-    console.log('--- AI ERROR CAUGHT ---');
-    if (err instanceof KeyPoolExhaustedError) {
-      console.error('All keys exhausted');
-      return res.status(429).json({ error: 'AI assistant is busy. Please try again in a few minutes.' });
-    }
-    console.error('AI chat error:', err.message); // Just log the message to avoid huge logs
-    res.status(500).json({ error: 'AI service unavailable' });
+    console.error('AI chat error:', err.message);
+    res.status(500).json({ error: 'AI service unavailable. Please try again.' });
   }
 });
 // ==================== TOOL USAGE TRACKING ====================

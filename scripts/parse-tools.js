@@ -40,10 +40,15 @@ function main() {
   for (const file of CARD_FILES) {
     const p = path.join(PUBLIC_DIR, file);
     if (!fs.existsSync(p)) { console.warn(`⚠️ Missing: ${file} — skipping`); continue; }
+    
     const found = extractToolsFromHtml(fs.readFileSync(p, 'utf8'));
     console.log(`   ${file}: ${found.length} tools`);
+    
+    // Add the source page to each tool
+    found.forEach(t => t.sourcePage = file);
     all.push(...found);
   }
+  
   const seen = new Set();
   const unique = all.filter(t => {
     const k = t.name.toLowerCase();
