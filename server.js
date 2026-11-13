@@ -2381,7 +2381,7 @@ app.post('/api/ai/chat', limiter, isAuthenticated, async (req, res) => {
     ];
 
     const completion = await aiClient.chat.completions.create({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3.8-flash',
       messages,
       response_format: { type: 'json_object' },
       temperature: 0.3,
