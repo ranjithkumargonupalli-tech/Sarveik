@@ -2385,15 +2385,33 @@ app.post('/api/ai/chat', limiter, isAuthenticated, async (req, res) => {
       { role: 'user', content: message },
     ];
 
+    // Inside /api/ai/chat
     console.time('Gemini API Call');
-    const completion = await aiClient.chat.completions.create({
-      model: 'gemini-3.8-flash',
-      messages,
-      response_format: { type: 'json_object' },
-      temperature: 0.3,
-      max_tokens: 600,
-    });
-    console.timeEnd('Gemini API Call'); // Will show in logs how long this takes
+    
+    let completion;
+    let retries = 3;
+    while (retries > 0) {
+      try {
+        completion = await aiClient.chat.completions.create({
+          model: 'gemini-3.8-flash',
+          messages,
+          response_format: { type: 'json_object' },
+          temperature: 0.3,
+          max_tokens: 600,
+        });
+        break; // Success! Exit the loop.
+      } catch (err) {
+        if (err.status === 500 || err.status === 503) {
+          console.warn(`Gemini server error (500/503). Retrying... (${retries} attempts left)`);
+          retries--;
+          if (retries === 0) throw err; // No more retries, throw the error.
+          await new Promise(res => setTimeout(res, 2000)); // Wait 2 seconds before retrying
+        } else {
+          throw err; // Not a server error (e.g., 400, 401), throw immediately.
+        }
+      }
+    }
+    console.timeEnd('Gemini API Call');// Will show in logs how long this takes
 
     let aiResponse = JSON.parse(completion.choices[0].message.content);
 
