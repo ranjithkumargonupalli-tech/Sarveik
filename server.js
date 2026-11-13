@@ -2392,7 +2392,7 @@ app.post('/api/ai/chat', limiter, isAuthenticated, async (req, res) => {
 
     // Added timeout and optimized model
     const completion = await aiClient.chat.completions.create({
-      model: 'gemini-3.8-flash-lite', // Switched to Lite for speed
+      model: 'gemini-3.1-flash-lite', // Switched to Lite for speed
       messages,
       response_format: { type: 'json_object' },
       temperature: 0.3,
