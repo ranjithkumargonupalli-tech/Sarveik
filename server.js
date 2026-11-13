@@ -2361,8 +2361,13 @@ app.post('/api/ai/chat', limiter, isAuthenticated, async (req, res) => {
   }
 
   try {
-    // 1. Local prefilter (1,300+ tools → top 20)
+    console.time('Total AI Request');
+    
+    // 1. Local prefilter
+    console.time('Embedding Prefilter');
     const candidates = await prefilterTools(message, 20);
+    console.timeEnd('Embedding Prefilter'); // Will show in logs how long this takes
+
     const toolListText = candidates.length
       ? candidates.map((t) => `- ${t.name} (${t.category}): ${t.description}. Link: ${t.url}`).join('\n')
       : '(No tools matched.)';
@@ -2380,6 +2385,7 @@ app.post('/api/ai/chat', limiter, isAuthenticated, async (req, res) => {
       { role: 'user', content: message },
     ];
 
+    console.time('Gemini API Call');
     const completion = await aiClient.chat.completions.create({
       model: 'gemini-3.8-flash',
       messages,
@@ -2387,6 +2393,7 @@ app.post('/api/ai/chat', limiter, isAuthenticated, async (req, res) => {
       temperature: 0.3,
       max_tokens: 600,
     });
+    console.timeEnd('Gemini API Call'); // Will show in logs how long this takes
 
     let aiResponse = JSON.parse(completion.choices[0].message.content);
 
@@ -2405,12 +2412,16 @@ app.post('/api/ai/chat', limiter, isAuthenticated, async (req, res) => {
     history.push({ role: 'assistant', content: JSON.stringify(aiResponse) });
     req.session.aiHistory = history.slice(-12);
 
+    console.timeEnd('Total AI Request');
     res.json(aiResponse);
+    
   } catch (err) {
+    console.log('--- AI ERROR CAUGHT ---');
     if (err instanceof KeyPoolExhaustedError) {
+      console.error('All keys exhausted');
       return res.status(429).json({ error: 'AI assistant is busy. Please try again in a few minutes.' });
     }
-    console.error('AI chat error:', err);
+    console.error('AI chat error:', err.message); // Just log the message to avoid huge logs
     res.status(500).json({ error: 'AI service unavailable' });
   }
 });
