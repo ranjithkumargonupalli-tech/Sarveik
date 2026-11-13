@@ -28,7 +28,6 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/utils ./utils
 COPY --from=builder /app/database.js ./
-COPY --from=builder /app/.env ./
 
 # Set the environment to production
 ENV NODE_ENV=production
