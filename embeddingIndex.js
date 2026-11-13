@@ -1,5 +1,5 @@
 // embeddingIndex.js
-const { pipeline, env } = require('@xenova/transformers');
+const { pipeline, env } = require('@huggingface/transformers');
 const fs = require('fs');
 const path = require('path');
 
@@ -23,6 +23,7 @@ async function buildIndex() {
     quantized: true,
     device: 'cpu',
   });
+  env.useBrowserCache = false;
 
   allTools = JSON.parse(fs.readFileSync(TOOLS_JSON, 'utf8'));
   toolVectors = [];
