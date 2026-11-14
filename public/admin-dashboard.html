@@ -86,7 +86,6 @@
         .status-admin { background: #6366f1; color: white; }
         .status-user { background: #f59e0b; color: white; }
         .status-moderator { background: #3b82f6; color: white; }
-        /* NEW ROLE BADGES */
         .status-business_owner { background: #8b5cf6; color: white; }
         .status-delivery_partner { background: #06b6d4; color: white; }
         .status-support_staff { background: #f472b6; color: white; }
@@ -246,13 +245,11 @@
         .status-approved { background: #10b981; box-shadow: 0 0 5px #10b981; }
         .status-rejected { background: #ef4444; box-shadow: 0 0 5px #ef4444; }
 
-        /* ===== BUSINESS VIEW TOGGLE ===== */
         .business-view-toggle { display: flex; gap: 4px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 4px; }
         .business-view-btn { width: 34px; height: 30px; border-radius: 7px; border: none; background: transparent; color: rgba(255,255,255,0.6); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; transition: all 0.2s; padding: 0; }
         .business-view-btn.active { background: #00d4ff; color: #fff; }
         .business-view-btn:hover { transform: none; background: rgba(0,212,255,0.3); }
 
-        /* ===== BUSINESS CARD VIEW ===== */
         .biz-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem; margin-top: 1rem; }
         .biz-card { background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.15); border-radius: 16px; overflow: hidden; transition: all 0.25s; }
         .biz-card:hover { transform: translateY(-4px); box-shadow: 0 16px 32px rgba(0,0,0,0.25); border-color: rgba(0,212,255,0.4); }
@@ -270,19 +267,16 @@
         .biz-badge-cat { background: rgba(0,212,255,0.2); color: #00d4ff; border: 1px solid rgba(0,212,255,0.3); }
         .biz-card-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
 
-        /* ===== BUSINESS LOADING STATE ===== */
         .biz-loading { text-align: center; padding: 2rem; opacity: 0.6; }
         .biz-empty { text-align: center; padding: 2rem; opacity: 0.5; font-size: 0.9rem; }
         .biz-empty i { font-size: 2rem; display: block; margin-bottom: 0.5rem; }
 
-        /* ===== BUSINESS DETAIL MODAL ===== */
         .biz-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
         .biz-detail-field { background: rgba(255,255,255,0.05); padding: 0.75rem; border-radius: 10px; }
         .biz-detail-label { font-size: 0.7rem; color: #00d4ff; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.25rem; }
         .biz-detail-value { font-size: 0.88rem; word-break: break-all; }
         @media(max-width:600px){ .biz-detail-grid { grid-template-columns: 1fr; } }
 
-        /* ===== INLINE SPINNER IN BUTTONS ===== */
         .btn-loading { opacity: 0.7; pointer-events: none; }
         .btn-loading::after { content: ''; display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.4); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; margin-left: 6px; vertical-align: middle; }
     </style>
@@ -879,7 +873,7 @@
         }
 
         async init() {
-            // 🔴 CRITICAL FIX: Wait for auth check. If it fails, stop loading the dashboard.
+            // 🔴 FORCE ALERT ON AUTH CHECK FAILURE
             const isAuthorized = await this.checkAdminAccess();
             if (!isAuthorized) return;
 
@@ -1016,6 +1010,10 @@
         async checkAdminAccess() {
             try { 
                 const profile = await apiCall('/profile'); 
+                
+                // 🔴 FORCE THE BROWSER TO TELL US WHAT THE ROLE IS
+                alert("DEBUG INFO FROM SERVER:\n\nUsername: " + profile.username + "\nRole: '" + profile.role + "'");
+                
                 const r = String(profile.role || '').trim().toLowerCase();
                 
                 if (r !== 'admin' && r !== 'moderator') { 
@@ -1028,6 +1026,7 @@
                 } 
             } catch (e) { 
                 console.error('Auth check failed:', e);
+                alert("DEBUG INFO - FETCH FAILED:\n\n" + e.message);
                 showToast('Session expired or unauthorized. Redirecting to login...', 'error');
                 setTimeout(() => window.location.href = '/', 1500);
                 return false; 
