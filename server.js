@@ -168,6 +168,26 @@ app.use((req, res, next) => {
 
 app.use(express.static('public', { extensions: ['html'] }));
 app.use('/.well-known', express.static(path.join(__dirname, 'public', '.well-known'), { dotfiles: 'allow' }));
+
+app.get('/profile', isAuthenticated, async (req, res) => {
+    try {
+        const result = await pool.query(
+            `SELECT id, username, email, role, display_name, 
+                    bio, phone, github, twitter, linkedin,
+                    avatar_url, created_at, updated_at,
+                    email_verified, avatar_style
+             FROM users WHERE id = $1`,
+            [req.session.userId]
+        );
+        if (!result.rows[0]) return res.status(404).json({ error: 'User not found' });
+        const profile = result.rows[0];
+        profile.role = String(profile.role || '').trim().toLowerCase();
+        res.json(profile);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
 // ==================== SESSION MIDDLEWARE ====================
 const sessionMiddleware = session({
     store: new pgSession({
@@ -4784,25 +4804,7 @@ app.get('/api/users/search', isAuthenticated, async (req, res) => {
     }
 });
 
-app.get('/profile', isAuthenticated, async (req, res) => {
-    try {
-        const result = await pool.query(
-            `SELECT id, username, email, role, display_name, 
-                    bio, phone, github, twitter, linkedin,
-                    avatar_url, created_at, updated_at,
-                    email_verified, avatar_style
-             FROM users WHERE id = $1`,
-            [req.session.userId]
-        );
-        if (!result.rows[0]) return res.status(404).json({ error: 'User not found' });
-        const profile = result.rows[0];
-        profile.role = String(profile.role || '').trim().toLowerCase();
-        res.json(profile);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
+
 
 app.put('/profile/update', isAuthenticated, async (req, res) => {
     const { display_name, bio, phone, github, twitter, linkedin } = req.body;
@@ -5798,5 +5800,7 @@ cron.schedule('0 9 * * 1', async () => {
 // NEW DELIVERY SYSTEM – PRODUCTS, ORDERS, PARTNERS, PROMOS, RATINGS, ETC.
 // ============================================================================
 // (Removed — no delivery endpoints   remain in this build.)
-
+app.get('/api/admin/maintenance/status', (req, res) => {
+    res.json({ enabled: false, enabledAt: null, message: null });
+});
 module.exports = app;
