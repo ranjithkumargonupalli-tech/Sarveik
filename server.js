@@ -1094,7 +1094,7 @@ const isAuthenticated = async (req, res, next) => {
                 req.session.destroy();
                 return res.status(403).json({ error: 'Your account has been banned' });
             }
-            req.session.role = result.rows[0].role;
+            req.session.role = String(result.rows[0].role || '').trim().toLowerCase();
         }
         next();
     } catch (err) {
@@ -1105,16 +1105,18 @@ const isAuthenticated = async (req, res, next) => {
 
 const isAdmin = async (req, res, next) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Not authenticated' });
-    if (req.session.role === 'admin') return next();
+    const normalize = r => String(r || '').trim().toLowerCase();
+    if (normalize(req.session.role) === 'admin') return next();
     try {
         const result = await pool.query(
             'SELECT role FROM users WHERE id = $1',
             [req.session.userId]
         );
-        if (result.rows.length === 0 || result.rows[0].role !== 'admin') {
+        const dbRole = normalize(result.rows[0]?.role);
+        if (result.rows.length === 0 || dbRole !== 'admin') {
             return res.status(403).json({ error: 'Access denied' });
         }
-        req.session.role = 'admin';
+        req.session.role = dbRole;
         next();
     } catch (err) {
         res.status(500).json({ error: 'Server error' });
@@ -1123,14 +1125,15 @@ const isAdmin = async (req, res, next) => {
 
 const isAdminOrModerator = async (req, res, next) => {
     if (!req.session.userId) return res.status(401).json({ error: 'Not authenticated' });
-    const role = req.session.role;
+    const normalize = r => String(r || '').trim().toLowerCase();
+    const role = normalize(req.session.role);
     if (role === 'admin' || role === 'moderator') return next();
     try {
         const result = await pool.query(
             'SELECT role FROM users WHERE id = $1',
             [req.session.userId]
         );
-        const dbRole = result.rows[0]?.role;
+        const dbRole = normalize(result.rows[0]?.role);
         if (dbRole === 'admin' || dbRole === 'moderator') {
             req.session.role = dbRole;
             return next();
@@ -2307,11 +2310,12 @@ app.post('/login', authLimiter, async (req, res) => {
 
         req.session.regenerate((err) => {
             if (err) return res.status(500).send('Session error');
+            const normalizedRole = String(user.role || '').trim().toLowerCase();
             req.session.userId = user.id;
             req.session.username = user.username;
             req.session.email = user.email;
-            req.session.role = user.role;
-            if (user.role === 'admin') res.send('Login successful:admin');
+            req.session.role = normalizedRole;
+            if (normalizedRole === 'admin') res.send('Login successful:admin');
             else res.send('Login successful');
         });
 
@@ -2353,11 +2357,12 @@ app.get('/auth/google/callback', (req, res, next) => {
         }
         req.session.regenerate((e) => {
             if (e) return res.redirect('/');
+            const normalizedRole = String(user.role || '').trim().toLowerCase();
             req.session.userId = user.id;
             req.session.username = user.username;
             req.session.email = user.email;
-            req.session.role = user.role;
-            res.redirect(user.role === 'admin' ? '/admin-dashboard.html' : '/main.html');
+            req.session.role = normalizedRole;
+            res.redirect(normalizedRole === 'admin' ? '/admin-dashboard.html' : '/main.html');
         });
     })(req, res, next);
 });
@@ -4789,7 +4794,10 @@ app.get('/profile', isAuthenticated, async (req, res) => {
              FROM users WHERE id = $1`,
             [req.session.userId]
         );
-        res.json(result.rows[0]);
+        if (!result.rows[0]) return res.status(404).json({ error: 'User not found' });
+        const profile = result.rows[0];
+        profile.role = String(profile.role || '').trim().toLowerCase();
+        res.json(profile);
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
@@ -5696,6 +5704,7 @@ app.get('/api/csrf-token', (req, res) => {
     try {
         await pool.query('SELECT NOW()');
         console.log('✅ Database connection verified');
+        await pool.query(`UPDATE users SET role = LOWER(TRIM(role)) WHERE role <> LOWER(TRIM(role));`);
         await pool.query(`ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS priority VARCHAR(20) DEFAULT 'medium';`);
         await pool.query(`ALTER TABLE support_tickets ADD COLUMN IF NOT EXISTS category VARCHAR(50) DEFAULT 'general';`);
         await ensureStaffLoungeGroup();

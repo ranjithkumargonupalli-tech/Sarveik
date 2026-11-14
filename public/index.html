@@ -1145,6 +1145,14 @@
         let resetEmailGlobal = '';
         let usernameFormatOk = false;
 
+        /* ── ROLE NORMALIZATION (THE FIX) ──
+           Roles coming from the DB can be 'Admin', 'ADMIN', ' admin ', etc.
+           Always compare normalized values so that admin login is never
+           silently misrouted to the regular user dashboard. */
+        function normalizeRole(role){
+            return String(role || '').trim().toLowerCase();
+        }
+
         /* ── PERSISTENT LOGIN SETTINGS ──
            45-day session. Every successful login (including a re-login after logout)
            stamps a fresh timestamp, so the 45 days restart from that moment.
@@ -1157,11 +1165,12 @@
         const MAINT_META_KEY='nova_maintenance_meta';
 
         function getRoleRedirectUrl(role){
-            if (role === 'admin') return '/admin-dashboard.html';
-            if (role === 'moderator') return '/moderator-dashboard.html';
-            if (role === 'business_owner') return '/business-owner.html';
-            if (role === 'delivery_partner') return '/delivery-login.html';
-            if (role === 'support_staff') return '/support-dashboard.html';
+            const r = normalizeRole(role);
+            if (r === 'admin') return '/admin-dashboard.html';
+            if (r === 'moderator') return '/moderator-dashboard.html';
+            if (r === 'business_owner') return '/business-owner.html';
+            if (r === 'delivery_partner') return '/delivery-login.html';
+            if (r === 'support_staff') return '/support-dashboard.html';
             return '/main.html';
         }
         function getStoredAuth(){
@@ -1173,12 +1182,17 @@
                     localStorage.removeItem('nova_auth');
                     return null;
                 }
-                return data;
+                // Normalize on read as well — protects against older entries
+                return { ...data, role: normalizeRole(data.role) };
             }catch(e){ return null; }
         }
         function saveAuth(profile){
             /* timestamp = original login time; refreshed on every verified visit (rolling) */
-            localStorage.setItem('nova_auth', JSON.stringify({username:profile.username,role:profile.role,timestamp:Date.now()}));
+            localStorage.setItem('nova_auth', JSON.stringify({
+                username: profile.username,
+                role: normalizeRole(profile.role),
+                timestamp: Date.now()
+            }));
         }
 
         function togglePasswordVisibility(inputId, btn) {
@@ -1511,7 +1525,7 @@
             btn.disabled=true; btn.innerHTML='Creating... <span class="loading-spinner"></span>';
             try{
                 const payload={username,email,password:pwd,otp};
-                if(referralCode) payload.referralCode=referralCode;
+                if(referralCode) payload.ref=referralCode;   // server expects `ref`
                 await apiCall('/register',{method:'POST',body:JSON.stringify(payload)});
                 const successMsg=referralCode
                     ?'🎉 Account created! You and your referrer each earned 50 bonus credits. Please login.'
@@ -1543,8 +1557,15 @@
                 /* remember + rememberDays tell the server to issue a long-lived session cookie */
                 await apiCall('/login',{method:'POST',body:JSON.stringify({username:id,password:pwd,remember:true,rememberDays:AUTH_DAYS})});
                 const profile=await apiCall('/profile');
-                if(remember){ localStorage.setItem('nova_remember',JSON.stringify({username:id,role:profile.role})); }
-                else localStorage.removeItem('nova_remember');
+
+                /* 🔎 Debug trace — check DevTools console after failed redirect */
+                console.log('[Sarveik] login role from server:', JSON.stringify(profile.role), '→ normalized:', normalizeRole(profile.role), '→ redirect:', getRoleRedirectUrl(profile.role));
+
+                if(remember){
+                    localStorage.setItem('nova_remember', JSON.stringify({ username:id, role: normalizeRole(profile.role) }));
+                } else {
+                    localStorage.removeItem('nova_remember');
+                }
                 saveAuth(profile);
 
                 window.location.href = getRoleRedirectUrl(profile.role);
@@ -1595,13 +1616,13 @@
             const authBtnDiv=document.getElementById('authHeaderBtn');
             const data=getStoredAuth();
             if(data){
-                let dashboardLink = '';
-                if (data.role === 'admin') dashboardLink = '/admin-dashboard.html';
-                else if (data.role === 'moderator') dashboardLink = '/moderator-dashboard.html';
-                else if (data.role === 'business_owner') dashboardLink = '/business-owner.html';
-                else if (data.role === 'delivery_partner') dashboardLink = '/delivery-partner.html';
-                else if (data.role === 'support_staff') dashboardLink = '/support-dashboard.html';
-                else dashboardLink = '/main.html'; // default for regular users
+                const r = normalizeRole(data.role);
+                let dashboardLink = '/main.html';
+                if (r === 'admin') dashboardLink = '/admin-dashboard.html';
+                else if (r === 'moderator') dashboardLink = '/moderator-dashboard.html';
+                else if (r === 'business_owner') dashboardLink = '/business-owner.html';
+                else if (r === 'delivery_partner') dashboardLink = '/delivery-partner.html';
+                else if (r === 'support_staff') dashboardLink = '/support-dashboard.html';
 
                 authBtnDiv.innerHTML = `
                     <div class="user-greeting">
@@ -1698,7 +1719,7 @@
         });
 
         /* ── MAINTENANCE MODE ──
-           FIX: the banner now reflects ONLY the live server status.
+           The banner now reflects ONLY the live server status.
            Stale localStorage flags are never trusted when the status request fails
            (e.g. after logout the admin endpoint returns 401/403), so the banner
            can no longer "stick" after logging out. */
@@ -1719,7 +1740,11 @@
             banner.classList.add('visible');
             requestAnimationFrame(()=>{ const h=banner.offsetHeight; spacer.style.height=h+'px'; spacer.classList.add('active'); });
             if(meta&&meta.message) subText.textContent=meta.message;
-            try{ const auth=JSON.parse(localStorage.getItem('nova_auth')||'{}'); if(auth.role==='admin') adminLk.classList.add('visible'); else adminLk.classList.remove('visible'); }catch(e){}
+            try{
+                const auth=JSON.parse(localStorage.getItem('nova_auth')||'{}');
+                if(normalizeRole(auth.role)==='admin') adminLk.classList.add('visible');
+                else adminLk.classList.remove('visible');
+            }catch(e){}
             const startTime=(meta&&meta.enabledAt)?new Date(meta.enabledAt).getTime():Date.now();
             startElapsed(startTime);
         }
