@@ -1016,9 +1016,20 @@
             }
             if (input) input.value = '';
         }
-
+        
         async checkAdminAccess() {
-            try { const profile = await apiCall('/profile'); if (profile.role !== 'admin') { showToast('Admin access required', 'error'); setTimeout(() => window.location.href = '/', 1500); } else { this.currentUser = profile; } } catch { console.warn('Admin check skipped (demo mode)'); }
+            try { 
+                const profile = await apiCall('/profile'); 
+                const r = (profile.role || '').toString().trim().toLowerCase();
+                if (r !== 'admin') { 
+                    showToast('Admin access required', 'error'); 
+                    setTimeout(() => window.location.href = '/', 1500); 
+                } else { 
+                    this.currentUser = profile; 
+                } 
+            } catch (e) { 
+                console.warn('Admin check skipped (demo mode)', e); 
+            }
         }
 
         initCategoryPreview() {

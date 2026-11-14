@@ -1181,13 +1181,13 @@
             try{ sessionStorage.removeItem(GOOGLE_PENDING_KEY); }catch(e){}
             try{ localStorage.removeItem(GOOGLE_PENDING_KEY); }catch(e){}
         }
-
         function getRoleRedirectUrl(role){
-            if (role === 'admin') return '/admin-dashboard.html';
-            if (role === 'moderator') return '/moderator-dashboard.html';
-            if (role === 'business_owner') return '/business-owner.html';
-            if (role === 'delivery_partner') return '/delivery-login.html';
-            if (role === 'support_staff') return '/support-dashboard.html';
+            const r = (role || '').toString().trim().toLowerCase();
+            if (r === 'admin') return '/admin-dashboard.html';
+            if (r === 'moderator') return '/moderator-dashboard.html';
+            if (r === 'business_owner') return '/business-owner.html';
+            if (r === 'delivery_partner') return '/delivery-login.html';
+            if (r === 'support_staff') return '/support-dashboard.html';
             return '/main.html';
         }
         function getStoredAuth(){
