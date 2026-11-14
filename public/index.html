@@ -15,8 +15,15 @@
             }catch(e){}
         })();
     </script>
+    
+    <!-- Performance Enhancements: Preconnect to external resources -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
+    
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#e0f2fe">
     <link rel="apple-touch-icon" href="/icons/icon-192.png">
@@ -769,7 +776,7 @@
 <body>
 
     <!-- MAINTENANCE BANNER -->
-    <div id="maintenanceWarning">
+    <div id="maintenanceWarning" aria-live="polite">
         <div class="maint-ticker">
             <span class="maint-ticker-track">
                 &nbsp;&nbsp;&nbsp;⚠️ &nbsp; SCHEDULED MAINTENANCE IN PROGRESS — Some features may be temporarily unavailable. Our engineering team is actively working to restore full service. We apologise for any inconvenience. &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -1273,7 +1280,7 @@
         window.onclick=function(e){ if(e.target===document.getElementById('authModal')) closeAuthModal(); };
 
         /* ================================================================
-           OTP RESEND TIMER SYSTEM (unchanged)
+           OTP RESEND TIMER SYSTEM
            ================================================================ */
         const OTP_COOLDOWN_STEPS = [30, 60, 90, 120];
         const OTP_TIMER_STORE_KEY = 'sarveik_otp_timers';
@@ -1525,7 +1532,7 @@
             btn.disabled=true; btn.innerHTML='Creating... <span class="loading-spinner"></span>';
             try{
                 const payload={username,email,password:pwd,otp};
-                if(referralCode) payload.ref=referralCode;   // server expects `ref`
+                if(referralCode) payload.ref=referralCode;
                 await apiCall('/register',{method:'POST',body:JSON.stringify(payload)});
                 const successMsg=referralCode
                     ?'🎉 Account created! You and your referrer each earned 50 bonus credits. Please login.'
@@ -1545,7 +1552,7 @@
             }finally{ btn.disabled=false; btn.innerHTML='Create Account'; }
         }
 
-        /* ── LOGIN — PERSISTENT SESSION + ROLE-BASED REDIRECT ── */
+        /* ── LOGIN ── */
         async function handleLogin(){
             const id = document.getElementById('login-username').value;
             const pwd = document.getElementById('login-password').value;
@@ -1554,12 +1561,8 @@
             if(!id||!pwd) return showMessage('Enter credentials');
             btn.disabled=true; btn.innerHTML='Logging in... <span class="loading-spinner"></span>';
             try{
-                /* remember + rememberDays tell the server to issue a long-lived session cookie */
                 await apiCall('/login',{method:'POST',body:JSON.stringify({username:id,password:pwd,remember:true,rememberDays:AUTH_DAYS})});
                 const profile=await apiCall('/profile');
-
-                /* 🔎 Debug trace — check DevTools console after failed redirect */
-                console.log('[Sarveik] login role from server:', JSON.stringify(profile.role), '→ normalized:', normalizeRole(profile.role), '→ redirect:', getRoleRedirectUrl(profile.role));
 
                 if(remember){
                     localStorage.setItem('nova_remember', JSON.stringify({ username:id, role: normalizeRole(profile.role) }));
@@ -1578,13 +1581,13 @@
         async function requestResetOtp(){ const email=document.getElementById('forgot-email').value; const btn=document.getElementById('request-otp-btn'); if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showMessage('Valid email required'); btn.disabled=true; btn.innerHTML='Sending...'; try{ await apiCall('/api/forgot-password',{method:'POST',body:JSON.stringify({email})}); resetEmailGlobal=email; showMessage('OTP sent!',false); document.getElementById('forgot-step1').style.display='none'; document.getElementById('forgot-step2').style.display='block'; resetOtpTimer.reset(); const store=loadOtpTimerStore(); store.reset={resendCount:1,cooldownUntil:Date.now()+30000}; saveOtpTimerStore(store); resetOtpTimer.init(); }catch(e){ showMessage(e.message); }finally{ btn.disabled=false; btn.innerHTML='Send Reset OTP'; } }
         async function resetPassword(){ const otp=document.getElementById('reset-otp').value; const newPwd=document.getElementById('new-password').value; const confirmPwd=document.getElementById('confirm-password').value; const btn=document.getElementById('reset-password-btn'); if(!otp||!newPwd||!confirmPwd) return showMessage('Fill all fields'); if(newPwd!==confirmPwd) return showMessage('Passwords mismatch'); if(newPwd.length<8) return showMessage('Min 8 chars'); btn.disabled=true; btn.innerHTML='Resetting...'; try{ await apiCall('/api/reset-password',{method:'POST',body:JSON.stringify({email:resetEmailGlobal,otp,newPassword:newPwd})}); showMessage('Password reset! Please login.',false); resetOtpTimer.reset(); setTimeout(()=>{ switchAuthTab('login'); },2000); }catch(e){ showMessage(e.message); }finally{ btn.disabled=false; btn.innerHTML='Reset Password'; } }
 
-        /* ── SESSION CHECK — if logged in go straight to the dashboard / main.html ── */
+        /* ── SESSION CHECK ── */
         let _redirectingLoggedIn = false;
         async function checkSession(){
             try{
                 const profile = await apiCall('/profile');
                 if (profile && profile.id) {
-                    saveAuth(profile); /* rolling: renews the window on each visit */
+                    saveAuth(profile);
                     updateHeaderUI();
                     _redirectingLoggedIn = true;
                     window.location.replace(getRoleRedirectUrl(profile.role));
@@ -1594,7 +1597,6 @@
                 updateHeaderUI();
                 return false;
             }catch(e){
-                /* Network error (not a server "not logged in" answer): trust local record */
                 if (e instanceof TypeError) {
                     const stored = getStoredAuth();
                     if (stored) {
@@ -1604,14 +1606,13 @@
                         return true;
                     }
                 }
-                /* Server says session invalid/expired → logged out */
                 localStorage.removeItem('nova_auth');
                 updateHeaderUI();
                 return false;
             }
         }
 
-        /* ── UPDATE HEADER UI WITH ROLE-BASED DASHBOARD LINK ── */
+        /* ── UPDATE HEADER UI ── */
         function updateHeaderUI(){
             const authBtnDiv=document.getElementById('authHeaderBtn');
             const data=getStoredAuth();
@@ -1636,8 +1637,7 @@
             }
         }
 
-        /* Logout — clears ALL saved state, including the maintenance banner flags,
-           so no stale notification is shown after logging out */
+        /* Logout — clears ALL saved state */
         async function logoutUser(){
             try{ await apiCall('/logout',{method:'POST'}); }catch(e){}
             try{
@@ -1646,7 +1646,6 @@
                 localStorage.removeItem(MAINT_KEY);
                 localStorage.removeItem(MAINT_META_KEY);
             }catch(e){}
-            /* hide the banner immediately and stop polling */
             if(typeof _maintPollTimer !== 'undefined' && _maintPollTimer){ clearInterval(_maintPollTimer); _maintPollTimer = null; }
             try{ applyBanner(false, null); }catch(e){}
             window.location.href = '/';
@@ -1718,11 +1717,7 @@
             animateCounters();
         });
 
-        /* ── MAINTENANCE MODE ──
-           The banner now reflects ONLY the live server status.
-           Stale localStorage flags are never trusted when the status request fails
-           (e.g. after logout the admin endpoint returns 401/403), so the banner
-           can no longer "stick" after logging out. */
+        /* ── MAINTENANCE MODE ── */
         const POLL_INTERVAL=5000;
         let _maintTimer=null; let _maintPollTimer=null;
         function applyBanner(active,meta){
@@ -1752,10 +1747,8 @@
         function clearMaintStorage(){ try{ localStorage.removeItem(MAINT_KEY); localStorage.removeItem(MAINT_META_KEY); }catch(e){} }
         function checkMaintenance(){
             fetch('/api/admin/maintenance/status',{credentials:'include'})
-                .then(r=>r.ok?r.json():null)
+                .then(r => r.ok ? r.json() : Promise.reject('Unauthorized'))
                 .then(data=>{
-                    /* Not authorised / no data (logged out) → hide banner, drop stale flags */
-                    if(!data){ clearMaintStorage(); applyBanner(false,null); return; }
                     const serverOn=!!data.enabled;
                     if(serverOn){
                         const m={enabledAt:data.enabledAt||new Date().toISOString(),message:data.message||null};
@@ -1766,7 +1759,11 @@
                         applyBanner(false,null);
                     }
                 })
-                .catch(()=>{ /* network error → don't show a stale banner */ clearMaintStorage(); applyBanner(false,null); });
+                .catch(()=>{ 
+                    /* network error or unauthorized → don't show a stale banner */
+                    clearMaintStorage(); 
+                    applyBanner(false,null); 
+                });
         }
         window.addEventListener('storage',e=>{ if(e.key===MAINT_KEY||e.key===MAINT_META_KEY) checkMaintenance(); });
         function startPoll(){ if(_maintPollTimer) clearInterval(_maintPollTimer); _maintPollTimer=setInterval(checkMaintenance,POLL_INTERVAL); }
@@ -2017,16 +2014,15 @@
             try{ savedTheme = localStorage.getItem('nova_theme'); }catch(e){}
             applyTheme(savedTheme === 'dark' ? 'dark' : 'light');
 
-            /* Already logged in? → go straight to main.html / role dashboard.
-               The login page is shown only after logout or when the session expires. */
+            /* Already logged in? → go straight to main.html / role dashboard. */
             await checkSession();
             if(_redirectingLoggedIn) return;
 
-            /* Logged out: start from a clean slate — no stale maintenance banner */
+            /* Logged out: start from a clean slate */
             clearMaintStorage();
             applyBanner(false, null);
 
-            // Start maintenance polling (banner shows only if the live server status says so)
+            // Start maintenance polling
             checkMaintenance();
             startPoll();
 

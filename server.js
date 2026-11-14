@@ -5796,6 +5796,34 @@ cron.schedule('0 9 * * 1', async () => {
         console.error('❌ Error in weekly digest cron job:', err);
     }
 });
+// ==================== MAINTENANCE MODE STATE ====================
+// This holds the maintenance state in memory. (Resets if server restarts)
+let globalMaintenanceMode = {
+    enabled: false,
+    enabledAt: null,
+    message: "We're performing scheduled upgrades to improve your experience. Please check back shortly."
+};
+
+// 1. Get Status (Used by index.html)
+app.get('/api/admin/maintenance/status', (req, res) => {
+    res.json(globalMaintenanceMode);
+});
+
+// 2. Toggle Status (Used by admin-dashboard.html)
+app.post('/api/admin/maintenance', isAdmin, (req, res) => {
+    const { enabled, message } = req.body;
+    
+    globalMaintenanceMode.enabled = enabled;
+    globalMaintenanceMode.enabledAt = enabled ? new Date().toISOString() : null;
+    
+    if (message) {
+        globalMaintenanceMode.message = message;
+    }
+    
+    console.log(`🔧 Maintenance Mode: ${enabled ? 'ENABLED' : 'DISABLED'}`);
+    res.json({ success: true, ...globalMaintenanceMode });
+});
+// ================================================================
 
 // ============================================================================
 // NEW DELIVERY SYSTEM – PRODUCTS, ORDERS, PARTNERS, PROMOS, RATINGS, ETC.
