@@ -4069,70 +4069,7 @@ app.get('/api/support/stats', isAdminOrModerator, async (req, res) => {
 });
 
 // ==================== MODERATOR REMINDERS CRON JOB ====================
-cron.schedule('*/5 * * * *', async () => {
-    console.log('🔔 Running moderator reminder cron job...');
-    const REMINDER_THRESHOLD_MINUTES = parseInt(process.env.REMINDER_THRESHOLD_MINUTES) || 5;
-    const BATCH_LIMIT = parseInt(process.env.REMINDER_BATCH_LIMIT) || 50;
 
-    try {
-        const staleTickets = await pool.query(`
-            SELECT t.id, t.subject, t.assigned_to, u.username as moderator_name, u.email as moderator_email,
-                   t.escalated_at, t.last_reminder_sent
-            FROM support_tickets t
-            JOIN users u ON t.assigned_to = u.id
-            WHERE t.assigned_to IS NOT NULL
-              AND t.status = 'open'
-              AND EXTRACT(EPOCH FROM (NOW() - t.escalated_at)) / 60 > $1
-              AND (t.last_reminder_sent IS NULL 
-                   OR EXTRACT(EPOCH FROM (NOW() - t.last_reminder_sent)) / 60 > $1)
-            ORDER BY t.escalated_at ASC
-            LIMIT $2
-        `, [REMINDER_THRESHOLD_MINUTES, BATCH_LIMIT]);
-
-        if (staleTickets.rows.length === 0) {
-            console.log('ℹ️ No stale tickets found.');
-            return;
-        }
-
-        console.log(`📋 Found ${staleTickets.rows.length} stale tickets to process.`);
-
-        let reminderCount = 0;
-        let errorCount = 0;
-
-        for (const ticket of staleTickets.rows) {
-            try {
-                const moderatorEntry = onlineUsers.get(ticket.assigned_to);
-                if (moderatorEntry && moderatorEntry.socketId) {
-                    io.to(moderatorEntry.socketId).emit('support_reminder', {
-                        ticketId: ticket.id,
-                        subject: ticket.subject,
-                        minutesSince: Math.floor((Date.now() - new Date(ticket.escalated_at).getTime()) / 60000)
-                    });
-                }
-
-                await sendEmail(
-                    ticket.moderator_email,
-                    `Support Ticket Reminder #${ticket.id}`,
-                    `<p>You have a pending support ticket <strong>#${ticket.id}: "${escapeHtml(ticket.subject)}"</strong> that was escalated ${Math.floor((Date.now() - new Date(ticket.escalated_at).getTime()) / 60000)} minutes ago.</p><p>Please respond soon.</p>`
-                );
-
-                await pool.query(
-                    `UPDATE support_tickets SET last_reminder_sent = NOW() WHERE id = $1`,
-                    [ticket.id]
-                );
-                reminderCount++;
-                console.log(`✅ Reminder sent for ticket ${ticket.id} to moderator ${ticket.moderator_name} (${ticket.moderator_email})`);
-            } catch (err) {
-                errorCount++;
-                console.error(`❌ Failed to process reminder for ticket ${ticket.id}:`, err.message);
-            }
-        }
-
-        console.log(`✅ Cron job finished: ${reminderCount} reminders sent, ${errorCount} errors.`);
-    } catch (err) {
-        console.error('❌ Reminder cron error (query level):', err);
-    }
-}, { scheduled: true, recoverMissedExecutions: false });
 
 // ==================== STATS, USER STATUS, USAGE ANALYTICS ====================
 app.get('/api/stats', isAuthenticated, async (req, res) => {
