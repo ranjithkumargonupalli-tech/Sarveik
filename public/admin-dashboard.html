@@ -879,7 +879,10 @@
         }
 
         async init() {
-            await this.checkAdminAccess();
+            // 🔴 CRITICAL FIX: Wait for auth check. If it fails, stop loading the dashboard.
+            const isAuthorized = await this.checkAdminAccess();
+            if (!isAuthorized) return;
+
             await this.loadAnalytics();
             await this.loadUsers();
             await this.loadTools();
@@ -1010,22 +1013,26 @@
             if (input) input.value = '';
         }
 
-async checkAdminAccess() {
-    try { 
-        const profile = await apiCall('/profile'); 
-        // Normalize the role here too
-        const r = String(profile.role || '').trim().toLowerCase();
-        
-        if (r !== 'admin' && r !== 'moderator') { 
-            showToast('Admin/Moderator access required', 'error'); 
-            setTimeout(() => window.location.href = '/main.html', 1500); 
-        } else { 
-            this.currentUser = profile; 
-        } 
-    } catch (e) { 
-        console.warn('Admin check skipped (demo mode)', e); 
-    }
-}
+        async checkAdminAccess() {
+            try { 
+                const profile = await apiCall('/profile'); 
+                const r = String(profile.role || '').trim().toLowerCase();
+                
+                if (r !== 'admin' && r !== 'moderator') { 
+                    showToast('Admin/Moderator access required', 'error'); 
+                    setTimeout(() => window.location.href = '/main.html', 1500); 
+                    return false; 
+                } else { 
+                    this.currentUser = profile; 
+                    return true;
+                } 
+            } catch (e) { 
+                console.error('Auth check failed:', e);
+                showToast('Session expired or unauthorized. Redirecting to login...', 'error');
+                setTimeout(() => window.location.href = '/', 1500);
+                return false; 
+            }
+        }
 
         initCategoryPreview() {
             const sel = document.getElementById('toolCategory');
