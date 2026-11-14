@@ -4262,9 +4262,6 @@ app.post('/api/friends/request', isAuthenticated, async (req, res) => {
             [req.session.userId, friendId, expiresAt]
         );
  
-        sendFriendRequestEmail(friendEmail, req.session.username)
-            .catch(err => console.error('Friend request email failed:', err));
- 
         const friendEntry = onlineUsers.get(friendId);
         if (friendEntry?.socketId) {
             io.to(friendEntry.socketId).emit('friend_request_notification', {
@@ -4365,6 +4362,41 @@ app.get('/api/friends/outgoing-requests', isAuthenticated, async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
+    }
+});
+// Requests I sent that are still pending (used by "Sent Requests")
+app.get('/api/friends/sent', isAuthenticated, async (req, res) => {
+    try {
+        const result = await pool.query(
+            `SELECT f.id, f.created_at, u.id AS friend_id, u.username, u.display_name, u.avatar_url
+             FROM friendships f
+             JOIN users u ON u.id = f.friend_id
+             WHERE f.user_id = $1 AND f.status = 'pending'
+             ORDER BY f.created_at DESC`,
+            [req.session.userId]
+        );
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// Withdraw a request I sent (:requestId = the friendship row id)
+app.delete('/api/friends/request/:requestId', isAuthenticated, async (req, res) => {
+    const requestId = parseInt(req.params.requestId);
+    if (isNaN(requestId)) return res.status(400).send('Invalid request ID');
+    try {
+        const result = await pool.query(
+            `DELETE FROM friendships
+             WHERE id = $1 AND user_id = $2 AND status = 'pending'`,
+            [requestId, req.session.userId]
+        );
+        if (result.rowCount === 0) return res.status(404).send('Request not found');
+        res.send('Request withdrawn');
+    } catch (err) {
+        console.error(err);
+        res.status(500).send('Server error');
     }
 });
 
