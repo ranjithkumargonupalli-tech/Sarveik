@@ -63,6 +63,15 @@ h2 .count{margin-left:auto;font-family:var(--body);font-size:.75rem;font-weight:
 .stat-n{font-family:var(--display);font-size:2rem;font-weight:800;background:linear-gradient(135deg,#0ea5e9,#10b981);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 .stat-l{color:var(--muted);font-size:.78rem;font-weight:500;letter-spacing:.04em;text-transform:uppercase}
 
+/* TOP TABS (Active chats / All connections) */
+.tabs-top{display:flex;gap:.4rem;background:var(--card);border:1px solid var(--border);border-radius:var(--pill);padding:.35rem;margin-bottom:1.25rem;box-shadow:0 4px 16px rgba(14,116,144,.08)}
+.tab-btn{flex:1;border:none;background:transparent;color:var(--sub);font-family:var(--body);font-weight:600;font-size:.88rem;padding:.7rem 1rem;border-radius:var(--pill);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:.5rem;transition:.2s;white-space:nowrap}
+.tab-btn:hover{background:var(--cyan-dim);color:var(--cyan)}
+.tab-btn.active{background:linear-gradient(135deg,#0ea5e9,#10b981);color:#fff;box-shadow:0 4px 12px rgba(14,165,233,.3)}
+.tcount{background:rgba(14,165,233,.15);color:#0b7fb3;border-radius:var(--pill);min-width:22px;padding:1px 8px;font-size:.72rem;font-weight:700}
+.tab-btn.active .tcount{background:rgba(255,255,255,.28);color:#fff}
+.tab-btn:focus-visible,.fchip:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+
 /* NOTIFICATION ENABLE BANNER */
 .notif-banner{display:none;align-items:center;gap:.9rem;background:linear-gradient(135deg,rgba(37,211,102,.14),rgba(14,165,233,.12));border:1px solid rgba(37,211,102,.35);border-radius:var(--r);padding:.9rem 1.2rem;margin-bottom:1.25rem}
 .notif-banner.show{display:flex}
@@ -88,6 +97,7 @@ h2 .count{margin-left:auto;font-family:var(--body);font-size:.75rem;font-weight:
 .btn-outline:hover:not(:disabled){border-color:rgba(14,165,233,.5);color:var(--cyan)}
 .btn-sm{padding:.5rem .9rem;font-size:.8rem}
 .btn-xs{padding:.4rem .75rem;font-size:.75rem}
+.fav-btn.on{color:var(--amber);border-color:rgba(245,158,11,.55);background:rgba(245,158,11,.12)}
 
 /* FILTER BAR */
 .toolbar{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.2rem;margin-bottom:1rem;display:flex;flex-wrap:wrap;gap:.6rem;align-items:center}
@@ -95,8 +105,8 @@ h2 .count{margin-left:auto;font-family:var(--body);font-size:.75rem;font-weight:
 .toolbar .filter-select{flex:0 0 auto;min-width:130px}
 .chips{display:flex;gap:.4rem;flex-wrap:wrap;align-items:center}
 .chips span{font-size:.78rem;color:var(--muted);font-weight:500}
-.chip{padding:.4rem .9rem;border-radius:var(--pill);border:1px solid var(--border);background:rgba(255,255,255,.7);color:var(--muted);font-family:var(--body);font-size:.78rem;font-weight:500;cursor:pointer;transition:.2s}
-.chip.active,.chip:hover{background:linear-gradient(135deg,rgba(14,165,233,.16),rgba(16,185,129,.16));color:#0b7fb3;border-color:rgba(14,165,233,.45)}
+.chip,.fchip{padding:.4rem .9rem;border-radius:var(--pill);border:1px solid var(--border);background:rgba(255,255,255,.7);color:var(--muted);font-family:var(--body);font-size:.78rem;font-weight:500;cursor:pointer;transition:.2s}
+.chip.active,.chip:hover,.fchip.active,.fchip:hover{background:linear-gradient(135deg,rgba(14,165,233,.16),rgba(16,185,129,.16));color:#0b7fb3;border-color:rgba(14,165,233,.45)}
 
 /* CARDS */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:.9rem}
@@ -108,6 +118,7 @@ h2 .count{margin-left:auto;font-family:var(--body);font-size:.75rem;font-weight:
 .grid .card .actions{width:100%;padding-top:.75rem;border-top:1px solid var(--border)}
 .grid .card .actions .btn-primary{flex:1}
 .card.recent{border-left:3px solid var(--wa)}
+.card.pinned{box-shadow:inset 0 0 0 1px rgba(245,158,11,.4),0 3px 14px rgba(14,116,144,.07)}
 .card.has-unread{background:linear-gradient(135deg,rgba(37,211,102,.1),rgba(255,255,255,.95));border-color:rgba(37,211,102,.45)}
 .card.flash{animation:flash 1.4s ease}
 @keyframes flash{0%,100%{box-shadow:0 3px 14px rgba(14,116,144,.07)}30%{box-shadow:0 0 0 4px rgba(37,211,102,.45)}}
@@ -137,9 +148,18 @@ h2 .count{margin-left:auto;font-family:var(--body);font-size:.75rem;font-weight:
 .sk-a{width:52px;height:52px;border-radius:50%;background:rgba(14,165,233,.14);animation:sh 1.5s infinite}
 .sk-t{flex:1;height:44px;background:rgba(14,165,233,.12);border-radius:8px;animation:sh 1.5s infinite}
 @keyframes sh{0%,100%{opacity:.4}50%{opacity:.85}}
-.empty{display:flex;align-items:center;justify-content:center;padding:2rem;color:var(--muted);font-size:.88rem;gap:.5rem;text-align:center}
+.empty{display:flex;align-items:center;justify-content:center;padding:2rem;color:var(--muted);font-size:.88rem;gap:.5rem;text-align:center;flex-wrap:wrap}
 .spin{animation:spin 1s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
 hr{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--border-h),transparent);margin:2rem 0}
+
+/* NETWORK TOOLS */
+.tools-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:.9rem;margin-bottom:1.5rem}
+.tool{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1.05rem 1.1rem;display:flex;flex-direction:column;gap:.5rem;box-shadow:0 3px 14px rgba(14,116,144,.07);transition:border-color .25s,box-shadow .25s,transform .25s}
+.tool:hover{border-color:var(--border-h);box-shadow:var(--shadow);transform:translateY(-2px)}
+.tool .ti{width:38px;height:38px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(14,165,233,.16),rgba(16,185,129,.16));color:#0b7fb3}
+.tool .tt{font-family:var(--display);font-weight:700;font-size:.92rem}
+.tool .td{font-size:.78rem;color:var(--muted);line-height:1.45;flex:1}
+.tool .btn{width:100%}
 
 /* TOASTS (generic) */
 .toast-stack{position:fixed;top:4.6rem;right:1.1rem;z-index:3000;display:flex;flex-direction:column;gap:.6rem;align-items:flex-end;pointer-events:none;max-width:calc(100vw - 2rem)}
@@ -208,6 +228,7 @@ hr{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--bor
   .stat-n{font-size:1.5rem}.stats{gap:.6rem}
   .card{flex-wrap:wrap}.actions{width:100%;padding-top:.6rem;border-top:1px solid var(--border);flex-wrap:wrap}
   .toolbar{flex-direction:column;align-items:stretch}
+  .tab-btn{padding:.65rem .5rem;font-size:.8rem}
 }
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
@@ -246,6 +267,12 @@ hr{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--bor
 
 <div class="wrap">
 
+  <!-- TOP TABS: active chats (last 5 days) / overall connections -->
+  <div class="tabs-top" role="tablist" aria-label="Network view">
+    <button class="tab-btn active" id="tabActive" data-view="active" role="tab" aria-selected="true"><i class="fas fa-comments"></i> Active Chats <span class="tcount" id="tcActive">0</span></button>
+    <button class="tab-btn" id="tabAll" data-view="all" role="tab" aria-selected="false"><i class="fas fa-address-book"></i> All Connections <span class="tcount" id="tcAll">0</span></button>
+  </div>
+
   <div class="notif-banner" id="notifBanner">
     <i class="fab fa-whatsapp big"></i>
     <div class="t" id="notifText"><strong>Turn on real-time notifications</strong>Get new messages, group messages and connection requests instantly on your phone and desktop, even when this tab is closed.</div>
@@ -262,7 +289,7 @@ hr{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--bor
     <div class="stat"><div class="stat-n" id="sReq">0</div><div class="stat-l">Pending</div></div>
   </div>
 
-  <h2><i class="fas fa-user-friends"></i> Your Network <span class="count" id="netCount"></span></h2>
+  <h2 id="netTitle"><i class="fas fa-user-friends"></i> Your Network <span class="count" id="netCount"></span></h2>
   <div class="toolbar">
     <input type="text" id="quickSearch" class="filter-input" placeholder="Search your connections…">
     <select id="statusFilter" class="filter-select">
@@ -273,6 +300,11 @@ hr{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--bor
       <button class="chip active" data-sort="recent">Recent chats</button>
       <button class="chip" data-sort="status">Online first</button>
       <button class="chip" data-sort="name">Name</button>
+    </div>
+    <div class="chips">
+      <span>Show:</span>
+      <button class="fchip" id="fltUnread" aria-pressed="false"><i class="fas fa-envelope"></i> Unread</button>
+      <button class="fchip" id="fltFav" aria-pressed="false"><i class="fas fa-star"></i> Pinned</button>
     </div>
     <button id="refreshBtn" class="btn btn-outline btn-sm" title="Refresh"><i class="fas fa-sync-alt"></i></button>
   </div>
@@ -293,10 +325,32 @@ hr{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--bor
   </div>
   <div id="searchResults"></div>
 
-  <h2><i class="fas fa-user-plus"></i> Add Connection</h2>
-  <div class="row">
-    <input type="text" id="friendUsername" placeholder="Enter exact username">
-    <button id="addFriendBtn" class="btn btn-primary"><i class="fas fa-user-plus"></i> Send Request</button>
+  <h2><i class="fas fa-bolt"></i> Network Tools</h2>
+  <div class="tools-grid">
+    <div class="tool">
+      <div class="ti"><i class="fas fa-share-alt"></i></div>
+      <div class="tt">Invite a friend</div>
+      <div class="td">Share your Sarveik invite link by message, or copy it to the clipboard.</div>
+      <button class="btn btn-primary btn-sm" id="inviteBtn"><i class="fas fa-paper-plane"></i> Share invite</button>
+    </div>
+    <div class="tool">
+      <div class="ti"><i class="fas fa-check-double"></i></div>
+      <div class="tt">Mark all as read</div>
+      <div class="td">Clear every unread badge in one tap.</div>
+      <button class="btn btn-outline btn-sm" id="markAllBtn"><i class="fas fa-check-double"></i> Mark all read</button>
+    </div>
+    <div class="tool">
+      <div class="ti"><i class="fas fa-volume-up"></i></div>
+      <div class="tt">Message sound</div>
+      <div class="td">Play a short tone when a new message or request arrives.</div>
+      <button class="btn btn-outline btn-sm" id="soundBtn"></button>
+    </div>
+    <div class="tool">
+      <div class="ti"><i class="fas fa-mobile-alt"></i></div>
+      <div class="tt">Vibration</div>
+      <div class="td">Vibrate your phone for new alerts (on supported devices).</div>
+      <button class="btn btn-outline btn-sm" id="vibBtn"></button>
+    </div>
   </div>
 </div>
 
@@ -327,7 +381,8 @@ hr{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--bor
    HELPERS
    ========================================================= */
 const $ = id => document.getElementById(id);
-const RECENT_MS = 10 * 24 * 60 * 60 * 1000;   // names / chats / requests only count for 10 days
+const RECENT_MS = 10 * 24 * 60 * 60 * 1000;   // pending requests / stored chat info only count for 10 days
+const ACTIVE_CHAT_MS = 5 * 24 * 60 * 60 * 1000; // "Active Chats" = chatted within the last 5 days; older chats are hidden from that tab
 const PRESENCE_MS = 15 * 60 * 1000;           // someone shows as Online only if they chatted in the last 15 min (use 10 * 60 * 1000 for 10 min)
 const safeParse = (raw, fb) => { try { const v = JSON.parse(raw); return v == null ? fb : v; } catch (_) { return fb; } };
 const store = {
@@ -396,7 +451,7 @@ async function api(url, opt = {}, retry = true) {
       if (ct && ct.includes('json')) { const j = await res.json(); msg = j.message || j.error || msg; }
       else { const t = await res.text(); if (t) msg = t; }
     } catch (_) {}
-    throw new Error(msg);
+    const err = new Error(msg); err.status = res.status; throw err;
   }
   const ct = res.headers.get('content-type');
   return ct && ct.includes('json') ? res.json() : res.text();
@@ -408,8 +463,10 @@ async function api(url, opt = {}, retry = true) {
 const socket = io({ withCredentials: true });
 let me = { id: null, username: null };
 let friends = [], requests = [], groups = [], pickerFriends = [];
-let filters = { status: '', search: '' };
+let filters = { status: '', search: '', unread: false, fav: false };
 let sortMode = store.get('sarveik_sort', 'recent');
+let view = store.get('sarveik_view', 'active') === 'all' ? 'all' : 'active';   // 'active' = chats of the last 5 days, 'all' = every connection
+let favs = new Set((store.get('sarveik_favs', []) || []).map(String));         // pinned connections (kept on this device)
 const online = new Map();        // id -> status
 const unread = new Map();        // id -> count
 const seen = new Map();          // id -> last chat activity (ms)
@@ -429,23 +486,25 @@ function touchChat(id, text, ts) {
   lastChat[id] = { ts: ts || Date.now(), text: text != null ? text : (prev.text || '') };
   saveLast();
 }
-/* newest chat time inside the 10-day window, otherwise 0 (= not a recent chat) */
+/* newest chat time inside the 5-day active window, otherwise 0 (= not an active chat) */
 function chatTs(f) {
   const server = f.last_message_at ? new Date(f.last_message_at).getTime() : 0;
   const local = (lastChat[String(f.id)] || {}).ts || 0;
   const ts = Math.max(isNaN(server) ? 0 : server, local);
-  return Date.now() - ts <= RECENT_MS ? ts : 0;
+  return Date.now() - ts <= ACTIVE_CHAT_MS ? ts : 0;
 }
 function chatText(f) {
   const local = lastChat[String(f.id)] || {};
   return local.text || f.last_message || '';
 }
+/* active chat = talked within the last 5 days, or has unread messages waiting */
+function isActiveChat(f) { return chatTs(f) > 0 || (unread.get(f.id) || 0) > 0; }
 
 /* =========================================================
    REAL-TIME NOTIFICATIONS
    in-page popup · system notification (tab hidden) · Web Push (tab closed) · sound · vibration · tab title
    ========================================================= */
-const prefs = { sound: true, vibrate: true, system: true };
+const prefs = Object.assign({ sound: true, vibrate: true, system: true }, store.get('sarveik_prefs', {}) || {});
 let swReg = null;
 const baseTitle = document.title;
 let titleTimer = null;
@@ -657,7 +716,7 @@ async function loadStats() {
 }
 
 /* =========================================================
-   FRIENDS — recent chats (last 10 days) always on top
+   FRIENDS — "Active Chats" tab (last 5 days) + "All Connections" tab
    ========================================================= */
 async function loadFriends() {
   const box = $('friendsList'); if (!friends.length) skeleton(box);
@@ -681,10 +740,15 @@ function statusOf(f) {
   return st;
 }
 function sorted() {
-  const arr = friends.filter(f => !filters.status || statusOf(f) === filters.status);
+  let arr = friends.filter(f => !filters.status || statusOf(f) === filters.status);
+  if (view === 'active') arr = arr.filter(isActiveChat);                       // hide chats older than 5 days
+  if (filters.unread) arr = arr.filter(f => (unread.get(f.id) || 0) > 0);
+  if (filters.fav) arr = arr.filter(f => favs.has(String(f.id)));
   const byName = (a, b) => (a.display_name || a.username).localeCompare(b.display_name || b.username);
   const order = { online: 0, away: 1, busy: 2, offline: 3 };
   arr.sort((a, b) => {
+    const pa = favs.has(String(a.id)), pb = favs.has(String(b.id));          // pinned connections always first
+    if (pa !== pb) return pa ? -1 : 1;
     if (sortMode === 'recent') {
       const ta = chatTs(a), tb = chatTs(b);
       if (ta || tb) { if (tb !== ta) return tb - ta; }
@@ -695,22 +759,50 @@ function sorted() {
   });
   return arr;
 }
+function updateTabCounts() {
+  setStat('tcActive', friends.filter(isActiveChat).length);
+  setStat('tcAll', friends.length);
+}
+function setView(v, scroll) {
+  view = v === 'all' ? 'all' : 'active';
+  store.set('sarveik_view', view);
+  [['tabActive', 'active'], ['tabAll', 'all']].forEach(([id, name]) => {
+    $(id).classList.toggle('active', view === name); $(id).setAttribute('aria-selected', view === name ? 'true' : 'false');
+  });
+  renderFriends();
+  if (scroll) $('netTitle').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
 function renderFriends() {
   const box = $('friendsList');
   const list = sorted();
-  $('netCount').textContent = list.length ? list.length + ' connection' + (list.length > 1 ? 's' : '') : '';
+  updateTabCounts();
+  $('netCount').textContent = list.length
+    ? list.length + (view === 'active' ? ' active chat' : ' connection') + (list.length > 1 ? 's' : '')
+    : '';
   if (!filters.status && !filters.search) setStat('sOnline', friends.filter(f => statusOf(f) === 'online').length);
-  if (!list.length) { box.innerHTML = '<div class="empty" style="grid-column:1/-1">No connections found. Add some professionals below!</div>'; return; }
+  if (!list.length) {
+    const filtered = filters.status || filters.search || filters.unread || filters.fav;
+    if (view === 'active') {
+      box.innerHTML = filtered
+        ? '<div class="empty" style="grid-column:1/-1">No active chats match your filters.</div>'
+        : '<div class="empty" style="grid-column:1/-1">No active chats in the last 5 days. <button class="btn btn-sm btn-outline" data-goall="1"><i class="fas fa-address-book"></i> View all connections</button></div>';
+    } else {
+      box.innerHTML = '<div class="empty" style="grid-column:1/-1">No connections found. Add some professionals below!</div>';
+    }
+    return;
+  }
   box.innerHTML = list.map((f, i) => {
     const u = unread.get(f.id) || 0, ts = chatTs(f), txt = ts ? chatText(f) : '', st = statusOf(f);
     const stCls = ['online', 'away', 'busy'].includes(st) ? st : '';
+    const pinned = favs.has(String(f.id));
     return `
-    <div class="card ${ts ? 'recent' : ''} ${u ? 'has-unread' : ''}" data-id="${f.id}" style="animation-delay:${Math.min(i, 12) * .03}s">
+    <div class="card ${ts ? 'recent' : ''} ${u ? 'has-unread' : ''} ${pinned ? 'pinned' : ''}" data-id="${f.id}" style="animation-delay:${Math.min(i, 12) * .03}s">
       <div class="info">
         <div class="av-wrap">${avatar(f.avatar_url, f.display_name || f.username)}<span class="dot ${stCls}" title="${st === 'online' ? 'Active now' : st === 'away' ? 'Away' : st === 'busy' ? 'Busy' : 'Offline'}"></span></div>
         <div class="meta">
           <div class="name-row">
             <span class="name" title="${esc(f.display_name || f.username)}">${esc(f.display_name || f.username)}</span>
+            ${pinned ? '<i class="fas fa-star" style="color:var(--amber);font-size:.7rem;flex-shrink:0" title="Pinned"></i>' : ''}
             ${f.is_pro ? '<span class="pro">PRO</span>' : ''}${f.is_verified ? '<span class="ver"><i class="fas fa-check"></i></span>' : ''}
             ${ts ? `<span class="time">${timeAgo(ts)}</span>` : ''}
           </div>
@@ -720,6 +812,7 @@ function renderFriends() {
       </div>
       <div class="actions">
         <button class="btn btn-sm btn-primary chat-btn" data-id="${f.id}"><i class="fas fa-comments"></i> Chat</button>
+        <button class="btn btn-sm btn-outline fav-btn ${pinned ? 'on' : ''}" data-id="${f.id}" aria-label="${pinned ? 'Unpin' : 'Pin'} connection" title="${pinned ? 'Unpin' : 'Pin to top'}"><i class="fas fa-star"></i></button>
         <button class="btn btn-sm btn-outline prof-btn" data-id="${f.id}" aria-label="View profile"><i class="fas fa-user-circle"></i></button>
         <button class="btn btn-sm btn-danger unf-btn" data-id="${f.id}" aria-label="Remove"><i class="fas fa-user-minus"></i></button>
       </div>
@@ -731,13 +824,18 @@ function flashCard(id) {
   if (el) { el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
 }
 $('friendsList').addEventListener('click', async e => {
-  const chat = e.target.closest('.chat-btn'), prof = e.target.closest('.prof-btn'), unf = e.target.closest('.unf-btn');
+  if (e.target.closest('[data-goall]')) { setView('all', false); return; }
+  const chat = e.target.closest('.chat-btn'), prof = e.target.closest('.prof-btn'), unf = e.target.closest('.unf-btn'), fav = e.target.closest('.fav-btn');
   if (chat) {
     const id = chat.dataset.id;
     touchChat(id, undefined, Date.now());
     try { await api('/api/messages/read/' + id, { method: 'POST' }); } catch (_) {}
     unread.delete(Number(id)); updateTitle();
     location.href = 'chat.html?friend=' + id;
+  } else if (fav) {
+    const id = String(fav.dataset.id);
+    if (favs.has(id)) { favs.delete(id); showToast('Unpinned.', 'info'); } else { favs.add(id); showToast('Pinned to the top ⭐'); }
+    store.set('sarveik_favs', [...favs]); renderFriends();
   } else if (prof) showProfile(prof.dataset.id);
   else if (unf) unfriend(unf.dataset.id, unf);
 });
@@ -749,6 +847,7 @@ async function unfriend(id, btn) {
     showToast('Connection removed.', 'info');
     friends = friends.filter(f => String(f.id) !== String(id));
     delete lastChat[String(id)]; saveLast();
+    favs.delete(String(id)); store.set('sarveik_favs', [...favs]);
     renderFriends(); loadStats(); loadUnread();
   } catch (e) { showToast(e.message || 'Failed to remove', 'error'); btn.disabled = false; btn.innerHTML = orig; }
 }
@@ -786,7 +885,8 @@ $('requestsList').addEventListener('click', async e => {
 });
 
 /* =========================================================
-   ADD / SEARCH
+   SEND REQUEST (notification only — no e-mail; the receiver is alerted through
+   the in-app / push notification the server sends with friend_request_notification)
    ========================================================= */
 async function sendRequest(username, btn) {
   const orig = btn && btn.innerHTML;
@@ -797,20 +897,11 @@ async function sendRequest(username, btn) {
     if (btn) btn.innerHTML = '<i class="fas fa-check"></i> Sent';
     return true;
   } catch (e) {
-    showToast(e.message || 'Failed to send request', 'error');
+    showToast(e.status >= 500 ? 'Could not send the request right now. Please try again in a moment.' : (e.message || 'Failed to send request'), 'error');
     if (btn) { btn.disabled = false; btn.innerHTML = orig; }
     return false;
   }
 }
-async function addFriend() {
-  const v = $('friendUsername').value.trim().replace(/^@/, '');
-  if (!v) { showToast('Please enter a username', 'error'); return; }
-  const b = $('addFriendBtn'), o = b.innerHTML; b.disabled = true; b.innerHTML = '<i class="fas fa-spinner spin"></i> Sending…';
-  if (await sendRequest(v)) $('friendUsername').value = '';
-  b.disabled = false; b.innerHTML = o;
-}
-$('addFriendBtn').addEventListener('click', addFriend);
-$('friendUsername').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); addFriend(); } });
 
 let searchSeq = 0;
 async function searchUsers() {
@@ -837,10 +928,18 @@ $('searchUser').addEventListener('input', debounce(searchUsers, 300));
 $('searchUser').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); searchUsers(); } });
 
 /* =========================================================
-   FILTERS + SORT
+   FILTERS + SORT + TABS
    ========================================================= */
+$('tabActive').addEventListener('click', () => setView('active', true));
+$('tabAll').addEventListener('click', () => setView('all', true));
 $('statusFilter').addEventListener('change', e => { filters.status = e.target.value; renderFriends(); });
 $('quickSearch').addEventListener('input', debounce(() => { filters.search = $('quickSearch').value; loadFriends(); }, 350));
+$('fltUnread').addEventListener('click', () => {
+  filters.unread = !filters.unread; $('fltUnread').classList.toggle('active', filters.unread); $('fltUnread').setAttribute('aria-pressed', filters.unread); renderFriends();
+});
+$('fltFav').addEventListener('click', () => {
+  filters.fav = !filters.fav; $('fltFav').classList.toggle('active', filters.fav); $('fltFav').setAttribute('aria-pressed', filters.fav); renderFriends();
+});
 $('refreshBtn').addEventListener('click', async () => {
   const i = $('refreshBtn').querySelector('i'); i.classList.add('spin');
   await Promise.all([loadFriends(), loadRequests(), loadStats(), loadGroups(), loadUnread()]);
@@ -852,6 +951,53 @@ document.querySelectorAll('.chip').forEach(c => {
     document.querySelectorAll('.chip').forEach(x => x.classList.remove('active'));
     c.classList.add('active'); sortMode = c.dataset.sort; store.set('sarveik_sort', sortMode); renderFriends();
   });
+});
+
+/* =========================================================
+   NETWORK TOOLS (invite · mark all read · export · sound · vibration)
+   ========================================================= */
+function syncToolButtons() {
+  $('soundBtn').innerHTML = `<i class="fas fa-${prefs.sound ? 'volume-up' : 'volume-mute'}"></i> ${prefs.sound ? 'Sound: On' : 'Sound: Off'}`;
+  $('vibBtn').innerHTML = `<i class="fas fa-mobile-alt"></i> ${prefs.vibrate ? 'Vibration: On' : 'Vibration: Off'}`;
+  $('soundBtn').classList.toggle('btn-primary', prefs.sound); $('soundBtn').classList.toggle('btn-outline', !prefs.sound);
+  $('vibBtn').classList.toggle('btn-primary', prefs.vibrate); $('vibBtn').classList.toggle('btn-outline', !prefs.vibrate);
+}
+$('soundBtn').addEventListener('click', () => { prefs.sound = !prefs.sound; store.set('sarveik_prefs', prefs); syncToolButtons(); if (prefs.sound) playTone(); });
+$('vibBtn').addEventListener('click', () => { prefs.vibrate = !prefs.vibrate; store.set('sarveik_prefs', prefs); syncToolButtons(); if (prefs.vibrate) buzz(); });
+
+$('inviteBtn').addEventListener('click', async () => {
+  const link = location.origin + '/index.html';
+  const text = `Join me on Sarveik${me.username ? ' — I am @' + me.username : ''}. Sign up here: ${link}`;
+  try {
+    if (navigator.share) { await navigator.share({ title: 'Sarveik', text, url: link }); return; }
+    await navigator.clipboard.writeText(text);
+    showToast('Invite link copied to clipboard!');
+  } catch (e) {
+    if (e && e.name === 'AbortError') return;
+    showToast('Could not share. Copy this link: ' + link, 'info');
+  }
+});
+
+$('markAllBtn').addEventListener('click', async () => {
+  const ids = [...unread.entries()].filter(([, n]) => n > 0).map(([id]) => id);
+  if (!ids.length) { showToast('You have no unread messages.', 'info'); return; }
+  const b = $('markAllBtn'), o = b.innerHTML; b.disabled = true; b.innerHTML = '<i class="fas fa-spinner spin"></i> Working…';
+  await Promise.all(ids.map(id => api('/api/messages/read/' + id, { method: 'POST' }).catch(() => null)));
+  unread.clear(); renderFriends(); updateBadges(); updateTitle();
+  showToast('All messages marked as read.');
+  b.disabled = false; b.innerHTML = o;
+});
+
+$('exportBtn').addEventListener('click', () => {
+  if (!friends.length) { showToast('You have no connections to export yet.', 'info'); return; }
+  const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+  const rows = [['Name', 'Username', 'Profession', 'Status']].concat(
+    friends.map(f => [f.display_name || f.username, f.username, f.profession || '', statusOf(f)]));
+  const csv = '\ufeff' + rows.map(r => r.map(q).join(',')).join('\r\n');
+  const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+  const a = document.createElement('a'); a.href = url; a.download = 'sarveik-connections.csv';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+  showToast(`Exported ${friends.length} connection${friends.length > 1 ? 's' : ''}.`);
 });
 
 /* =========================================================
@@ -1047,9 +1193,11 @@ $('mLogoutBtn').addEventListener('click', doLogout);
    INIT
    ========================================================= */
 setInterval(() => { if (!document.hidden && me.id) { loadUnread(); loadStats(); } }, 30000);
-setInterval(() => { pruneLast(); renderFriends(); }, 60000);   // keep "5m / 1h" labels fresh and drop chats older than 10 days
+setInterval(() => { pruneLast(); renderFriends(); }, 60000);   // keep "5m / 1h" labels fresh, drop old chats, and move chats out of "Active" after 5 days
 (async () => {
   pruneLast();
+  syncToolButtons();
+  setView(view, false);
   await fetchCsrf();
   try { const u = await api('/profile'); me = { id: u.id, username: u.username }; } catch (_) {}
   refreshBanner(); subscribePush();

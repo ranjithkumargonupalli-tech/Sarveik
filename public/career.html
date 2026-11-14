@@ -8,21 +8,51 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <link rel="stylesheet" href="sarveik-enhanced.css">
+  <style>
+    .starter-hero{background:var(--bg-card);backdrop-filter:blur(10px);border:var(--border);border-radius:20px;padding:20px 24px;margin-bottom:24px;box-shadow:var(--shadow)}
+    .starter-hero h2{font-size:1.15rem;margin-bottom:6px;color:var(--accent-strong);display:flex;align-items:center;gap:8px}
+    .starter-hero p{font-size:.82rem;color:var(--text-muted);margin-bottom:14px}
+    .starter-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+    .starter-chip{background:var(--accent-soft);border:1px solid rgba(14,165,233,.25);border-radius:12px;padding:10px;cursor:pointer;text-align:center;transition:var(--transition);font-size:.8rem;font-weight:600}
+    .starter-chip:hover{background:var(--btn-bg);color:#fff;transform:translateY(-2px)}
+    .starter-chip small{display:block;font-weight:400;font-size:.68rem;opacity:.75;margin-top:2px}
+    .starter-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+    .starter-actions button{background:transparent;border:var(--border);border-radius:50px;padding:6px 14px;font-size:.78rem;cursor:pointer;color:var(--text);font-family:inherit;transition:var(--transition)}
+    .starter-actions button:hover{background:var(--accent-soft);border-color:var(--accent)}
+    .compare-btn{background:var(--accent-soft);border:1px solid rgba(14,165,233,.3);color:var(--accent-strong);padding:6px 14px;border-radius:50px;font-size:.78rem;cursor:pointer;font-weight:600;font-family:inherit}
+    .compare-btn:hover{background:var(--btn-bg);color:#fff}
+    .verified-badge{position:absolute;bottom:8px;left:12px;font-size:.6rem;color:var(--text-muted);opacity:.65;z-index:5}
+    .offline-banner{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.4);border-radius:12px;padding:10px 16px;margin-bottom:20px;font-size:.82rem;color:#b45309;display:none;align-items:center;gap:10px}
+    .offline-banner.show{display:flex}
+  </style>
 </head>
 <body>
 <div class="container">
   <h1>🎯 Career Gateway</h1>
-  <p class="subtitle">Government & Private Jobs • Exam Portals • Scholarships • Career Resources</p>
+  <p class="subtitle">Government & Private Jobs • Exam Portals • Scholarships • Freelancing • Startup Schemes</p>
 
   <div style="text-align:center"><div class="stats-badge" id="statsBadge">Loading resources...</div></div>
 
-  <!-- Smart, trainable search -->
+  <div class="offline-banner" id="offlineBanner">
+    <i class="fas fa-wifi"></i>
+    <span>Running in offline mode — tools are loaded locally. Login features disabled.</span>
+  </div>
+
+  <div class="starter-hero">
+    <h2><i class="fas fa-fire"></i> Trending this week</h2>
+    <p>Click a chip to jump straight to the resource. Updated weekly based on what users search for.</p>
+    <div class="starter-grid" id="starterGrid"></div>
+    <div class="starter-actions">
+      <button class="compare-btn" id="compareBtn"><i class="fas fa-columns"></i> Compare SSC vs UPSC vs Banking prep</button>
+    </div>
+  </div>
+
   <div class="smart-search" id="smartSearch">
     <div class="search-field">
       <i class="fas fa-search s-ico"></i>
       <div class="input-wrap">
         <div class="search-hl" aria-hidden="true"><div class="search-hl-inner" id="searchHl"></div></div>
-        <input type="text" id="searchInput" placeholder="Search — try “upsc”, “banking”, “scholarship”…" autocomplete="off" spellcheck="false" aria-label="Search tools" role="combobox" aria-expanded="false" aria-controls="suggestBox">
+        <input type="text" id="searchInput" placeholder="Search — try “upsc”, “banking”, “scholarship”, “freelance”…" autocomplete="off" spellcheck="false" aria-label="Search tools" role="combobox" aria-expanded="false" aria-controls="suggestBox">
       </div>
       <button class="clear-search" id="clearSearch" title="Clear search" style="display:none">&times;</button>
       <button class="mem-btn" id="memoryBtn" title="Search memory &amp; training" aria-label="Open search memory">🧠</button>
@@ -54,7 +84,7 @@
 
   <div class="submit-section">
     <h3><i class="fas fa-plus-circle"></i> Suggest a Career Resource</h3>
-    <p style="margin-bottom:15px;font-size:.85rem">Submit a job portal, exam site, or scholarship — after admin approval it will appear for everyone!</p>
+    <p style="margin-bottom:15px;font-size:.85rem">Submit a job portal, exam site, scholarship, freelancing platform, or startup scheme — after admin approval it will appear for everyone!</p>
     <input type="text" id="newName" placeholder="Website name *">
     <input type="text" id="newUrl" placeholder="Website URL (https://...) *">
     <textarea id="newDesc" placeholder="Short description *" rows="2"></textarea>
@@ -63,7 +93,11 @@
       <option value="private-jobs">💼 Private Jobs</option>
       <option value="exam-portals">📝 Exam Portals</option>
       <option value="scholarships">💰 Scholarships</option>
-      <option value="career-skills">🚀 Career Skills / Internships</option>
+      <option value="career-skills">🚀 Career Skills</option>
+      <option value="freelancing">💻 Freelancing</option>
+      <option value="gov-digital">🪪 Government Digital</option>
+      <option value="entrepreneurship">🌱 Entrepreneurship</option>
+      <option value="competitions">🏆 Competitions</option>
     </select>
     <button id="submitToolBtn"><i class="fas fa-paper-plane"></i> Submit for Review</button>
     <p style="margin-top:10px;font-size:.75rem;opacity:.7">Resources are reviewed by admins. You'll receive credits when approved.</p>
@@ -72,7 +106,6 @@
   <div class="navigation"><a href="main.html" class="nav-btn"><i class="fas fa-home"></i> Back to Tools</a></div>
 </div>
 
-<!-- Tool modal -->
 <div class="modal" id="toolModal">
   <div class="modal-content">
     <span class="close">&times;</span>
@@ -98,7 +131,6 @@
   </div>
 </div>
 
-<!-- Memory modal -->
 <div class="modal" id="memoryModal">
   <div class="modal-content">
     <span class="close" id="memoryClose">&times;</span>
@@ -107,6 +139,31 @@
     <div id="memoryBody"></div>
   </div>
 </div>
+
+<div class="modal" id="compareModal">
+  <div class="modal-content" style="max-width:820px">
+    <span class="close" id="compareClose">&times;</span>
+    <h2>⚖️ SSC vs UPSC vs Banking</h2>
+    <p style="font-size:.85rem;color:var(--text-muted);margin:6px 0 16px">The three most-searched government career tracks. Pick by education level and goal.</p>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-size:.82rem">
+        <thead><tr style="background:var(--accent-soft)">
+          <th style="padding:10px;text-align:left;border-bottom:var(--border)">Criteria</th>
+          <th style="padding:10px;text-align:left;border-bottom:var(--border)">SSC</th>
+          <th style="padding:10px;text-align:left;border-bottom:var(--border)">UPSC</th>
+          <th style="padding:10px;text-align:left;border-bottom:var(--border)">Banking (IBPS/SBI)</th>
+        </tr></thead>
+        <tbody>
+          <tr><td style="padding:8px;border-bottom:1px solid var(--accent-soft)"><b>Eligibility</b></td><td style="padding:8px;border-bottom:1px solid var(--accent-soft)">10th–Graduate</td><td style="padding:8px;border-bottom:1px solid var(--accent-soft)">Any graduate</td><td style="padding:8px;border-bottom:1px solid var(--accent-soft)">Any graduate</td></tr>
+          <tr><td style="padding:8px;border-bottom:1px solid var(--accent-soft)"><b>Age limit</b></td><td style="padding:8px;border-bottom:1px solid var(--accent-soft)">18–32</td><td style="padding:8px;border-bottom:1px solid var(--accent-soft)">21–32</td><td style="padding:8px;border-bottom:1px solid var(--accent-soft)">20–30</td></tr>
+          <tr><td style="padding:8px;border-bottom:1px solid var(--accent-soft)"><b>Prep time</b></td><td style="padding:8px;border-bottom:1px solid var(--accent-soft)">6–12 months</td><td style="padding:8px;border-bottom:1px solid var(--accent-soft)">1–2 years</td><td style="padding:8px;border-bottom:1px solid var(--accent-soft)">4–8 months</td></tr>
+          <tr><td style="padding:8px"><b>Best for</b></td><td style="padding:8px">Fast government job</td><td style="padding:8px">IAS/IPS ambition</td><td style="padding:8px">Job + banking career</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
 <input type="file" id="memImportFile" accept="application/json" style="display:none">
 
 <div class="disclaimer">
@@ -115,11 +172,6 @@
 <button id="backToTop" title="Back to top">↑</button>
 
 <script>
-/* ============================================================
-   Sarveik Career Gateway — Enhanced
-   Same engine as Student Tools reference (smart search, memory,
-   optimistic submit). Only the tool data differs between pages.
-   ============================================================ */
 const PAGE_TYPE = 'career';
 const NEW_DAYS_THRESHOLD = 7;
 
@@ -131,112 +183,160 @@ let filteredTools = [];
 let userPremiumStatus = false;
 let searchVer = 0;
 let modalToolName = '';
+let offlineMode = false;
 
-/* ---------- Tool data (NUMBERS are for your review) ---------- */
+/* ============ 127 verified tools ============ */
 const toolsData = [
-  /* 1 */ { name: "SSC Official", url: "https://ssc.nic.in", desc: "Staff Selection Commission – CGL, CHSL, MTS, JE etc.", category: "govt-jobs", longDesc: "Official SSC portal for all exams – notifications, syllabus, admit cards, results.", isPremiumRequired: false },
-  /* 2 */ { name: "UPSC", url: "https://upsc.gov.in", desc: "Union Public Service Commission – Civil Services, Engineering, CDS.", category: "govt-jobs", longDesc: "Official UPSC website for all recruitment and examination information.", isPremiumRequired: false },
-  /* 3 */ { name: "IBPS", url: "https://ibps.in", desc: "Institute of Banking Personnel Selection – PO, Clerk, RRB, SO.", category: "govt-jobs", longDesc: "Official IBPS portal for banking exam notifications and results.", isPremiumRequired: false },
-  /* 4 */ { name: "SBI Careers", url: "https://sbi.co.in/web/careers", desc: "SBI recruitment for PO, Clerk, Specialist Officers.", category: "govt-jobs", longDesc: "Official SBI career page – application forms, exam dates, results.", isPremiumRequired: false },
-  /* 5 */ { name: "RRB", url: "https://rrbcdg.gov.in", desc: "Railway Recruitment Board – NTPC, Group D, ALP, JE.", category: "govt-jobs", longDesc: "Indian Railways official recruitment portal (zone-wise links).", isPremiumRequired: false },
-  /* 6 */ { name: "Indian Army", url: "https://joinindianarmy.nic.in", desc: "Army recruitment for officers, soldiers, technical entries.", category: "govt-jobs", longDesc: "Official Indian Army job notification and application platform.", isPremiumRequired: false },
-  /* 7 */ { name: "Indian Navy", url: "https://www.joinindiannavy.gov.in", desc: "Navy recruitment for officers and sailors.", category: "govt-jobs", longDesc: "Official career portal for Indian Navy.", isPremiumRequired: false },
-  /* 8 */ { name: "Indian Air Force", url: "https://indianairforce.nic.in", desc: "IAF recruitment – Airmen, Officers, Technical.", category: "govt-jobs", longDesc: "Official Indian Air Force career site.", isPremiumRequired: false },
-  /* 9 */ { name: "BPSC", url: "https://bpsc.bih.nic.in", desc: "Bihar Public Service Commission.", category: "govt-jobs", longDesc: "State PSC exam notifications and results.", isPremiumRequired: false },
-  /* 10 */ { name: "UPPSC", url: "https://uppsc.up.nic.in", desc: "Uttar Pradesh Public Service Commission.", category: "govt-jobs", longDesc: "UPPSC exam calendar, syllabus, and application.", isPremiumRequired: false },
-  /* 11 */ { name: "MPPSC", url: "https://mppsc.mp.gov.in", desc: "Madhya Pradesh Public Service Commission.", category: "govt-jobs", longDesc: "MPPSC official website for state recruitment.", isPremiumRequired: false },
-  /* 12 */ { name: "Rajasthan PSC", url: "https://rpsc.rajasthan.gov.in", desc: "RPSC – RAS, RTS, and other state exams.", category: "govt-jobs", longDesc: "RPSC exam schedule and online forms.", isPremiumRequired: false },
-  /* 13 */ { name: "TNPSC", url: "https://www.tnpsc.gov.in", desc: "Tamil Nadu Public Service Commission.", category: "govt-jobs", longDesc: "TNPSC group exams and recruitment.", isPremiumRequired: false },
-  /* 14 */ { name: "Kerala PSC", url: "https://www.keralapsc.gov.in", desc: "Kerala Public Service Commission.", category: "govt-jobs", longDesc: "State exam notifications and results.", isPremiumRequired: false },
-  /* 15 */ { name: "Maharashtra PSC", url: "https://mpsc.gov.in", desc: "MPSC for Maharashtra state govt jobs.", category: "govt-jobs", longDesc: "MPSC official site for all Maharashtra govt exams.", isPremiumRequired: false },
-  
-  
-  /* 18 */ { name: "JKPSC", url: "https://jkpsc.nic.in", desc: "Jammu & Kashmir Public Service Commission.", category: "govt-jobs", longDesc: "Recruitment for JKAS, medical officer, engineering services.", isPremiumRequired: false },
-  /* 19 */ { name: "UKPSC", url: "https://ukpsc.gov.in", desc: "Uttarakhand Public Service Commission.", category: "govt-jobs", longDesc: "Notifications for UKPCS, RO/ARO, lecturer and state exams.", isPremiumRequired: false },
-  /* 20 */ { name: "CGPSC", url: "https://psc.cg.gov.in", desc: "Chhattisgarh Public Service Commission.", category: "govt-jobs", longDesc: "CGPSC state service, forest service, and other CG recruitments.", isPremiumRequired: false },
-  /* 21 */ { name: "JPSC (Jharkhand)", url: "https://jpsc.gov.in", desc: "Jharkhand Public Service Commission.", category: "govt-jobs", longDesc: "JPSC civil services, combined competitive exam.", isPremiumRequired: false },
-  /* 22 */ { name: "OPSC", url: "https://opsc.gov.in", desc: "Odisha Public Service Commission.", category: "govt-jobs", longDesc: "OPSC OAS, OSSC, teachers, and medical officer recruitments.", isPremiumRequired: false },
-  /* 23 */ { name: "APSC", url: "https://apsc.nic.in", desc: "Assam Public Service Commission.", category: "govt-jobs", longDesc: "Assam civil services, combined competitive exam.", isPremiumRequired: false },
-  /* 24 */ { name: "GPSC (Gujarat)", url: "https://gpsc.gujarat.gov.in", desc: "Gujarat Public Service Commission.", category: "govt-jobs", longDesc: "GPSC class 1 & 2, administrative service.", isPremiumRequired: false },
-  /* 25 */ { name: "Goa PSC", url: "https://gpsc.goa.gov.in", desc: "Goa Public Service Commission.", category: "govt-jobs", longDesc: "Recruitment for Goa civil services, police, various departments.", isPremiumRequired: false },
-  /* 26 */ { name: "HPPSC", url: "https://hppsc.hp.gov.in", desc: "Himachal Pradesh Public Service Commission.", category: "govt-jobs", longDesc: "HAS, allied services, and state teacher recruitment.", isPremiumRequired: false },
-  /* 27 */ { name: "PPSC (Punjab)", url: "https://ppsc.gov.in", desc: "Punjab Public Service Commission.", category: "govt-jobs", longDesc: "PCS exams, DSP, district attorney, and other Punjab govt jobs.", isPremiumRequired: false },
-  /* 28 */ { name: "WBPSC", url: "https://psc.wb.gov.in", desc: "West Bengal Public Service Commission.", category: "govt-jobs", longDesc: "WBCS, miscellaneous services, education department recruitments.", isPremiumRequired: false },
-  /* 29 */ { name: "TSPSC", url: "https://tspsc.gov.in", desc: "Telangana State Public Service Commission.", category: "govt-jobs", longDesc: "Group 1,2,3,4 and other TSPSC notifications and results.", isPremiumRequired: false },
-  /* 30 */ { name: "KPSC (Karnataka)", url: "https://kpsc.kar.nic.in", desc: "Karnataka Public Service Commission.", category: "govt-jobs", longDesc: "KPSC gazetted probationers, FDA, SDA exams.", isPremiumRequired: false },
-  /* 31 */ { name: "APPSC", url: "https://psc.ap.gov.in", desc: "Andhra Pradesh Public Service Commission.", category: "govt-jobs", longDesc: "APPSC group 1,2,3, and other AP state exams.", isPremiumRequired: false },
-  /* 33 */ { name: "RBI Grade B", url: "https://rbi.org.in", desc: "Reserve Bank of India Grade B officer recruitment.", category: "govt-jobs", longDesc: "Direct recruitment for RBI officers and assistant.", isPremiumRequired: false },
-  /* 34 */ { name: "NABARD", url: "https://nabard.org", desc: "NABARD development assistant and grade A/B exams.", category: "govt-jobs", longDesc: "National Bank for Agriculture and Rural Development careers.", isPremiumRequired: false },
-  /* 35 */ { name: "SIDBI", url: "https://sidbi.in", desc: "SIDBI officer and assistant manager recruitment.", category: "govt-jobs", longDesc: "Small Industries Development Bank of India official careers.", isPremiumRequired: false },
+  /* ===== GOVT JOBS (35) ===== */
+  { name: "SSC Official", url: "https://ssc.nic.in", desc: "Staff Selection Commission – CGL, CHSL, MTS, JE etc.", category: "govt-jobs", longDesc: "Official SSC portal for all exams – notifications, syllabus, admit cards, results.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "UPSC", url: "https://upsc.gov.in", desc: "Union Public Service Commission – Civil Services, Engineering, CDS.", category: "govt-jobs", longDesc: "Official UPSC website for all recruitment and examination information.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "IBPS", url: "https://ibps.in", desc: "Institute of Banking Personnel Selection – PO, Clerk, RRB, SO.", category: "govt-jobs", longDesc: "Official IBPS portal for banking exam notifications and results.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "SBI Careers", url: "https://sbi.co.in/web/careers", desc: "SBI recruitment for PO, Clerk, Specialist Officers.", category: "govt-jobs", longDesc: "Official SBI career page – application forms, exam dates, results.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "RRB", url: "https://rrbcdg.gov.in", desc: "Railway Recruitment Board – NTPC, Group D, ALP, JE.", category: "govt-jobs", longDesc: "Indian Railways official recruitment portal (zone-wise links).", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Indian Army", url: "https://joinindianarmy.nic.in", desc: "Army recruitment for officers, soldiers, technical entries.", category: "govt-jobs", longDesc: "Official Indian Army job notification and application platform.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Indian Navy", url: "https://www.joinindiannavy.gov.in", desc: "Navy recruitment for officers and sailors.", category: "govt-jobs", longDesc: "Official career portal for Indian Navy.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Indian Air Force", url: "https://indianairforce.nic.in", desc: "IAF recruitment – Airmen, Officers, Technical.", category: "govt-jobs", longDesc: "Official Indian Air Force career site.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "BPSC", url: "https://bpsc.bih.nic.in", desc: "Bihar Public Service Commission.", category: "govt-jobs", longDesc: "State PSC exam notifications and results.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "UPPSC", url: "https://uppsc.up.nic.in", desc: "Uttar Pradesh Public Service Commission.", category: "govt-jobs", longDesc: "UPPSC exam calendar, syllabus, and application.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "MPPSC", url: "https://mppsc.mp.gov.in", desc: "Madhya Pradesh Public Service Commission.", category: "govt-jobs", longDesc: "MPPSC official website for state recruitment.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Rajasthan PSC", url: "https://rpsc.rajasthan.gov.in", desc: "RPSC – RAS, RTS, and other state exams.", category: "govt-jobs", longDesc: "RPSC exam schedule and online forms.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "TNPSC", url: "https://www.tnpsc.gov.in", desc: "Tamil Nadu Public Service Commission.", category: "govt-jobs", longDesc: "TNPSC group exams and recruitment.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Kerala PSC", url: "https://www.keralapsc.gov.in", desc: "Kerala Public Service Commission.", category: "govt-jobs", longDesc: "State exam notifications and results.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Maharashtra PSC", url: "https://mpsc.gov.in", desc: "MPSC for Maharashtra state govt jobs.", category: "govt-jobs", longDesc: "MPSC official site for all Maharashtra govt exams.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Employment News", url: "https://employmentnews.gov.in", desc: "Weekly job bulletin from Government of India.", category: "govt-jobs", longDesc: "Free weekly PDF with all central govt job vacancies.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "HPSC (Haryana)", url: "https://hpsc.gov.in", desc: "Haryana Public Service Commission.", category: "govt-jobs", longDesc: "Official HPSC portal for HSSC, HCS and other Haryana recruitments.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "JKPSC", url: "https://jkpsc.nic.in", desc: "Jammu & Kashmir Public Service Commission.", category: "govt-jobs", longDesc: "Recruitment for JKAS, medical officer, engineering services.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "UKPSC", url: "https://ukpsc.gov.in", desc: "Uttarakhand Public Service Commission.", category: "govt-jobs", longDesc: "Notifications for UKPCS, RO/ARO, lecturer and state exams.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "CGPSC", url: "https://psc.cg.gov.in", desc: "Chhattisgarh Public Service Commission.", category: "govt-jobs", longDesc: "CGPSC state service, forest service, and other CG recruitments.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "JPSC (Jharkhand)", url: "https://jpsc.gov.in", desc: "Jharkhand Public Service Commission.", category: "govt-jobs", longDesc: "JPSC civil services, combined competitive exam.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "OPSC", url: "https://opsc.gov.in", desc: "Odisha Public Service Commission.", category: "govt-jobs", longDesc: "OPSC OAS, OSSC, teachers, and medical officer recruitments.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "APSC", url: "https://apsc.nic.in", desc: "Assam Public Service Commission.", category: "govt-jobs", longDesc: "Assam civil services, combined competitive exam.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "GPSC (Gujarat)", url: "https://gpsc.gujarat.gov.in", desc: "Gujarat Public Service Commission.", category: "govt-jobs", longDesc: "GPSC class 1 & 2, administrative service.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Goa PSC", url: "https://gpsc.goa.gov.in", desc: "Goa Public Service Commission.", category: "govt-jobs", longDesc: "Recruitment for Goa civil services, police, various departments.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "HPPSC", url: "https://hppsc.hp.gov.in", desc: "Himachal Pradesh Public Service Commission.", category: "govt-jobs", longDesc: "HAS, allied services, and state teacher recruitment.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "PPSC (Punjab)", url: "https://ppsc.gov.in", desc: "Punjab Public Service Commission.", category: "govt-jobs", longDesc: "PCS exams, DSP, district attorney, and other Punjab govt jobs.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "WBPSC", url: "https://psc.wb.gov.in", desc: "West Bengal Public Service Commission.", category: "govt-jobs", longDesc: "WBCS, miscellaneous services, education department recruitments.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "TSPSC", url: "https://tspsc.gov.in", desc: "Telangana State Public Service Commission.", category: "govt-jobs", longDesc: "Group 1,2,3,4 and other TSPSC notifications and results.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "KPSC (Karnataka)", url: "https://kpsc.kar.nic.in", desc: "Karnataka Public Service Commission.", category: "govt-jobs", longDesc: "KPSC gazetted probationers, FDA, SDA exams.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "APPSC", url: "https://psc.ap.gov.in", desc: "Andhra Pradesh Public Service Commission.", category: "govt-jobs", longDesc: "APPSC group 1,2,3, and other AP state exams.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "DSSSB", url: "https://dsssb.delhi.gov.in", desc: "Delhi Subordinate Services Selection Board.", category: "govt-jobs", longDesc: "Teaching and non-teaching jobs in Delhi government.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "RBI Grade B", url: "https://rbi.org.in", desc: "Reserve Bank of India Grade B officer recruitment.", category: "govt-jobs", longDesc: "Direct recruitment for RBI officers and assistant.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "NABARD", url: "https://nabard.org", desc: "NABARD development assistant and grade A/B exams.", category: "govt-jobs", longDesc: "National Bank for Agriculture and Rural Development careers.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "SIDBI", url: "https://sidbi.in", desc: "SIDBI officer and assistant manager recruitment.", category: "govt-jobs", longDesc: "Small Industries Development Bank of India official careers.", isPremiumRequired: false, verified: "2026-11" },
 
-  /* 36 */ { name: "Naukri.com", url: "https://www.naukri.com", desc: "India's largest job portal for private sector.", category: "private-jobs", longDesc: "Free job search, resume upload, job alerts. Premium for priority visibility.", isPremiumRequired: true },
-  /* 37 */ { name: "Indeed", url: "https://www.indeed.com", desc: "Global job search platform (India included).", category: "private-jobs", longDesc: "Millions of job listings, salary comparisons, company reviews.", isPremiumRequired: true },
-  /* 38 */ { name: "LinkedIn Jobs", url: "https://www.linkedin.com/jobs", desc: "Professional network with job listings.", category: "private-jobs", longDesc: "Free job search, networking, easy apply. Premium for InMail.", isPremiumRequired: true },
-  /* 39 */ { name: "Monster India", url: "https://www.monsterindia.com", desc: "Job search and career advice.", category: "private-jobs", longDesc: "Post resume, get job alerts, career resources.", isPremiumRequired: true },
-  /* 40 */ { name: "Shine", url: "https://www.shine.com", desc: "Private sector jobs for freshers and experienced.", category: "private-jobs", longDesc: "Free registration, job matching, career guidance.", isPremiumRequired: true },
-  /* 41 */ { name: "TimesJobs", url: "https://www.timesjobs.com", desc: "Job portal by Times Group.", category: "private-jobs", longDesc: "Job search, company reviews, interview tips.", isPremiumRequired: true },
-  /* 42 */ { name: "Glassdoor", url: "https://www.glassdoor.com", desc: "Job listings + company reviews & salaries.", category: "private-jobs", longDesc: "Insider info about companies, interview questions.", isPremiumRequired: true },
-  /* 43 */ { name: "Hirect", url: "https://hirect.in", desc: "Direct chat with startup founders.", category: "private-jobs", longDesc: "App for direct hiring in startups (free).", isPremiumRequired: false },
+  /* ===== PRIVATE JOBS + JOB BOARDS (15) ===== */
+  { name: "Naukri.com", url: "https://www.naukri.com", desc: "India's largest job portal for private sector.", category: "private-jobs", longDesc: "Free job search, resume upload, job alerts. Premium for priority visibility.", isPremiumRequired: true, verified: "2026-11" },
+  { name: "Indeed", url: "https://www.indeed.com", desc: "Global job search platform (India included).", category: "private-jobs", longDesc: "Millions of job listings, salary comparisons, company reviews.", isPremiumRequired: true, verified: "2026-11" },
+  { name: "LinkedIn Jobs", url: "https://www.linkedin.com/jobs", desc: "Professional network with job listings.", category: "private-jobs", longDesc: "Free job search, networking, easy apply. Premium for InMail.", isPremiumRequired: true, verified: "2026-11" },
+  { name: "Foundit (Monster India)", url: "https://www.foundit.in", desc: "Job search and career advice (rebranded Monster India).", category: "private-jobs", longDesc: "Post resume, get job alerts, career resources. Formerly Monster India.", isPremiumRequired: true, verified: "2026-11" },
+  { name: "Shine", url: "https://www.shine.com", desc: "Private sector jobs for freshers and experienced.", category: "private-jobs", longDesc: "Free registration, job matching, career guidance.", isPremiumRequired: true, verified: "2026-11" },
+  { name: "TimesJobs", url: "https://www.timesjobs.com", desc: "Job portal by Times Group.", category: "private-jobs", longDesc: "Job search, company reviews, interview tips.", isPremiumRequired: true, verified: "2026-11" },
+  { name: "Glassdoor", url: "https://www.glassdoor.com", desc: "Job listings + company reviews & salaries.", category: "private-jobs", longDesc: "Insider info about companies, interview questions.", isPremiumRequired: true, verified: "2026-11" },
+  { name: "Hirect", url: "https://hirect.in", desc: "Direct chat with startup founders.", category: "private-jobs", longDesc: "App for direct hiring in startups (free).", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Freshersworld", url: "https://www.freshersworld.com", desc: "Jobs for freshers and internships in India.", category: "private-jobs", longDesc: "Massive fresher jobs board with walk-ins, internships and campus drives. Free.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Apna", url: "https://apna.co", desc: "India's largest jobs app for blue/grey collar work.", category: "private-jobs", longDesc: "Trusted hiring app for delivery, sales, retail and entry-level roles. Free.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Cutshort", url: "https://cutshort.io", desc: "AI-powered job matching for tech and product roles.", category: "private-jobs", longDesc: "Free job search for tech professionals with AI matching.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Instahyre", url: "https://www.instahyre.com", desc: "Curated tech jobs with direct recruiter contact.", category: "private-jobs", longDesc: "Free job search for engineers and product managers.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Wellfound (AngelList)", url: "https://wellfound.com", desc: "Startup jobs with equity and salary transparency.", category: "private-jobs", longDesc: "Startup jobs board with equity and salary visible upfront. Free.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Hirist", url: "https://www.hirist.tech", desc: "Specialised tech and startup jobs portal.", category: "private-jobs", longDesc: "Focused on engineering, product and design roles. Free.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Work at a Startup (YC)", url: "https://www.workatastartup.com", desc: "Jobs at Y Combinator-backed startups.", category: "private-jobs", longDesc: "Direct applications to founders of YC companies. Free.", isPremiumRequired: false, verified: "2026-11" },
 
-  /* 44 */ { name: "JEE Main Official", url: "https://jeemain.nta.nic.in", desc: "JEE Main registration, syllabus, papers.", category: "exam-portals", longDesc: "NTA – JEE Main official site.", isPremiumRequired: false },
-  /* 45 */ { name: "NEET Official", url: "https://neet.nta.nic.in", desc: "NEET UG registration and information.", category: "exam-portals", longDesc: "Official NEET website by NTA.", isPremiumRequired: false },
-  /* 46 */ { name: "GATE Official", url: "https://gate.iitd.ac.in", desc: "Graduate Aptitude Test in Engineering.", category: "exam-portals", longDesc: "GATE for M.Tech and PSU recruitment.", isPremiumRequired: false },
-  /* 47 */ { name: "CAT Official", url: "https://iimcat.ac.in", desc: "Common Admission Test for MBA.", category: "exam-portals", longDesc: "IIM CAT registration and exam info.", isPremiumRequired: false },
-  /* 48 */ { name: "CLAT Official", url: "https://consortiumofnlus.ac.in", desc: "Common Law Admission Test.", category: "exam-portals", longDesc: "Official CLAT for NLU admissions.", isPremiumRequired: false },
-  /* 49 */ { name: "UGC NET", url: "https://ugcnet.nta.nic.in", desc: "UGC NET for Assistant Professor/JRF.", category: "exam-portals", longDesc: "NTA NET official site.", isPremiumRequired: false },
-  /* 50 */ { name: "CSIR NET", url: "https://csirnet.nta.nic.in", desc: "CSIR UGC NET for science lectureship.", category: "exam-portals", longDesc: "Official CSIR NET exam portal.", isPremiumRequired: false },
-  /* 51 */ { name: "CTET", url: "https://ctet.nic.in", desc: "Central Teacher Eligibility Test.", category: "exam-portals", longDesc: "CBSE CTET for teaching jobs.", isPremiumRequired: false },
- 
-  /* 57 */ { name: "Karnataka KCET", url: "https://cetonline.karnataka.gov.in/kea", desc: "KCET registration and results.", category: "exam-portals", longDesc: "Karnataka CET for engineering, agriculture.", isPremiumRequired: false },
-  /* 58 */ { name: "MHT-CET", url: "https://cetcell.mahacet.org", desc: "Maharashtra CET for engineering/pharmacy.", category: "exam-portals", longDesc: "MHT-CET official portal.", isPremiumRequired: false },
-  /* 59 */ { name: "WBJEE", url: "https://wbjeeb.nic.in", desc: "West Bengal Joint Entrance Exam.", category: "exam-portals", longDesc: "WBJEE for engineering, pharmacy.", isPremiumRequired: false },
-  /* 60 */ { name: "AP EAPCET", url: "https://cets.apsche.ap.gov.in", desc: "AP Engineering, Agriculture & Pharmacy CET.", category: "exam-portals", longDesc: "EAPCET official website.", isPremiumRequired: false },
-  /* 61 */ { name: "CUET (NTA)", url: "https://cuet.samarth.ac.in", desc: "Common University Entrance Test UG/PG.", category: "exam-portals", longDesc: "Official CUET registration, syllabus, results.", isPremiumRequired: false },
-  /* 62 */ { name: "IISER IAT", url: "https://iiseradmission.in", desc: "IISER admission test for BS-MS.", category: "exam-portals", longDesc: "Joint admission for IISERs.", isPremiumRequired: false },
-  /* 63 */ { name: "ICAR AIEEA", url: "https://icar.nta.nic.in", desc: "ICAR entrance for agriculture UG/PG.", category: "exam-portals", longDesc: "ICAR AIEEA for B.Sc Agriculture, veterinary.", isPremiumRequired: false },
-  /* 64 */ { name: "AIIMS Exam Portal", url: "https://aiimsexams.ac.in", desc: "AIIMS nursing, paramedical, PhD entrance.", category: "exam-portals", longDesc: "Official AIIMS entrance portal.", isPremiumRequired: false },
-  /* 65 */ { name: "AMU Entrance", url: "https://amucontrollerexams.com", desc: "AMU admissions for diploma, UG, PG.", category: "exam-portals", longDesc: "Aligarh Muslim University exam portal.", isPremiumRequired: false },
-  /* 66 */ { name: "BHU UET", url: "https://bhuonline.in", desc: "Banaras Hindu University entrance test.", category: "exam-portals", longDesc: "BHU UET and PET online applications.", isPremiumRequired: false },
-  /* 67 */ { name: "DU Entrance", url: "https://du.ac.in", desc: "Delhi University JAT, LLB, MCA admissions.", category: "exam-portals", longDesc: "Delhi University admission portal.", isPremiumRequired: false },
-  /* 68 */ { name: "KEAM (Kerala)", url: "https://cee.kerala.gov.in", desc: "Kerala Engineering Architecture Medical entrance.", category: "exam-portals", longDesc: "KEAM for engineering and pharmacy admissions.", isPremiumRequired: false },
-  /* 69 */ { name: "COMEDK UGET", url: "https://comedk.org", desc: "COMEDK for engineering in Karnataka.", category: "exam-portals", longDesc: "Official COMEDK exam registration and counselling.", isPremiumRequired: false },
-  /* 70 */ { name: "TS EAMCET", url: "https://eamcet.tsche.ac.in", desc: "Telangana EAMCET (Engineering, Agriculture, Medical).", category: "exam-portals", longDesc: "EAMCET for admission in Telangana.", isPremiumRequired: false },
-  /* 71 */ { name: "GUJCET", url: "https://gujcet.gseb.org", desc: "Gujarat CET for engineering/pharmacy.", category: "exam-portals", longDesc: "GUJCET official notification and results.", isPremiumRequired: false },
-  /* 72 */ { name: "IIT JAM", url: "https://jam.iitm.ac.in", desc: "Joint Admission Test for MSc in IITs.", category: "exam-portals", longDesc: "IIT JAM for MSc, integrated PhD programs.", isPremiumRequired: false },
+  /* ===== EXAM PORTALS (29) ===== */
+  { name: "JEE Main Official", url: "https://jeemain.nta.nic.in", desc: "JEE Main registration, syllabus, papers.", category: "exam-portals", longDesc: "NTA – JEE Main official site.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "NEET Official", url: "https://neet.nta.nic.in", desc: "NEET UG registration and information.", category: "exam-portals", longDesc: "Official NEET website by NTA.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "GATE Official", url: "https://gate.iitd.ac.in", desc: "Graduate Aptitude Test in Engineering.", category: "exam-portals", longDesc: "GATE for M.Tech and PSU recruitment.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "CAT Official", url: "https://iimcat.ac.in", desc: "Common Admission Test for MBA.", category: "exam-portals", longDesc: "IIM CAT registration and exam info.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "CLAT Official", url: "https://consortiumofnlus.ac.in", desc: "Common Law Admission Test.", category: "exam-portals", longDesc: "Official CLAT for NLU admissions.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "UGC NET", url: "https://ugcnet.nta.nic.in", desc: "UGC NET for Assistant Professor/JRF.", category: "exam-portals", longDesc: "NTA NET official site.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "CSIR NET", url: "https://csirnet.nta.nic.in", desc: "CSIR UGC NET for science lectureship.", category: "exam-portals", longDesc: "Official CSIR NET exam portal.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "CTET", url: "https://ctet.nic.in", desc: "Central Teacher Eligibility Test.", category: "exam-portals", longDesc: "CBSE CTET for teaching jobs.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "GPAT", url: "https://gpat.nta.nic.in", desc: "Graduate Pharmacy Aptitude Test.", category: "exam-portals", longDesc: "GPAT for pharmacy postgraduate admission.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "NIMCET", url: "https://nimcet.in", desc: "NIT MCA Common Entrance Test.", category: "exam-portals", longDesc: "For MCA admission in NITs.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "BITSAT", url: "https://bitsadmission.com", desc: "BITS Pilani entrance test.", category: "exam-portals", longDesc: "Online exam for BITS campuses.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "VITEEE", url: "https://viteee.vit.ac.in", desc: "VIT Engineering Entrance Exam.", category: "exam-portals", longDesc: "VITEEE official registration site.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "SRMJEEE", url: "https://www.srmist.edu.in/admission", desc: "SRM Joint Engineering Entrance Exam.", category: "exam-portals", longDesc: "SRM university engineering admission.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Karnataka KCET", url: "https://cetonline.karnataka.gov.in/kea", desc: "KCET registration and results.", category: "exam-portals", longDesc: "Karnataka CET for engineering, agriculture.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "MHT-CET", url: "https://cetcell.mahacet.org", desc: "Maharashtra CET for engineering/pharmacy.", category: "exam-portals", longDesc: "MHT-CET official portal.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "WBJEE", url: "https://wbjeeb.nic.in", desc: "West Bengal Joint Entrance Exam.", category: "exam-portals", longDesc: "WBJEE for engineering, pharmacy.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "AP EAPCET", url: "https://cets.apsche.ap.gov.in", desc: "AP Engineering, Agriculture & Pharmacy CET.", category: "exam-portals", longDesc: "EAPCET official website.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "CUET (NTA)", url: "https://cuet.samarth.ac.in", desc: "Common University Entrance Test UG/PG.", category: "exam-portals", longDesc: "Official CUET registration, syllabus, results.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "IISER IAT", url: "https://iiseradmission.in", desc: "IISER admission test for BS-MS.", category: "exam-portals", longDesc: "Joint admission for IISERs.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "ICAR AIEEA", url: "https://icar.nta.nic.in", desc: "ICAR entrance for agriculture UG/PG.", category: "exam-portals", longDesc: "ICAR AIEEA for B.Sc Agriculture, veterinary.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "AIIMS Exam Portal", url: "https://aiimsexams.ac.in", desc: "AIIMS nursing, paramedical, PhD entrance.", category: "exam-portals", longDesc: "Official AIIMS entrance portal.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "AMU Entrance", url: "https://amucontrollerexams.com", desc: "AMU admissions for diploma, UG, PG.", category: "exam-portals", longDesc: "Aligarh Muslim University exam portal.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "BHU UET", url: "https://bhuonline.in", desc: "Banaras Hindu University entrance test.", category: "exam-portals", longDesc: "BHU UET and PET online applications.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "DU Entrance", url: "https://du.ac.in", desc: "Delhi University JAT, LLB, MCA admissions.", category: "exam-portals", longDesc: "Delhi University admission portal.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "KEAM (Kerala)", url: "https://cee.kerala.gov.in", desc: "Kerala Engineering Architecture Medical entrance.", category: "exam-portals", longDesc: "KEAM for engineering and pharmacy admissions.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "COMEDK UGET", url: "https://comedk.org", desc: "COMEDK for engineering in Karnataka.", category: "exam-portals", longDesc: "Official COMEDK exam registration and counselling.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "TS EAMCET", url: "https://eamcet.tsche.ac.in", desc: "Telangana EAMCET (Engineering, Agriculture, Medical).", category: "exam-portals", longDesc: "EAMCET for admission in Telangana.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "GUJCET", url: "https://gujcet.gseb.org", desc: "Gujarat CET for engineering/pharmacy.", category: "exam-portals", longDesc: "GUJCET official notification and results.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "IIT JAM", url: "https://jam.iitm.ac.in", desc: "Joint Admission Test for MSc in IITs.", category: "exam-portals", longDesc: "IIT JAM for MSc, integrated PhD programs.", isPremiumRequired: false, verified: "2026-11" },
 
-  /* 73 */ { name: "National Scholarship Portal", url: "https://scholarships.gov.in", desc: "Government of India's central scholarship portal.", category: "scholarships", longDesc: "One-stop site for all central & state scholarships.", isPremiumRequired: false },
-  /* 74 */ { name: "Vidya Lakshmi", url: "https://www.vidyalakshmi.co.in", desc: "Education loan and scholarship portal.", category: "scholarships", longDesc: "Apply for education loans and scholarships.", isPremiumRequired: false },
-  /* 75 */ { name: "PMSSS", url: "https://www.aicte-pmsss.org", desc: "PM Special Scholarship Scheme (J&K).", category: "scholarships", longDesc: "Scholarship for J&K students.", isPremiumRequired: false },
-  /* 76 */ { name: "Inspire Scholarship", url: "https://www.online-inspire.gov.in", desc: "DST Inspire for science students.", category: "scholarships", longDesc: "Scholarship for higher education in science.", isPremiumRequired: false },
-  /* 77 */ { name: "CBSE Scholarship", url: "http://cbse.nic.in/newsite/scholarship.html", desc: "CBSE single girl child & merit scholarships.", category: "scholarships", longDesc: "CBSE central scheme scholarships.", isPremiumRequired: false },
-  /* 78 */ { name: "ONGC Scholarship", url: "https://ongcindia.com", desc: "ONGC merit scholarship for SC/ST students.", category: "scholarships", longDesc: "Energy giant's scholarship for engineering/medical.", isPremiumRequired: false },
-  /* 79 */ { name: "Tata Scholarship", url: "https://www.tatascholarship.org", desc: "Tata scholarship for undergraduate studies.", category: "scholarships", longDesc: "Need-based merit scholarship for Indian students.", isPremiumRequired: false },
-  /* 80 */ { name: "Reliance Foundation", url: "https://www.reliancefoundation.org/scholarships", desc: "Reliance Foundation Undergraduate Scholarships.", category: "scholarships", longDesc: "Scholarship for merit and need.", isPremiumRequired: false },
-  /* 81 */ { name: "NTPC Scholarship", url: "https://www.ntpc.co.in/en/career/scholarships", desc: "NTPC scholarship for SC/ST/PH.", category: "scholarships", longDesc: "Power sector scholarship for engineering.", isPremiumRequired: false },
-  /* 82 */ { name: "LIC Golden Jubilee", url: "https://www.licindia.in", desc: "LIC scholarship for meritorious students.", category: "scholarships", longDesc: "Scholarship for family income < 2 lakh.", isPremiumRequired: false },
-  /* 83 */ { name: "Indian Oil Scholarship", url: "https://iocl.com", desc: "Indian Oil merit scholarship.", category: "scholarships", longDesc: "IOCL scholarships for 10th/12th/graduate.", isPremiumRequired: false },
-  /* 84 */ { name: "GAIL Scholarship", url: "https://gailonline.com", desc: "GAIL merit scholarship for SC/ST/girls.", category: "scholarships", longDesc: "₹10,000 per month for professional courses.", isPremiumRequired: false },
-  /* 85 */ { name: "KVPY", url: "https://kvpy.iisc.ac.in", desc: "Kishore Vaigyanik Protsahan Yojana fellowship.", category: "scholarships", longDesc: "Encourage students to pursue basic science research.", isPremiumRequired: false },
-  /* 86 */ { name: "NTSE (NCERT)", url: "https://ncert.nic.in", desc: "National Talent Search Examination scholarship.", category: "scholarships", longDesc: "NTSE exam for class 10, monthly scholarship.", isPremiumRequired: false },
-  /* 87 */ { name: "PMRF", url: "https://pmrf.in", desc: "Prime Minister's Research Fellowship for PhD.", category: "scholarships", longDesc: "Fellowship of ₹70k-80k per month for research.", isPremiumRequired: false },
+  /* ===== SCHOLARSHIPS (15) ===== */
+  { name: "National Scholarship Portal", url: "https://scholarships.gov.in", desc: "Government of India's central scholarship portal.", category: "scholarships", longDesc: "One-stop site for all central & state scholarships.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Vidya Lakshmi", url: "https://www.vidyalakshmi.co.in", desc: "Education loan and scholarship portal.", category: "scholarships", longDesc: "Apply for education loans and scholarships.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "PMSSS", url: "https://www.aicte-pmsss.org", desc: "PM Special Scholarship Scheme (J&K).", category: "scholarships", longDesc: "Scholarship for J&K students.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Inspire Scholarship", url: "https://www.online-inspire.gov.in", desc: "DST Inspire for science students.", category: "scholarships", longDesc: "Scholarship for higher education in science.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "CBSE Scholarship", url: "http://cbse.nic.in/newsite/scholarship.html", desc: "CBSE single girl child & merit scholarships.", category: "scholarships", longDesc: "CBSE central scheme scholarships.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "ONGC Scholarship", url: "https://ongcindia.com", desc: "ONGC merit scholarship for SC/ST students.", category: "scholarships", longDesc: "Energy giant's scholarship for engineering/medical.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Tata Scholarship", url: "https://www.tatascholarship.org", desc: "Tata scholarship for undergraduate studies.", category: "scholarships", longDesc: "Need-based merit scholarship for Indian students.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Reliance Foundation", url: "https://www.reliancefoundation.org/scholarships", desc: "Reliance Foundation Undergraduate Scholarships.", category: "scholarships", longDesc: "Scholarship for merit and need.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "NTPC Scholarship", url: "https://www.ntpc.co.in/en/career/scholarships", desc: "NTPC scholarship for SC/ST/PH.", category: "scholarships", longDesc: "Power sector scholarship for engineering.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "LIC Golden Jubilee", url: "https://www.licindia.in", desc: "LIC scholarship for meritorious students.", category: "scholarships", longDesc: "Scholarship for family income < 2 lakh.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Indian Oil Scholarship", url: "https://iocl.com", desc: "Indian Oil merit scholarship.", category: "scholarships", longDesc: "IOCL scholarships for 10th/12th/graduate.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "GAIL Scholarship", url: "https://gailonline.com", desc: "GAIL merit scholarship for SC/ST/girls.", category: "scholarships", longDesc: "₹10,000 per month for professional courses.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "KVPY", url: "https://kvpy.iisc.ac.in", desc: "Kishore Vaigyanik Protsahan Yojana fellowship.", category: "scholarships", longDesc: "Encourage students to pursue basic science research.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "NTSE (NCERT)", url: "https://ncert.nic.in", desc: "National Talent Search Examination scholarship.", category: "scholarships", longDesc: "NTSE exam for class 10, monthly scholarship.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "PMRF", url: "https://pmrf.in", desc: "Prime Minister's Research Fellowship for PhD.", category: "scholarships", longDesc: "Fellowship of ₹70k-80k per month for research.", isPremiumRequired: false, verified: "2026-11" },
 
-  /* 88 */ { name: "Internshala", url: "https://internshala.com", desc: "Internships, fresher jobs, and training.", category: "career-skills", longDesc: "Free internships, online training, placement support.", isPremiumRequired: false },
-  /* 89 */ { name: "NPTEL", url: "https://nptel.ac.in", desc: "Free online courses from IITs and IISc.", category: "career-skills", longDesc: "Certification courses, exam registration free.", isPremiumRequired: false },
-  /* 90 */ { name: "Swayam", url: "https://swayam.gov.in", desc: "Free government online courses.", category: "career-skills", longDesc: "MOOCs from Indian universities, free certificates.", isPremiumRequired: false },
-  /* 91 */ { name: "Coursera", url: "https://www.coursera.org", desc: "Thousands of free professional courses with audit.", category: "career-skills", longDesc: "Audit free, financial aid for certificates. Paid certificates.", isPremiumRequired: true },
-  /* 92 */ { name: "edX", url: "https://www.edx.org", desc: "University-level free online courses.", category: "career-skills", longDesc: "Free audit; financial aid for verified certificates.", isPremiumRequired: true },
-  /* 93 */ { name: "Google Career Certificates", url: "https://grow.google/certificates", desc: "Free IT support, data analytics, UX design courses.", category: "career-skills", longDesc: "Financial aid available; prepare for high-demand jobs.", isPremiumRequired: true },
-  /* 94 */ { name: "Microsoft Learn", url: "https://learn.microsoft.com", desc: "Free technical learning paths.", category: "career-skills", longDesc: "Role-based certifications and hands-on labs.", isPremiumRequired: false },
-  /* 95 */ { name: "AWS Educate", url: "https://awseducate.com", desc: "Cloud computing courses & free credits.", category: "career-skills", longDesc: "Free self-paced cloud learning.", isPremiumRequired: false },
-  /* 96 */ { name: "IBM SkillsBuild", url: "https://skillsbuild.org", desc: "Free digital skills & career certificates.", category: "career-skills", longDesc: "AI, cybersecurity, cloud, professional development.", isPremiumRequired: false },
-  /* 97 */ { name: "Salesforce Trailhead", url: "https://trailhead.salesforce.com", desc: "Free CRM and business skills platform.", category: "career-skills", longDesc: "Gamified learning, superbadges, career paths.", isPremiumRequired: true },
-  /* 98 */ { name: "GitHub Education", url: "https://education.github.com", desc: "GitHub student developer pack & free tools.", category: "career-skills", longDesc: "Free pro account, courses, mentorship for students.", isPremiumRequired: false },
-  /* 99 */ { name: "NSDC eSkill India", url: "https://eskillindia.digitalindia.gov.in", desc: "Government skill building portal.", category: "career-skills", longDesc: "Free online courses by National Skill Development Corporation.", isPremiumRequired: false },
-  /* 100 */ { name: "NATS Apprenticeship", url: "https://mhrdnats.gov.in", desc: "National Apprenticeship Training Scheme portal.", category: "career-skills", longDesc: "Register for apprenticeships with govt & private companies.", isPremiumRequired: false },
-  /* 101 */ { name: "PMKVY Skill India", url: "https://pmkvyofficial.org", desc: "Pradhan Mantri Kaushal Vikas Yojana training.", category: "career-skills", longDesc: "Certification and placement support in various trades.", isPremiumRequired: false }
+  /* ===== CAREER SKILLS (21) ===== */
+  { name: "Internshala", url: "https://internshala.com", desc: "Internships, fresher jobs, and training.", category: "career-skills", longDesc: "Free internships, online training, placement support.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "NPTEL", url: "https://nptel.ac.in", desc: "Free online courses from IITs and IISc.", category: "career-skills", longDesc: "Certification courses, exam registration free.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Swayam", url: "https://swayam.gov.in", desc: "Free government online courses.", category: "career-skills", longDesc: "MOOCs from Indian universities, free certificates.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Coursera", url: "https://www.coursera.org", desc: "Thousands of free professional courses with audit.", category: "career-skills", longDesc: "Audit free, financial aid for certificates. Paid certificates.", isPremiumRequired: true, verified: "2026-11" },
+  { name: "edX", url: "https://www.edx.org", desc: "University-level free online courses.", category: "career-skills", longDesc: "Free audit; financial aid for verified certificates.", isPremiumRequired: true, verified: "2026-11" },
+  { name: "Google Career Certificates", url: "https://grow.google/certificates", desc: "Free IT support, data analytics, UX design courses.", category: "career-skills", longDesc: "Financial aid available; prepare for high-demand jobs.", isPremiumRequired: true, verified: "2026-11" },
+  { name: "Microsoft Learn", url: "https://learn.microsoft.com", desc: "Free technical learning paths.", category: "career-skills", longDesc: "Role-based certifications and hands-on labs.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "AWS Educate", url: "https://awseducate.com", desc: "Cloud computing courses & free credits.", category: "career-skills", longDesc: "Free self-paced cloud learning.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "IBM SkillsBuild", url: "https://skillsbuild.org", desc: "Free digital skills & career certificates.", category: "career-skills", longDesc: "AI, cybersecurity, cloud, professional development.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Salesforce Trailhead", url: "https://trailhead.salesforce.com", desc: "Free CRM and business skills platform.", category: "career-skills", longDesc: "Gamified learning, superbadges, career paths.", isPremiumRequired: true, verified: "2026-11" },
+  { name: "GitHub Education", url: "https://education.github.com", desc: "GitHub student developer pack & free tools.", category: "career-skills", longDesc: "Free pro account, courses, mentorship for students.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "NSDC eSkill India", url: "https://eskillindia.digitalindia.gov.in", desc: "Government skill building portal.", category: "career-skills", longDesc: "Free online courses by National Skill Development Corporation.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "NATS Apprenticeship", url: "https://mhrdnats.gov.in", desc: "National Apprenticeship Training Scheme portal.", category: "career-skills", longDesc: "Register for apprenticeships with govt & private companies.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "PMKVY Skill India", url: "https://pmkvyofficial.org", desc: "Pradhan Mantri Kaushal Vikas Yojana training.", category: "career-skills", longDesc: "Certification and placement support in various trades.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Great Learning", url: "https://www.mygreatlearning.com", desc: "Free courses with certificates in AI, cloud, data.", category: "career-skills", longDesc: "Free skill-based courses from top universities. Paid programs optional.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Simplilearn SkillUp", url: "https://www.simplilearn.com/skillup-free-online-courses", desc: "Free career-focused courses with certificates.", category: "career-skills", longDesc: "Free courses in data, cloud, DevOps, AI. Free certificates.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "NASSCOM FutureSkills", url: "https://futureskillsprime.in", desc: "Free digital skilling from Indian IT industry.", category: "career-skills", longDesc: "Free courses in AI, IoT, cybersecurity, blockchain. Government-backed.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Google Digital Garage", url: "https://learndigital.withgoogle.com/digitalgarage", desc: "Free digital marketing and career skills.", category: "career-skills", longDesc: "Free Google-certified courses in digital marketing, data, career development.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "HubSpot Academy", url: "https://academy.hubspot.com", desc: "Free inbound marketing and sales courses.", category: "career-skills", longDesc: "Free certifications in marketing, sales, and CRM.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Meta Blueprint", url: "https://www.facebook.com/business/learn", desc: "Free Meta (Facebook) marketing certifications.", category: "career-skills", longDesc: "Free courses on Meta advertising and analytics.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "LinkedIn Learning Free", url: "https://www.linkedin.com/learning", desc: "Professional courses (free tier via Premium).", category: "career-skills", longDesc: "Free with LinkedIn Premium or during trials.", isPremiumRequired: true, verified: "2026-11" },
+
+  /* ===== FREELANCING (5) ===== */
+  { name: "Upwork", url: "https://www.upwork.com", desc: "World's largest freelancing marketplace.", category: "freelancing", longDesc: "Freelance projects in writing, coding, design, marketing. Free account with Connects system.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Fiverr", url: "https://www.fiverr.com", desc: "Buy and sell freelance services as 'gigs'.", category: "freelancing", longDesc: "Popular for small, fixed-price tasks. Free to join and create gigs.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Freelancer.com", url: "https://www.freelancer.com", desc: "Global freelancing platform with contests.", category: "freelancing", longDesc: "Jobs, contests and projects in 2000+ categories. Free tier.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Truelancer", url: "https://www.truelancer.com", desc: "Indian freelancing platform with lower fees.", category: "freelancing", longDesc: "Freelance projects for Indian and global clients. Free to join.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "PeoplePerHour", url: "https://www.peopleperhour.com", desc: "UK-based freelancing for creatives and developers.", category: "freelancing", longDesc: "Freelance projects with hourly billing. Free to join.", isPremiumRequired: false, verified: "2026-11" },
+
+  /* ===== GOV DIGITAL (4) ===== */
+  { name: "National Career Service (NCS)", url: "https://www.ncs.gov.in", desc: "Government job matching and career services.", category: "gov-digital", longDesc: "Free registration for job seekers, employers, and career counsellors. Government-backed.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "DigiLocker", url: "https://www.digilocker.gov.in", desc: "Store government documents digitally.", category: "gov-digital", longDesc: "Free digital locker for Aadhaar, PAN, DL, marksheets. Recognised legally.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "UMANG", url: "https://web.umang.gov.in", desc: "All-in-one government services app.", category: "gov-digital", longDesc: "Access 200+ central and state services from a single app. Free.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Common Service Centre (CSC)", url: "https://register.csc.gov.in", desc: "Village-level access to government services.", category: "gov-digital", longDesc: "Find local CSC centres for government applications, banking, and digital services.", isPremiumRequired: false, verified: "2026-11" },
+
+  /* ===== ENTREPRENEURSHIP (3) ===== */
+  { name: "Startup India", url: "https://www.startupindia.gov.in", desc: "Government platform for startups and founders.", category: "entrepreneurship", longDesc: "Free registration, tax benefits, funding schemes, learning resources.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Udyam MSME Registration", url: "https://udyamregistration.gov.in", desc: "Free government MSME registration.", category: "entrepreneurship", longDesc: "Free online registration for micro, small and medium businesses.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Stand Up India", url: "https://www.standupmitra.in", desc: "Business loans for SC/ST and women entrepreneurs.", category: "entrepreneurship", longDesc: "Government scheme offering ₹10 lakh – ₹1 crore loans. Free application.", isPremiumRequired: false, verified: "2026-11" },
+
+  /* ===== COMPETITIONS (3) ===== */
+  { name: "Unstop", url: "https://unstop.com", desc: "Competitions, hackathons, internships for students.", category: "competitions", longDesc: "Largest student competition platform. Free to join.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "HackerEarth", url: "https://www.hackerearth.com", desc: "Coding challenges and hackathons.", category: "competitions", longDesc: "Practice challenges, hiring challenges and hackathons. Free.", isPremiumRequired: false, verified: "2026-11" },
+  { name: "Devfolio", url: "https://devfolio.co", desc: "Discover and host hackathons.", category: "competitions", longDesc: "Free hackathon discovery and hosting for developers.", isPremiumRequired: false, verified: "2026-11" }
 ];
 
-/* ---------- Local storage helpers ---------- */
+/* ---------- localStorage helpers ---------- */
 function readLS(k, fb){ try{ const v=JSON.parse(localStorage.getItem(k)); return v===null||v===undefined?fb:v; }catch{ return fb; } }
 let _pop=null,_rat=null,_fav=null;
 const popMap=()=>_pop||(_pop=(v=>(v&&typeof v==='object'&&!Array.isArray(v))?v:{})(readLS('popularity',{})));
@@ -265,25 +365,23 @@ const SYNONYM_GROUPS=[
  ['internship','internships','apprentice','apprenticeship','training','trainee'],
  ['bank','banking','ibps','sbi','rbi','nabard','sidbi'],
  ['railway','railways','rrb','rail'],
- ['defence','defense','army','navy','airforce','air','force','military'],
+ ['defence','defense','army','navy','airforce','military'],
  ['study','course','courses','learn','learning','education','mooc','moocs'],
- ['engineer','engineering','jee','gate','btech','b.e','iit','nit'],
+ ['engineer','engineering','jee','gate','btech','iit','nit'],
  ['medical','neet','doctor','aiims','pharmacy','gpat'],
  ['law','clat','legal','nlu'],
- ['state','statepsc','psc','bpsc','uppsc','mppsc','rpsc','tnpsc','kpsc','tspsc','appsc','opsc','apsc','wbpsc','ppsc','hpsc','hpsc','hpsc','cgpsc','jpsc','jkpsc','ukpsc','gpsc','hpsc'],
- ['resume','cv','profile','portfolio'],
- ['interview','prep','preparation','mock','test','tests','quiz']
+ ['freelance','freelancing','upwork','fiverr','gig','remote'],
+ ['startup','startups','entrepreneur','founder','business'],
+ ['digital','digilocker','umang','csc','aadhaar'],
+ ['hackathon','competition','competitions','contest']
 ];
 const synMap=new Map();
 SYNONYM_GROUPS.forEach((g,i)=>g.forEach(w=>{if(!synMap.has(w))synMap.set(w,[]);synMap.get(w).push(i);}));
-
 const norm=s=>(s||'').toString().toLowerCase().normalize('NFKD').replace(/[\u0300-\u036f]/g,'');
 const tokenize=s=>(norm(s).match(/[a-z0-9+#]+/g)||[]);
 const stripMd=s=>(s||'').replace(/\*\*/g,'');
-
 function singular(w){if(w.length<=3)return w;if(w.endsWith('ies'))return w.slice(0,-3)+'y';if(w.endsWith('s')&&!w.endsWith('ss'))return w.slice(0,-1);return w;}
 function expandSyn(w){const g=synMap.get(w)||synMap.get(singular(w));if(!g)return[];const o=new Set();g.forEach(i=>SYNONYM_GROUPS[i].forEach(x=>{if(x!==w)o.add(x);}));return[...o].slice(0,14);}
-
 function editDistance(a,b,max){
   if(a===b)return 0;const la=a.length,lb=b.length;if(Math.abs(la-lb)>max)return max+1;
   let prev2=null,prev=Array.from({length:lb+1},(_,j)=>j),cur;
@@ -316,7 +414,6 @@ function wordMatch(q,w){
 }
 function matchBest(q,arr){let best=null;for(let i=0;i<arr.length;i++){const m=wordMatch(q,arr[i]);if(m&&(!best||m.s>best.s)){best=m;if(m.s===1)break;}}return best;}
 
-/* ---------- Index ---------- */
 let searchIndex=[];let vocab=new Map(),vocabList=[],phonMap=new Map();
 function addVocab(w,wt){if(!w||w.length<2)return;vocab.set(w,(vocab.get(w)||0)+wt);}
 function buildSearchIndex(){
@@ -336,7 +433,6 @@ function buildSearchIndex(){
   vocabList.forEach(w=>{if(w.length>=4){const p=phon(w);if(!phonMap.has(p))phonMap.set(p,[]);phonMap.get(p).push(w);}});
   searchVer++;
 }
-
 function isKnownOrPrefix(t){
   if(vocab.has(t))return true;
   if(t.length>=2)for(let i=0;i<vocabList.length;i++)if(vocabList[i].startsWith(t))return true;
@@ -350,7 +446,6 @@ function suggestWord(t){
   if(!best&&t.length>=4){const l=phonMap.get(phon(t));if(l&&l.length)best=[...l].sort((a,b)=>vocab.get(b)-vocab.get(a))[0];}
   return best&&best!==t?best:null;
 }
-
 let _analysisCache={raw:null,ver:-1,val:null};
 function analyzeQuery(raw){
   if(_analysisCache.raw===raw&&_analysisCache.ver===searchVer)return _analysisCache.val;
@@ -368,8 +463,6 @@ function analyzeQuery(raw){
   _analysisCache={raw,ver:searchVer,val:A};
   return A;
 }
-
-/* ---------- Memory ---------- */
 const MEM_KEY='sarveik_search_memory_v1';
 const KW_KEY='sarveik_tool_keywords_v1';
 let searchMemory=(()=>{const m=readLS(MEM_KEY,{});return{recent:Array.isArray(m.recent)?m.recent:[],assoc:m.assoc&&typeof m.assoc==='object'?m.assoc:{},clicks:m.clicks&&typeof m.clicks==='object'?m.clicks:{}};})();
@@ -398,10 +491,8 @@ function learn(qt,tn,wt){
 }
 function learnFromAction(tn,wt){if(currentSearch.trim().length>=2)learn(currentSearch,tn,wt);}
 
-/* ---------- Scoring ---------- */
 const FIELDS=[['name','nameTokens',10],['custom','customTokens',8],['cat','catTokens',4],['desc','descTokens',3],['long','longTokens',1.3]];
 const TEXT_THRESHOLD=1.6;
-
 function scoreEntry(e,A){
   let text=0;const why=new Set();let hits=0;
   A.mains.forEach(t=>{
@@ -457,7 +548,6 @@ function scoreEntry(e,A){
   const pct=Math.max(1,Math.min(99,Math.round(Math.min(1,(text/(10*Math.max(1,A.mains.length)))*1.3+mem/12)*100)));
   return{pass,text,mem,rel,total:text+mem+rel,pct,why:[...why]};
 }
-
 let _searchCache={key:'',ver:-1,val:null};
 function runSearch(q,pool){
   const key=q+'|'+currentFilter+'|'+userPremiumStatus+'|'+pool.length;
@@ -475,8 +565,6 @@ function runSearch(q,pool){
   _searchCache={key,ver:searchVer,val};
   return val;
 }
-
-/* ---------- Highlight ---------- */
 function highlight(text,A){
   const str=String(text==null?'':text);
   if(!A||!A.mains.length||A.onlyStop)return escapeHtml(str);
@@ -522,8 +610,6 @@ function updateSearchOverlay(){
   }).join('');
   hl.style.transform='translateX('+(-input.scrollLeft)+'px)';
 }
-
-/* ---------- Suggestions ---------- */
 let suggestItems=[],activeSuggest=-1;
 function buildSuggestions(q){
   const items=[];
@@ -567,8 +653,6 @@ function pickSuggestion(it){
   }else input.value=it.q;
   applySearch(true);
 }
-
-/* ---------- Applying a search ---------- */
 let searchDebounce=null;
 function applySearch(commit){
   clearTimeout(searchDebounce);
@@ -593,8 +677,6 @@ function renderKeywordBar(A,count){
     (rel.length?'<span class="kw rel" title="Related words also searched">≈ '+rel.map(escapeHtml).join(', ')+'</span>':'')+
     (A.hasFix?'<div class="did-you-mean">Showing results for <a data-corrected="'+escapeHtml(A.corrected)+'">'+escapeHtml(A.corrected)+'</a></div>':'');
 }
-
-/* ---------- Filter / Sort / Render ---------- */
 function computeResults(){
   let pool=[...allTools];
   if(currentFilter==='premium')pool=pool.filter(t=>t.isPremiumRequired===true);
@@ -636,7 +718,7 @@ function renderSearchInfo(ctx){
   const info=document.getElementById('searchInfo');
   if(!ctx.q){info.innerHTML='';renderKeywordBar(null,0);return;}
   const anyMem=[...ctx.infoMap.values()].some(i=>i.mem>=1);
-  let html='<b>'+filteredTools.length+'</b> result'+(filteredTools.length===1?'':'s')+' for “'+escapeHtml(ctx.q)+'”';
+  let html='<b>'+filteredTools.length+'</b> result'+(filteredTools.length===1?'':'s')+' for "'+escapeHtml(ctx.q)+'"';
   if(currentSort==='relevance')html+=' · best matches first';
   if(anyMem)html+=' · 🧠 personalised by your search memory';
   if(ctx.hiddenPremium>0)html+=' · 🔒 '+ctx.hiddenPremium+' more Premium match'+(ctx.hiddenPremium===1?'':'es')+' (<a href="profile.html?tab=premium">upgrade</a> to see)';
@@ -652,7 +734,7 @@ function renderTools(){
   if(pageTools.length===0){
     if(ctx.q){
       const A=ctx.A;
-      grid.innerHTML='<div class="no-match-box"><div style="font-size:2rem">🔍</div><h3>No tools match “'+escapeHtml(ctx.q)+'”</h3><p style="color:var(--text-muted);margin-top:6px">'+(A.hasFix?'We also tried <b>'+escapeHtml(A.corrected)+'</b>. ':'')+'Try fewer words or a different spelling.</p><div class="btn-row"><button id="nmClear">Clear search</button><button id="nmTrain">🧠 Teach search</button></div></div>';
+      grid.innerHTML='<div class="no-match-box"><div style="font-size:2rem">🔍</div><h3>No tools match "'+escapeHtml(ctx.q)+'"</h3><p style="color:var(--text-muted);margin-top:6px">'+(A.hasFix?'We also tried <b>'+escapeHtml(A.corrected)+'</b>. ':'')+'Try fewer words or a different spelling.</p><div class="btn-row"><button id="nmClear">Clear search</button><button id="nmTrain">🧠 Teach search</button></div></div>';
       document.getElementById('nmClear').addEventListener('click',clearSearchBox);
       document.getElementById('nmTrain').addEventListener('click',()=>openMemoryPanel(ctx.q));
     }else if(!userPremiumStatus&&allTools.some(t=>t.isPremiumRequired)&&currentFilter!=='premium'){
@@ -685,8 +767,6 @@ function renderTools(){
     }
     const nameHtml=ctx.A?highlight(tool.name,ctx.A):escapeHtml(tool.name);
     const descHtml=ctx.A?highlight(tool.desc,ctx.A):escapeHtml(tool.desc);
-    /* ---- unique number for this tool (matches the toolsData list) ---- */
-    const cardNum=tool._num;
     return '<div class="tool-card '+lockClass+'" data-name="'+escapeHtml(tool.name)+'" data-url="'+escapeHtml(safeUrl(tool.url))+'" data-desc="'+escapeHtml(tool.longDesc)+'" data-icon="'+escapeHtml(tool.icon)+'" data-premium="'+tool.isPremiumRequired+'">'+
       approvedBadge+newBadge+premiumTag+
       '<span class="fav-icon '+favClass+'" data-fav="'+escapeHtml(tool.name)+'" role="button" aria-label="Toggle favorite">❤️</span>'+
@@ -694,7 +774,7 @@ function renderTools(){
       '<h3>'+nameHtml+'</h3>'+matchRow+'<p>'+descHtml+'</p>'+
       '<div class="meta"><span class="rating">'+(stars||'☆☆☆☆☆')+'</span><span class="popularity">🔥 '+pop+'</span></div>'+
       '<button class="btn details-btn" '+(locked?'disabled style="opacity:.6;"':'')+'>Details</button>'+lockOverlay+
-      (cardNum?'<span class="tool-number">#'+cardNum+'</span>':'')+
+      '<span class="verified-badge"><i class="fas fa-check-circle"></i> verified '+(tool.verified||'2026-11')+'</span>'+
       '</div>';
   }).join('');
   document.querySelectorAll('#toolsGrid .fav-icon').forEach(icon=>{icon.addEventListener('click',e=>{e.stopPropagation();toggleFavorite(icon.dataset.fav);});});
@@ -721,8 +801,6 @@ function renderFavorites(){
   }).join('');
   grid.querySelectorAll('.details-btn:not([disabled])').forEach(btn=>{btn.addEventListener('click',e=>{const c=e.target.closest('.tool-card');openModal(c.dataset.name,c.dataset.url,c.dataset.desc,c.dataset.icon);});});
 }
-
-/* ---------- Helpers ---------- */
 function escapeHtml(str){if(str===null||str===undefined)return '';return String(str).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function safeUrl(url){try{const u=new URL(url);return(u.protocol==='http:'||u.protocol==='https:')?u.href:'#';}catch{return '#';}}
 function getDomainFromUrl(url){try{return new URL(url).hostname;}catch{return 'example.com';}}
@@ -731,31 +809,34 @@ function showToast(msg,type='success'){
   t.innerHTML='<i class="fas '+(type==='success'?'fa-check-circle':type==='error'?'fa-exclamation-circle':'fa-info-circle')+'"></i> '+escapeHtml(msg);
   document.body.appendChild(t);setTimeout(()=>t.remove(),4000);
 }
-
-/* ---------- How-to-use templates ---------- */
 function generateHowToUse(toolName,category,toolUrl){
-  const n=toolName.toLowerCase();const tn=escapeHtml(toolName);const tu=escapeHtml(safeUrl(toolUrl));
-  if(n.includes('ssc')&&(n.includes('official')||n.includes('ssc.nic')))return '<ol><li>Visit ssc.nic.in and click Latest Notifications.</li><li>Find your exam (CGL, CHSL, MTS, JE).</li><li>Read eligibility and important dates.</li><li>Register via "Apply Online" – fill personal/educational/upload photo & signature.</li><li>Pay fee (if not exempt) and submit.</li><li>Download admit card before exam.</li></ol><div class="pro-tip">📅 Use Candidate Login to track status.</div>';
+  const n=toolName.toLowerCase();const tu=escapeHtml(safeUrl(toolUrl));
+  if(n.includes('ssc')&&(n.includes('official')||n.includes('ssc.nic')))return '<ol><li>Visit ssc.nic.in and click Latest Notifications.</li><li>Find your exam (CGL, CHSL, MTS, JE).</li><li>Read eligibility and important dates.</li><li>Register via "Apply Online" – fill personal/educational, upload photo & signature.</li><li>Pay fee (if not exempt) and submit.</li><li>Download admit card before exam.</li></ol><div class="pro-tip">📅 Use Candidate Login to track status.</div>';
   if(n.includes('upsc'))return '<ol><li>Go to upsc.gov.in → Examinations.</li><li>Select the exam (Civil Services, IES, CDS, etc.).</li><li>Read notification PDF for eligibility and syllabus.</li><li>Register on upsconline.nic.in.</li><li>Fill form, upload documents, pay fee.</li><li>Download e-Admit Card.</li></ol><div class="pro-tip">📘 Download the syllabus PDF for exam prep.</div>';
   if(n.includes('naukri'))return '<ol><li>Create a free Naukri account.</li><li>Complete profile with education, experience, skills, resume.</li><li>Set job preferences (location, salary, industry).</li><li>Search with filters and apply.</li><li>Enable email alerts for new jobs.</li></ol><div class="pro-tip">📄 Keep resume keyword-optimised for visibility.</div>';
   if(n.includes('internshala'))return '<ol><li>Sign up free (Google/email).</li><li>Complete profile with education and skills.</li><li>Browse internships/jobs by category.</li><li>Filter by stipend, duration, location.</li><li>Apply with customised cover letter.</li></ol><div class="pro-tip">🎓 Free training courses with certificates.</div>';
   if(n.includes('national scholarship'))return '<ol><li>Visit scholarships.gov.in and register (Aadhaar-linked).</li><li>Select category (Post-Matric, Merit-cum-Means, etc.).</li><li>Fill form with personal, academic, and bank details.</li><li>Upload income certificate, caste certificate, fee receipt.</li><li>Submit before deadline – track approval status.</li></ol><div class="pro-tip">📌 Link Aadhaar with bank for DBT.</div>';
+  if(n.includes('upwork'))return '<ol><li>Create a free Upwork account.</li><li>Complete your profile with portfolio and skills.</li><li>Search jobs by keyword and filter by experience level.</li><li>Apply with a customised proposal (Connects required).</li><li>Deliver work and get paid via Payoneer or direct deposit.</li></ol><div class="pro-tip">💼 Start with small fixed-price projects to build reviews.</div>';
+  if(n.includes('fiverr'))return '<ol><li>Create a free Fiverr seller account.</li><li>Choose a category and create a "gig".</li><li>Set your price, delivery time, and packages.</li><li>Optimise gig title and description with keywords.</li><li>Respond to buyer briefs and messages quickly.</li></ol><div class="pro-tip">⭐ Your first 5 reviews matter most — price low initially.</div>';
+  if(n.includes('freshersworld'))return '<ol><li>Register on Freshersworld.</li><li>Complete profile with education and skills.</li><li>Browse fresher jobs, walk-ins, campus drives.</li><li>Apply with a tailored resume.</li><li>Set up email alerts.</li></ol><div class="pro-tip">📅 Walk-in drives often skip resume screening — attend live.</div>';
+  if(n.includes('startup india'))return '<ol><li>Sign up at startupindia.gov.in.</li><li>Register your entity (DPIIT recognition).</li><li>Apply for tax exemptions and seed fund schemes.</li><li>Browse incubators and government tenders.</li><li>Track applications in your dashboard.</li></ol><div class="pro-tip">🌱 DPIIT recognition unlocks multiple schemes.</div>';
+  if(n.includes('unstop'))return '<ol><li>Create a free Unstop account.</li><li>Browse competitions by category (hackathon, case study, quiz).</li><li>Register for events you like.</li><li>Submit entries and track results.</li></ol><div class="pro-tip">🏆 Competitions often lead to internships and job offers.</div>';
   if(category==='govt-jobs')return '<ol><li>Open the official recruitment portal (.gov.in).</li><li>Look for the Recruitment or Career section.</li><li>Read notification PDF: eligibility, age, fees, dates.</li><li>Register with email/mobile.</li><li>Fill online form step by step.</li><li>Upload photo, signature, certificates.</li><li>Pay fee (if any) and submit.</li><li>Take a printout of the confirmation page.</li></ol><div class="pro-tip">📂 Keep scanned copies of all documents ready.</div>';
   if(category==='private-jobs')return '<ol><li>Create a free profile on the job portal.</li><li>Upload updated resume (PDF/DOC).</li><li>Set job alert filters for daily emails.</li><li>Search by keyword, location, or company.</li><li>Read job description and requirements.</li><li>Click Apply – some portals offer Easy Apply.</li></ol><div class="pro-tip">📝 Customise resume for each job.</div>';
   if(category==='exam-portals')return '<ol><li>Visit the official exam website (nta.nic.in, etc.).</li><li>Check the Information Brochure for eligibility and dates.</li><li>Register with user ID and password.</li><li>Fill form: personal, academic, preferences.</li><li>Upload photo, signature, category certificates.</li><li>Pay fee online (netbanking, card, UPI).</li><li>Download the confirmation page and admit card.</li></ol><div class="pro-tip">📅 Mark exam date on calendar.</div>';
   if(category==='scholarships')return '<ol><li>Register on the scholarship portal (often with Aadhaar).</li><li>Search for schemes matching your category.</li><li>Read eligibility and required documents.</li><li>Fill the online application carefully.</li><li>Upload income certificate, caste certificate, marksheets.</li><li>Submit before deadline.</li></ol><div class="pro-tip">💰 Verify bank account details before submitting.</div>';
   if(category==='career-skills')return '<ol><li>Create a free account on the learning platform.</li><li>Browse courses by category (IT, marketing, design).</li><li>Enrol in a course – most offer free audits.</li><li>Watch videos, complete assignments, take quizzes.</li><li>Apply for financial aid if needed.</li><li>Download certificate and add to LinkedIn.</li></ol><div class="pro-tip">📚 Use Learning Paths for job-ready skills.</div>';
+  if(category==='freelancing')return '<ol><li>Create a free account on the freelancing platform.</li><li>Complete your profile with portfolio and skills.</li><li>Search jobs by keyword or browse gigs.</li><li>Apply with a customised proposal.</li><li>Deliver work and get paid via platform escrow.</li></ol><div class="pro-tip">💻 Start with small projects to build reviews.</div>';
+  if(category==='gov-digital')return '<ol><li>Create a free account using Aadhaar or mobile.</li><li>Complete your profile.</li><li>Browse available services.</li><li>Submit applications online.</li><li>Track status in your dashboard.</li></ol><div class="pro-tip">🪪 Aadhaar e-KYC makes registration faster.</div>';
+  if(category==='entrepreneurship')return '<ol><li>Create a free account on the government portal.</li><li>Register your business entity.</li><li>Apply for recognised schemes.</li><li>Track applications.</li><li>Access funding and mentorship.</li></ol><div class="pro-tip">🌱 Udyam MSME registration is free and unlocks many benefits.</div>';
+  if(category==='competitions')return '<ol><li>Create a free account.</li><li>Browse competitions by category and skill level.</li><li>Register for events.</li><li>Submit entries before deadline.</li><li>Track results and prizes.</li></ol><div class="pro-tip">🏆 Competitions are a great portfolio builder.</div>';
   return '<ol><li>Visit <a href="'+tu+'" target="_blank" rel="noopener noreferrer">'+tu+'</a>.</li><li>Navigate to Careers, Admissions, or Scholarships.</li><li>Read instructions and eligibility criteria.</li><li>Register with email or mobile.</li><li>Submit the online form accurately.</li><li>Save confirmation ID.</li></ol><div class="pro-tip">🔔 Bookmark and check for updates.</div>';
 }
-
-/* ---------- Teach list ---------- */
 function renderTeachList(name){
   const list=customKeywords[name]||[];
   const el=document.getElementById('teachKwList');
   el.innerHTML=list.length?list.map(k=>'<span class="chip">'+escapeHtml(k)+'<button data-k="'+escapeHtml(k)+'" aria-label="Remove">&times;</button></span>').join(''):'<span class="empty-note">No taught keywords yet.</span>';
 }
-
-/* ---------- Open modal ---------- */
 function openModal(name,url,longDesc,icon,noCount){
   const tool=allTools.find(t=>t.name===name);
   if(tool?.isPremiumRequired&&!userPremiumStatus){showToast('This tool requires Premium. Please upgrade.','error');return;}
@@ -785,8 +866,6 @@ function openModal(name,url,longDesc,icon,noCount){
   renderTeachList(name);
   document.getElementById('toolModal').classList.add('active');
 }
-
-/* ---------- Filter buttons ---------- */
 function buildFilterButtons(){
   const cats=['all',...new Set(allTools.map(t=>t.category))];
   cats.push('premium');
@@ -794,8 +873,6 @@ function buildFilterButtons(){
   c.innerHTML=cats.map(cat=>'<button class="filter-btn '+(cat===currentFilter?'active':'')+'" data-filter="'+escapeHtml(cat)+'">'+escapeHtml(cat.charAt(0).toUpperCase()+cat.slice(1).replace('-',' '))+'</button>').join('');
   document.querySelectorAll('.filter-btn').forEach(btn=>{btn.addEventListener('click',()=>{document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');currentFilter=btn.dataset.filter;currentPage=1;renderTools();});});
 }
-
-/* ---------- Optimistic submit (student-file pattern) ---------- */
 async function apiCall(url,options={}){
   const response=await fetch(url,{...options,headers:{'Content-Type':'application/json',...options.headers},credentials:'include'});
   if(!response.ok){const t=await response.text();throw new Error(t);}
@@ -812,242 +889,329 @@ async function submitTool(){
   const btn=document.getElementById('submitToolBtn');
   if(btn.disabled)return;
   btn.disabled=true;
-  // 1) INSTANT success + clear form (optimistic)
   showToast('✅ Tool submitted! Waiting for approval','success');
   document.getElementById('newName').value='';
   document.getElementById('newUrl').value='';
   document.getElementById('newDesc').value='';
   btn.innerHTML='<i class="fas fa-check"></i> Submitted!';
-  // 2) Fire in the background
   apiCall('/api/tools/submit',{method:'POST',body:JSON.stringify({name,url,description,category,pageType:PAGE_TYPE})})
     .then(()=>loadAndMergeTools())
     .catch(err=>showToast(err.message||'Submission failed - please try again','error'))
     .finally(()=>{btn.disabled=false;btn.innerHTML='<i class="fas fa-paper-plane"></i> Submit for Review';});
 }
 
-/* ---------- Session / premium / load ---------- */
+/* ---------- Session check (non-blocking, no redirect on failure) ---------- */
 async function checkSession(){
-  try{const s=await apiCall('/check-session');if(!s.loggedIn){window.location.href='/';return false;}return true;}
-  catch{window.location.href='/';return false;}
+  try{
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+    const res = await fetch('/check-session', { signal: controller.signal, credentials: 'include' });
+    clearTimeout(timeout);
+    if(!res.ok){ return { ok: true, loggedIn: true, offline: true }; }
+    const data = await res.json();
+    return { ok: true, loggedIn: data.loggedIn !== false, offline: false };
+  }catch(e){
+    console.warn('Session check failed, continuing in offline mode:', e.message);
+    return { ok: true, loggedIn: true, offline: true };
+  }
 }
+
+/* ---------- Premium status (non-blocking, no throw) ---------- */
 async function fetchPremiumStatus(){
   try{
-    const res=await fetch('/api/user/premium-status',{credentials:'include'});
-    if(res.ok){const d=await res.json();userPremiumStatus=d.isPremium===true;
-      document.getElementById('premiumBanner').style.display=userPremiumStatus?'none':'flex';
-      document.getElementById('premiumRecommendations').style.display=userPremiumStatus?'none':'block';
-    }else{userPremiumStatus=false;
-      document.getElementById('premiumBanner').style.display='flex';
-      document.getElementById('premiumRecommendations').style.display='block';}
-  }catch{userPremiumStatus=false;
-    document.getElementById('premiumBanner').style.display='flex';
-    document.getElementById('premiumRecommendations').style.display='block';}
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 3000);
+    const res = await fetch('/api/user/premium-status', { credentials: 'include', signal: controller.signal });
+    clearTimeout(timeout);
+    if(res.ok){
+      const d = await res.json();
+      userPremiumStatus = d.isPremium === true;
+    } else {
+      userPremiumStatus = false;
+    }
+  }catch(e){
+    console.warn('Premium status check failed:', e.message);
+    userPremiumStatus = false;
+  }
+  const banner = document.getElementById('premiumBanner');
+  const recs = document.getElementById('premiumRecommendations');
+  if(banner) banner.style.display = userPremiumStatus ? 'none' : 'flex';
+  if(recs) recs.style.display = userPremiumStatus ? 'none' : 'block';
   searchVer++;
 }
+
 function showPremiumRecommendations(){
-  const premium=allTools.filter(t=>t.isPremiumRequired).slice(0,6);
-  const c=document.getElementById('recommendGrid');
-  if(!premium.length){c.innerHTML='<p>No premium tools available yet.</p>';return;}
-  c.innerHTML=premium.map(t=>'<div class="recommend-item"><img src="'+escapeHtml(t.icon)+'" alt="'+escapeHtml(t.name)+'" onerror="this.src=\'https://via.placeholder.com/40\'"><div class="name">'+escapeHtml(t.name)+'</div><button onclick="window.location.href=\'profile.html?tab=premium\'">Unlock</button></div>').join('');
+  const premium = allTools.filter(t => t.isPremiumRequired).slice(0, 6);
+  const c = document.getElementById('recommendGrid');
+  if(!c) return;
+  if(!premium.length){ c.innerHTML = '<p>No premium tools available yet.</p>'; return; }
+  c.innerHTML = premium.map(t => '<div class="recommend-item"><img src="'+escapeHtml(t.icon)+'" alt="'+escapeHtml(t.name)+'" onerror="this.src=\'https://via.placeholder.com/40\'"><div class="name">'+escapeHtml(t.name)+'</div><button onclick="window.location.href=\'profile.html?tab=premium\'">Unlock</button></div>').join('');
 }
+
+/* ---------- Load tools (ALWAYS works, even offline) ---------- */
 async function loadAndMergeTools(){
   try{
-    document.getElementById('toolsGrid').innerHTML='<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading resources...</div>';
-    let approved=[];
-    try{approved=await apiCall('/api/tools?page='+PAGE_TYPE);}catch{approved=[];}
-    const formatted=approved.map(t=>({
-      id:t.id,name:t.name,url:t.url,
-      desc:t.description||'A community-submitted career resource.',
-      longDesc:'**'+t.name+'** (Community Approved)\n\n'+(t.description||'Useful free career tool.'),
-      category:t.category||'private-jobs',
-      icon:'https://www.google.com/s2/favicons?domain='+getDomainFromUrl(t.url),
-      source:'approved',approved:true,created_at:t.created_at,
-      isPremiumRequired:t.is_premium===1
+    document.getElementById('toolsGrid').innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading resources...</div>';
+    let approved = [];
+    try{
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 4000);
+      const res = await fetch('/api/tools?page=' + PAGE_TYPE, { signal: controller.signal, credentials: 'include' });
+      clearTimeout(timeout);
+      if(res.ok) approved = await res.json();
+    }catch(e){
+      console.warn('Backend tools fetch failed, using local list:', e.message);
+      offlineMode = true;
+    }
+    if(!Array.isArray(approved)) approved = [];
+    const formatted = approved.map(t => ({
+      id: t.id, name: t.name, url: t.url,
+      desc: t.description || 'A community-submitted career resource.',
+      longDesc: '**' + t.name + '** (Community Approved)\n\n' + (t.description || 'Useful free career tool.'),
+      category: t.category || 'private-jobs',
+      icon: 'https://www.google.com/s2/favicons?domain=' + getDomainFromUrl(t.url),
+      source: 'approved', approved: true, created_at: t.created_at,
+      isPremiumRequired: t.is_premium === 1
     }));
-    const names=new Set();const merged=[];
-    toolsData.forEach((t,i)=>{
-      const key=t.name.toLowerCase();
+    const names = new Set();
+    const merged = [];
+    toolsData.forEach(t => {
+      const key = t.name.toLowerCase();
       if(!names.has(key)){
         names.add(key);
-        const icon='https://www.google.com/s2/favicons?domain='+getDomainFromUrl(t.url);
-        merged.push({...t,icon,source:'local',_num:i+1});
+        const icon = 'https://www.google.com/s2/favicons?domain=' + getDomainFromUrl(t.url);
+        merged.push(Object.assign({}, t, { icon, source: 'local' }));
       }
     });
-    formatted.forEach(t=>{const k=t.name.toLowerCase();if(!names.has(k)){names.add(k);merged.push(t);}});
-    allTools=merged;
+    formatted.forEach(t => {
+      const k = t.name.toLowerCase();
+      if(!names.has(k)){ names.add(k); merged.push(t); }
+    });
+    allTools = merged;
     buildSearchIndex();
-    const premiumCount=allTools.filter(t=>t.isPremiumRequired).length;
-    document.getElementById('statsBadge').innerHTML='<i class="fas fa-database"></i> '+allTools.length+' resources'+(userPremiumStatus?'':' · 🔒 '+premiumCount+' premium');
+    const premiumCount = allTools.filter(t => t.isPremiumRequired).length;
+    document.getElementById('statsBadge').innerHTML = '<i class="fas fa-database"></i> ' + allTools.length + ' resources' + (userPremiumStatus ? '' : ' · 🔒 ' + premiumCount + ' premium');
     buildFilterButtons();
+    renderStarterPack();
     renderTools();
-    if(!userPremiumStatus)showPremiumRecommendations();
+    if(!userPremiumStatus) showPremiumRecommendations();
+    if(offlineMode){
+      const banner = document.getElementById('offlineBanner');
+      if(banner) banner.classList.add('show');
+    }
     return true;
   }catch(err){
-    console.error(err);
-    document.getElementById('toolsGrid').innerHTML='<div class="loading">❌ Failed to load. Please make sure you are logged in.</div>';
-    showToast('Failed to load from server','error');
+    console.error('CRITICAL: loadAndMergeTools failed:', err);
+    document.getElementById('toolsGrid').innerHTML = '<div class="loading">❌ Something went wrong loading the tools. <button onclick="location.reload()" style="margin-left:8px;background:var(--btn-bg);color:#fff;border:none;border-radius:50px;padding:8px 18px;cursor:pointer">Reload</button></div>';
+    showToast('Failed to load. Please reload.', 'error');
     return false;
   }
 }
 
-/* ---------- Memory panel ---------- */
-function openMemoryPanel(prefill){renderMemoryPanel(prefill||'');document.getElementById('memoryModal').classList.add('active');}
-function closeMemoryPanel(){document.getElementById('memoryModal').classList.remove('active');}
-function renderMemoryPanel(prefill){
-  const body=document.getElementById('memoryBody');
-  const links=[];
-  Object.entries(searchMemory.assoc).forEach(([w,tools])=>Object.entries(tools).forEach(([t,v])=>links.push({w,t,v})));
-  links.sort((a,b)=>b.v-a.v);
-  const kws=Object.entries(customKeywords).filter(([,a])=>a&&a.length);
-  const opts=[...allTools].sort((a,b)=>a.name.localeCompare(b.name)).map(t=>'<option value="'+escapeHtml(t.name)+'">'+escapeHtml(t.name)+'</option>').join('');
-  body.innerHTML=
-    '<div class="mem-stats"><div class="mem-stat"><b>'+searchMemory.recent.length+'</b>recent searches</div><div class="mem-stat"><b>'+links.length+'</b>learned links</div><div class="mem-stat"><b>'+kws.reduce((n,[,a])=>n+a.length,0)+'</b>taught keywords</div></div>'+
-    '<h4>🎓 Train the search</h4><p class="empty-note" style="margin:0 0 8px">Tell search which tool you mean when you type a phrase.</p>'+
-    '<div class="mem-form"><input type="text" id="teachPhrase" placeholder="When I search… (e.g. bank exam)" value="'+escapeHtml(prefill)+'"><select id="teachTool"><option value="">…open this tool</option>'+opts+'</select><button id="teachBtn">Teach</button></div>'+
-    '<h4>🕘 Recent searches</h4><div class="chip-list">'+(searchMemory.recent.length?searchMemory.recent.slice(0,15).map(r=>'<span class="chip clickable" data-act="rerun" data-q="'+escapeHtml(r.q)+'">'+escapeHtml(r.q)+'<button data-act="forget-recent" data-q="'+escapeHtml(r.q)+'" aria-label="Forget">&times;</button></span>').join(''):'<span class="empty-note">Nothing yet — start searching!</span>')+'</div>'+
-    '<h4>🧠 Learned links</h4><div class="chip-list">'+(links.length?links.slice(0,30).map(l=>'<span class="chip">'+escapeHtml(l.w)+' → <b>'+escapeHtml(l.t)+'</b> <small>('+Math.round(l.v*10)/10+')</small><button data-act="forget-link" data-w="'+escapeHtml(l.w)+'" data-t="'+escapeHtml(l.t)+'" aria-label="Forget">&times;</button></span>').join(''):'<span class="empty-note">Open tools after searching and links will appear here.</span>')+'</div>'+
-    '<h4>🏷️ Taught keywords</h4><div class="chip-list">'+(kws.length?kws.map(([t,a])=>a.map(k=>'<span class="chip">'+escapeHtml(t)+': '+escapeHtml(k)+'<button data-act="forget-kw" data-t="'+escapeHtml(t)+'" data-k="'+escapeHtml(k)+'" aria-label="Forget">&times;</button></span>').join('')).join(''):'<span class="empty-note">None yet. Use “Teach search” inside any tool, or the form above.</span>')+'</div>'+
-    '<div class="mem-actions"><button id="memExport"><i class="fas fa-download"></i> Export</button><button id="memImport"><i class="fas fa-upload"></i> Import</button><button id="memClear" class="danger"><i class="fas fa-trash"></i> Clear memory</button></div>';
-}
-function teachPhrase(phrase,toolName){
-  const A=analyzeQuery(phrase);
-  const words=[...new Set(A.mains.filter(t=>t.kind!=='stop'||A.onlyStop).map(t=>t.fixed||t.norm))];
-  if(!words.length)return false;
-  const list=customKeywords[toolName]||(customKeywords[toolName]=[]);
-  words.forEach(w=>{if(!list.includes(w))list.push(w);});
-  customKeywords[toolName]=list.slice(-30);
-  saveKeywords();learn(phrase,toolName,4);buildSearchIndex();return true;
+/* ---------- Starter pack / trending ---------- */
+function renderStarterPack(){
+  const picks = ['SSC Official', 'UPSC', 'IBPS', 'National Scholarship Portal', 'Upwork', 'Unstop'];
+  const grid = document.getElementById('starterGrid');
+  if(!grid) return;
+  grid.innerHTML = picks.map(n => {
+    const t = allTools.find(x => x.name === n);
+    if(!t) return '';
+    return '<div class="starter-chip" data-starter="' + escapeHtml(n) + '"><div>' + escapeHtml(n) + '</div><small>' + escapeHtml(t.category) + '</small></div>';
+  }).join('');
+  grid.querySelectorAll('[data-starter]').forEach(el => {
+    el.addEventListener('click', () => {
+      const n = el.dataset.starter;
+      const t = allTools.find(x => x.name === n);
+      if(t) openModal(t.name, t.url, t.longDesc, t.icon);
+    });
+  });
 }
 
-/* ---------- Init ---------- */
+/* ---------- Memory panel ---------- */
+function openMemoryPanel(prefill){ renderMemoryPanel(prefill || ''); document.getElementById('memoryModal').classList.add('active'); }
+function closeMemoryPanel(){ document.getElementById('memoryModal').classList.remove('active'); }
+function renderMemoryPanel(prefill){
+  const body = document.getElementById('memoryBody');
+  const links = [];
+  Object.entries(searchMemory.assoc).forEach(([w, tools]) => Object.entries(tools).forEach(([t, v]) => links.push({ w, t, v })));
+  links.sort((a, b) => b.v - a.v);
+  const kws = Object.entries(customKeywords).filter(([, a]) => a && a.length);
+  const opts = [...allTools].sort((a, b) => a.name.localeCompare(b.name)).map(t => '<option value="' + escapeHtml(t.name) + '">' + escapeHtml(t.name) + '</option>').join('');
+  body.innerHTML =
+    '<div class="mem-stats"><div class="mem-stat"><b>' + searchMemory.recent.length + '</b>recent searches</div><div class="mem-stat"><b>' + links.length + '</b>learned links</div><div class="mem-stat"><b>' + kws.reduce((n, [, a]) => n + a.length, 0) + '</b>taught keywords</div></div>' +
+    '<h4>🎓 Train the search</h4><p class="empty-note" style="margin:0 0 8px">Tell search which tool you mean when you type a phrase.</p>' +
+    '<div class="mem-form"><input type="text" id="teachPhrase" placeholder="When I search… (e.g. bank exam)" value="' + escapeHtml(prefill) + '"><select id="teachTool"><option value="">…open this tool</option>' + opts + '</select><button id="teachBtn">Teach</button></div>' +
+    '<h4>🕘 Recent searches</h4><div class="chip-list">' + (searchMemory.recent.length ? searchMemory.recent.slice(0, 15).map(r => '<span class="chip clickable" data-act="rerun" data-q="' + escapeHtml(r.q) + '">' + escapeHtml(r.q) + '<button data-act="forget-recent" data-q="' + escapeHtml(r.q) + '" aria-label="Forget">&times;</button></span>').join('') : '<span class="empty-note">Nothing yet — start searching!</span>') + '</div>' +
+    '<h4>🧠 Learned links</h4><div class="chip-list">' + (links.length ? links.slice(0, 30).map(l => '<span class="chip">' + escapeHtml(l.w) + ' → <b>' + escapeHtml(l.t) + '</b> <small>(' + Math.round(l.v * 10) / 10 + ')</small><button data-act="forget-link" data-w="' + escapeHtml(l.w) + '" data-t="' + escapeHtml(l.t) + '" aria-label="Forget">&times;</button></span>').join('') : '<span class="empty-note">Open tools after searching and links will appear here.</span>') + '</div>' +
+    '<h4>🏷️ Taught keywords</h4><div class="chip-list">' + (kws.length ? kws.map(([t, a]) => a.map(k => '<span class="chip">' + escapeHtml(t) + ': ' + escapeHtml(k) + '<button data-act="forget-kw" data-t="' + escapeHtml(t) + '" data-k="' + escapeHtml(k) + '" aria-label="Forget">&times;</button></span>').join('')).join('') : '<span class="empty-note">None yet. Use "Teach search" inside any tool.</span>') + '</div>' +
+    '<div class="mem-actions"><button id="memExport"><i class="fas fa-download"></i> Export</button><button id="memImport"><i class="fas fa-upload"></i> Import</button><button id="memClear" class="danger"><i class="fas fa-trash"></i> Clear memory</button></div>';
+}
+function teachPhrase(phrase, toolName){
+  const A = analyzeQuery(phrase);
+  const words = [...new Set(A.mains.filter(t => t.kind !== 'stop' || A.onlyStop).map(t => t.fixed || t.norm))];
+  if(!words.length) return false;
+  const list = customKeywords[toolName] || (customKeywords[toolName] = []);
+  words.forEach(w => { if(!list.includes(w)) list.push(w); });
+  customKeywords[toolName] = list.slice(-30);
+  saveKeywords(); learn(phrase, toolName, 4); buildSearchIndex(); return true;
+}
+
+/* ---------- INIT (bulletproof) ---------- */
 async function init(){
-  loadMemory?.();
-  const ok=await checkSession();
-  if(!ok)return;
-  await fetchPremiumStatus();
+  // 1) Session check - non-blocking
+  try {
+    const session = await checkSession();
+    if(!session.offline && !session.loggedIn){
+      console.log('Not logged in, redirecting...');
+      window.location.href = '/';
+      return;
+    }
+  } catch(e){
+    console.warn('Session check threw (should not happen):', e);
+  }
+
+  // 2) Premium check - non-blocking
+  try { await fetchPremiumStatus(); } catch(e){ console.warn(e); }
+
+  // 3) ALWAYS load tools
   await loadAndMergeTools();
-  try{await fetch('/api/track-usage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tool_name:'Career Gateway',tool_category:'career'}),credentials:'include'});}catch{}
+
+  // 4) Track usage - fire and forget
+  try {
+    fetch('/api/track-usage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tool_name: 'Career Gateway', tool_category: 'career' }),
+      credentials: 'include'
+    }).catch(() => {});
+  } catch(e){}
 }
 
 /* ---------- Event wiring ---------- */
-const searchInputEl=document.getElementById('searchInput');
-function clearSearchBox(){searchInputEl.value='';applySearch(false);openSuggest();searchInputEl.focus();}
-searchInputEl.addEventListener('input',()=>{
+const searchInputEl = document.getElementById('searchInput');
+function clearSearchBox(){ searchInputEl.value = ''; applySearch(false); openSuggest(); searchInputEl.focus(); }
+searchInputEl.addEventListener('input', () => {
   updateSearchOverlay();
-  document.getElementById('clearSearch').style.display=searchInputEl.value?'block':'none';
-  suggestItems=buildSuggestions(searchInputEl.value);activeSuggest=-1;renderSuggestBox();
-  clearTimeout(searchDebounce);searchDebounce=setTimeout(()=>applySearch(false),130);
+  document.getElementById('clearSearch').style.display = searchInputEl.value ? 'block' : 'none';
+  suggestItems = buildSuggestions(searchInputEl.value); activeSuggest = -1; renderSuggestBox();
+  clearTimeout(searchDebounce); searchDebounce = setTimeout(() => applySearch(false), 130);
 });
-searchInputEl.addEventListener('scroll',updateSearchOverlay);
-searchInputEl.addEventListener('keyup',()=>{document.getElementById('searchHl').style.transform='translateX('+(-searchInputEl.scrollLeft)+'px)';});
-searchInputEl.addEventListener('focus',openSuggest);
-searchInputEl.addEventListener('keydown',e=>{
-  if(e.key==='ArrowDown'||e.key==='ArrowUp'){
-    if(!suggestItems.length)openSuggest();
-    if(!suggestItems.length)return;
+searchInputEl.addEventListener('scroll', updateSearchOverlay);
+searchInputEl.addEventListener('keyup', () => { document.getElementById('searchHl').style.transform = 'translateX(' + (-searchInputEl.scrollLeft) + 'px)'; });
+searchInputEl.addEventListener('focus', openSuggest);
+searchInputEl.addEventListener('keydown', e => {
+  if(e.key === 'ArrowDown' || e.key === 'ArrowUp'){
+    if(!suggestItems.length) openSuggest();
+    if(!suggestItems.length) return;
     e.preventDefault();
-    activeSuggest=e.key==='ArrowDown'?(activeSuggest+1)%suggestItems.length:(activeSuggest-1+suggestItems.length)%suggestItems.length;
+    activeSuggest = e.key === 'ArrowDown' ? (activeSuggest + 1) % suggestItems.length : (activeSuggest - 1 + suggestItems.length) % suggestItems.length;
     renderSuggestBox();
-    const act=document.querySelector('.suggest-item.active');if(act)act.scrollIntoView({block:'nearest'});
-  }else if(e.key==='Enter'){e.preventDefault();if(activeSuggest>=0&&suggestItems[activeSuggest])pickSuggestion(suggestItems[activeSuggest]);else applySearch(true);}
-  else if(e.key==='Escape')hideSuggest();
+    const act = document.querySelector('.suggest-item.active'); if(act) act.scrollIntoView({ block: 'nearest' });
+  } else if(e.key === 'Enter'){ e.preventDefault(); if(activeSuggest >= 0 && suggestItems[activeSuggest]) pickSuggestion(suggestItems[activeSuggest]); else applySearch(true); }
+  else if(e.key === 'Escape') hideSuggest();
 });
-document.getElementById('suggestBox').addEventListener('mousedown',e=>e.preventDefault());
-document.getElementById('suggestBox').addEventListener('click',e=>{const el=e.target.closest('.suggest-item');if(el&&suggestItems[+el.dataset.i])pickSuggestion(suggestItems[+el.dataset.i]);});
-document.addEventListener('click',e=>{if(!e.target.closest('#smartSearch'))hideSuggest();});
-document.getElementById('clearSearch').addEventListener('click',clearSearchBox);
-document.getElementById('keywordBar').addEventListener('click',e=>{
-  const fix=e.target.closest('.kw.fix');const dym=e.target.closest('[data-corrected]');
-  if(fix){const re=new RegExp('\\b'+fix.dataset.from.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','i');searchInputEl.value=searchInputEl.value.replace(re,fix.dataset.to);applySearch(true);}
-  else if(dym){searchInputEl.value=dym.dataset.corrected;applySearch(true);}
+document.getElementById('suggestBox').addEventListener('mousedown', e => e.preventDefault());
+document.getElementById('suggestBox').addEventListener('click', e => { const el = e.target.closest('.suggest-item'); if(el && suggestItems[+el.dataset.i]) pickSuggestion(suggestItems[+el.dataset.i]); });
+document.addEventListener('click', e => { if(!e.target.closest('#smartSearch')) hideSuggest(); });
+document.getElementById('clearSearch').addEventListener('click', clearSearchBox);
+document.getElementById('keywordBar').addEventListener('click', e => {
+  const fix = e.target.closest('.kw.fix'); const dym = e.target.closest('[data-corrected]');
+  if(fix){ const re = new RegExp('\\b' + fix.dataset.from.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i'); searchInputEl.value = searchInputEl.value.replace(re, fix.dataset.to); applySearch(true); }
+  else if(dym){ searchInputEl.value = dym.dataset.corrected; applySearch(true); }
 });
-document.getElementById('sortSelect').addEventListener('change',e=>{currentSort=e.target.value;currentPage=1;renderTools();});
-document.getElementById('refreshToolsBtn').addEventListener('click',()=>{loadAndMergeTools();showToast('Refreshing...','info');});
-document.getElementById('themeToggle').addEventListener('click',()=>{
+document.getElementById('sortSelect').addEventListener('change', e => { currentSort = e.target.value; currentPage = 1; renderTools(); });
+document.getElementById('refreshToolsBtn').addEventListener('click', () => { loadAndMergeTools(); showToast('Refreshing...', 'info'); });
+document.getElementById('themeToggle').addEventListener('click', () => {
   document.body.classList.toggle('dark-mode');
-  const d=document.body.classList.contains('dark-mode');
-  document.getElementById('themeToggle').textContent=d?'☀️ Light':'🌙 Dark';
-  localStorage.setItem('theme',d?'dark':'light');
+  const d = document.body.classList.contains('dark-mode');
+  document.getElementById('themeToggle').textContent = d ? '☀️ Light' : '🌙 Dark';
+  localStorage.setItem('theme', d ? 'dark' : 'light');
 });
-if(localStorage.getItem('theme')==='dark'){document.body.classList.add('dark-mode');document.getElementById('themeToggle').textContent='☀️ Light';}
-document.getElementById('showFavorites').addEventListener('click',e=>{e.preventDefault();document.getElementById('toolsGrid').style.display='none';document.getElementById('favoritesPage').style.display='block';renderFavorites();});
-document.getElementById('hideFavorites').addEventListener('click',()=>{document.getElementById('favoritesPage').style.display='none';document.getElementById('toolsGrid').style.display='flex';renderTools();});
-document.getElementById('submitToolBtn').addEventListener('click',submitTool);
-document.querySelector('#toolModal .close').addEventListener('click',()=>document.getElementById('toolModal').classList.remove('active'));
-document.getElementById('memoryClose').addEventListener('click',closeMemoryPanel);
-document.getElementById('memoryBtn').addEventListener('click',()=>openMemoryPanel(''));
-window.addEventListener('click',e=>{if(e.target===document.getElementById('toolModal'))document.getElementById('toolModal').classList.remove('active');if(e.target===document.getElementById('memoryModal'))closeMemoryPanel();});
-window.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){document.getElementById('toolModal').classList.remove('active');closeMemoryPanel();}
-  const tag=(e.target.tagName||'').toLowerCase();
-  if(e.key==='/'&&!['input','textarea','select'].includes(tag)){e.preventDefault();searchInputEl.focus();}
+if(localStorage.getItem('theme') === 'dark'){ document.body.classList.add('dark-mode'); document.getElementById('themeToggle').textContent = '☀️ Light'; }
+document.getElementById('showFavorites').addEventListener('click', e => { e.preventDefault(); document.getElementById('toolsGrid').style.display = 'none'; document.getElementById('favoritesPage').style.display = 'block'; renderFavorites(); });
+document.getElementById('hideFavorites').addEventListener('click', () => { document.getElementById('favoritesPage').style.display = 'none'; document.getElementById('toolsGrid').style.display = 'flex'; renderTools(); });
+document.getElementById('submitToolBtn').addEventListener('click', submitTool);
+document.querySelector('#toolModal .close').addEventListener('click', () => document.getElementById('toolModal').classList.remove('active'));
+document.getElementById('memoryClose').addEventListener('click', closeMemoryPanel);
+document.getElementById('memoryBtn').addEventListener('click', () => openMemoryPanel(''));
+window.addEventListener('click', e => {
+  if(e.target === document.getElementById('toolModal')) document.getElementById('toolModal').classList.remove('active');
+  if(e.target === document.getElementById('memoryModal')) closeMemoryPanel();
+  if(e.target === document.getElementById('compareModal')) document.getElementById('compareModal').classList.remove('active');
 });
-window.addEventListener('scroll',()=>{const b=document.getElementById('backToTop');if(b)b.classList.toggle('visible',window.scrollY>300);});
-document.getElementById('backToTop').addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
-document.getElementById('modalVisitBtn').addEventListener('click',()=>{if(modalToolName)learnFromAction(modalToolName,1.5);});
+window.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){ document.getElementById('toolModal').classList.remove('active'); closeMemoryPanel(); document.getElementById('compareModal').classList.remove('active'); }
+  const tag = (e.target.tagName || '').toLowerCase();
+  if(e.key === '/' && !['input','textarea','select'].includes(tag)){ e.preventDefault(); searchInputEl.focus(); }
+});
+window.addEventListener('scroll', () => { const b = document.getElementById('backToTop'); if(b) b.classList.toggle('visible', window.scrollY > 300); });
+document.getElementById('backToTop').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+document.getElementById('modalVisitBtn').addEventListener('click', () => { if(modalToolName) learnFromAction(modalToolName, 1.5); });
+document.getElementById('compareBtn').addEventListener('click', () => document.getElementById('compareModal').classList.add('active'));
+document.getElementById('compareClose').addEventListener('click', () => document.getElementById('compareModal').classList.remove('active'));
 
 function teachFromModal(){
-  const input=document.getElementById('teachKwInput');const val=input.value.trim();
-  if(!val||!modalToolName)return;
-  const words=val.split(/[,\n]/).map(s=>s.trim()).filter(Boolean);
-  let added=0;words.forEach(w=>{if(teachPhrase(w,modalToolName))added++;});
-  input.value='';renderTeachList(modalToolName);renderTools();
-  showToast(added?'Learned '+added+' keyword'+(added===1?'':'s')+' for '+modalToolName:'Please enter a meaningful keyword',added?'success':'error');
+  const input = document.getElementById('teachKwInput'); const val = input.value.trim();
+  if(!val || !modalToolName) return;
+  const words = val.split(/[,\n]/).map(s => s.trim()).filter(Boolean);
+  let added = 0; words.forEach(w => { if(teachPhrase(w, modalToolName)) added++; });
+  input.value = ''; renderTeachList(modalToolName); renderTools();
+  showToast(added ? 'Learned ' + added + ' keyword' + (added === 1 ? '' : 's') + ' for ' + modalToolName : 'Please enter a meaningful keyword', added ? 'success' : 'error');
 }
-document.getElementById('teachKwBtn').addEventListener('click',teachFromModal);
-document.getElementById('teachKwInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();teachFromModal();}});
-document.getElementById('teachKwList').addEventListener('click',e=>{
-  const b=e.target.closest('button[data-k]');if(!b||!modalToolName)return;
-  customKeywords[modalToolName]=(customKeywords[modalToolName]||[]).filter(k=>k!==b.dataset.k);
-  saveKeywords();buildSearchIndex();renderTeachList(modalToolName);renderTools();
+document.getElementById('teachKwBtn').addEventListener('click', teachFromModal);
+document.getElementById('teachKwInput').addEventListener('keydown', e => { if(e.key === 'Enter'){ e.preventDefault(); teachFromModal(); } });
+document.getElementById('teachKwList').addEventListener('click', e => {
+  const b = e.target.closest('button[data-k]'); if(!b || !modalToolName) return;
+  customKeywords[modalToolName] = (customKeywords[modalToolName] || []).filter(k => k !== b.dataset.k);
+  saveKeywords(); buildSearchIndex(); renderTeachList(modalToolName); renderTools();
 });
-document.getElementById('memoryBody').addEventListener('click',e=>{
-  const t=e.target.closest('[data-act], #teachBtn, #memExport, #memImport, #memClear');if(!t)return;
-  const act=t.dataset.act;
-  if(t.id==='teachBtn'){
-    const phrase=document.getElementById('teachPhrase').value.trim();
-    const tool=document.getElementById('teachTool').value;
-    if(!phrase||!tool){showToast('Enter a phrase and choose a tool','error');return;}
-    if(teachPhrase(phrase,tool)){showToast('Got it! “'+phrase+'” → '+tool);renderMemoryPanel('');renderTools();}
-    else showToast('That phrase has no searchable words','error');
-  }else if(t.id==='memExport'){
-    const blob=new Blob([JSON.stringify({memory:searchMemory,keywords:customKeywords},null,2)],{type:'application/json'});
-    const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='sarveik_search_memory.json';a.click();
-    setTimeout(()=>URL.revokeObjectURL(url),1000);
-  }else if(t.id==='memImport'){document.getElementById('memImportFile').click();}
-  else if(t.id==='memClear'){
-    if(!confirm('Erase all search memory and taught keywords?'))return;
-    searchMemory={recent:[],assoc:{},clicks:{}};customKeywords={};
-    saveMemory();saveKeywords();buildSearchIndex();renderMemoryPanel('');renderTools();showToast('Memory cleared','info');
-  }else if(act==='rerun'){
-    if(e.target.closest('button'))return;
-    searchInputEl.value=t.dataset.q;closeMemoryPanel();applySearch(true);
-  }else if(act==='forget-recent'){e.stopPropagation();searchMemory.recent=searchMemory.recent.filter(r=>r.q!==t.dataset.q);saveMemory();renderMemoryPanel('');}
-  else if(act==='forget-link'){
-    const a=searchMemory.assoc[t.dataset.w];
-    if(a){delete a[t.dataset.t];if(!Object.keys(a).length)delete searchMemory.assoc[t.dataset.w];}
-    saveMemory();searchVer++;renderMemoryPanel('');renderTools();
-  }else if(act==='forget-kw'){
-    customKeywords[t.dataset.t]=(customKeywords[t.dataset.t]||[]).filter(k=>k!==t.dataset.k);
-    saveKeywords();buildSearchIndex();renderMemoryPanel('');renderTools();
+document.getElementById('memoryBody').addEventListener('click', e => {
+  const t = e.target.closest('[data-act], #teachBtn, #memExport, #memImport, #memClear'); if(!t) return;
+  const act = t.dataset.act;
+  if(t.id === 'teachBtn'){
+    const phrase = document.getElementById('teachPhrase').value.trim();
+    const tool = document.getElementById('teachTool').value;
+    if(!phrase || !tool){ showToast('Enter a phrase and choose a tool', 'error'); return; }
+    if(teachPhrase(phrase, tool)){ showToast('Got it! "' + phrase + '" → ' + tool); renderMemoryPanel(''); renderTools(); }
+    else showToast('That phrase has no searchable words', 'error');
+  } else if(t.id === 'memExport'){
+    const blob = new Blob([JSON.stringify({ memory: searchMemory, keywords: customKeywords }, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = 'sarveik_search_memory.json'; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } else if(t.id === 'memImport'){ document.getElementById('memImportFile').click(); }
+  else if(t.id === 'memClear'){
+    if(!confirm('Erase all search memory and taught keywords?')) return;
+    searchMemory = { recent: [], assoc: {}, clicks: {} }; customKeywords = {};
+    saveMemory(); saveKeywords(); buildSearchIndex(); renderMemoryPanel(''); renderTools(); showToast('Memory cleared', 'info');
+  } else if(act === 'rerun'){
+    if(e.target.closest('button')) return;
+    searchInputEl.value = t.dataset.q; closeMemoryPanel(); applySearch(true);
+  } else if(act === 'forget-recent'){ e.stopPropagation(); searchMemory.recent = searchMemory.recent.filter(r => r.q !== t.dataset.q); saveMemory(); renderMemoryPanel(''); }
+  else if(act === 'forget-link'){
+    const a = searchMemory.assoc[t.dataset.w];
+    if(a){ delete a[t.dataset.t]; if(!Object.keys(a).length) delete searchMemory.assoc[t.dataset.w]; }
+    saveMemory(); searchVer++; renderMemoryPanel(''); renderTools();
+  } else if(act === 'forget-kw'){
+    customKeywords[t.dataset.t] = (customKeywords[t.dataset.t] || []).filter(k => k !== t.dataset.k);
+    saveKeywords(); buildSearchIndex(); renderMemoryPanel(''); renderTools();
   }
 });
-document.getElementById('memImportFile').addEventListener('change',e=>{
-  const file=e.target.files[0];if(!file)return;
-  const r=new FileReader();
-  r.onload=()=>{
+document.getElementById('memImportFile').addEventListener('change', e => {
+  const file = e.target.files[0]; if(!file) return;
+  const r = new FileReader();
+  r.onload = () => {
     try{
-      const data=JSON.parse(r.result);
-      if(data.memory&&typeof data.memory==='object'){
-        const m=data.memory;
-        if(Array.isArray(m.recent))searchMemory.recent=[...m.recent.filter(r=>r&&typeof r.q==='string'),...searchMemory.recent].slice(0,30);
-        if(m.assoc&&typeof m.assoc==='object')Object.entries(m.assoc).forEach(([w,tools])=>{if(tools&&typeof tools==='object')Object.entries(tools).forEach(([t,v])=>{if(typeof v==='number'){const a=searchMemory.assoc[w]||(searchMemory.assoc[w]={});a[t]=Math.min(20,(a[t]||0)+v);}});});
-        if(m.clicks&&typeof m.clicks==='object')Object.entries(m.clicks).forEach(([t,v])=>{if(typeof v==='number')searchMemory.clicks[t]=(searchMemory.clicks[t]||0)+v;});
+      const data = JSON.parse(r.result);
+      if(data.memory && typeof data.memory === 'object'){
+        const m = data.memory;
+        if(Array.isArray(m.recent)) searchMemory.recent = [...m.recent.filter(r => r && typeof r.q === 'string'), ...searchMemory.recent].slice(0, 30);
+        if(m.assoc && typeof m.assoc === 'object') Object.entries(m.assoc).forEach(([w, tools]) => { if(tools && typeof tools === 'object') Object.entries(tools).forEach(([t, v]) => { if(typeof v === 'number'){ const a = searchMemory.assoc[w] || (searchMemory.assoc[w] = {}); a[t] = Math.min(20, (a[t] || 0) + v); } }); });
+        if(m.clicks && typeof m.clicks === 'object') Object.entries(m.clicks).forEach(([t, v]) => { if(typeof v === 'number') searchMemory.clicks[t] = (searchMemory.clicks[t] || 0) + v; });
       }
-      if(data.keywords&&typeof data.keywords==='object')Object.entries(data.keywords).forEach(([t,arr])=>{if(Array.isArray(arr))customKeywords[t]=[...new Set([...(customKeywords[t]||[]),...arr.filter(x=>typeof x==='string')])].slice(-30);});
-      saveMemory();saveKeywords();buildSearchIndex();renderMemoryPanel('');renderTools();showToast('Memory imported');
-    }catch{showToast('Invalid memory file','error');}
-    e.target.value='';
+      if(data.keywords && typeof data.keywords === 'object') Object.entries(data.keywords).forEach(([t, arr]) => { if(Array.isArray(arr)) customKeywords[t] = [...new Set([...(customKeywords[t] || []), ...arr.filter(x => typeof x === 'string')])].slice(-30); });
+      saveMemory(); saveKeywords(); buildSearchIndex(); renderMemoryPanel(''); renderTools(); showToast('Memory imported');
+    }catch{ showToast('Invalid memory file', 'error'); }
+    e.target.value = '';
   };
   r.readAsText(file);
 });

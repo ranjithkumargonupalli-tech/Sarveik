@@ -1035,8 +1035,8 @@
                 </div>
                 <div class="forgot-link"><a onclick="showForgotFlow()">Forgot Password?</a></div>
                 <button class="auth-btn" onclick="handleLogin()" id="loginBtn">Login</button>
-                <a href="/auth/google" style="text-decoration:none;">
-                    <button class="auth-btn google-btn"><i class="fab fa-google"></i> Continue with Google</button>
+                <a href="/auth/google?remember=1&rememberDays=45" onclick="markGoogleLoginPending()" style="text-decoration:none;">
+                    <button type="button" class="auth-btn google-btn"><i class="fab fa-google"></i> Continue with Google</button>
                 </a>
             </div>
 
@@ -1148,13 +1148,39 @@
         /* ── PERSISTENT LOGIN SETTINGS ──
            45-day session. Every successful login (including a re-login after logout)
            stamps a fresh timestamp, so the 45 days restart from that moment.
-           Each verified visit also renews the window (rolling session). */
+           Each verified visit also renews the window (rolling session).
+           The user is ONLY logged out when they press Logout (or the server
+           explicitly answers 401/403 because the session truly no longer exists). */
         const AUTH_DAYS = 45;
         const AUTH_MAX_AGE_MS = AUTH_DAYS * 24 * 60 * 60 * 1000;
 
         /* ── MAINTENANCE STORAGE KEYS (declared early so logout can clear them) ── */
         const MAINT_KEY='nova_maintenance_mode';
         const MAINT_META_KEY='nova_maintenance_meta';
+
+        /* ── GOOGLE LOGIN HAND-OFF ──
+           Set right before leaving to Google so that, when we come back, we know
+           the session cookie may still be settling (brand-new accounts are created
+           during the callback) and we retry /profile instead of showing "logged out". */
+        const GOOGLE_PENDING_KEY = 'sarveik_google_pending';
+        function markGoogleLoginPending(){
+            try{ sessionStorage.setItem(GOOGLE_PENDING_KEY, String(Date.now())); }catch(e){}
+            try{ localStorage.setItem(GOOGLE_PENDING_KEY, String(Date.now())); }catch(e){}
+        }
+        function isGoogleReturn(){
+            try{
+                const params = new URLSearchParams(window.location.search);
+                if(params.has('google') || params.has('oauth') || params.has('login') || params.has('auth') || params.has('code') && params.has('state')) return true;
+                if(document.referrer && /accounts\.google\.com|google\.com/i.test(document.referrer)) return true;
+                const t = parseInt(sessionStorage.getItem(GOOGLE_PENDING_KEY) || localStorage.getItem(GOOGLE_PENDING_KEY) || '0', 10);
+                if(t && (Date.now() - t) < 10 * 60 * 1000) return true; /* within last 10 minutes */
+            }catch(e){}
+            return false;
+        }
+        function clearGooglePending(){
+            try{ sessionStorage.removeItem(GOOGLE_PENDING_KEY); }catch(e){}
+            try{ localStorage.removeItem(GOOGLE_PENDING_KEY); }catch(e){}
+        }
 
         function getRoleRedirectUrl(role){
             if (role === 'admin') return '/admin-dashboard.html';
@@ -1178,7 +1204,8 @@
         }
         function saveAuth(profile){
             /* timestamp = original login time; refreshed on every verified visit (rolling) */
-            localStorage.setItem('nova_auth', JSON.stringify({username:profile.username,role:profile.role,timestamp:Date.now()}));
+            const uname = profile.username || profile.display_name || profile.name || (profile.email ? String(profile.email).split('@')[0] : '') || 'user';
+            localStorage.setItem('nova_auth', JSON.stringify({username:uname,role:profile.role || 'user',timestamp:Date.now()}));
         }
 
         function togglePasswordVisibility(inputId, btn) {
@@ -1248,7 +1275,10 @@
 
         function showMessage(msg,isError=true){ const d=document.getElementById('auth-message'); d.textContent=msg; d.className='auth-message '+(isError?'error':'success'); d.style.display='block'; setTimeout(()=>{ if(d.className.includes('auth-message')) d.style.display='none'; },5000); }
         function clearMessage(){ const d=document.getElementById('auth-message'); d.className='auth-message'; d.textContent=''; d.style.display='none'; }
-        async function apiCall(url,options={}){ const res=await fetch(url,{...options,headers:{'Content-Type':'application/json',...options.headers},credentials:'include'}); if(!res.ok){ const txt=await res.text(); throw new Error(txt); } const ct=res.headers.get('content-type'); if(ct&&ct.includes('application/json')) return res.json(); return res.text(); }
+        /* apiCall now keeps the HTTP status on the thrown error (err.status) so callers can tell a real
+           "not logged in" (401/403) apart from a temporary server hiccup (500/502/503/429/timeouts).
+           cache:'no-store' stops the browser reusing a stale /profile answer. */
+        async function apiCall(url,options={}){ const res=await fetch(url,{cache:'no-store',...options,headers:{'Content-Type':'application/json',...options.headers},credentials:'include'}); if(!res.ok){ const txt=await res.text(); const err=new Error(txt); err.status=res.status; throw err; } const ct=res.headers.get('content-type'); if(ct&&ct.includes('application/json')) return res.json(); return res.text(); }
         function checkUsernameFormat(){ const u=document.getElementById('signup-username').value; const valDiv=document.getElementById('username-validation'); const inp=document.getElementById('signup-username'); if(u.length===0){ valDiv.innerHTML=''; inp.classList.remove('success','error'); usernameFormatOk=false; return; } if(u.length<3){ valDiv.innerHTML='<i class="fas fa-info-circle"></i> Min 3 characters'; valDiv.className='validation-message error'; inp.classList.add('error'); inp.classList.remove('success'); usernameFormatOk=false; } else if(!/^[a-zA-Z0-9_.]+$/.test(u)){ valDiv.innerHTML='<i class="fas fa-times-circle"></i> Only letters, numbers, _ .'; valDiv.className='validation-message error'; inp.classList.add('error'); inp.classList.remove('success'); usernameFormatOk=false; } else { valDiv.innerHTML='<i class="fas fa-check-circle"></i> Valid format'; valDiv.className='validation-message success'; inp.classList.add('success'); inp.classList.remove('error'); usernameFormatOk=true; } }
         function checkPasswordStrength(){ const p=document.getElementById('signup-password').value; let s=0; if(p.length>=8)s++; if(/[a-z]/.test(p))s++; if(/[A-Z]/.test(p))s++; if(/[0-9]/.test(p))s++; if(/[^a-zA-Z0-9]/.test(p))s++; const colors=['#ef4444','#f59e0b','#ecc94b','#10b981','#059669']; const texts=['Very Weak','Weak','Medium','Strong','Very Strong']; const idx=Math.min(4,Math.max(0,s-1)); document.getElementById('strength-fill').style.width=(s*20)+'%'; document.getElementById('strength-fill').style.background=colors[idx]; document.getElementById('strength-text').textContent=texts[idx]; document.getElementById('strength-text').style.color=colors[idx]; }
         function checkResetPasswordStrength(){ const p=document.getElementById('new-password').value; let s=0; if(p.length>=8)s++; if(/[a-z]/.test(p))s++; if(/[A-Z]/.test(p))s++; if(/[0-9]/.test(p))s++; if(/[^a-zA-Z0-9]/.test(p))s++; const colors=['#ef4444','#f59e0b','#ecc94b','#10b981','#059669']; const texts=['Very Weak','Weak','Medium','Strong','Very Strong']; const idx=Math.min(4,Math.max(0,s-1)); document.getElementById('reset-strength-fill').style.width=(s*20)+'%'; document.getElementById('reset-strength-fill').style.background=colors[idx]; document.getElementById('reset-strength-text').textContent=texts[idx]; document.getElementById('reset-strength-text').style.color=colors[idx]; }
@@ -1557,37 +1587,79 @@
         async function requestResetOtp(){ const email=document.getElementById('forgot-email').value; const btn=document.getElementById('request-otp-btn'); if(!email||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showMessage('Valid email required'); btn.disabled=true; btn.innerHTML='Sending...'; try{ await apiCall('/api/forgot-password',{method:'POST',body:JSON.stringify({email})}); resetEmailGlobal=email; showMessage('OTP sent!',false); document.getElementById('forgot-step1').style.display='none'; document.getElementById('forgot-step2').style.display='block'; resetOtpTimer.reset(); const store=loadOtpTimerStore(); store.reset={resendCount:1,cooldownUntil:Date.now()+30000}; saveOtpTimerStore(store); resetOtpTimer.init(); }catch(e){ showMessage(e.message); }finally{ btn.disabled=false; btn.innerHTML='Send Reset OTP'; } }
         async function resetPassword(){ const otp=document.getElementById('reset-otp').value; const newPwd=document.getElementById('new-password').value; const confirmPwd=document.getElementById('confirm-password').value; const btn=document.getElementById('reset-password-btn'); if(!otp||!newPwd||!confirmPwd) return showMessage('Fill all fields'); if(newPwd!==confirmPwd) return showMessage('Passwords mismatch'); if(newPwd.length<8) return showMessage('Min 8 chars'); btn.disabled=true; btn.innerHTML='Resetting...'; try{ await apiCall('/api/reset-password',{method:'POST',body:JSON.stringify({email:resetEmailGlobal,otp,newPassword:newPwd})}); showMessage('Password reset! Please login.',false); resetOtpTimer.reset(); setTimeout(()=>{ switchAuthTab('login'); },2000); }catch(e){ showMessage(e.message); }finally{ btn.disabled=false; btn.innerHTML='Reset Password'; } }
 
-        /* ── SESSION CHECK — if logged in go straight to the dashboard / main.html ── */
+        /* ── SESSION CHECK — if logged in go straight to the dashboard / main.html ──
+           FIXES:
+           1) Previously ANY error from /profile (500, 502, 503, 429, slow cold start, etc.)
+              wiped the saved login and showed the login page → "keeps logging out".
+              Now the saved login is wiped ONLY when the server clearly answers 401/403
+              (session really gone) AND the retries confirm it.
+           2) Google sign-in for a NEW user: the account/session is created during the
+              /auth/google callback, so the very first /profile call can still answer 401
+              (or an incomplete profile), which used to look like "not logged in" and forced
+              a 2nd Google login. We now detect the Google return and retry /profile a few
+              times before deciding. */
         let _redirectingLoggedIn = false;
-        async function checkSession(){
-            try{
-                const profile = await apiCall('/profile');
-                if (profile && profile.id) {
-                    saveAuth(profile); /* rolling: renews the window on each visit */
-                    updateHeaderUI();
-                    _redirectingLoggedIn = true;
-                    window.location.replace(getRoleRedirectUrl(profile.role));
-                    return true;
+        const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+        function profileLooksValid(p){
+            return !!(p && typeof p === 'object' && (p.id || p._id || p.userId || p.username || p.email));
+        }
+
+        /* returns {state:'ok', profile} | {state:'unauth'} | {state:'transient'} */
+        async function fetchProfileResilient(maxAttempts, delayMs){
+            let lastState = 'transient';
+            for(let i = 0; i < maxAttempts; i++){
+                try{
+                    const profile = await apiCall('/profile');
+                    if(profileLooksValid(profile)) return { state:'ok', profile };
+                    lastState = 'unauth';          /* 200 but empty/incomplete → maybe still being created */
+                }catch(e){
+                    if(e && (e.status === 401 || e.status === 403)) lastState = 'unauth';
+                    else lastState = 'transient';  /* network error, 5xx, 429, timeout … */
                 }
-                localStorage.removeItem('nova_auth');
+                if(i < maxAttempts - 1) await sleep(delayMs * (i + 1));
+            }
+            return { state:lastState };
+        }
+
+        async function checkSession(){
+            const fromGoogle = isGoogleReturn();
+            /* Google return: up to 6 tries (~ 0.9+1.8+2.7+3.6+4.5 s); normal visit: 3 tries */
+            const result = await fetchProfileResilient(fromGoogle ? 6 : 3, fromGoogle ? 900 : 600);
+
+            if(result.state === 'ok'){
+                const profile = result.profile;
+                clearGooglePending();
+                saveAuth(profile); /* rolling: renews the 45-day window on each visit */
                 updateHeaderUI();
-                return false;
-            }catch(e){
-                /* Network error (not a server "not logged in" answer): trust local record */
-                if (e instanceof TypeError) {
-                    const stored = getStoredAuth();
-                    if (stored) {
-                        updateHeaderUI();
+                _redirectingLoggedIn = true;
+                window.location.replace(getRoleRedirectUrl(profile.role));
+                return true;
+            }
+
+            if(result.state === 'transient'){
+                /* Server/network trouble — NOT a logout. Keep the saved login and trust it. */
+                const stored = getStoredAuth();
+                updateHeaderUI();
+                if(stored){
+                    /* loop guard: don't bounce back and forth if the dashboard bounces us here */
+                    let last = 0;
+                    try{ last = parseInt(sessionStorage.getItem('sarveik_trust_redirect') || '0', 10); }catch(e){}
+                    if(Date.now() - last > 15000){
+                        try{ sessionStorage.setItem('sarveik_trust_redirect', String(Date.now())); }catch(e){}
                         _redirectingLoggedIn = true;
                         window.location.replace(getRoleRedirectUrl(stored.role));
                         return true;
                     }
                 }
-                /* Server says session invalid/expired → logged out */
-                localStorage.removeItem('nova_auth');
-                updateHeaderUI();
                 return false;
             }
+
+            /* Server confirmed (after retries) that there is no valid session → logged out */
+            clearGooglePending();
+            localStorage.removeItem('nova_auth');
+            updateHeaderUI();
+            return false;
         }
 
         /* ── UPDATE HEADER UI WITH ROLE-BASED DASHBOARD LINK ── */
@@ -1615,7 +1687,8 @@
             }
         }
 
-        /* Logout — clears ALL saved state, including the maintenance banner flags,
+        /* Logout — the ONLY place a user is intentionally logged out.
+           Clears ALL saved state, including the maintenance banner flags,
            so no stale notification is shown after logging out */
         async function logoutUser(){
             try{ await apiCall('/logout',{method:'POST'}); }catch(e){}
@@ -1624,6 +1697,8 @@
                 localStorage.removeItem('nova_remember');
                 localStorage.removeItem(MAINT_KEY);
                 localStorage.removeItem(MAINT_META_KEY);
+                clearGooglePending();
+                sessionStorage.removeItem('sarveik_trust_redirect');
             }catch(e){}
             /* hide the banner immediately and stop polling */
             if(typeof _maintPollTimer !== 'undefined' && _maintPollTimer){ clearInterval(_maintPollTimer); _maintPollTimer = null; }

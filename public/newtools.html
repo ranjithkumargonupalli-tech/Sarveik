@@ -1,601 +1,487 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Newly Added Tools – Sarveik</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#e0f2fe">
+  <title>Newly Added Tools – Sarveik | Community Approved</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <link rel="stylesheet" href="sarveik-enhanced.css">
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    /* ---- Starter hero (how credits work) ---- */
+    .starter-hero{background:var(--bg-card);backdrop-filter:blur(10px);border:var(--border);border-radius:20px;padding:20px 24px;margin-bottom:24px;box-shadow:var(--shadow)}
+    .starter-hero h2{font-size:1.15rem;margin-bottom:6px;color:var(--accent-strong);display:flex;align-items:center;gap:8px}
+    .starter-hero p{font-size:.82rem;color:var(--text-muted);margin-bottom:14px}
+    .starter-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+    .starter-step{background:var(--accent-soft);border:1px solid rgba(14,165,233,.2);border-radius:12px;padding:12px;display:flex;gap:10px;align-items:flex-start}
+    .starter-step .num{width:26px;height:26px;border-radius:50%;background:var(--btn-bg);color:#fff;font-weight:700;font-size:.8rem;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+    .starter-step .text{font-size:.8rem;line-height:1.4;color:var(--text)}
+    .starter-step .text b{display:block;color:var(--accent-strong);margin-bottom:2px}
 
-    :root {
-      --bg-gradient: linear-gradient(-45deg, #1f1c2c, #928dab, #2c3e50, #3498db);
-      --bg-card: rgba(0, 0, 0, 0.4);
-      --text: #fff;
-      --text-muted: rgba(255, 255, 255, 0.7);
-      --btn-bg: linear-gradient(135deg, #667eea, #764ba2);
-      --shadow: 0 8px 20px rgba(0, 0, 0, 0.6);
-      --border: 1px solid rgba(255, 255, 255, 0.2);
-      --card-width: 280px;
-      --transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
+    /* ---- Simple search box (not full smart search — feed is small) ---- */
+    .search-box input{padding:12px 20px;border-radius:50px;border:var(--border);background:var(--input-bg);color:var(--text);font-family:inherit;font-size:.95em;width:260px;outline:none;transition:var(--transition)}
+    .search-box input:focus{border-color:rgba(14,165,233,.65);box-shadow:0 0 0 4px rgba(14,165,233,.15)}
 
-    body.light-mode {
-      --bg-gradient: linear-gradient(-45deg, #f0f4ff, #e8f2ff, #f8fbff, #e0f2fe);
-      --bg-card: rgba(255, 255, 255, 0.8);
-      --text: #1e293b;
-      --text-muted: #64748b;
-      --btn-bg: linear-gradient(135deg, #0ea5e9, #6366f1);
-      --shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
-      --border: 1px solid rgba(0, 0, 0, 0.1);
-    }
+    /* ---- Filter tags ---- */
+    .filter-tags{display:flex;gap:6px;flex-wrap:wrap;justify-content:center}
+    .filter-tags button{padding:8px 14px;border-radius:50px;border:var(--border);background:var(--glass);color:var(--text);cursor:pointer;font-family:inherit;font-size:.8em;font-weight:500;white-space:nowrap;transition:var(--transition)}
+    .filter-tags button:hover{background:var(--accent-soft)}
+    .filter-tags button.active{background:var(--btn-bg);color:#fff;border-color:transparent;font-weight:600}
 
-    body {
-      font-family: "Inter", sans-serif;
-      background: var(--bg-gradient);
-      background-size: 400% 400%;
-      animation: gradientBG 15s ease infinite;
-      color: var(--text);
-      padding: 40px 20px;
-      min-height: 100vh;
-    }
+    /* ---- Sort select ---- */
+    .sort-controls select{padding:10px 34px 10px 18px;border-radius:50px;border:var(--border);background:var(--glass);color:var(--text);cursor:pointer;font-family:inherit;font-size:.9em;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%230b7fb3' d='M6 9L1 4h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center}
 
-    @keyframes gradientBG {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
+    /* ---- Feed tool card ---- */
+    .feed-tool-card{background:var(--bg-card);backdrop-filter:blur(10px);border-radius:15px;padding:20px;width:var(--card-width);min-height:280px;box-shadow:var(--shadow);transition:var(--transition);display:flex;flex-direction:column;position:relative;border:var(--border)}
+    .feed-tool-card:hover{transform:translateY(-6px);border-color:rgba(16,185,129,.4)}
+    .feed-tool-card .page-badge{position:absolute;top:10px;left:10px;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#1f2937;padding:3px 10px;border-radius:20px;font-size:.65rem;font-weight:700;text-transform:capitalize;z-index:2;letter-spacing:.3px;display:inline-flex;align-items:center;gap:4px}
+    .feed-tool-card .verified-badge{position:absolute;top:10px;right:10px;background:#10b981;color:#fff;padding:2px 8px;border-radius:20px;font-size:.6rem;font-weight:700;z-index:2;display:inline-flex;align-items:center;gap:3px}
+    .feed-tool-card img{width:48px;height:48px;margin:20px 0 12px;border-radius:8px;background:#fff;object-fit:contain;border:1px solid rgba(14,165,233,.15)}
+    .feed-tool-card h3{font-size:1.1em;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+    .feed-tool-card .submitted-by{font-size:.72em;color:var(--text-muted);margin-bottom:8px;display:flex;align-items:center;gap:5px}
+    .feed-tool-card .credit-badge{background:linear-gradient(135deg,#fef3c7,#fde68a);color:#92400e;font-size:.62em;font-weight:700;padding:3px 9px;border-radius:20px;display:inline-flex;align-items:center;gap:4px;width:fit-content;margin-bottom:10px;border:1px solid #fcd34d}
+    .feed-tool-card .tool-desc{font-size:.85em;color:var(--text-muted);flex:1;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:6px;line-height:1.4}
+    .feed-tool-card .tool-desc.expanded{-webkit-line-clamp:unset;-webkit-box-orient:unset;display:block}
+    .feed-tool-card .expand-btn{background:none;border:none;color:var(--accent-strong);cursor:pointer;font-size:.72em;font-family:inherit;padding:0;margin-bottom:10px;text-align:left;font-weight:600}
+    .feed-tool-card .expand-btn:hover{text-decoration:underline}
+    .feed-tool-card .card-meta{display:flex;justify-content:space-between;align-items:center;margin:10px 0;font-size:.78em;color:var(--text-muted);flex-wrap:wrap;gap:6px}
+    .feed-tool-card .card-meta .date{display:flex;align-items:center;gap:4px}
+    .feed-tool-card .card-actions{display:flex;gap:6px;flex-wrap:wrap}
+    .feed-tool-card .card-actions .btn{padding:7px 14px;font-size:.8em;gap:5px;display:inline-flex;align-items:center}
+    .feed-tool-card .card-actions .btn.copy{background:var(--accent-soft);color:var(--accent-strong);border:1px solid rgba(14,165,233,.3)}
+    .feed-tool-card .card-actions .btn.copy:hover{background:var(--btn-bg);color:#fff}
 
-    .container {
-      max-width: 1400px;
-      margin: 0 auto;
-    }
+    /* ---- Skeleton ---- */
+    .skeleton-card{background:var(--bg-card);border-radius:15px;padding:20px;width:var(--card-width);min-height:280px;border:var(--border)}
+    .skeleton-line{height:12px;border-radius:6px;background:linear-gradient(90deg,var(--accent-soft) 0%,rgba(255,255,255,.3) 50%,var(--accent-soft) 100%);background-size:200% 100%;animation:shimmer 1.4s infinite;margin-bottom:10px}
+    .skeleton-line.w-40{width:40%}.skeleton-line.w-70{width:70%}.skeleton-line.w-90{width:90%}
+    .skeleton-circle{width:48px;height:48px;border-radius:8px;background:linear-gradient(90deg,var(--accent-soft) 0%,rgba(255,255,255,.3) 50%,var(--accent-soft) 100%);background-size:200% 100%;animation:shimmer 1.4s infinite;margin-bottom:14px}
+    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
 
-    h1 {
-      font-size: 2.5em;
-      margin-bottom: 10px;
-      text-align: center;
-    }
+    /* ---- Load more ---- */
+    .load-more-wrap{display:flex;justify-content:center;margin:20px 0 30px}
+    #loadMoreBtn{background:var(--btn-bg);color:#fff;border:none;padding:12px 30px;border-radius:50px;font-family:inherit;font-weight:600;font-size:.95em;cursor:pointer;transition:var(--transition);box-shadow:var(--shadow)}
+    #loadMoreBtn:hover{transform:scale(1.04);box-shadow:0 8px 24px rgba(16,185,129,.35)}
+    #loadMoreBtn:disabled{opacity:.6;cursor:not-allowed;transform:none}
 
-    .subtitle {
-      text-align: center;
-      margin-bottom: 30px;
-      opacity: 0.9;
-    }
+    /* ---- Refresh spinner ---- */
+    .refresh-btn.spinning i{animation:spin 1s linear infinite}
+    @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
-    .stats-badge {
-      display: flex;
-      gap: 12px;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 20px;
-      padding: 8px 16px;
-      font-size: 0.95em;
-      background: var(--bg-card);
-      border-radius: 50px;
-      backdrop-filter: blur(5px);
-    }
-
-    .controls {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 15px;
-      margin-bottom: 30px;
-      align-items: center;
-    }
-
-    .controls > * {
-      flex: 1 0 180px;
-    }
-
-    .search-box input {
-      padding: 12px 20px;
-      border-radius: 50px;
-      border: var(--border);
-      background: rgba(255, 255, 255, 0.2);
-      color: var(--text);
-      font-size: 1em;
-      width: 100%;
-      max-width: 300px;
-      backdrop-filter: blur(5px);
-    }
-
-    .filter-tags {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-      overflow-x: auto;
-      padding: 4px 0;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .filter-tags button {
-      padding: 6px 12px;
-      border-radius: 20px;
-      border: var(--border);
-      background: rgba(255, 255, 255, 0.15);
-      color: var(--text);
-      font-size: 0.82em;
-      min-width: 80px;
-      white-space: nowrap;
-      cursor: pointer;
-    }
-
-    .filter-tags button.active {
-      background: var(--btn-bg);
-      color: #fff;
-      border: none;
-    }
-
-    .sort-controls select {
-      padding: 10px 12px;
-      border-radius: 50px;
-      border: var(--border);
-      background: rgba(255, 255, 255, 0.2);
-      color: var(--text);
-      font-size: 0.9em;
-      width: 100%;
-      max-width: 200px;
-    }
-
-    .tools-grid {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 20px;
-      margin-bottom: 30px;
-    }
-
-    .tool-card {
-      background: var(--bg-card);
-      backdrop-filter: blur(10px);
-      border-radius: 15px;
-      padding: 20px;
-      width: var(--card-width);
-      min-height: 300px;
-      box-shadow: var(--shadow);
-      transition: var(--transition);
-      display: flex;
-      flex-direction: column;
-      position: relative;
-      border: var(--border);
-    }
-
-    .tool-card:hover {
-      transform: translateY(-8px) scale(1.02);
-      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.7);
-    }
-
-    .tool-card img {
-      width: 48px;
-      height: 48px;
-      margin-bottom: 12px;
-      border-radius: 8px;
-      background: #fff;
-      object-fit: contain;
-    }
-
-    .tool-card h3 {
-      font-size: 1.2em;
-      margin-bottom: 4px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .submitted-by {
-      font-size: 0.7em;
-      opacity: 0.7;
-      margin-bottom: 8px;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .credit-badge {
-      background: #f59e0b;
-      color: #000;
-      font-size: 0.65em;
-      padding: 2px 8px;
-      border-radius: 20px;
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      width: fit-content;
-      margin-bottom: 8px;
-    }
-
-    .tool-card p {
-      font-size: 0.85em;
-      opacity: 0.85;
-      flex: 1;
-      display: -webkit-box;
-      -webkit-line-clamp: 3;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      margin-bottom: 12px;
-    }
-
-    .tool-card p.expanded {
-      -webkit-line-clamp: unset;
-      -webkit-box-orient: unset;
-    }
-
-    .meta {
-      display: flex;
-      justify-content: space-between;
-      margin: 10px 0;
-      font-size: 0.85em;
-      flex-wrap: wrap;
-      gap: 6px;
-    }
-
-    .meta .date {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .actions {
-      display: flex;
-      gap: 6px;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      background: var(--btn-bg);
-      color: #fff;
-      padding: 6px 10px;
-      border-radius: 50px;
-      text-decoration: none;
-      font-size: 0.85em;
-      text-align: center;
-      border: none;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-    }
-
-    .btn:hover {
-      transform: scale(1.02);
-    }
-
-    .btn.copy {
-      background: rgba(255, 255, 255, 0.15);
-      padding: 5px 10px;
-    }
-
-    .btn.copy:hover {
-      background: rgba(255, 255, 255, 0.25);
-    }
-
-    .btn.expand {
-      background: transparent;
-      color: var(--text-muted);
-      padding: 4px 0;
-      font-size: 0.75em;
-      margin-top: -4px;
-    }
-
-    .btn.expand:hover {
-      color: #fff;
-      text-decoration: underline;
-      transform: scale(1);
-    }
-
-    .page-badge {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background: #f59e0b;
-      color: white;
-      padding: 2px 8px;
-      border-radius: 20px;
-      font-size: 0.65em;
-      text-transform: capitalize;
-    }
-
-    .loading, .empty-state {
-      text-align: center;
-      padding: 50px;
-      font-size: 1.2em;
-      color: var(--text-muted);
-    }
-
-    .empty-state i {
-      font-size: 2em;
-      margin-bottom: 12px;
-    }
-
-    .toast {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      background: rgba(0, 0, 0, 0.9);
-      color: white;
-      padding: 12px 20px;
-      border-radius: 10px;
-      z-index: 10000;
-      animation: slideIn 0.3s ease;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      max-width: 320px;
-    }
-
-    .toast.success { background: #10b981; }
-    .toast.error { background: #ef4444; }
-
-    @keyframes slideIn {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-
-    .nav-buttons {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin: 20px 0;
-      flex-wrap: wrap;
-    }
-        .disclaimer {
-      margin-top: 40px;
-      padding: 20px;
-      background: rgba(0,0,0,0.2);
-      border-radius: 12px;
-      text-align: center;
-      font-size: 0.8em;
-    }
-
-    @media (max-width: 768px) {
-      .controls { flex-direction: column; align-items: stretch; }
-      .tool-card { width: 100%; max-width: 360px; }
-      .sort-controls select { max-width: 100%; }
+    @media (max-width:768px){
+      .search-box input{width:100%}
+      .feed-tool-card,.skeleton-card{width:100%;max-width:380px;margin:0 auto}
+      .starter-grid{grid-template-columns:1fr}
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>✨ Newly Added Tools</h1>
-    <p class="subtitle">Community‑approved tools – earn 25 credits when your tool gets approved!</p>
+<div class="container">
+  <h1>✨ Newly Added Tools</h1>
+  <p class="subtitle">Community-approved tools — earn <strong>25 credits</strong> when your submission is approved</p>
 
-    <div class="stats-badge" id="statsBadge">
-      <i class="fas fa-spinner fa-spin"></i> Loading tools…
-    </div>
+  <div style="text-align:center">
+    <div class="stats-badge" id="statsBadge">Loading tools…</div>
+  </div>
 
-    <div class="controls">
-      <div class="search-box">
-        <input type="text" id="searchInput" placeholder="Search tools..." />
-      </div>
-
-      <div class="filter-tags" id="filterTags">
-        <button data-page="all" class="active">All</button>
-        <button data-page="student">Student</button>
-        <button data-page="teacher">Teacher</button>
-        <button data-page="developer">Developer</button>
-        <button data-page="gamer">Gamer</button>
-        <button data-page="music">Music</button>
-        <button data-page="entertainment">Entertainment</button>
-        <button data-page="cartoons">Cartoons</button>
-        <button data-page="custom">Custom</button>
-      </div>
-
-      <div class="sort-controls">
-        <select id="sortBy">
-          <option value="newest">Newest first</option>
-          <option value="oldest">Oldest first</option>
-        </select>
-      </div>
-    </div>
-
-    <div class="tools-grid" id="toolsGrid">
-      <div class="loading"><i class="fas fa-spinner fa-spin"></i> Loading latest tools…</div>
-    </div>
-
-    <div class="nav-buttons">
-      <a href="main.html" class="btn"><i class="fas fa-home"></i> Sarveik Tools</a>
+  <div class="starter-hero">
+    <h2><i class="fas fa-lightbulb"></i> How submission works</h2>
+    <p>Every tool below was submitted by a community member and reviewed by our admins before appearing here.</p>
+    <div class="starter-grid">
+      <div class="starter-step"><div class="num">1</div><div class="text"><b>Submit</b>On any Sarveik page, use the “Suggest a tool” form.</div></div>
+      <div class="starter-step"><div class="num">2</div><div class="text"><b>Review</b>Admins verify the link is working, safe, and relevant.</div></div>
+      <div class="starter-step"><div class="num">3</div><div class="text"><b>Earn 25 credits</b>Approved submissions earn credits toward Premium.</div></div>
+      <div class="starter-step"><div class="num">4</div><div class="text"><b>Appear here</b>Your tool shows up on this page instantly.</div></div>
     </div>
   </div>
-    <div class="disclaimer">
-    <p><strong>Disclaimer:</strong> Sarveik is a directory of third‑party tools. We do not host any content. All trademarks, logos, and brand names are the property of their respective owners. If you believe any link infringes your rights, please <a href="dmca.html" style="color: inherit; text-decoration: underline;">contact us</a> for removal.</p>
+
+  <div class="controls">
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Search recently added tools…" aria-label="Search recently added tools">
+    </div>
+    <div class="filter-tags" id="filterTags">
+      <button data-page="all" class="active">All</button>
+      <button data-page="student">🎓 Student</button>
+      <button data-page="teacher">👩‍🏫 Teacher</button>
+      <button data-page="developer">💻 Developer</button>
+      <button data-page="gamer">🎮 Gamer</button>
+      <button data-page="music">🎵 Music</button>
+      <button data-page="entertainment">🎬 Entertainment</button>
+      <button data-page="cartoons">🦸 Cartoons</button>
+      <button data-page="custom">⚙️ Custom</button>
+      <button data-page="life">🍔 Life</button>
+      <button data-page="career">🎯 Career</button>
+      <button data-page="editing">🎞️ Editing</button>
+      <button data-page="research">📚 Research</button>
+      <button data-page="shopping">🛍️ Shopping</button>
+    </div>
+    <div class="sort-controls">
+      <select id="sortBy" aria-label="Sort order">
+        <option value="newest">Newest first</option>
+        <option value="oldest">Oldest first</option>
+        <option value="name">Name (A–Z)</option>
+      </select>
+    </div>
+    <div class="theme-toggle">
+      <button id="themeToggle">🌙 Dark</button>
+    </div>
+    <button id="refreshBtn" class="refresh-btn"><i class="fas fa-sync-alt"></i> Refresh</button>
   </div>
-  <button id="backToTop" title="Back to top">↑</button>
+
+  <div class="tools-grid" id="toolsGrid" aria-live="polite"></div>
+
+  <div class="load-more-wrap">
+    <button id="loadMoreBtn" style="display:none">Load more</button>
+  </div>
+
+  <div class="navigation">
+    <a href="main.html" class="nav-btn"><i class="fas fa-home"></i> Back to Sarveik Tools</a>
+  </div>
 </div>
 
-  <script>
-    let tools = [];
-    let currentSearch = "";
-    let currentFilter = "all";
-    let currentSort = "newest";
+<div class="disclaimer">
+  <p><strong>Disclaimer:</strong> Sarveik is a directory of third-party tools. We do not host any content. All trademarks, logos, and brand names are the property of their respective owners. If you believe any link infringes your rights, please <a href="dmca.html" style="color:inherit;text-decoration:underline">contact us</a> for removal.</p>
+</div>
 
-    // ---------- Authentication check ----------
-    async function checkAuth() {
-      try {
-        const res = await fetch('/check-session', { credentials: 'include' });
-        const data = await res.json();
-        if (!data.loggedIn) {
-          window.location.href = '/';
-        }
-        return true;
-      } catch (err) {
-        window.location.href = '/';
-      }
+<button id="backToTop" title="Back to top" aria-label="Back to top">↑</button>
+
+<script>
+/* ============================================================
+   Newly Added Tools — fixed & polished
+   Loads recent approved tools, filters, sorts, paginates,
+   shares, expands. All URL/date/null accesses are guarded.
+   ============================================================ */
+
+const ITEMS_PER_PAGE = 24;
+const FETCH_COOLDOWN_MS = 5000;
+
+let tools = [];
+let filteredTools = [];
+let currentSearch = '';
+let currentFilter = 'all';
+let currentSort = 'newest';
+let currentPage = 1;
+let isLoading = false;
+let lastFetchTime = 0;
+
+/* ---------- Utilities ---------- */
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str).replace(/[&<>"']/g, function(m) {
+    return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[m];
+  });
+}
+
+function safeUrl(url) {
+  try {
+    const u = new URL(url);
+    if (u.protocol === 'http:' || u.protocol === 'https:') return u.href;
+    return '#';
+  } catch (e) { return '#'; }
+}
+
+function safeHostname(url) {
+  try { return new URL(url).hostname; } catch (e) { return 'example.com'; }
+}
+
+function formatRelative(dateStr) {
+  if (!dateStr) return 'recently';
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return 'recently';
+  const diff = Date.now() - d.getTime();
+  if (diff < 0) return 'just now';
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return 'just now';
+  if (min < 60) return min + ' min ago';
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return hr === 1 ? '1 hour ago' : hr + ' hours ago';
+  const day = Math.floor(hr / 24);
+  if (day === 1) return 'yesterday';
+  if (day < 7) return day + ' days ago';
+  const wk = Math.floor(day / 7);
+  if (wk < 4) return wk + (wk === 1 ? ' week ago' : ' weeks ago');
+  return d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+function safeTime(dateStr) {
+  if (!dateStr) return 0;
+  const t = new Date(dateStr).getTime();
+  return isNaN(t) ? 0 : t;
+}
+
+function showToast(message, type) {
+  type = type || 'success';
+  const icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle';
+  const toast = document.createElement('div');
+  toast.className = 'toast ' + type;
+  toast.innerHTML = '<i class="fas ' + icon + '"></i> ' + escapeHtml(message);
+  document.body.appendChild(toast);
+  setTimeout(function() { toast.remove(); }, 3500);
+}
+
+/* ---------- Auth & API ---------- */
+async function checkAuth() {
+  try {
+    const res = await fetch('/check-session', { credentials: 'include' });
+    const data = await res.json();
+    if (!data.loggedIn) { window.location.href = '/'; return false; }
+    return true;
+  } catch (e) {
+    window.location.href = '/';
+    return false;
+  }
+}
+
+async function apiCall(url, options) {
+  options = options || {};
+  const res = await fetch(url, Object.assign({}, options, { credentials: 'include' }));
+  if (res.status === 401) { window.location.href = '/'; throw new Error('Unauthorized'); }
+  if (!res.ok) {
+    const text = await res.text().catch(function() { return ''; });
+    throw new Error(text || ('HTTP ' + res.status));
+  }
+  const ct = res.headers.get('content-type') || '';
+  return ct.indexOf('application/json') !== -1 ? res.json() : res.text();
+}
+
+/* ---------- Skeleton ---------- */
+function renderSkeleton(count) {
+  count = count || 6;
+  let html = '';
+  for (let i = 0; i < count; i++) {
+    html += '<div class="skeleton-card">' +
+      '<div class="skeleton-circle"></div>' +
+      '<div class="skeleton-line w-70"></div>' +
+      '<div class="skeleton-line w-40"></div>' +
+      '<div class="skeleton-line w-90"></div>' +
+      '<div class="skeleton-line w-90"></div>' +
+      '<div class="skeleton-line w-40"></div>' +
+      '</div>';
+  }
+  document.getElementById('toolsGrid').innerHTML = html;
+  document.getElementById('loadMoreBtn').style.display = 'none';
+}
+
+/* ---------- Load ---------- */
+async function loadRecentTools(force) {
+  const now = Date.now();
+  if (!force && tools.length && (now - lastFetchTime) < FETCH_COOLDOWN_MS) return;
+  if (isLoading) return;
+
+  isLoading = true;
+  lastFetchTime = now;
+
+  const refreshBtn = document.getElementById('refreshBtn');
+  refreshBtn.classList.add('spinning');
+  refreshBtn.disabled = true;
+
+  if (!tools.length) renderSkeleton();
+
+  try {
+    const recent = await apiCall('/api/tools/recent?limit=200');
+    tools = Array.isArray(recent) ? recent : [];
+    currentPage = 1;
+    renderTools();
+  } catch (err) {
+    console.error('loadRecentTools:', err);
+    if (!tools.length) {
+      document.getElementById('toolsGrid').innerHTML =
+        '<div class="loading"><i class="fas fa-exclamation-triangle"></i> Failed to load tools. Please try again in a moment.</div>';
     }
+    showToast('Could not load tools', 'error');
+  } finally {
+    isLoading = false;
+    refreshBtn.classList.remove('spinning');
+    refreshBtn.disabled = false;
+  }
+}
 
-    async function apiCall(url, options = {}) {
-      const res = await fetch(url, { ...options, credentials: "include" });
-      if (res.status === 401) {
-        window.location.href = '/';
-        throw new Error('Unauthorized');
-      }
-      if (!res.ok) throw new Error(await res.text());
-      const ct = res.headers.get("content-type");
-      return ct?.includes("application/json") ? res.json() : res.text();
-    }
+/* ---------- Filter & Sort ---------- */
+function applyFilterAndSort() {
+  const term = currentSearch.toLowerCase().trim();
+  let out = tools.slice();
 
-    function showToast(message, type = "success") {
-      const toast = document.createElement("div");
-      toast.className = `toast ${type}`;
-      toast.innerHTML = `<i class="fas ${type === "success" ? "fa-check-circle" : "fa-exclamation-circle"}"></i> ${message}`;
-      document.body.appendChild(toast);
-      setTimeout(() => toast.remove(), 4000);
-    }
-
-    function formatDate(dateStr) {
-      return new Date(dateStr).toLocaleDateString(undefined, {
-        year: "numeric", month: "short", day: "numeric"
-      });
-    }
-
-    async function loadRecentTools() {
-      try {
-        const recent = await apiCall("/api/tools/recent?limit=200");
-        tools = Array.isArray(recent) ? recent : [];
-        renderStatsBadge();
-        renderTools();
-      } catch (err) {
-        console.error(err);
-        document.getElementById("toolsGrid").innerHTML = `<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><div>Failed to load tools. Please try again later.</div></div>`;
-      }
-    }
-
-    function renderStatsBadge() {
-      const badge = document.getElementById("statsBadge");
-      const activeBtn = document.querySelector("#filterTags .active");
-      const tagLabel = activeBtn ? activeBtn.dataset.page : "all";
-      badge.innerHTML = `<i class="fas fa-clock"></i> ${tools.length} approved tools • <strong>${tagLabel === "all" ? "All categories" : tagLabel}</strong>`;
-    }
-
-    function renderTools() {
-      const grid = document.getElementById("toolsGrid");
-
-      let filtered = [...tools];
-      if (currentFilter !== "all") {
-        filtered = filtered.filter(t => t.page_type === currentFilter);
-      }
-      if (currentSearch) {
-        const s = currentSearch.toLowerCase();
-        filtered = filtered.filter(t => t.name?.toLowerCase().includes(s) || (t.description && t.description.toLowerCase().includes(s)));
-      }
-      if (currentSort === "newest") {
-        filtered.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-      } else {
-        filtered.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-      }
-
-      if (filtered.length === 0) {
-        grid.innerHTML = `<div class="empty-state"><i class="fas fa-box-open"></i><div>No tools match your filters.</div></div>`;
-        return;
-      }
-
-      grid.innerHTML = filtered.map(tool => {
-        const pageName = tool.page_type ? tool.page_type.charAt(0).toUpperCase() + tool.page_type.slice(1) : "General";
-        const submittedBy = tool.submitted_by || "Anonymous";
-        return `
-          <div class="tool-card">
-            <span class="page-badge"><i class="fas fa-tag"></i> ${escapeHtml(pageName)}</span>
-            <img src="https://www.google.com/s2/favicons?domain=${new URL(tool.url).hostname}" 
-                 alt="${escapeHtml(tool.name)}" 
-                 onerror="this.src='https://via.placeholder.com/48'">
-            <h3>${escapeHtml(tool.name)}</h3>
-            <div class="submitted-by"><i class="fas fa-user"></i> by ${escapeHtml(submittedBy)}</div>
-            <div class="credit-badge"><i class="fas fa-coins"></i> 25 credits for submitting</div>
-            <p class="tool-desc" data-full="${escapeHtml(tool.description || 'No description available.')}">
-              ${escapeHtml(tool.description || 'No description available.')}
-            </p>
-            <div class="meta">
-              <span class="date"><i class="fas fa-calendar-alt"></i> ${formatDate(tool.created_at)}</span>
-              <div class="actions">
-                <a href="${escapeHtml(tool.url)}" target="_blank" class="btn">Visit <i class="fas fa-external-link-alt"></i></a>
-                <button class="btn copy" data-url="${escapeHtml(tool.url)}"><i class="fas fa-copy"></i></button>
-                <button class="btn expand" data-expanded="false">Show more</button>
-              </div>
-            </div>
-          </div>`;
-      }).join('');
-
-      // Attach event listeners for copy and expand
-      document.querySelectorAll('.btn.copy').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const url = e.currentTarget.dataset.url;
-          navigator.clipboard.writeText(url).then(() => showToast('URL copied to clipboard!')).catch(() => showToast('Failed to copy', 'error'));
-        });
-      });
-      document.querySelectorAll('.btn.expand').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          const card = e.currentTarget.closest('.tool-card');
-          const desc = card.querySelector('.tool-desc');
-          const expanded = btn.dataset.expanded === 'true';
-          desc.classList.toggle('expanded', !expanded);
-          btn.dataset.expanded = expanded ? 'false' : 'true';
-          btn.textContent = expanded ? 'Show more' : 'Show less';
-        });
-      });
-    }
-
-    function escapeHtml(str) {
-      if (!str) return '';
-      return str.replace(/[&<>"']/g, ch => {
-        switch (ch) { case '&': return '&amp;'; case '<': return '&lt;'; case '>': return '&gt;'; case '"': return '&quot;'; case "'": return '&#39;'; default: return ch; }
-      });
-    }
-
-    // Event listeners
-    document.getElementById('searchInput').addEventListener('input', (e) => { currentSearch = e.target.value; renderTools(); });
-    document.querySelectorAll('#filterTags button').forEach(btn => {
-      btn.addEventListener('click', (e) => {
-        currentFilter = e.currentTarget.dataset.page;
-        document.querySelectorAll('#filterTags button').forEach(b => b.classList.remove('active'));
-        e.currentTarget.classList.add('active');
-        renderStatsBadge();
-        renderTools();
-      });
+  if (currentFilter !== 'all') {
+    out = out.filter(function(t) { return t.page_type === currentFilter; });
+  }
+  if (term) {
+    out = out.filter(function(t) {
+      const n = (t.name || '').toLowerCase();
+      const d = (t.description || '').toLowerCase();
+      return n.indexOf(term) !== -1 || d.indexOf(term) !== -1;
     });
-    document.getElementById('sortBy').addEventListener('change', (e) => { currentSort = e.target.value; renderTools(); });
+  }
 
-    // Add refresh button
-    (function addRefreshBtn() {
-      const controls = document.querySelector('.controls');
-      const refreshBtn = document.createElement('button');
-      refreshBtn.id = 'refreshBtn';
-      refreshBtn.className = 'btn';
-      refreshBtn.innerHTML = '<i class="fas fa-sync"></i> Refresh';
-      refreshBtn.addEventListener('click', () => loadRecentTools());
-      controls.appendChild(refreshBtn);
-    })();
+  out.sort(function(a, b) {
+    if (currentSort === 'name') return (a.name || '').localeCompare(b.name || '');
+    const da = safeTime(a.created_at);
+    const db = safeTime(b.created_at);
+    return currentSort === 'newest' ? db - da : da - db;
+  });
 
-    // Light/dark mode toggle
-    function initTheme() {
-      const theme = localStorage.getItem('theme');
-      if (theme === 'light') document.body.classList.add('light-mode');
-      const btn = document.createElement('button');
-      btn.id = 'themeToggle';
-      btn.className = 'btn';
-      btn.style.position = 'fixed';
-      btn.style.top = '20px';
-      btn.style.right = '20px';
-      btn.style.zIndex = '1000';
-      btn.innerHTML = document.body.classList.contains('light-mode') ? '☀️ Light' : '🌙 Dark';
-      btn.addEventListener('click', () => {
-        document.body.classList.toggle('light-mode');
-        const isLight = document.body.classList.contains('light-mode');
-        btn.innerHTML = isLight ? '☀️ Light' : '🌙 Dark';
-        localStorage.setItem('theme', isLight ? 'light' : 'dark');
-      });
-      document.body.appendChild(btn);
+  filteredTools = out;
+}
+
+/* ---------- Stats ---------- */
+function renderStatsBadge() {
+  const badge = document.getElementById('statsBadge');
+  const activeBtn = document.querySelector('#filterTags button.active');
+  const tagLabel = activeBtn ? activeBtn.textContent.trim() : 'All';
+  const total = tools.length;
+  const shown = filteredTools.length;
+  let txt = '<i class="fas fa-clock"></i> ' + total + ' approved tool' + (total === 1 ? '' : 's');
+  if (currentFilter !== 'all') txt += ' · <strong>' + escapeHtml(tagLabel) + '</strong>';
+  if (shown !== total) txt += ' · showing ' + shown;
+  badge.innerHTML = txt;
+}
+
+/* ---------- Render cards ---------- */
+function renderTools() {
+  applyFilterAndSort();
+  renderStatsBadge();
+
+  const grid = document.getElementById('toolsGrid');
+  const loadMoreBtn = document.getElementById('loadMoreBtn');
+
+  if (filteredTools.length === 0) {
+    if (tools.length === 0) {
+      grid.innerHTML = '<div class="loading">No approved tools yet — check back soon!</div>';
+    } else {
+      grid.innerHTML = '<div class="loading">No tools match your filters. Try “All” or clear the search.</div>';
     }
+    loadMoreBtn.style.display = 'none';
+    return;
+  }
 
-    checkAuth().then(() => {
-      loadRecentTools();
-      initTheme();
-    });
-  </script>
+  const visible = filteredTools.slice(0, currentPage * ITEMS_PER_PAGE);
+
+  grid.innerHTML = visible.map(function(tool) {
+    const name = escapeHtml(tool.name || 'Unnamed tool');
+    const desc = escapeHtml(tool.description || 'No description available.');
+    const url = safeUrl(tool.url);
+    const host = safeHostname(tool.url);
+    const icon = escapeHtml('https://www.google.com/s2/favicons?domain=' + host);
+    const page = escapeHtml(tool.page_type || 'general');
+    const submittedBy = escapeHtml(tool.submitted_by || 'Anonymous');
+    const when = formatRelative(tool.created_at);
+    const longDesc = (tool.description || '').length > 140;
+
+    return '<div class="feed-tool-card">' +
+      '<span class="page-badge"><i class="fas fa-tag"></i> ' + page + '</span>' +
+      '<span class="verified-badge"><i class="fas fa-check-circle"></i> Verified</span>' +
+      '<img src="' + icon + '" alt="' + name + '" loading="lazy" onerror="this.src=\'https://via.placeholder.com/48\'">' +
+      '<h3>' + name + '</h3>' +
+      '<div class="submitted-by"><i class="fas fa-user"></i> by ' + submittedBy + '</div>' +
+      '<div class="credit-badge"><i class="fas fa-coins"></i> 25 credits earned</div>' +
+      '<p class="tool-desc">' + desc + '</p>' +
+      (longDesc ? '<button class="expand-btn" data-action="expand">Show more</button>' : '') +
+      '<div class="card-meta"><span class="date"><i class="fas fa-calendar-alt"></i> ' + when + '</span></div>' +
+      '<div class="card-actions">' +
+        '<a href="' + url + '" target="_blank" rel="noopener noreferrer" class="btn">Visit <i class="fas fa-external-link-alt"></i></a>' +
+        '<button class="btn copy" data-url="' + url + '" data-action="copy" aria-label="Copy URL"><i class="fas fa-copy"></i> Copy</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+
+  loadMoreBtn.style.display = visible.length < filteredTools.length ? 'block' : 'none';
+}
+
+/* ---------- Delegated clicks ---------- */
+document.getElementById('toolsGrid').addEventListener('click', function(e) {
+  const btn = e.target.closest('[data-action]');
+  if (!btn) return;
+
+  if (btn.dataset.action === 'copy') {
+    const url = btn.dataset.url || '';
+    if (!url || url === '#') { showToast('Nothing to copy', 'error'); return; }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(function() {
+        showToast('URL copied to clipboard');
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-check"></i> Copied';
+        setTimeout(function() { btn.innerHTML = orig; }, 1500);
+      }).catch(function() { showToast('Failed to copy', 'error'); });
+    } else {
+      showToast('Copy not supported on this browser', 'error');
+    }
+  } else if (btn.dataset.action === 'expand') {
+    const card = btn.closest('.feed-tool-card');
+    const p = card && card.querySelector('.tool-desc');
+    if (!p) return;
+    const expanded = p.classList.toggle('expanded');
+    btn.textContent = expanded ? 'Show less' : 'Show more';
+  }
+});
+
+/* ---------- Search ---------- */
+let searchDebounce = null;
+document.getElementById('searchInput').addEventListener('input', function(e) {
+  currentSearch = e.target.value;
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(function() {
+    currentPage = 1;
+    renderTools();
+  }, 120);
+});
+
+/* ---------- Filter buttons ---------- */
+document.getElementById('filterTags').addEventListener('click', function(e) {
+  const btn = e.target.closest('button[data-page]');
+  if (!btn) return;
+  document.querySelectorAll('#filterTags button').forEach(function(b) { b.classList.remove('active'); });
+  btn.classList.add('active');
+  currentFilter = btn.dataset.page;
+  currentPage = 1;
+  renderTools();
+});
+
+/* ---------- Sort ---------- */
+document.getElementById('sortBy').addEventListener('change', function(e) {
+  currentSort = e.target.value;
+  currentPage = 1;
+  renderTools();
+});
+
+/* ---------- Refresh ---------- */
+document.getElementById('refreshBtn').addEventListener('click', function() {
+  loadRecentTools(true);
+});
+
+/* ---------- Load more ---------- */
+document.getElementById('loadMoreBtn').addEventListener('click', function() {
+  currentPage++;
+  renderTools();
+});
+
+/* ---------- Theme ---------- */
+const themeBtn = document.getElementById('themeToggle');
+themeBtn.addEventListener('click', function() {
+  document.body.classList.toggle('dark-mode');
+  const dark = document.body.classList.contains('dark-mode');
+  themeBtn.textContent = dark ? '☀️ Light' : '🌙 Dark';
+  localStorage.setItem('theme', dark ? 'dark' : 'light');
+});
+if (localStorage.getItem('theme') === 'dark') {
+  document.body.classList.add('dark-mode');
+  themeBtn.textContent = '☀️ Light';
+}
+
+/* ---------- Back to top ---------- */
+window.addEventListener('scroll', function() {
+  const btn = document.getElementById('backToTop');
+  if (btn) btn.classList.toggle('visible', window.scrollY > 300);
+});
+document.getElementById('backToTop').addEventListener('click', function() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+/* ---------- Init ---------- */
+(async function() {
+  const ok = await checkAuth();
+  if (!ok) return;
+  await loadRecentTools(true);
+})();
+</script>
 </body>
 </html>
