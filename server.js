@@ -193,15 +193,6 @@ function getAIHistory(req) {
   }
   return req.session.aiHistory;
 }
-// ==================== SESSION LIFETIME HELPER ====================
-const SESSION_DEFAULT_DAYS = 45;
-
-function setSessionLifetime(req, days) {
-    const d = Math.min(Math.max(parseInt(days, 10) || SESSION_DEFAULT_DAYS, 1), 365);
-    // Setting maxAge also sets cookie.expires → connect-pg-simple stores the right expire column
-    req.session.cookie.maxAge = d * 24 * 60 * 60 * 1000;
-    req.session.rememberDays = d;
-}
 
 app.use(passport.initialize());
 app.use(passport.session());
@@ -2262,7 +2253,7 @@ function validatePasswordStrength(password) {
 }
 
 app.post('/login', authLimiter, async (req, res) => {
-    const { username, password, remember, rememberDays } = req.body;
+    const { username, password } = req.body;
     if (!username || !password) return res.status(400).send('Username/email and password required');
     
     try {
@@ -2366,7 +2357,6 @@ app.get('/auth/google/callback', (req, res, next) => {
             req.session.username = user.username;
             req.session.email = user.email;
             req.session.role = user.role;
-            setSessionLifetime(req, 45);
             res.redirect(user.role === 'admin' ? '/admin-dashboard.html' : '/main.html');
         });
     })(req, res, next);
@@ -5079,62 +5069,6 @@ app.get('/api/admin/analytics', isAdmin, async (req, res) => {
         });
     } catch (err) {
         console.error(err);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
-// ==================== MAINTENANCE MODE ====================
-async function ensureAppSettingsTable() {
-    await pool.query(`
-        CREATE TABLE IF NOT EXISTS app_settings (
-            key VARCHAR(100) PRIMARY KEY,
-            value JSONB NOT NULL,
-            updated_at TIMESTAMP DEFAULT NOW()
-        )
-    `);
-}
-
-async function getMaintenanceState() {
-    try {
-        await ensureAppSettingsTable();
-        const r = await pool.query(`SELECT value FROM app_settings WHERE key = 'maintenance'`);
-        if (r.rows.length === 0) return { enabled: false, enabledAt: null, message: null };
-        return r.rows[0].value;
-    } catch (e) {
-        console.error('getMaintenanceState error:', e.message);
-        return { enabled: false, enabledAt: null, message: null };
-    }
-}
-
-// PUBLIC — index.html polls this every 5s
-app.get('/api/admin/maintenance/status', async (req, res) => {
-    const state = await getMaintenanceState();
-    res.json({
-        enabled: !!state.enabled,
-        enabledAt: state.enabledAt || null,
-        message: state.message || null
-    });
-});
-
-// ADMIN — the dashboard toggle will hit this
-app.post('/api/admin/maintenance/toggle', isAdmin, async (req, res) => {
-    const { enabled, message } = req.body;
-    const newState = {
-        enabled: !!enabled,
-        enabledAt: enabled ? new Date().toISOString() : null,
-        message: message || null
-    };
-    try {
-        await ensureAppSettingsTable();
-        await pool.query(
-            `INSERT INTO app_settings (key, value, updated_at)
-             VALUES ('maintenance', $1, NOW())
-             ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()`,
-            [newState]
-        );
-        io.emit('maintenance_update', newState);
-        res.json({ success: true, ...newState });
-    } catch (e) {
-        console.error('maintenance toggle error:', e);
         res.status(500).json({ error: 'Server error' });
     }
 });
