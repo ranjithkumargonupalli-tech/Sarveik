@@ -155,9 +155,19 @@ app.use(cors({
 app.use(express.json({ limit: '1mb' }));
 app.use(express.urlencoded({ extended: true, limit: '1mb' }));
 app.use('/api/phonepe-webhook', express.raw({ type: 'application/json' }));
-app.use(express.static('public'));
-app.use('/.well-known', express.static(path.join(__dirname, 'public', '.well-known'), { dotfiles: 'allow' }));
+// /something.html -> /something (keeps ?query)
+app.use((req, res, next) => {
+    if (req.method !== 'GET' && req.method !== 'HEAD') return next();
+    if (req.path.endsWith('.html')) {
+        const clean = req.path === '/index.html' ? '/' : req.path.slice(0, -5);
+        const query = req.url.slice(req.path.length);
+        return res.redirect(302, clean + query);
+    }
+    next();
+});
 
+app.use(express.static('public', { extensions: ['html'] }));
+app.use('/.well-known', express.static(path.join(__dirname, 'public', '.well-known'), { dotfiles: 'allow' }));
 // ==================== SESSION MIDDLEWARE ====================
 const sessionMiddleware = session({
     store: new pgSession({
