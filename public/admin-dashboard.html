@@ -289,9 +289,14 @@
 </head>
 <body>
     <!-- Maintenance Mode Banner -->
-    <div id="maintenanceBanner" class="maintenance-banner">
-        🔧 MAINTENANCE MODE IS ACTIVE — The platform is currently in maintenance. Users see a maintenance page.
-        <button onclick="window.adminDashboard.toggleMaintenance()" style="margin-left:15px;padding:4px 12px;font-size:0.8rem;" class="btn-small">Disable</button>
+     <div id="maintenanceBanner" class="maintenance-banner">
+        🔧 MAINTENANCE MODE IS ACTIVE — The platform is currently in maintenance.
+        <input type="text" id="maintMessageInput"
+        placeholder="Custom message shown to users (optional)"
+        style="margin-left:15px;padding:4px 12px;font-size:0.8rem;border-radius:20px;background:rgba(0,0,0,0.25);border:1px solid rgba(255,255,255,0.3);color:#fff;width:260px;"
+        oninput="window.adminDashboard.maintenanceMessage = this.value">
+        <button onclick="window.adminDashboard.toggleMaintenance()"
+        style="margin-left:10px;padding:4px 12px;font-size:0.8rem;" class="btn-small">Disable</button>
     </div>
 
     <nav class="navbar">
@@ -875,11 +880,13 @@
             this.currentEditTemplate = null; this.businessViewMode = 'table';
             this.currentUser = null;
             this._bizLoading = false;
+            this.maintenanceMessage = '';    // <-- near other field initialisers
             this.init();
         }
 
         async init() {
             await this.checkAdminAccess();
+            await this.loadMaintenanceState();
             await this.loadAnalytics();
             await this.loadUsers();
             await this.loadTools();
@@ -1504,13 +1511,40 @@
         }
 
         updateDarkBtn() { document.getElementById('darkModeToggle').innerHTML = this.darkMode ? '<i class="fas fa-sun"></i> Light' : '<i class="fas fa-moon"></i> Dark'; }
-
-        toggleMaintenance() {
-            this.maintenanceMode = !this.maintenanceMode;
+        async loadMaintenanceState() {
+            try {
+                const data = await apiCall('/api/admin/maintenance/status');
+                this.maintenanceMode = !!data.enabled;
+                this.maintenanceMessage = data.message || '';
+                document.getElementById('maintenanceBanner').classList.toggle('active', this.maintenanceMode);
+                const input = document.getElementById('maintMessageInput');
+                if (input) input.value = this.maintenanceMessage || '';
+            } catch (e) {
+                console.warn('loadMaintenanceState failed:', e.message);
+            }
+        }
+        async toggleMaintenance() {
+            const newState = !this.maintenanceMode;
+            const btn = document.querySelector('#maintenanceBanner .btn-small');
+            if (btn) { btn.disabled = true; btn.classList.add('btn-loading'); }
+            try {
+                const data = await apiCall('/api/admin/maintenance/toggle', {
+                method: 'POST',
+                body: { enabled: newState, message: this.maintenanceMessage || null }
+            });
+            this.maintenanceMode = !!data.enabled;
             document.getElementById('maintenanceBanner').classList.toggle('active', this.maintenanceMode);
-            showToast(`Maintenance ${this.maintenanceMode ? 'ENABLED' : 'disabled'}`, this.maintenanceMode ? 'warning' : 'success');
-            try { apiCall('/api/admin/maintenance', { method: 'POST', body: { enabled: this.maintenanceMode } }); } catch { }
-            this.addAuditLogEntry('maintenance', this.currentUser?.username || 'admin', `Maintenance ${this.maintenanceMode ? 'enabled' : 'disabled'}`);
+            showToast(
+                 `Maintenance ${this.maintenanceMode ? 'ENABLED — users now see the banner' : 'disabled'}`,
+                 this.maintenanceMode ? 'warning' : 'success'
+                );
+                this.addAuditLogEntry('maintenance', this.currentUser?.username || 'admin',
+                `Maintenance ${this.maintenanceMode ? 'enabled' : 'disabled'}`);
+            } catch (e) {
+                showToast('Failed to update maintenance: ' + e.message, 'error');
+            } finally {
+                if (btn) { btn.disabled = false; btn.classList.remove('btn-loading'); }
+            }
         }
 
         initGlobalSearch() {

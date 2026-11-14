@@ -988,6 +988,28 @@ async function init(){
   if(!ok)return;
   await fetchPremiumStatus();
   await loadAndMergeTools();
+      // 👇 ADD THIS SNIPPET TO EVERY TOOL PAGE 👇
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetToolName = urlParams.get('tool');
+    
+    if (targetToolName) {
+      // Small delay to ensure all tools are rendered in the DOM
+      setTimeout(() => {
+        // Find the tool in the loaded list
+        const targetTool = allTools.find(t => t.name.toLowerCase() === targetToolName.toLowerCase());
+        if (targetTool) {
+          // Call the existing openModal function for this page
+          openModal(targetTool.name, targetTool.url, targetTool.longDesc, targetTool.icon);
+          
+          // Optional: Scroll down a bit so it's visible
+          setTimeout(() => {
+            const modal = document.getElementById('toolModal');
+            if (modal) modal.scrollIntoView({ behavior: 'smooth' });
+          }, 100);
+        }
+      }, 500); 
+    }
+    // 👆 END OF SNIPPET 👆
   try{await fetch('/api/track-usage',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tool_name:'Research Tools Hub',tool_category:'researcher'}),credentials:'include'});}catch{}
 }
 const searchInputEl=document.getElementById('searchInput');
