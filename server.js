@@ -2262,90 +2262,51 @@ function validatePasswordStrength(password) {
 }
 
 app.post('/login', authLimiter, async (req, res) => {
-    // ── 1. Input validation (defensive against non-JSON bodies, wrong types) ──
-    const body         = req.body || {};
-    const rawUsername  = typeof body.username === 'string' ? body.username.trim() : '';
-    const password     = typeof body.password === 'string' ? body.password     : '';
-    const remember     = body.remember !== false;          // default true
-    const rememberDays = body.rememberDays;                // optional, helper caps it
-
-    if (!rawUsername || !password) {
-        return res.status(400).send('Username/email and password required');
-    }
-    // Cap sizes: bcrypt on a 10 MB string is a CPU DoS vector
-    if (rawUsername.length > 254 || password.length > 1024) {
-        return res.status(400).send('Invalid credentials format');
-    }
-
+    const { username, password, remember, rememberDays } = req.body;
+    if (!username || !password) return res.status(400).send('Username/email and password required');
+    
     try {
-        // ── 2. Lookup — case-insensitive for emails ──────────────────────────
-        const isEmail    = rawUsername.includes('@') && rawUsername.includes('.');
-        const identifier = isEmail ? rawUsername.toLowerCase() : rawUsername;
-        const sql = isEmail
-            ? 'SELECT * FROM users WHERE LOWER(email) = $1'
-            : 'SELECT * FROM users WHERE username = $1';
-
-        const result = await pool.query(sql, [identifier]);
+        const isEmail = username.includes('@') && username.includes('.');
+        const column = isEmail ? 'email' : 'username';
+        const result = await pool.query(
+            `SELECT * FROM users WHERE ${column} = $1`, 
+            [username]
+        );
+        
+        if (result.rows.length === 0) {
+            return res.status(401).send('Invalid username/email or password');
+        }
         const user = result.rows[0];
 
-        // ── 3. Unknown user: uniform response + timing mitigation ────────────
-        if (!user) {
-            try { await bcrypt.compare(password, await getDummyHash()); } catch {}
-            console.warn(`[login] unknown account "${identifier}" ip=${req.ip}`);
-            return res.status(401).send('Invalid username/email or password');
-        }
-
-        // ── 4. Account-state guards ──────────────────────────────────────────
-        // Google-only accounts: password is either NULL or an opaque bcrypt hash
-        if (user.google_id && (!user.password || user.password.length < 20)) {
+        if (user.google_id && !user.password) {
             return res.status(401).send('This account uses Google Sign-In. Please log in with Google.');
         }
-        // Row corruption / cleared password — log, but return the same generic 401
-        if (!user.password) {
-            console.error(`[login] user ${user.id} has no password and no google_id — data corruption?`);
-            return res.status(401).send('Invalid username/email or password');
-        }
         if (user.is_banned) {
-            console.warn(`[login] banned user "${user.username}" ip=${req.ip}`);
             return res.status(401).send('Your account has been banned. Contact support.');
         }
 
         const isAdminUser = user.role === 'admin';
-        // Admins are exempt from the lock check so a locked regular user can't lock the admin out
         if (!isAdminUser && user.lock_until && new Date() < new Date(user.lock_until)) {
             return res.status(401).send('Account temporarily locked. Try again later.');
         }
 
-        // ── 5. Password check (wrapped — bad hash in DB shouldn't 500 silently) ──
-        let match = false;
-        try {
-            match = await bcrypt.compare(password, user.password);
-        } catch (bcryptErr) {
-            console.error(`[login] bcrypt error for user ${user.id}:`, bcryptErr.message);
-            return res.status(500).send('Server error');
-        }
-
+        const match = await bcrypt.compare(password, user.password);
         if (!match) {
             if (!isAdminUser) {
-                await pool.query(
-                    `UPDATE users SET
+                await pool.query(`
+                    UPDATE users SET 
                         login_attempts = login_attempts + 1,
-                        lock_until = CASE
-                            WHEN login_attempts + 1 >= $1
-                                THEN NOW() + INTERVAL '30 minutes'
+                        lock_until = CASE 
+                            WHEN login_attempts + 1 >= $1 
+                            THEN NOW() + INTERVAL '30 minutes'
                             ELSE lock_until
                         END
-                     WHERE id = $2`,
-                    [MAX_LOGIN_ATTEMPTS, user.id]
-                );
-            } else {
-                // Admin failures are worth logging — brute-force attempts on admin accounts
-                console.warn(`[login] ADMIN password failed "${user.username}" ip=${req.ip}`);
+                    WHERE id = $2
+                `, [MAX_LOGIN_ATTEMPTS, user.id]);
             }
             return res.status(401).send('Invalid username/email or password');
         }
 
-        // ── 6. Success — reset lockout counter ───────────────────────────────
         if (!isAdminUser) {
             await pool.query(
                 'UPDATE users SET login_attempts = 0, lock_until = NULL WHERE id = $1',
@@ -2353,50 +2314,23 @@ app.post('/login', authLimiter, async (req, res) => {
             );
         }
 
-        // ── 7. Regenerate session (fixes fixation + sets 45-day lifetime) ────
         req.session.regenerate((err) => {
-            if (err) {
-                console.error('[login] session regenerate failed:', err);
-                return res.status(500).send('Session error');
-            }
-            try {
-                req.session.userId   = user.id;
-                req.session.username = user.username;
-                req.session.email    = user.email;
-                req.session.role     = user.role;
-
-                if (remember) setSessionLifetime(req, rememberDays);
-
-                // Verify the 45-day fix at runtime — shows 3888000000 for 45 days
-                console.log(
-                    `[login] ✓ user=${user.username} role=${user.role} ` +
-                    `maxAge(ms)=${req.session.cookie.maxAge} ip=${req.ip}`
-                );
-
-                if (user.role === 'admin') return res.send('Login successful:admin');
-                res.send('Login successful');
-            } catch (innerErr) {
-                console.error('[login] post-regenerate error:', innerErr);
-                if (!res.headersSent) res.status(500).send('Session setup error');
-            }
+            if (err) return res.status(500).send('Session error');
+            req.session.userId = user.id;
+            req.session.username = user.username;
+            req.session.email = user.email;
+            req.session.role = user.role;
+            if (user.role === 'admin') res.send('Login successful:admin');
+            else res.send('Login successful');
         });
 
-        // ── 8. Fire-and-forget side effects (all settled, never block response) ──
-        Promise.allSettled([
-            updateStreak(user.id),
-            updateQuestProgress(user.id, 'login'),
-            checkAchievements(user.id)
-        ]).then(results => {
-            results.forEach((r, i) => {
-                if (r.status === 'rejected') {
-                    console.error(`[login] side-effect #${i} failed:`, r.reason?.message || r.reason);
-                }
-            });
-        });
+        updateStreak(user.id).catch(err => console.error('Streak error:', err));
+        updateQuestProgress(user.id, 'login').catch(err => console.error('Quest error:', err));
+        checkAchievements(user.id).catch(err => console.error('Achievement error:', err));
 
     } catch (err) {
-        console.error('[login] unexpected error:', err);
-        if (!res.headersSent) res.status(500).send('Server error');
+        console.error('Login error:', err);
+        res.status(500).send('Server error');
     }
 });
 
