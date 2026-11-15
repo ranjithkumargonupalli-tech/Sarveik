@@ -1842,7 +1842,7 @@
                 const cached = Cache.get('profile_data', 60000);
                 if (cached) { this.userData = cached; }
                 else {
-                    const res = await fetch('/profile/', { credentials: 'include' });
+                    const res = await fetch('/api/profile/', { credentials: 'include' });
                     if (!res.ok) throw new Error();
                     this.userData = await res.json();
                     Cache.set('profile_data', this.userData);

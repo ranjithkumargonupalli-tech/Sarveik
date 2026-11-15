@@ -1104,7 +1104,7 @@ const isAuthenticated = async (req, res, next) => {
         res.status(500).json({ error: 'Server error' });
     }
 };
-app.get('/profile', isAuthenticated, async (req, res) => {
+app.get('/api/profile', isAuthenticated, async (req, res) => {
     try {
         const result = await pool.query(
             `SELECT id, username, email, role, display_name, 
@@ -2608,7 +2608,7 @@ app.post('/api/credits/spend', isAuthenticated, async (req, res) => {
 });
 
 // ==================== PROFILE UPDATE ====================
-app.put('/profile/update', isAuthenticated, async (req, res) => {
+app.put('/api/profile/update', isAuthenticated, async (req, res) => {
     const { display_name, bio, phone, github, twitter, linkedin } = req.body;
     try {
         await pool.query(
@@ -2642,7 +2642,7 @@ app.put('/profile/update', isAuthenticated, async (req, res) => {
 });
 
 // ==================== AVATAR UPLOAD ====================
-app.post('/profile/avatar', isAuthenticated, upload.single('avatar'), async (req, res) => {
+app.post('/api/profile/avatar', isAuthenticated, upload.single('avatar'), async (req, res) => {
     if (!req.file) return res.status(400).send('No file uploaded');
     try {
         const buffer = fs.readFileSync(req.file.path);
@@ -4807,7 +4807,7 @@ app.get('/api/users/search', isAuthenticated, async (req, res) => {
 
 
 
-app.put('/profile/update', isAuthenticated, async (req, res) => {
+app.put('/api/profile/update', isAuthenticated, async (req, res) => {
     const { display_name, bio, phone, github, twitter, linkedin } = req.body;
     try {
         await pool.query(
@@ -4840,7 +4840,7 @@ app.put('/profile/update', isAuthenticated, async (req, res) => {
     }
 });
 
-app.post('/profile/avatar', isAuthenticated, upload.single('avatar'), async (req, res) => {
+app.post('/api/profile/avatar', isAuthenticated, upload.single('avatar'), async (req, res) => {
     if (!req.file) return res.status(400).send('No file uploaded');
     try {
         const buffer = fs.readFileSync(req.file.path);
@@ -4869,7 +4869,7 @@ app.post('/profile/avatar', isAuthenticated, upload.single('avatar'), async (req
     }
 });
 
-app.put('/profile/password', isAuthenticated, async (req, res) => {
+app.put('/api/profile/password', isAuthenticated, async (req, res) => {
     const { currentPassword, newPassword } = req.body;
     if (!currentPassword || !newPassword) return res.status(400).send('All fields required');
     try {
@@ -4896,7 +4896,7 @@ app.put('/profile/password', isAuthenticated, async (req, res) => {
     }
 });
 
-app.post('/profile/toggle-2fa', isAuthenticated, async (req, res) => {
+app.post('/api/profile/toggle-2fa', isAuthenticated, async (req, res) => {
     try {
         await pool.query(
             'UPDATE users SET two_factor_enabled = NOT two_factor_enabled WHERE id = $1',
@@ -4909,7 +4909,7 @@ app.post('/profile/toggle-2fa', isAuthenticated, async (req, res) => {
     }
 });
 
-app.delete('/profile/delete', isAuthenticated, async (req, res) => {
+app.delete('/api/profile/delete', isAuthenticated, async (req, res) => {
     try {
         const userId = req.session.userId;
         const userEmail = req.session.email;
