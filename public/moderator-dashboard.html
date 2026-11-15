@@ -877,7 +877,7 @@ async function checkSession() {
     try {
         const session = await apiCall('/check-session');
         if (!session.loggedIn) { window.location.href = '/'; return false; }
-        const profile = await apiCall('/profile');
+        const profile = await apiCall('/api/profile');
         if (!['moderator', 'admin'].includes(profile.role)) { alert('Access denied'); window.location.href = '/'; return false; }
         currentUser = profile;
         document.getElementById('sidebarName').textContent = profile.username;
