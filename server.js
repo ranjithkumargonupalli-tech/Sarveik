@@ -762,49 +762,202 @@ async function grantLevelRewards(userId, oldLevel, newLevel) {
     }
 }
 
+// ==================== DAILY STREAK — rewards + reset on miss ====================
+//
+//  • Day 1 = 1.0×   • +0.1× per consecutive day   • capped at 3.0× (day 21+)
+//  • base reward: 10 XP × multiplier  +  5 credits × multiplier
+//  • milestone bonuses on day 7 / 14 / 30 / 100
+//  • logged in twice in one day  → no double reward
+//  • missed ≥ 1 day              → streak reset to day 1
+//
+const STREAK_MILESTONES = {
+    7:   { xp: 25,  credits: 15 },
+    14:  { xp: 50,  credits: 30 },
+    30:  { xp: 100, credits: 75 },
+    100: { xp: 500, credits: 250 }
+};
+
+function computeStreakReward(currentStreak) {
+    const multiplier = Math.min(3.0, 1 + (currentStreak - 1) * 0.1);
+    let xp = Math.floor(10 * multiplier);
+    let credits = Math.floor(5 * multiplier);
+    const milestone = STREAK_MILESTONES[currentStreak] || null;
+    if (milestone) { xp += milestone.xp; credits += milestone.credits; }
+    return { multiplier: Math.round(multiplier * 100) / 100, xp, credits, milestone };
+}
+
 async function updateStreak(userId) {
     const today = new Date().toISOString().slice(0, 10);
     try {
-        const streak = await pool.query(
-            'SELECT current_streak, last_login_date FROM user_streak WHERE user_id = $1',
+        const { rows } = await pool.query(
+            `SELECT current_streak, longest_streak, last_login_date
+             FROM user_streak WHERE user_id = $1`,
             [userId]
         );
-        if (streak.rows.length === 0) {
-            await pool.query(
-                `INSERT INTO user_streak (user_id, current_streak, longest_streak, last_login_date, multiplier)
-                 VALUES ($1, 1, 1, $2, 1.0)`,
-                [userId, today]
-            );
-            return 1;
-        }
-        const { current_streak, last_login_date } = streak.rows[0];
-        const lastDate = last_login_date ? new Date(last_login_date) : null;
-        const now = new Date();
-        let current = current_streak;
-        let multiplier = 1.0;
 
-        if (lastDate) {
-            const diffDays = Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
-            if (diffDays === 1) {
-                current++;
-                multiplier = Math.min(2.0, 1 + (current - 1) * 0.05);
-            } else if (diffDays > 1) {
-                current = 1;
-                multiplier = 1.0;
-            }
+        // --- First-ever login ---
+        if (rows.length === 0) {
+            const reward = computeStreakReward(1);
+            await pool.query(
+                `INSERT INTO user_streak
+                    (user_id, current_streak, longest_streak, last_login_date, multiplier)
+                 VALUES ($1, 1, 1, $2, $3)`,
+                [userId, today, reward.multiplier]
+            );
+            await _awardStreakReward(userId, 1, 1, reward, 'new');
+            return { currentStreak: 1, longestStreak: 1, streakType: 'new', ...reward };
         }
-        const longest = Math.max(current, current_streak);
-        await pool.query(
-            `UPDATE user_streak SET current_streak=$1, longest_streak=$2,
-             last_login_date=$3, multiplier=$4 WHERE user_id=$5`,
-            [current, longest, today, multiplier, userId]
+
+        const { current_streak, longest_streak, last_login_date } = rows[0];
+
+        // --- Already logged in today? return current state, no reward ---
+        const lastDate = last_login_date ? new Date(last_login_date) : null;
+        const lastMidnight  = lastDate ? Date.UTC(lastDate.getUTCFullYear(), lastDate.getUTCMonth(), lastDate.getUTCDate()) : null;
+        const todayMidnight = (() => { const n = new Date(); return Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate()); })();
+
+        let current, streakType;
+        if (lastMidnight !== null) {
+            const diffDays = Math.round((todayMidnight - lastMidnight) / 86_400_000);
+            if (diffDays === 0) {
+                // Already checked in today — no reward, no state change
+                return {
+                    currentStreak: current_streak, longestStreak: longest_streak,
+                    streakType: 'already', multiplier: 1.0, xp: 0, credits: 0, milestone: null
+                };
+            } else if (diffDays === 1) {
+                current = current_streak + 1;
+                streakType = 'continued';
+            } else {
+                current = 1;
+                streakType = 'reset';
+            }
+        } else {
+            current = 1;
+            streakType = 'new';
+        }
+
+        const reward = computeStreakReward(current);
+        const newLongest = Math.max(current, longest_streak);
+
+        // --- Atomic update: only succeeds if last_login_date < today.
+        //     Protects against double-award from concurrent login requests.
+        const upd = await pool.query(
+            `UPDATE user_streak
+             SET current_streak   = $1,
+                 longest_streak   = $2,
+                 last_login_date  = $3,
+                 multiplier       = $4,
+                 updated_at       = NOW()
+             WHERE user_id = $5
+               AND (last_login_date IS NULL OR last_login_date < $3)`,
+            [current, newLongest, today, reward.multiplier, userId]
         );
-        return multiplier;
+
+        if (upd.rowCount === 0) {
+            // Another request already checked this user in today
+            return {
+                currentStreak: current_streak, longestStreak: longest_streak,
+                streakType: 'already', multiplier: 1.0, xp: 0, credits: 0, milestone: null
+            };
+        }
+
+        await _awardStreakReward(userId, current, newLongest, reward, streakType);
+        return { currentStreak: current, longestStreak: newLongest, streakType, ...reward };
+
     } catch (err) {
         console.error('updateStreak error:', err);
-        return 1;
+        return { error: err.message };
     }
 }
+
+async function _awardStreakReward(userId, currentStreak, longestStreak, reward, streakType) {
+    // XP (uses your existing addXP which also handles level-up detection)
+    if (reward.xp > 0) {
+        await addXP(userId, reward.xp, `Daily streak · Day ${currentStreak}`);
+    }
+    // Credits
+    if (reward.credits > 0) {
+        await ensureUserCredits(userId);
+        await pool.query(
+            `UPDATE user_credits
+             SET balance = balance + $1,
+                 lifetime_earned = lifetime_earned + $1,
+                 last_updated = NOW()
+             WHERE user_id = $2`,
+            [reward.credits, userId]
+        );
+        await pool.query(
+            `INSERT INTO credit_transactions (user_id, amount, type, description)
+             VALUES ($1, $2, 'bonus', $3)`,
+            [userId, reward.credits, `Daily login streak · Day ${currentStreak}`]
+        );
+    }
+    // Live socket notification (fires only if the user is currently connected)
+    const sock = onlineUsers.get(userId);
+    if (sock && sock.socketId) {
+        io.to(sock.socketId).emit('streak_updated', {
+            currentStreak,
+            longestStreak,
+            streakType,
+            multiplier: reward.multiplier,
+            xpAwarded: reward.xp,
+            creditsAwarded: reward.credits,
+            milestone: reward.milestone || null,
+            at: Date.now()
+        });
+    }
+}
+
+// ==================== GET /api/user/streak ====================
+app.get('/api/user/streak', isAuthenticated, async (req, res) => {
+    try {
+        const { rows } = await pool.query(
+            `SELECT current_streak, longest_streak, last_login_date, multiplier
+             FROM user_streak WHERE user_id = $1`,
+            [req.session.userId]
+        );
+
+        const today = new Date().toISOString().slice(0, 10);
+        const row = rows[0] || { current_streak: 0, longest_streak: 0, last_login_date: null, multiplier: 1.0 };
+
+        const checkedInToday = row.last_login_date
+            ? new Date(row.last_login_date).toISOString().slice(0, 10) === today
+            : false;
+
+        // Preview: what would tomorrow's login award (if they keep the streak)?
+        const nextStreak = checkedInToday ? row.current_streak + 1 : row.current_streak + 1;
+        const nextReward = computeStreakReward(nextStreak);
+
+        // 7-day calendar (last 6 days + today) for a UI heatmap
+        const calendar = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setUTCDate(d.getUTCDate() - i);
+            const iso = d.toISOString().slice(0, 10);
+            calendar.push({
+                date: iso,
+                checkedIn: row.last_login_date
+                    ? new Date(row.last_login_date).toISOString().slice(0, 10) === iso
+                    : false,
+                isToday: iso === today
+            });
+        }
+
+        res.json({
+            currentStreak: row.current_streak,
+            longestStreak: row.longest_streak,
+            multiplier: Number(row.multiplier) || 1.0,
+            checkedInToday,
+            lastLoginDate: row.last_login_date,
+            nextRewardPreview: nextReward,     // { multiplier, xp, credits, milestone }
+            milestones: STREAK_MILESTONES,      // shown in UI as upcoming goals
+            calendar
+        });
+    } catch (err) {
+        console.error('GET /api/user/streak error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
 
 async function getDailyQuests(userId) {
     const today = new Date().toISOString().slice(0,10);
@@ -1125,6 +1278,127 @@ app.get('/api/profile', isAuthenticated, async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// ==================== LEADERBOARD (Top 50 + exact user position) ====================
+const LEADERBOARD_MAX = 50;
+
+// Whitelisted sort expressions — never interpolate raw user input into SQL.
+const LEADERBOARD_SORTS = {
+    total_xp_earned: 'u.total_xp_earned',
+    xp: 'u.xp',
+    level: 'u.level',
+    credits: 'COALESCE(uc.balance, 0)'
+};
+
+function formatLeaderboardUser(row) {
+    return {
+        rank: Number(row.rank),
+        id: row.id,
+        username: row.username,
+        displayName: row.display_name || row.username,
+        avatarUrl: row.avatar_url || null,
+        level: row.level || 1,
+        xp: row.xp || 0,
+        totalXpEarned: row.total_xp_earned || 0,
+        credits: Number(row.credits) || 0,
+        badge: row.has_custom_badge ? (row.selected_badge || 'custom') : null,
+        bio: row.bio || null,
+        professional: {
+            github: row.github || null,
+            twitter: row.twitter || null,
+            linkedin: row.linkedin || null
+        }
+    };
+}
+
+app.get('/api/leaderboard', isAuthenticated, async (req, res) => {
+    const userId = req.session.userId;
+
+    // --- Clamp limit to 1..50 (default 50) ---
+    const requested = parseInt(req.query.limit, 10);
+    const limit = Number.isFinite(requested)
+        ? Math.max(1, Math.min(LEADERBOARD_MAX, requested))
+        : LEADERBOARD_MAX;
+
+    // --- Whitelisted sortBy (default: total XP) ---
+    const sortBy = String(req.query.sortBy || 'total_xp_earned');
+    const sortExpr = LEADERBOARD_SORTS[sortBy];
+    if (!sortExpr) {
+        return res.status(400).json({
+            error: 'Invalid sortBy',
+            allowed: Object.keys(LEADERBOARD_SORTS)
+        });
+    }
+
+    try {
+        // Single query:
+        //   • RANK() gives the true position even outside the top N
+        //   • COUNT(*) OVER() gives total players on the ladder
+        //   • WHERE rank <= $1 OR id = $2 guarantees the caller is always present
+        const { rows } = await pool.query(
+            `
+            WITH ranked AS (
+                SELECT
+                    u.id,
+                    u.username,
+                    u.display_name,
+                    u.avatar_url,
+                    u.level,
+                    u.xp,
+                    u.total_xp_earned,
+                    u.bio,
+                    u.github,
+                    u.twitter,
+                    u.linkedin,
+                    u.has_custom_badge,
+                    u.selected_badge,
+                    COALESCE(uc.balance, 0)            AS credits,
+                    RANK() OVER (
+                        ORDER BY ${sortExpr} DESC, u.id ASC
+                    )                                  AS rank,
+                    COUNT(*) OVER ()                   AS total_users
+                FROM users u
+                LEFT JOIN user_credits uc ON uc.user_id = u.id
+                WHERE COALESCE(u.is_banned, false) = false
+            )
+            SELECT * FROM ranked
+            WHERE rank <= $1 OR id = $2
+            ORDER BY rank ASC
+            `,
+            [limit, userId]
+        );
+
+        const top = rows
+            .filter(r => Number(r.rank) <= limit)
+            .map(formatLeaderboardUser);
+
+        const meRow = rows.find(r => r.id === userId) || null;
+        let me = null;
+
+        if (meRow) {
+            const totalUsers = Number(meRow.total_users) || 1;
+            const rank = Number(meRow.rank);
+            me = {
+                ...formatLeaderboardUser(meRow),
+                inTop: rank <= limit,
+                totalUsers,
+                // 100 = best; rounded to 1 decimal
+                percentile: Math.round(((totalUsers - rank + 1) / totalUsers) * 1000) / 10
+            };
+        }
+
+        res.json({
+            sortBy,
+            limit,
+            maxLimit: LEADERBOARD_MAX,
+            top,
+            me
+        });
+    } catch (err) {
+        console.error('Leaderboard error:', err);
+        res.status(500).json({ error: 'Failed to load leaderboard' });
     }
 });
 
