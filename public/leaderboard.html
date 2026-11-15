@@ -372,7 +372,6 @@ body.dark .blob{opacity:.55;}
 .m-stat{background:var(--bg3);border:1px solid var(--b1);border-radius:var(--r);padding:.65rem .75rem;text-align:center;}
 .m-stat-val{font-family:var(--mono);font-weight:700;font-size:.92rem;}
 .m-stat-lbl{font-size:.62rem;color:var(--txt2);margin-top:.18rem;text-transform:uppercase;letter-spacing:.5px;}
-/* ── NEW: professional links in modal ── */
 .modal-professional{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.2rem;}
 .prof-link{display:inline-flex;align-items:center;gap:.38rem;padding:.42rem .72rem;background:var(--bg3);border:1px solid var(--b1);border-radius:var(--r);font-size:.72rem;color:var(--txt2);text-decoration:none;transition:var(--trans);font-weight:600;}
 .prof-link:hover{border-color:var(--a);color:var(--a2);background:rgba(14,165,233,.06);}
@@ -468,7 +467,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
     <div>
       <div class="hero-tag"><i class="fas fa-globe"></i> Global Rankings · Top 50</div>
       <h1>🏆 <span class="grad">Leader</span>board</h1>
-      <p class="hero-sub">Compete fiercely. Climb relentlessly. Own the summit.</p>
+      <p class="hero-sub">Ranked by total XP earned. Compete fiercely. Climb relentlessly.</p>
       <div class="hero-actions">
         <div class="live-pill clickable" id="autoRefreshToggle" role="button" tabindex="0" data-tip="Click to pause/resume auto-refresh"><div class="live-dot"></div> <span id="autoRefreshLabel">LIVE</span></div>
         <button class="btn btn-primary btn-sm" id="refreshBtn"><i class="fas fa-rotate-right" id="refreshIcon"></i> Refresh Now</button>
@@ -499,7 +498,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 
     <div class="card-hdr">
       <div>
-        <div class="card-hdr-title">Global Rankings — Top 50</div>
+        <div class="card-hdr-title">Global Rankings — Top 50 by Total XP</div>
         <div class="card-hdr-sub" id="countLine">Loading…</div>
       </div>
       <div style="display:flex;gap:.55rem;align-items:center;flex-wrap:wrap;">
@@ -603,7 +602,7 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 </main>
 
 <div class="footer">
-  &copy; 2026 <span class="footer-brand">Sarveik</span> · All rights reserved · Top 50 players · Auto-refreshes every 24 hours
+  &copy; 2026 <span class="footer-brand">Sarveik</span> · All rights reserved · Top 50 players by Total XP · Auto-refreshes every 24 hours
 </div>
 
 <button id="backToTop" title="Back to top" aria-label="Back to top"><i class="fas fa-chevron-up"></i></button>
@@ -670,12 +669,12 @@ a:focus-visible,button:focus-visible,input:focus-visible,select:focus-visible{ou
 /* ════════════════════════════════════════
    CONSTANTS + STATE
 ════════════════════════════════════════ */
-const MAX_USERS = 50;                     // server cap
-const CACHE_KEY = 'sv_lb_cache_v2';
+const MAX_USERS = 50;
+const CACHE_KEY = 'sv_lb_cache_v3';            // bumped: invalidates old level-sorted cache
 const RANK_HISTORY_KEY = 'sv_lb_prev_ranks';
 const AUTOREFRESH_KEY = 'sv_lb_autorefresh';
 const VIEW_KEY = 'sv_lb_view';
-const PREF_KEY = 'sv_lb_prefs';
+const PREF_KEY = 'sv_lb_prefs_v2';             // bumped: discards old sortBy:'level' preference
 const CACHE_DURATION_MS = 24 * 60 * 60 * 1000;
 
 function readJSON(key, fallback){ try { const v = JSON.parse(localStorage.getItem(key)); return v ?? fallback; } catch { return fallback; } }
@@ -690,7 +689,9 @@ const S = {
   search:'',
   levelFilter:savedPrefs.levelFilter || '',
   badgeFilter:savedPrefs.badgeFilter || '',
-  sortBy: SORTS.includes(savedPrefs.sortBy) ? savedPrefs.sortBy : 'total_xp_earned',
+  sortBy: (savedPrefs.sortBy && savedPrefs.sortBy !== 'level' && SORTS.includes(savedPrefs.sortBy))
+            ? savedPrefs.sortBy
+            : 'total_xp_earned',       // ← default XP if unset OR old 'level' value
   view: VIEWS.includes(localStorage.getItem(VIEW_KEY)) ? localStorage.getItem(VIEW_KEY) : 'table',
   allUsers:[], filteredUsers:[],
   me:null,
@@ -918,7 +919,7 @@ function updateCacheBar(state, fetchedAt){
 }
 
 /* ════════════════════════════════════════
-   DATA LOADING — new /api/leaderboard
+   DATA LOADING — /api/leaderboard (XP default)
 ════════════════════════════════════════ */
 function normalizeUser(u){
   if (!u) return null;
@@ -959,7 +960,9 @@ async function loadLeaderboard(forceRefresh = false){
   try {
     const params = new URLSearchParams();
     params.set('limit', String(MAX_USERS));
-    if (S.sortBy !== 'name') params.set('sortBy', S.sortBy);
+    // Guaranteed valid sortBy — never sends 'level' unless user explicitly picked it
+    const sendSort = SORTS.includes(S.sortBy) && S.sortBy !== 'name' ? S.sortBy : 'total_xp_earned';
+    params.set('sortBy', sendSort);
     const res = await fetch(`/api/leaderboard?${params.toString()}`, {
       credentials:'include',
       headers:{'Cache-Control':'no-cache'}
@@ -967,7 +970,7 @@ async function loadLeaderboard(forceRefresh = false){
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const raw = await res.json();
 
-    // Remember previous ranks (for ▲/▼ deltas)
+    // Snapshot previous ranks (for ▲/▼ deltas)
     if (S.allUsers.length) {
       const snap = {};
       S.allUsers.forEach(u => { snap[keyOf(u)] = u.rank; });
@@ -1022,7 +1025,7 @@ function setLoading(){
 }
 
 /* ════════════════════════════════════════
-   ME BANNER (exact rank + next target)
+   ME BANNER
 ════════════════════════════════════════ */
 function renderMeBanner(){
   if (!S.me) { $('myRankBadge').style.display = 'none'; $('myRankBadge2').style.display = 'none'; $('myRankBanner').style.display = 'none'; return; }
@@ -1040,7 +1043,6 @@ function renderMeBanner(){
   $('mrb-xp').textContent = fmt(S.me.total_xp_earned || S.me.xp || 0);
   setAvatar($('mrbAv'), S.me);
 
-  // Next target
   const gap = $('mrbGapText');
   if (S.me.rank === 1) {
     gap.innerHTML = `<b>You're #1!</b> Keep earning XP to defend your lead.`;
@@ -1096,9 +1098,8 @@ function applyFilters(){
   else if (S.badgeFilter === 'pro') users = users.filter(u => (u.level || 1) >= 10 && (u.level || 1) < 20);
   else if (S.badgeFilter === 'favorites') users = users.filter(u => S.favorites.has(keyOf(u)));
 
-  // Sort: API has already sorted, but name-sort is client-side
   if (S.sortBy === 'name') users.sort((a, b) => (a.username || '').localeCompare(b.username || ''));
-  // else: keep API order (top is pre-sorted)
+  // else: preserve server-side sort order (total_xp_earned DESC by default)
 
   S.filteredUsers = users;
   S.totalItems = users.length;
@@ -1167,7 +1168,7 @@ function renderTable(){
   };
   const maxXp = Math.max(...S.filteredUsers.map(u => u.total_xp_earned || u.xp || 0), 1);
   let html = `<div class="table-wrap"><table class="lb-table"><thead><tr>
-    <th style="width:90px;">Rank</th>${th('name','Player')}${th('level','Level','col-lvl')}${th('total_xp_earned','XP')}
+    <th style="width:90px;">Rank</th>${th('name','Player')}${th('level','Level','col-lvl')}${th('total_xp_earned','Total XP')}
     <th class="col-cmp" style="width:36px;"></th><th class="col-acts" style="width:80px;">Actions</th>
   </tr></thead><tbody>`;
 
@@ -1200,7 +1201,7 @@ function renderTable(){
   html += `</tbody></table></div>`;
   ca.innerHTML = html;
   ca.querySelectorAll('th[data-sort]').forEach(h => h.addEventListener('click', () => {
-    S.sortBy = h.dataset.sort; $('sortBy').value = S.sortBy; S.page = 1; applyFilters();
+    S.sortBy = h.dataset.sort; $('sortBy').value = S.sortBy; S.page = 1; applyFilters(); loadLeaderboard(true);
   }));
   renderPagination();
 }
@@ -1212,7 +1213,7 @@ function renderCards(){
   const maxXp = Math.max(...S.filteredUsers.map(u => u.total_xp_earned || u.xp || 0), 1);
   let html = `<div class="cards-grid">`;
   users.forEach((u, i) => {
-    const fIdx = S.filteredUsers.indexOf(u), displayRank = fIdx + 1, globalRank = globalRankOf(u);
+    const fIdx = S.filteredUsers.indexOf(u), displayRank = fIdx + 1;
     const fav = isFav(u), rn = displayRank === 1 ? 'r1' : displayRank === 2 ? 'r2' : displayRank === 3 ? 'r3' : '';
     const xp = u.total_xp_earned || u.xp || 0;
     html += `<div class="p-card ${isMe(u) ? 'my-card' : ''}" style="animation-delay:${i * 0.03}s" onclick="openModalIdx(${fIdx})">
@@ -1278,7 +1279,7 @@ function renderCompare(){
         <div><div class="cmp-uname">${esc(u.displayName || u.username || 'Unknown')}</div><div class="cmp-rank">Rank #${globalRankOf(u)}</div></div>
       </div>
       <div class="cmp-stats">
-        <div class="cmp-stat-row"><div class="cmp-stat-label">XP</div><div class="cmp-stat-value">${fmt(xp)}</div></div>
+        <div class="cmp-stat-row"><div class="cmp-stat-label">Total XP</div><div class="cmp-stat-value">${fmt(xp)}</div></div>
         <div class="cmp-stat-row"><div class="cmp-stat-label">Level</div><div class="cmp-stat-value">${u.level || 1}</div></div>
         <div class="cmp-stat-row"><div class="cmp-stat-label">Streak</div><div class="cmp-stat-value">${u.currentStreak || 0}🔥</div></div>
         <div class="cmp-stat-row"><div class="cmp-stat-label">Credits</div><div class="cmp-stat-value">${fmt(u.credits)}</div></div>
@@ -1299,7 +1300,6 @@ function renderAchievements(){
   const ca = $('contentArea');
   const me = S.me || (S.allUsers.find(isMe)) || null;
   const unlocked = [];
-  const cards = [];
   const ach = [
     {name:'Rising Star', icon:'⭐', desc:'Reach Level 5', tag:'common', test:u => (u.level||1) >= 5},
     {name:'Pro Player', icon:'⚡', desc:'Reach Level 10', tag:'rare', test:u => (u.level||1) >= 10},
@@ -1491,13 +1491,13 @@ function openModal(u){
   $('modalRankDelta').innerHTML = rankDeltaHtml(u, rank);
   $('modalName').textContent = u.displayName || u.username || 'Unknown';
   const joined = u.created_at ? new Date(u.created_at).toLocaleDateString(undefined, {year:'numeric', month:'short'}) : '—';
-  $('modalSub').textContent = `Level ${u.level || 1} · ${u.professional && (u.professional.github || u.professional.twitter || u.professional.linkedin) ? 'Professional' : 'Member'} · Joined ${joined}`;
+  const hasProf = u.professional && (u.professional.github || u.professional.twitter || u.professional.linkedin);
+  $('modalSub').textContent = `Level ${u.level || 1} · ${hasProf ? 'Professional' : 'Member'} · Joined ${joined}`;
 
   $('m-xp').textContent = fmt(u.total_xp_earned || u.xp || 0);
   $('m-lvl').textContent = u.level || 1;
   $('m-credits').textContent = fmt(u.credits || 0);
 
-  // Professional links
   const prof = u.professional || {};
   const links = [];
   if (prof.github)   links.push(`<a class="prof-link gh" href="${esc(prof.github)}" target="_blank" rel="noopener"><i class="fab fa-github"></i> GitHub</a>`);
@@ -1509,12 +1509,10 @@ function openModal(u){
   $('m-prog-fill').style.width = progress + '%';
   $('m-prog-txt').textContent = `${fmt(needed - current)} XP`;
 
-  // Sparkline
   const spark = mockSpark(u);
   const maxS = Math.max(...spark) || 1;
   $('modalSpark').innerHTML = spark.map(v => `<div class="sp-b" style="height:${Math.round((v / maxS) * 100)}%"></div>`).join('');
 
-  // Badges
   const badges = getUserBadges(u);
   $('m-badges').innerHTML = badges.map(b => `<span class="chip ${b.cls}">${b.label}</span>`).join('');
 
@@ -1558,7 +1556,7 @@ function maybeOpenSharedProfile(){
 }
 
 /* ════════════════════════════════════════
-   JUMP TO ME / EXPORT / FILTERS / BUTTONS
+   JUMP TO ME / EXPORT / BUTTONS
 ════════════════════════════════════════ */
 function jumpToMe(){
   if (!S.me) { toast('You are not on the leaderboard yet', 'info'); return; }
@@ -1567,10 +1565,8 @@ function jumpToMe(){
     $('myRankBanner').scrollIntoView({behavior:'smooth', block:'center'});
     return;
   }
-  // Find me in filtered list
   const idx = S.filteredUsers.findIndex(isMe);
   if (idx === -1) {
-    // Me is in top but hidden by current filters → clear them
     resetFilters();
     setTimeout(() => {
       const idx2 = S.filteredUsers.findIndex(isMe);
@@ -1622,7 +1618,12 @@ $('cmpBtn').addEventListener('click', () => goView('compare'));
 $('viewCmpBtn').addEventListener('click', () => goView('compare'));
 $('clearCmpBtn').addEventListener('click', clearCmp);
 
-$('sortBy').addEventListener('change', e => { S.sortBy = e.target.value; S.page = 1; applyFilters(); loadLeaderboard(true); });
+$('sortBy').addEventListener('change', e => {
+  S.sortBy = e.target.value; S.page = 1;
+  // server sorts by XP/credits/streak/level; 'name' is client-side
+  if (S.sortBy === 'name') applyFilters();
+  else loadLeaderboard(true);
+});
 $('perPage').addEventListener('change', e => { S.perPage = +e.target.value; S.page = 1; applyFilters(); });
 $('levelFilter').addEventListener('change', e => { S.levelFilter = e.target.value; S.page = 1; applyFilters(); });
 $('badgeFilter').addEventListener('change', e => { S.badgeFilter = e.target.value; S.page = 1; applyFilters(); });
@@ -1674,7 +1675,7 @@ btt.addEventListener('click', () => window.scrollTo({top:0, behavior:'smooth'}))
 /* ════════════════════════════════════════
    INIT
 ════════════════════════════════════════ */
-$('sortBy').value = S.sortBy;
+$('sortBy').value = S.sortBy;                 // mirrors S.sortBy → 'total_xp_earned' on first load
 $('perPage').value = String(S.perPage);
 $('levelFilter').value = S.levelFilter;
 $('badgeFilter').value = S.badgeFilter;
