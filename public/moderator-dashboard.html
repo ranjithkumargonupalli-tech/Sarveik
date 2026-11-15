@@ -781,15 +781,6 @@ input[type="checkbox"] { width: 15px; height: 15px; cursor: pointer; accent-colo
 <script>
 /* ================================================
    Sarveik MODERATOR DASHBOARD
-   Changes in this version:
-   - Light blue + light green UI themes
-   - "Users" removed from Management (nav + tab)
-   - Announcements: Internships (short / moderate / long),
-     Workshops & Events (workshop, hackathon, symposium...),
-     Job Opportunities - with notification sending
-   - Staff chat receiving: live unread badge, sound,
-     desktop alerts, typing indicator, jump-to-latest,
-     auto-reconnect + polling fallback, duplicate guard
    ================================================ */
 
 // ---- GLOBALS ----
@@ -808,6 +799,17 @@ let ipBans = [], userNotes = [];
 let staffGroupId = null;
 let staffMessages = [];
 let currentTicketSearch = '', currentTicketStatus = 'all', currentDateFrom = '', currentDateTo = '';
+let chatSoundEnabled = true;
+let isTyping = false;
+
+// ---- ANNOUNCEMENTS VARIABLES ----
+let currentAnnCategory = 'all';
+let currentAnnSubcategory = 'all';
+const SUB_CATEGORIES = {
+    internship: ['All types', 'Short Internship (1-2 months)', 'Moderate Internship (3-4 months)', 'Long Internship (5+ months)'],
+    workshop: ['All types', 'Workshop', 'Hackathon', 'Symposium', 'Seminar', 'Conference', 'Webinar', 'Other Event'],
+    job: ['All types', 'Full-time', 'Part-time', 'Contract / Freelance', 'Campus Drive', 'Other']
+};
 
 // ---- UTILITIES ----
 function escapeHtml(s) {
@@ -860,8 +862,6 @@ function renderPagination(containerId, current, total, onPageFn) {
     c.innerHTML = html;
 }
 
-function formatTime(d) { try { return new Date(d).toLocaleString(); } catch(e) { return d; } }
-
 function relativeTime(d) {
     const diff = Date.now() - new Date(d).getTime();
     const m = Math.floor(diff / 60000);
@@ -872,7 +872,7 @@ function relativeTime(d) {
     return `${Math.floor(h/24)}d ago`;
 }
 
-// ---- SESSION ----
+// ---- SESSION & INIT ----
 async function checkSession() {
     try {
         const session = await apiCall('/check-session');
@@ -897,14 +897,16 @@ function setTheme(t) {
     if (!THEMES.includes(t)) t = 'lagoon';
     document.documentElement.setAttribute('data-theme', t);
     localStorage.setItem('sarveik_theme', t);
-    document.getElementById('themeSelector').value = t;
+    const sel = document.getElementById('themeSelector');
+    if(sel) sel.value = t;
 }
 function initTheme() {
     setTheme(localStorage.getItem('sarveik_theme') || 'lagoon');
-    document.getElementById('themeSelector').addEventListener('change', e => setTheme(e.target.value));
+    const sel = document.getElementById('themeSelector');
+    if(sel) sel.addEventListener('change', e => setTheme(e.target.value));
 }
 
-// ---- NAV ----
+// ---- NAVIGATION ----
 function switchTab(tabId) {
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
@@ -912,11 +914,22 @@ function switchTab(tabId) {
     if (tab) tab.classList.add('active');
     const nav = document.querySelector(`.nav-item[data-tab="${tabId}"]`);
     if (nav) nav.classList.add('active');
-    const titles = { dashboard:'Dashboard', tools:'Tool Management', ipbans:'IP Ban Manager', support:'Support Tickets', announcements:'Announcements', notes:'User Notes', activity:'Activity Log', modstats:'Moderator Statistics', health:'Platform Health', staffconference:'Staff Conference' };
+    
+    const titles = { 
+        dashboard:'Dashboard', tools:'Tool Management', ipbans:'IP Ban Manager', 
+        support:'Support Tickets', announcements:'Announcements', notes:'User Notes', 
+        activity:'Activity Log', modstats:'Moderator Statistics', health:'Platform Health', 
+        staffconference:'Staff Conference' 
+    };
     const t = titles[tabId] || tabId;
     document.getElementById('pageTitle').textContent = t;
     document.getElementById('breadcrumbTab').textContent = t;
-    const loaders = { tools: loadAllTools, support: loadTickets, announcements: loadAnnouncements, activity: loadActivityLog, modstats: loadModeratorStats, ipbans: renderIPBans, notes: renderNotes, staffconference: loadStaffConference };
+    
+    const loaders = { 
+        tools: loadAllTools, support: loadTickets, announcements: loadAnnouncements, 
+        activity: loadActivityLog, modstats: loadModeratorStats, ipbans: renderIPBans, 
+        notes: renderNotes, staffconference: loadStaffConference 
+    };
     if (loaders[tabId]) loaders[tabId]();
     else loadStats();
 }
@@ -924,6 +937,14 @@ function switchTab(tabId) {
 document.querySelectorAll('.nav-item[data-tab]').forEach(item => {
     item.addEventListener('click', () => switchTab(item.getAttribute('data-tab')));
 });
+
+function refreshAllData() {
+    showToast('Refreshing data...', 'info');
+    loadStats();
+    if (document.getElementById('tools-tab').classList.contains('active')) loadAllTools();
+    if (document.getElementById('support-tab').classList.contains('active')) loadTickets();
+    if (document.getElementById('announcements-tab').classList.contains('active')) loadAnnouncements();
+}
 
 // ---- GLOBAL SEARCH ----
 function globalSearch(query) {
@@ -952,18 +973,16 @@ function renderNotifications() {
     `).join('');
 }
 
-// ---- STATS ----
+// ---- STATS & CHARTS ----
 async function loadStats() {
     try {
-        // Fetch all data concurrently
         const [usersRes, toolsRes, ticketsRes, annsRes] = await Promise.all([
             apiCall('/admin/users').catch(() => []),
             apiCall('/api/admin/tools').catch(() => []),
-            apiCall('/api/support/tickets').catch(() => ({ tickets: [] })), // Default to object
+            apiCall('/api/support/tickets').catch(() => ({ tickets: [] })),
             apiCall('/api/announcements').catch(() => []),
         ]);
 
-        // Ensure we are always working with arrays
         const users = Array.isArray(usersRes) ? usersRes : [];
         const tools = Array.isArray(toolsRes) ? toolsRes : [];
         const tickets = Array.isArray(ticketsRes) ? ticketsRes : (ticketsRes.tickets || []);
@@ -977,7 +996,6 @@ async function loadStats() {
         const openTk = tickets.filter(t => t.status === 'open').length;
         const banned = users.filter(u => u.is_banned).length;
 
-        // Update the DOM
         document.getElementById('totalUsers').textContent = totalU.toLocaleString();
         document.getElementById('totalTools').textContent = activeTools.toLocaleString();
         document.getElementById('pendingTools').textContent = pendingT.toLocaleString();
@@ -1003,6 +1021,7 @@ async function loadStats() {
         showToast('Error loading stats', 'error'); 
     }
 }
+
 function initCharts(users, tools, tickets) {
     const tick = 'rgba(61,98,119,0.9)', grid = 'rgba(30,90,120,0.08)';
     const ch1 = document.getElementById('userGrowthChart')?.getContext('2d');
@@ -1064,9 +1083,10 @@ function loadWidgets(tickets, users, tools) {
     `).join('') : '<div class="activity-item" style="color:var(--text3);font-size:0.82rem;">No tool data</div>';
 
     const rfEl = document.getElementById('recentFeedbackWidget');
-    apiCall('/api/feedback').catch(() => []).then(feedback => {
-        rfEl.innerHTML = feedback.slice(0,5).map(f => `
-            <div class="activity-item"><div class="activity-dot" style="background:var(--warning);"></div><div><div class="activity-text"><strong>${escapeHtml(f.username)}</strong>: ${escapeHtml(f.comment||'')}</div><div class="activity-time">${'⭐'.repeat(Math.min(f.rating||0,5))}</div></div></div>
+    apiCall('/api/admin/feedback').catch(() => []).then(feedback => {
+        const arr = Array.isArray(feedback) ? feedback : [];
+        rfEl.innerHTML = arr.slice(0,5).map(f => `
+            <div class="activity-item"><div class="activity-dot" style="background:var(--warning);"></div><div><div class="activity-text"><strong>${escapeHtml(f.username || 'User')}</strong>: ${escapeHtml(f.comment||'')}</div><div class="activity-time">${'⭐'.repeat(Math.min(f.rating||0,5))}</div></div></div>
         `).join('') || '<div style="color:var(--text3);font-size:0.82rem;">No feedback yet</div>';
     });
 }
@@ -1075,19 +1095,20 @@ async function loadRecentActivity() {
     const tbody = document.querySelector('#recentActivityTable tbody');
     try {
         const logs = await apiCall('/api/activity-log');
-        tbody.innerHTML = logs.slice(0, 8).map(l => `
+        const arr = Array.isArray(logs) ? logs : [];
+        tbody.innerHTML = arr.slice(0, 8).map(l => `
             <tr>
-                <td><span style="font-weight:600;color:var(--text);">${escapeHtml(l.moderator_name)}</span></td>
+                <td><span style="font-weight:600;color:var(--text);">${escapeHtml(l.moderator_name || 'System')}</span></td>
                 <td><span class="badge badge-info">${escapeHtml(l.action)}</span></td>
-                <td>${escapeHtml(l.target)}</td>
-                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(l.details)}</td>
+                <td>${escapeHtml(l.target || '')}</td>
+                <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(l.details || '')}</td>
                 <td style="white-space:nowrap;">${relativeTime(l.created_at)}</td>
             </tr>
         `).join('');
     } catch(e) { tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No activity yet</td></tr>'; }
 }
 
-// ---- USERS DATA (kept for stats, ticket assignment & forwarding; no Users tab) ----
+// ---- USERS DATA ----
 async function loadAllUsers() {
     try { allUsers = await apiCall('/admin/users'); } catch(e) { allUsers = []; }
 }
@@ -1136,14 +1157,18 @@ function renderToolsContainer(tools) {
 window.setToolsPage = (p) => { toolsPage = p; filterTools(); };
 
 async function approveTool(id) {
-    try { await apiCall(`/api/tools/${id}/approve`, { method: 'POST' }); await logModeratorAction('Approved tool', `Tool ${id}`); showToast('Tool approved', 'success'); loadAllTools(); loadStats(); } catch(e) { showToast('Failed to approve', 'error'); }
+    try { await apiCall(`/api/admin/tools/${id}/approve`, { method: 'PUT' }); await logModeratorAction('Approved tool', `Tool ${id}`); showToast('Tool approved', 'success'); loadAllTools(); loadStats(); } catch(e) { showToast('Failed to approve', 'error'); }
 }
 async function rejectTool(id) {
     if (!confirm('Reject this tool?')) return;
-    try { await apiCall(`/api/tools/${id}/reject`, { method: 'POST' }); await logModeratorAction('Rejected tool', `Tool ${id}`); showToast('Tool rejected', 'warning'); loadAllTools(); loadStats(); } catch(e) { showToast('Failed to reject', 'error'); }
+    try { await apiCall(`/api/admin/tools/${id}/reject`, { method: 'DELETE' }); await logModeratorAction('Rejected tool', `Tool ${id}`); showToast('Tool rejected', 'warning'); loadAllTools(); loadStats(); } catch(e) { showToast('Failed to reject', 'error'); }
 }
-async function recommendTool(id) { await apiCall(`/api/tools/${id}/recommend`, { method: 'POST' }).catch(() => {}); await logModeratorAction('Recommended tool', `Tool ${id}`); showToast('Recommendation sent', 'success'); }
-function exportToolsCSV() { showToast('Tools exported', 'success'); }
+async function recommendTool(id) { 
+    await apiCall(`/api/tools/${id}/recommend`, { method: 'POST' }).catch(() => {}); 
+    await logModeratorAction('Recommended tool', `Tool ${id}`); 
+    showToast('Recommendation sent', 'success'); 
+}
+function exportToolsCSV() { showToast('Tools exported (placeholder)', 'success'); }
 
 // ---- IP BANS ----
 ipBans = JSON.parse(localStorage.getItem('nova_ipbans') || '[]');
@@ -1243,7 +1268,6 @@ async function autoAssignTicket(ticketId) {
 async function loadTickets() {
     try { 
         const res = await apiCall('/api/support/tickets'); 
-        // Handle both array and object responses safely
         allTickets = Array.isArray(res) ? res : (res.tickets || []);
     } catch(e) { 
         allTickets = []; 
@@ -1385,7 +1409,7 @@ async function sendModeratorReply() {
 async function closeTicket() {
     if (!currentTicketId || !confirm('Close this ticket?')) return;
     try {
-        await apiCall(`/api/support/tickets/${currentTicketId}/close`, { method: 'POST' });
+        await apiCall(`/api/support/tickets/${currentTicketId}/status`, { method: 'PATCH', body: JSON.stringify({ status: 'closed' }) });
         await logModeratorAction('Closed ticket', `#${currentTicketId}`);
         showToast('Ticket closed', 'success');
         closeReplyPanel(); await loadTickets(); await loadStats();
@@ -1436,597 +1460,476 @@ async function bulkCloseTickets() {
     if (!confirm(`Close ${selectedTicketIds.size} ticket(s)?`)) return;
     try {
         await apiCall('/api/support/tickets/bulk-close', { method: 'POST', body: JSON.stringify({ ticketIds: [...selectedTicketIds] }) });
-        await logModeratorAction('Bulk closed', `${selectedTicketIds.size} tickets`);
-        showToast('Bulk close done', 'success');
-        clearTicketSelection(); await loadTickets(); await loadStats();
+        showToast('Tickets closed', 'success');
+        clearTicketSelection(); loadTickets(); loadStats();
     } catch(e) { showToast('Bulk close failed', 'error'); }
 }
-
 async function bulkDeleteTickets() {
     if (!selectedTicketIds.size) return;
-    if (!confirm(`Delete ${selectedTicketIds.size} ticket(s)? This is permanent.`)) return;
+    if (!confirm(`Delete ${selectedTicketIds.size} ticket(s)?`)) return;
     try {
         await apiCall('/api/support/tickets/bulk-delete', { method: 'POST', body: JSON.stringify({ ticketIds: [...selectedTicketIds] }) });
-        await logModeratorAction('Bulk deleted', `${selectedTicketIds.size} tickets`);
-        showToast('Bulk delete done', 'success');
-        clearTicketSelection(); await loadTickets(); await loadStats();
+        showToast('Tickets deleted', 'success');
+        clearTicketSelection(); loadTickets(); loadStats();
     } catch(e) { showToast('Bulk delete failed', 'error'); }
 }
+function exportTicketsCSV() { showToast('Tickets exported (placeholder)', 'success'); }
 
-function exportTicketsCSV() { showToast('Tickets exported', 'success'); }
-
-// ================================================
-// ---- ANNOUNCEMENTS (ENHANCED: 3 categories) ----
-// ================================================
-const ANN_CATS = {
-    internship: { label: 'Internships', icon: 'fa-user-graduate', badge: 'badge-info',
-        subs: { short: 'Short Internship (1–2 months)', moderate: 'Moderate Internship (3–4 months)', long: 'Long Internship (5+ months)' } },
-    workshop: { label: 'Workshops & Events', icon: 'fa-chalkboard-teacher', badge: 'badge-purple',
-        subs: { workshop: 'Workshop', hackathon: 'Hackathon', symposium: 'Symposium', seminar: 'Seminar', conference: 'Conference', webinar: 'Webinar', other: 'Other Event' } },
-    job: { label: 'Job Opportunities', icon: 'fa-briefcase', badge: 'badge-success',
-        subs: { fulltime: 'Full-time', parttime: 'Part-time', contract: 'Contract / Freelance', campus: 'Campus Drive', other: 'Other' } }
-};
-let annCat = 'all', annSub = 'all';
-let annMeta = {};
-try { annMeta = JSON.parse(localStorage.getItem('sarveik_annmeta') || '{}'); } catch(e) { annMeta = {}; }
-
-function getAnnInfo(a) {
-    const m = annMeta[a.id] || {};
-    return {
-        category: a.category || m.category || 'general',
-        subcategory: a.subcategory || m.subcategory || '',
-        organization: a.organization || m.organization || '',
-        mode: a.mode || m.mode || '',
-        deadline: a.deadline || m.deadline || '',
-        link: a.link || m.link || ''
-    };
-}
-
-function openAnnouncementModal() { onAnnCatChange(); openModal('announcementModal'); }
-
-function onAnnCatChange() {
-    const cat = document.getElementById('annCategory').value;
-    const subs = ANN_CATS[cat].subs;
-    document.getElementById('annSubcategory').innerHTML = Object.entries(subs).map(([k, v]) => `<option value="${k}">${v}</option>`).join('');
-}
-
+// ---- ANNOUNCEMENTS ----
 async function loadAnnouncements() {
-    try { allAnnouncements = await apiCall('/api/announcements'); } catch(e) { allAnnouncements = []; }
-    filterAnnouncements();
+    try { 
+        const res = await apiCall('/api/announcements'); 
+        allAnnouncements = Array.isArray(res) ? res : [];
+    } catch(e) { allAnnouncements = []; }
+    renderAnnouncementTabs();
+    renderAnnouncementsList();
 }
 
-function setAnnCat(c) { annCat = c; annSub = 'all'; filterAnnouncements(); }
-function setAnnSub(s) { annSub = s; filterAnnouncements(); }
+function renderAnnouncementTabs() {
+    const tabsContainer = document.getElementById('annCatTabs');
+    const chipsContainer = document.getElementById('annSubChips');
+    if (!tabsContainer || !chipsContainer) return;
 
-function filterAnnouncements() {
-    const term = (document.getElementById('announcementSearch')?.value || '').toLowerCase();
-    let base = [...allAnnouncements];
-    if (term) base = base.filter(a => (a.title||'').toLowerCase().includes(term) || (a.content||'').toLowerCase().includes(term) || (getAnnInfo(a).organization||'').toLowerCase().includes(term));
+    const now = new Date();
+    // Filter out expired announcements for display logic
+    const validAnns = allAnnouncements.filter(a => !a.deadline || new Date(a.deadline) >= now);
 
-    // category tabs with counts
-    const counts = { all: base.length, internship: 0, workshop: 0, job: 0 };
-    base.forEach(a => { const c = getAnnInfo(a).category; if (counts[c] !== undefined) counts[c]++; });
-    const tabs = [['all', 'All', 'fa-layer-group'], ...Object.entries(ANN_CATS).map(([k, v]) => [k, v.label, v.icon])];
-    document.getElementById('annCatTabs').innerHTML = tabs.map(([k, label, icon]) =>
-        `<button class="cat-tab ${annCat===k?'active':''}" onclick="setAnnCat('${k}')"><i class="fas ${icon}"></i>${label}<span class="cnt">${counts[k]}</span></button>`).join('');
+    const counts = {
+        all: validAnns.length,
+        internship: validAnns.filter(a => a.category === 'internship').length,
+        workshop: validAnns.filter(a => a.category === 'workshop').length,
+        job: validAnns.filter(a => a.category === 'job').length
+    };
 
-    // sub chips
-    const chipsEl = document.getElementById('annSubChips');
-    if (annCat !== 'all' && ANN_CATS[annCat]) {
-        const subCounts = {};
-        base.filter(a => getAnnInfo(a).category === annCat).forEach(a => { const s = getAnnInfo(a).subcategory; subCounts[s] = (subCounts[s]||0) + 1; });
-        chipsEl.innerHTML = `<button class="chip ${annSub==='all'?'active':''}" onclick="setAnnSub('all')">All types</button>` +
-            Object.entries(ANN_CATS[annCat].subs).map(([k, v]) => `<button class="chip ${annSub===k?'active':''}" onclick="setAnnSub('${k}')">${v}${subCounts[k] ? ' (' + subCounts[k] + ')' : ''}</button>`).join('');
-    } else { chipsEl.innerHTML = ''; }
+    tabsContainer.innerHTML = `
+        <button class="cat-tab ${currentAnnCategory === 'all' ? 'active' : ''}" onclick="setAnnCategory('all')">
+            <i class="fas fa-layer-group"></i> All <span class="cnt">${counts.all}</span>
+        </button>
+        <button class="cat-tab ${currentAnnCategory === 'internship' ? 'active' : ''}" onclick="setAnnCategory('internship')">
+            <i class="fas fa-graduation-cap"></i> Internships <span class="cnt">${counts.internship}</span>
+        </button>
+        <button class="cat-tab ${currentAnnCategory === 'workshop' ? 'active' : ''}" onclick="setAnnCategory('workshop')">
+            <i class="fas fa-tools"></i> Workshops & Events <span class="cnt">${counts.workshop}</span>
+        </button>
+        <button class="cat-tab ${currentAnnCategory === 'job' ? 'active' : ''}" onclick="setAnnCategory('job')">
+            <i class="fas fa-briefcase"></i> Job Opportunities <span class="cnt">${counts.job}</span>
+        </button>
+    `;
 
-    let f = base;
-    if (annCat !== 'all') f = f.filter(a => getAnnInfo(a).category === annCat);
-    if (annCat !== 'all' && annSub !== 'all') f = f.filter(a => getAnnInfo(a).subcategory === annSub);
-    renderAnnouncements(f);
-}
+    if (currentAnnCategory === 'all') {
+        chipsContainer.innerHTML = '';
+        return;
+    }
 
-function renderAnnouncements(anns) {
-    const container = document.getElementById('announcementsList');
-    if (!anns.length) { container.innerHTML = '<div class="empty-state"><i class="fas fa-newspaper"></i>No announcements</div>'; return; }
-    const priorityColors = { urgent: 'badge-danger', important: 'badge-warning', normal: 'badge-info' };
-    container.innerHTML = anns.map(a => {
-        const info = getAnnInfo(a);
-        const cat = ANN_CATS[info.category];
-        const subLabel = cat ? (cat.subs[info.subcategory] || '') : '';
-        const link = safeUrl(info.link);
-        return `
-        <div class="ann-card cat-${info.category}">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.5rem;">
-                <div style="flex:1;min-width:0;">
-                    <div class="ann-tags">
-                        ${cat ? `<span class="badge ${cat.badge}"><i class="fas ${cat.icon}"></i>${cat.label}</span>` : ''}
-                        ${subLabel ? `<span class="badge badge-muted">${escapeHtml(subLabel)}</span>` : ''}
-                        ${a.priority ? `<span class="badge ${priorityColors[a.priority]||'badge-muted'}">${escapeHtml(a.priority)}</span>` : ''}
-                    </div>
-                    <div class="ann-title">${escapeHtml(a.title)}</div>
-                    <div class="ann-body">${escapeHtml(a.content)}</div>
-                    ${(info.organization || info.mode || info.deadline || link) ? `<div class="ann-meta">
-                        ${info.organization ? `<span><i class="fas fa-building"></i>${escapeHtml(info.organization)}</span>` : ''}
-                        ${info.mode ? `<span><i class="fas fa-map-marker-alt"></i>${escapeHtml(info.mode)}</span>` : ''}
-                        ${info.deadline ? `<span><i class="fas fa-hourglass-half"></i>${escapeHtml(info.deadline)}</span>` : ''}
-                        ${link ? `<span><i class="fas fa-link"></i><a href="${escapeHtml(link)}" target="_blank" rel="noopener noreferrer">Apply / More info</a></span>` : ''}
-                    </div>` : ''}
-                    <div class="ann-footer">
-                        <span><i class="fas fa-calendar-alt"></i> ${new Date(a.created_at).toLocaleString()}</span>
-                        <span><i class="fas fa-user"></i> ${escapeHtml(a.author||'Moderator')}</span>
-                    </div>
-                </div>
-                <button class="btn btn-danger btn-sm" onclick="deleteAnnouncement(${a.id})"><i class="fas fa-trash"></i></button>
-            </div>
-        </div>`;
+    const subs = SUB_CATEGORIES[currentAnnCategory] || [];
+    chipsContainer.innerHTML = subs.map(sub => {
+        const val = sub === 'All types' ? 'all' : sub;
+        return `<button class="chip ${currentAnnSubcategory === val ? 'active' : ''}" onclick="setAnnSubcategory('${val}')">${sub}</button>`;
     }).join('');
 }
 
+window.setAnnCategory = (cat) => {
+    currentAnnCategory = cat;
+    currentAnnSubcategory = 'all';
+    renderAnnouncementTabs();
+    renderAnnouncementsList();
+};
+
+window.setAnnSubcategory = (sub) => {
+    currentAnnSubcategory = sub;
+    renderAnnouncementTabs();
+    renderAnnouncementsList();
+};
+
+function filterAnnouncements() {
+    renderAnnouncementsList();
+}
+
+function renderAnnouncementsList() {
+    const container = document.getElementById('announcementsList');
+    if (!container) return;
+
+    const searchQ = (document.getElementById('announcementSearch')?.value || '').toLowerCase();
+    const now = new Date();
+
+    let filtered = allAnnouncements.filter(a => !a.deadline || new Date(a.deadline) >= now); // Auto-hide expired
+
+    if (currentAnnCategory !== 'all') {
+        filtered = filtered.filter(a => a.category === currentAnnCategory);
+    }
+
+    if (currentAnnSubcategory !== 'all') {
+        filtered = filtered.filter(a => a.subcategory === currentAnnSubcategory);
+    }
+
+    if (searchQ) {
+        filtered = filtered.filter(a => 
+            a.title.toLowerCase().includes(searchQ) || 
+            a.content.toLowerCase().includes(searchQ)
+        );
+    }
+
+    if (!filtered.length) {
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-inbox"></i>No announcements found</div>';
+        return;
+    }
+
+    container.innerHTML = filtered.map(a => {
+        const isUrgent = a.priority === 'urgent' ? 'badge-danger' : (a.priority === 'important' ? 'badge-warning' : 'badge-info');
+        const dl = a.deadline ? new Date(a.deadline).toLocaleDateString() : 'No deadline';
+        
+        return `
+        <div class="ann-card cat-${a.category || 'internship'}">
+            <div class="ann-tags">
+                <span class="badge ${isUrgent}">${(a.priority || 'normal').toUpperCase()}</span>
+                <span class="badge badge-muted">${(a.category || 'General').toUpperCase()}</span>
+                ${a.subcategory ? `<span class="badge badge-success">${a.subcategory}</span>` : ''}
+            </div>
+            <div class="ann-title">${escapeHtml(a.title)}</div>
+            <div class="ann-body">${escapeHtml(a.content)}</div>
+            
+            <div class="ann-meta">
+                ${a.org ? `<span><i class="fas fa-building"></i> ${escapeHtml(a.org)}</span>` : ''}
+                ${a.mode ? `<span><i class="fas fa-map-marker-alt"></i> ${escapeHtml(a.mode)}</span>` : ''}
+                <span><i class="fas fa-calendar-alt"></i> Deadline: ${dl}</span>
+                ${a.link ? `<a href="${safeUrl(a.link)}" target="_blank"><i class="fas fa-external-link-alt"></i> Apply / View Details</a>` : ''}
+            </div>
+            
+            <div class="ann-footer">
+                <span><i class="fas fa-clock"></i> Posted ${relativeTime(a.created_at)}</span>
+                <button class="btn btn-sm btn-danger" onclick="deleteAnnouncement(${a.id})" style="margin-left:auto;"><i class="fas fa-trash"></i> Delete</button>
+            </div>
+        </div>
+        `;
+    }).join('');
+}
+
+function onAnnCatChange() {
+    const cat = document.getElementById('annCategory').value;
+    const subSelect = document.getElementById('annSubcategory');
+    
+    const options = SUB_CATEGORIES[cat] || [];
+    
+    subSelect.innerHTML = options.map(opt => {
+        const val = opt === 'All types' ? 'General' : opt;
+        return `<option value="${val}">${opt}</option>`;
+    }).join('');
+}
+
+function openAnnouncementModal() {
+    document.getElementById('annTitle').value = '';
+    document.getElementById('annContent').value = '';
+    document.getElementById('annOrg').value = '';
+    document.getElementById('annDeadline').value = '';
+    document.getElementById('annLink').value = '';
+    document.getElementById('annCategory').value = 'internship';
+    onAnnCatChange(); // Populate subcategories
+    openModal('announcementModal');
+}
+
 async function createAnnouncement() {
-    const category = document.getElementById('annCategory').value;
-    const subcategory = document.getElementById('annSubcategory').value;
     const title = document.getElementById('annTitle').value.trim();
     const content = document.getElementById('annContent').value.trim();
-    const priority = document.getElementById('annPriority').value;
-    const organization = document.getElementById('annOrg').value.trim();
+    const category = document.getElementById('annCategory').value;
+    const subcategory = document.getElementById('annSubcategory').value;
+    const org = document.getElementById('annOrg').value.trim();
     const mode = document.getElementById('annMode').value;
     const deadline = document.getElementById('annDeadline').value;
     const link = document.getElementById('annLink').value.trim();
-    const notify = document.getElementById('annNotify').checked;
-    if (!title || !content) { showToast('Fill title and content', 'error'); return; }
-    if (link && !safeUrl(link)) { showToast('Enter a valid http(s) link', 'error'); return; }
-    const payload = { title, content, priority, category, subcategory, organization, mode, deadline, link, notify };
+    const priority = document.getElementById('annPriority').value;
+
+    if (!title || !content) { showToast('Title and content required', 'error'); return; }
+
     try {
-        const res = await apiCall('/api/announcements', { method: 'POST', body: JSON.stringify(payload) });
-        const newId = res && typeof res === 'object' ? (res.id || res.announcementId || res.insertId) : null;
-        if (newId) { annMeta[newId] = { category, subcategory, organization, mode, deadline, link }; localStorage.setItem('sarveik_annmeta', JSON.stringify(annMeta)); }
-        if (notify && socket) socket.emit('announcement_notification', { ...payload, id: newId, author: currentUser?.username });
-        const cat = ANN_CATS[category];
-        await logModeratorAction('Created announcement', title, `${cat.label} › ${cat.subs[subcategory]}${notify ? ' · notified users' : ''}`);
-        showToast(notify ? `${cat.label} announcement published & users notified` : 'Announcement published', 'success');
-        addNotification(`Published ${cat.subs[subcategory]}: ${title}`, 'info', cat.icon);
+        await apiCall('/api/announcements', {
+            method: 'POST',
+            body: JSON.stringify({ title, content, category, subcategory, org, mode, deadline, link, priority })
+        });
+        showToast('Announcement published!', 'success');
         closeModal('announcementModal');
-        ['annTitle','annContent','annOrg','annLink','annDeadline'].forEach(id => document.getElementById(id).value = '');
-        document.getElementById('annMode').value = '';
+        
         loadAnnouncements();
         loadStats();
-    } catch(e) { showToast('Failed to create', 'error'); }
+    } catch(e) {
+        showToast('Failed to publish', 'error');
+    }
 }
 
 async function deleteAnnouncement(id) {
-    if (!confirm('Delete this announcement?')) return;
+    if(!confirm('Delete this announcement permanently?')) return;
     try {
         await apiCall(`/api/announcements/${id}`, { method: 'DELETE' });
-        await logModeratorAction('Deleted announcement', `ID ${id}`);
-        delete annMeta[id]; localStorage.setItem('sarveik_annmeta', JSON.stringify(annMeta));
-        showToast('Deleted', 'success');
+        showToast('Announcement deleted', 'success');
         loadAnnouncements();
-    } catch(e) { showToast('Failed', 'error'); }
+        loadStats();
+    } catch(e) { showToast('Failed to delete', 'error'); }
 }
 
 // ---- ACTIVITY LOG ----
 async function loadActivityLog() {
-    try { activityLogsAll = await apiCall('/api/activity-log'); } catch(e) { activityLogsAll = []; }
-    populateActivityFilters();
-    applyActivityFilters();
+    try {
+        const res = await apiCall('/api/activity-log');
+        activityLogsAll = Array.isArray(res) ? res : [];
+        activityFiltered = [...activityLogsAll];
+        renderActivityLog();
+    } catch(e) {
+        document.querySelector('#activityLogTable tbody').innerHTML = '<tr><td colspan="5" class="empty-state">Failed to load</td></tr>';
+    }
 }
 
-function populateActivityFilters() {
-    const mods = [...new Set(activityLogsAll.map(l => l.moderator_name))].sort();
-    const actions = [...new Set(activityLogsAll.map(l => l.action))].sort();
-    document.getElementById('activityModeratorFilter').innerHTML = '<option value="all">All</option>' + mods.map(m => `<option value="${escapeHtml(m)}">${escapeHtml(m)}</option>`).join('');
-    document.getElementById('activityActionFilter').innerHTML = '<option value="all">All</option>' + actions.map(a => `<option value="${escapeHtml(a)}">${escapeHtml(a)}</option>`).join('');
-}
-
-function applyActivityFilters() {
-    let f = [...activityLogsAll];
-    const mod = document.getElementById('activityModeratorFilter')?.value || 'all';
-    if (mod !== 'all') f = f.filter(l => l.moderator_name === mod);
-    const act = document.getElementById('activityActionFilter')?.value || 'all';
-    if (act !== 'all') f = f.filter(l => l.action === act);
-    const from = document.getElementById('activityDateFrom')?.value;
-    if (from) f = f.filter(l => new Date(l.created_at) >= new Date(from));
-    const to = document.getElementById('activityDateTo')?.value;
-    if (to) f = f.filter(l => new Date(l.created_at) <= new Date(to + 'T23:59:59'));
-    const kw = (document.getElementById('activitySearch')?.value || '').toLowerCase();
-    if (kw) f = f.filter(l => (l.details||'').toLowerCase().includes(kw) || (l.target||'').toLowerCase().includes(kw));
-    activityFiltered = f.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-    activityCurrentPage = 1;
-    renderActivityLogTable();
-}
-
-function resetActivityFilters() {
-    ['activityModeratorFilter','activityActionFilter'].forEach(id => { const el = document.getElementById(id); if(el) el.value='all'; });
-    ['activityDateFrom','activityDateTo','activitySearch'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
-    applyActivityFilters();
-}
-
-function renderActivityLogTable() {
+function renderActivityLog() {
     const tbody = document.querySelector('#activityLogTable tbody');
     const start = (activityCurrentPage - 1) * activityPerPage;
     const page = activityFiltered.slice(start, start + activityPerPage);
-    if (!page.length) { tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No logs found</td></tr>'; document.getElementById('activityPagination').innerHTML = ''; return; }
+    
+    if (!page.length) { 
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">No logs found</td></tr>'; 
+        document.getElementById('activityPagination').innerHTML = '';
+        return; 
+    }
+    
     tbody.innerHTML = page.map(l => `
         <tr>
-            <td><span style="font-weight:600;color:var(--text);">${escapeHtml(l.moderator_name)}</span></td>
+            <td><span style="font-weight:600;color:var(--text);">${escapeHtml(l.moderator_name||'System')}</span></td>
             <td><span class="badge badge-info">${escapeHtml(l.action)}</span></td>
-            <td>${escapeHtml(l.target)}</td>
-            <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(l.details)}</td>
-            <td style="white-space:nowrap;color:var(--text3);">${relativeTime(l.created_at)}</td>
+            <td>${escapeHtml(l.target||'')}</td>
+            <td>${escapeHtml(l.details||'')}</td>
+            <td style="white-space:nowrap;">${relativeTime(l.created_at)}</td>
         </tr>
     `).join('');
-    renderPagination('activityPagination', activityCurrentPage, Math.ceil(activityFiltered.length / activityPerPage), 'setActivityPage');
-}
-window.setActivityPage = (p) => { activityCurrentPage = p; renderActivityLogTable(); };
 
-function exportFilteredActivityLog() {
-    if (!activityFiltered.length) { showToast('No data to export', 'warning'); return; }
-    const rows = [['Moderator','Action','Target','Details','Time'], ...activityFiltered.map(l => [l.moderator_name, l.action, l.target, l.details, new Date(l.created_at).toLocaleString()])];
-    const blob = new Blob([rows.map(r => r.join(',')).join('\n')], { type: 'text/csv' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `activity_${Date.now()}.csv`; a.click();
-    showToast('Exported', 'success');
+    const totalPages = Math.ceil(activityFiltered.length / activityPerPage);
+    let pHtml = '';
+    if (totalPages > 1) {
+        for (let i = 1; i <= totalPages; i++) {
+            pHtml += `<button class="${i===activityCurrentPage?'active':''}" onclick="setActivityPage(${i})">${i}</button>`;
+        }
+    }
+    document.getElementById('activityPagination').innerHTML = pHtml;
 }
+
+window.setActivityPage = (p) => { activityCurrentPage = p; renderActivityLog(); };
+
+function applyActivityFilters() {
+    const mod = document.getElementById('activityModeratorFilter').value;
+    const act = document.getElementById('activityActionFilter').value;
+    const from = document.getElementById('activityDateFrom').value;
+    const to = document.getElementById('activityDateTo').value;
+    const keyword = document.getElementById('activitySearch').value.toLowerCase();
+
+    activityFiltered = activityLogsAll.filter(l => {
+        if (mod !== 'all' && l.moderator_name !== mod) return false;
+        if (act !== 'all' && l.action !== act) return false;
+        if (from && new Date(l.created_at) < new Date(from)) return false;
+        if (to && new Date(l.created_at) > new Date(to)) return false;
+        if (keyword && !(l.target+l.details).toLowerCase().includes(keyword)) return false;
+        return true;
+    });
+    activityCurrentPage = 1;
+    renderActivityLog();
+}
+
+function resetActivityFilters() {
+    document.getElementById('activityModeratorFilter').value = 'all';
+    document.getElementById('activityActionFilter').value = 'all';
+    document.getElementById('activityDateFrom').value = '';
+    document.getElementById('activityDateTo').value = '';
+    document.getElementById('activitySearch').value = '';
+    activityFiltered = [...activityLogsAll];
+    activityCurrentPage = 1;
+    renderActivityLog();
+}
+function exportFilteredActivityLog() { showToast('CSV export placeholder', 'success'); }
 
 // ---- MOD STATS ----
 async function loadModeratorStats() {
     try {
-        const [stats, tickets] = await Promise.all([
-            apiCall('/api/moderator-stats').catch(() => ({ replies: 0, closures: 0, notes: 0 })),
-            apiCall('/api/support/tickets').catch(() => [])
-        ]);
+        const stats = await apiCall('/api/moderator-stats').catch(() => ({}));
         document.getElementById('modStatsGrid').innerHTML = `
-            <div class="stat-card"><div class="stat-label">My Replies</div><div class="stat-value">${stats.replies||0}</div><i class="fas fa-reply stat-icon-bg"></i></div>
-            <div class="stat-card"><div class="stat-label">My Closures</div><div class="stat-value">${stats.closures||0}</div><i class="fas fa-lock stat-icon-bg"></i></div>
-            <div class="stat-card"><div class="stat-label">Notes Added</div><div class="stat-value">${stats.notes||0}</div><i class="fas fa-sticky-note stat-icon-bg"></i></div>
-            <div class="stat-card"><div class="stat-label">Total Resolved</div><div class="stat-value">${tickets.filter(t=>t.status==='closed').length}</div><i class="fas fa-check-circle stat-icon-bg"></i></div>
+            <div class="stat-card"><div class="stat-label">Tickets Replied</div><div class="stat-value">${stats.replies||0}</div></div>
+            <div class="stat-card"><div class="stat-label">Tickets Closed</div><div class="stat-value">${stats.closures||0}</div></div>
+            <div class="stat-card"><div class="stat-label">Notes Added</div><div class="stat-value">${stats.notes||0}</div></div>
         `;
-
-        const modClosures = {};
-        tickets.filter(t => t.status === 'closed' && t.assigned_to).forEach(t => { modClosures[t.assigned_to] = (modClosures[t.assigned_to]||0) + 1; });
-        const sorted = Object.entries(modClosures).sort((a,b) => b[1]-a[1]).slice(0, 7);
-        const maxVal = sorted[0]?.[1] || 1;
-        const rankClasses = ['rank-1','rank-2','rank-3'];
-        document.getElementById('modLeaderboardList').innerHTML = sorted.length ? sorted.map(([id,count], i) => {
-            const mod = allUsers.find(u => u.id == id);
-            const pct = Math.round((count / maxVal) * 100);
-            return `<div class="leaderboard-item"><div class="rank-badge ${rankClasses[i]||'rank-other'}">${i+1}</div><div style="flex:1;"><div class="lb-name">${mod ? escapeHtml(mod.username) : 'Mod#'+id}</div><div class="lb-bar"><div class="lb-bar-fill" style="width:${pct}%;"></div></div></div><span class="lb-score">${count}</span></div>`;
-        }).join('') : '<div class="empty-state" style="padding:1rem;">No data yet</div>';
-
-        const logs = await apiCall('/api/activity-log').catch(() => []);
-        const lastActive = {};
-        logs.forEach(l => { const t = new Date(l.created_at).getTime(); if (!lastActive[l.moderator_name] || t > lastActive[l.moderator_name]) lastActive[l.moderator_name] = t; });
-        const now = Date.now();
-        document.getElementById('moderatorStatusList').innerHTML = Object.entries(lastActive).length ? Object.entries(lastActive).map(([name, t]) => {
-            const online = (now - t) <= 15*60*1000;
-            const busy = !online && (now - t) <= 60*60*1000;
-            const dotClass = online ? 'status-online' : busy ? 'status-busy' : '';
-            return `<div class="leaderboard-item"><span class="status-dot ${dotClass}"></span><span class="lb-name">${escapeHtml(name)}</span><small style="color:var(--text3);font-size:0.7rem;">${online?'Active now':relativeTime(t)}</small></div>`;
-        }).join('') : '<div class="empty-state" style="padding:1rem;">No activity recorded</div>';
-
-        if (modStatsChart) modStatsChart.destroy();
-        const ctx = document.getElementById('modStatsChart')?.getContext('2d');
-        if (ctx) modStatsChart = new Chart(ctx, {
-            type: 'bar',
-            data: { labels: ['Replies','Closures','Notes'], datasets: [{ label: 'My Stats', data: [stats.replies||0, stats.closures||0, stats.notes||0], backgroundColor: ['rgba(43,159,216,0.75)','rgba(60,192,138,0.75)','rgba(240,178,74,0.75)'], borderRadius: 6, borderSkipped: false }] },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { ticks: { color: 'rgba(61,98,119,0.9)' }, grid: { display: false } }, y: { ticks: { color: 'rgba(61,98,119,0.9)' }, grid: { color: 'rgba(30,90,120,0.08)' } } } }
-        });
-    } catch(e) { console.error(e); }
+    } catch(e) { showToast('Failed to load stats', 'error'); }
 }
 
-// ================================================
-// ---- STAFF CHAT (ENHANCED RECEIVING) ----
-// ================================================
-let staffUnread = 0, staffPendingNew = 0;
-let staffSeen = new Set();
-let chatSoundOn = localStorage.getItem('sarveik_chat_sound') !== 'off';
-let typingUsers = {}, lastTypingEmit = 0, staffPollTimer = null;
-
-function staffTabActive() { return document.getElementById('staffconference-tab').classList.contains('active'); }
-function isStaffAtBottom() {
-    const c = document.getElementById('staffMessagesArea');
-    return c.scrollHeight - c.scrollTop - c.clientHeight < 60;
-}
-
-function updateStaffUnread() {
-    const el = document.getElementById('navStaffUnread');
-    el.textContent = staffUnread > 99 ? '99+' : staffUnread;
-    el.style.display = staffUnread > 0 ? 'inline-block' : 'none';
-}
-
-function setChatStatus(online, text) {
-    document.getElementById('chatStatusDot').classList.toggle('on', !!online);
-    document.getElementById('chatOnlineCount').textContent = text;
-}
-
-function updateSoundIcon() {
-    document.querySelector('#soundToggleBtn i').className = chatSoundOn ? 'fas fa-volume-up' : 'fas fa-volume-mute';
-}
-function toggleChatSound() {
-    chatSoundOn = !chatSoundOn;
-    localStorage.setItem('sarveik_chat_sound', chatSoundOn ? 'on' : 'off');
-    updateSoundIcon();
-    showToast(chatSoundOn ? 'Message sound on' : 'Message sound muted', 'info');
-}
-function playPing() {
-    if (!chatSoundOn) return;
-    try {
-        const c = new (window.AudioContext || window.webkitAudioContext)();
-        const o = c.createOscillator(), g = c.createGain();
-        o.type = 'sine'; o.frequency.value = 880;
-        g.gain.setValueAtTime(0.001, c.currentTime);
-        g.gain.exponentialRampToValueAtTime(0.08, c.currentTime + 0.02);
-        g.gain.exponentialRampToValueAtTime(0.001, c.currentTime + 0.25);
-        o.connect(g); g.connect(c.destination);
-        o.start(); o.stop(c.currentTime + 0.26);
-    } catch(e) {}
-}
-function desktopNotify(title, body) {
-    try {
-        if ('Notification' in window && Notification.permission === 'granted' && document.hidden) new Notification(title, { body });
-    } catch(e) {}
-}
-
-// Single entry point for every incoming staff message (socket or polling)
-function onIncomingStaffMessage(msg) {
-    if (!msg || (msg.id && staffSeen.has(String(msg.id)))) return;
-    if (msg.id) staffSeen.add(String(msg.id));
-    if (msg.sender_id === currentUser?.id) return; // own messages are already shown locally
-    staffMessages.push(msg);
-    delete typingUsers[msg.sender_name];
-    renderTyping();
-    const name = msg.sender_name || `Moderator ${msg.sender_id}`;
-    if (staffTabActive()) {
-        const atBottom = isStaffAtBottom();
-        renderStaffMessages(atBottom, true);
-        if (!atBottom) { staffPendingNew++; showJumpPill(); }
-    } else {
-        staffUnread++;
-        updateStaffUnread();
-        addNotification(`${name}: ${String(msg.content).slice(0, 60)}`, 'info', 'fa-comments');
-    }
-    playPing();
-    desktopNotify(`Staff Lounge · ${name}`, String(msg.content).slice(0, 100));
-}
-
-function showJumpPill() {
-    const p = document.getElementById('jumpPill');
-    document.getElementById('jumpPillText').textContent = staffPendingNew > 1 ? `${staffPendingNew} new messages` : 'New message';
-    p.classList.add('show');
-}
-function hideJumpPill() { staffPendingNew = 0; document.getElementById('jumpPill').classList.remove('show'); }
-function jumpToLatest() { const c = document.getElementById('staffMessagesArea'); c.scrollTo({ top: c.scrollHeight, behavior: 'smooth' }); hideJumpPill(); }
-function onStaffScroll() { if (isStaffAtBottom()) hideJumpPill(); }
-
-function emitTyping() {
-    if (!socket || !staffGroupId) return;
-    const now = Date.now();
-    if (now - lastTypingEmit < 1500) return;
-    lastTypingEmit = now;
-    socket.emit('typing', { groupId: staffGroupId, name: currentUser?.username });
-}
-function renderTyping() {
-    const names = Object.keys(typingUsers);
-    document.getElementById('typingLine').textContent = names.length ? `${names.slice(0, 2).join(', ')} ${names.length > 1 ? 'are' : 'is'} typing…` : '';
-}
-
-// Connects to the lounge in the background so messages are received even from other tabs
-async function joinStaffLounge() {
+// ---- STAFF CHAT ----
+async function loadStaffConference() {
     try {
         const loungeInfo = await apiCall('/api/staff-lounge');
-        if (!loungeInfo || !loungeInfo.groupId) throw new Error('Staff Lounge not found');
+        if (!loungeInfo?.groupId) throw new Error('No staff lounge');
         staffGroupId = loungeInfo.groupId;
-        if (socket && socket.connected) socket.emit('join_group', staffGroupId);
+        
+        if (socket) socket.emit('join_group', staffGroupId);
+        
         const messages = await apiCall(`/api/groups/${staffGroupId}/messages?limit=100`);
-        staffMessages = messages.reverse();
-        staffMessages.forEach(m => m.id && staffSeen.add(String(m.id)));
-        startStaffPolling();
-        return true;
-    } catch (err) { console.warn('Staff lounge unavailable:', err.message); return false; }
-}
-
-// Fallback: fetch new messages if the socket is down
-function startStaffPolling() {
-    clearInterval(staffPollTimer);
-    staffPollTimer = setInterval(async () => {
-        if (!staffGroupId || (socket && socket.connected)) return;
-        try {
-            const msgs = (await apiCall(`/api/groups/${staffGroupId}/messages?limit=30`)).reverse();
-            msgs.forEach(m => { if (m.id && !staffSeen.has(String(m.id))) onIncomingStaffMessage(m); });
-        } catch(e) {}
-    }, 15000);
-}
-
-async function loadStaffConference() {
-    staffUnread = 0; updateStaffUnread(); updateSoundIcon();
-    try { if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission(); } catch(e) {}
-    try {
-        if (!staffGroupId) { const ok = await joinStaffLounge(); if (!ok) throw new Error('Staff Lounge not found'); }
-        else if (socket && socket.connected) socket.emit('join_group', staffGroupId);
-        const messages = await apiCall(`/api/groups/${staffGroupId}/messages?limit=100`);
-        const fresh = messages.reverse();
-        // keep any not-yet-confirmed local messages
-        const temps = staffMessages.filter(m => String(m.id).startsWith('temp_'));
-        staffMessages = fresh.concat(temps.filter(t => !fresh.some(f => f.content === t.content && f.sender_id === t.sender_id)));
-        fresh.forEach(m => m.id && staffSeen.add(String(m.id)));
-        renderStaffMessages(true);
-        hideJumpPill();
+        staffMessages = Array.isArray(messages) ? messages.reverse() : [];
+        renderStaffMessages();
+        
         const members = await apiCall(`/api/groups/${staffGroupId}/members`);
         renderStaffMembers(members);
-        setChatStatus(socket && socket.connected, `${members.length} members · ${socket && socket.connected ? 'live' : 'reconnecting…'}`);
-    } catch (err) {
-        console.error('Staff lounge error:', err);
-        document.getElementById('staffMessagesArea').innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i>⚠️ Could not load Staff Lounge.</div>';
-        setChatStatus(false, 'Offline');
+    } catch(e) {
+        const c = document.getElementById('staffMessagesArea');
+        if (c) c.innerHTML = '<div style="text-align:center;padding:2rem;opacity:0.5;">⚠️ Staff Lounge unavailable.</div>';
     }
 }
 
-function renderStaffMessages(forceBottom = false, markFresh = false) {
-    const container = document.getElementById('staffMessagesArea');
-    if (!staffMessages.length) { container.innerHTML = '<div class="empty-state"><i class="fas fa-comments"></i>No messages yet.</div>'; return; }
-    const wasAtBottom = isStaffAtBottom();
-    const prevTop = container.scrollTop;
-    const currentUserId = currentUser?.id;
-    let lastDay = '', html = '';
-    staffMessages.forEach((msg, idx) => {
-        const day = new Date(msg.created_at).toDateString();
-        if (day !== lastDay) {
-            lastDay = day;
-            const label = day === new Date().toDateString() ? 'Today' : new Date(msg.created_at).toLocaleDateString();
-            html += `<div class="day-sep">${label}</div>`;
-        }
-        const isOwn = (msg.sender_id === currentUserId);
-        const senderName = msg.sender_name || `Moderator ${msg.sender_id}`;
-        const isLast = idx === staffMessages.length - 1;
-        html += `
-            <div class="chat-msg ${isOwn ? 'own' : 'other'} ${markFresh && isLast ? 'fresh' : ''}">
-                ${isOwn ? '' : `<div class="chat-sender">${escapeHtml(senderName)}</div>`}
+function renderStaffMessages() {
+    const c = document.getElementById('staffMessagesArea');
+    if (!c) return;
+    if (!staffMessages.length) { c.innerHTML = '<div style="text-align:center;padding:2rem;opacity:0.5;">No messages yet.</div>'; return; }
+    
+    const me = currentUser?.id;
+    c.innerHTML = staffMessages.map(msg => {
+        const own = msg.sender_id === me;
+        const name = msg.sender_name || 'Unknown';
+        return `
+            <div class="chat-msg ${own ? 'own' : 'other'}">
+                ${!own ? `<div class="chat-sender">${escapeHtml(name)}</div>` : ''}
                 <div class="chat-bubble">${escapeHtml(msg.content)}</div>
-                <div class="chat-msg-meta">${isOwn ? 'You' : escapeHtml(senderName)} · ${relativeTime(msg.created_at)}</div>
-            </div>`;
-    });
-    container.innerHTML = html;
-    if (forceBottom || wasAtBottom) container.scrollTop = container.scrollHeight;
-    else container.scrollTop = prevTop;
+                <div class="chat-msg-meta">${new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</div>
+            </div>
+        `;
+    }).join('');
+    c.scrollTop = c.scrollHeight;
 }
 
 function renderStaffMembers(members) {
-    const container = document.getElementById('staffMembersList');
-    if (!members.length) { container.innerHTML = '<div style="padding:1rem;color:var(--text3);font-size:0.82rem;">No members found</div>'; return; }
-    container.innerHTML = members.map(m => `
-        <div class="member-item">
-            <div class="user-av" style="width:26px;height:26px;font-size:0.65rem;">${(m.username||'?')[0].toUpperCase()}</div>
-            <span style="font-size:0.83rem;">${escapeHtml(m.username)}</span>
-            ${m.id === currentUser?.id ? '<span class="badge badge-info" style="margin-left:auto;font-size:0.62rem;">you</span>' : ''}
-        </div>
-    `).join('');
+    const c = document.getElementById('staffMembersList');
+    if (!c) return;
+    c.innerHTML = members.length
+        ? members.map(m => `<div class="member-item"><i class="fas fa-user-circle"></i><span>${escapeHtml(m.username)}</span>${m.id === currentUser?.id ? '<span class="badge badge-success" style="margin-left:auto;font-size:0.6rem;">you</span>' : ''}</div>`).join('')
+        : '<div>No members</div>';
 }
 
-async function sendStaffMessage() {
+function sendStaffMessage() {
     const input = document.getElementById('staffMessageInput');
-    const msg = input.value.trim();
+    const msg = input?.value.trim();
     if (!msg || !staffGroupId) return;
-    input.value = '';
-    if (socket && socket.connected) {
+    if (socket) {
         socket.emit('group_message', { groupId: staffGroupId, message: msg });
-        staffMessages.push({ id: 'temp_'+Date.now(), sender_id: currentUser.id, sender_name: currentUser.username, content: msg, created_at: new Date().toISOString() });
-        renderStaffMessages(true);
+        // Optimistic UI update
+        staffMessages.push({ id: 'tmp_' + Date.now(), sender_id: currentUser?.id, sender_name: currentUser?.username, content: msg, created_at: new Date().toISOString() });
+        renderStaffMessages();
     } else {
-        try {
-            await apiCall(`/api/groups/${staffGroupId}/messages`, { method: 'POST', body: JSON.stringify({ content: msg }) });
-            const messages = await apiCall(`/api/groups/${staffGroupId}/messages?limit=100`);
-            staffMessages = messages.reverse();
-            staffMessages.forEach(m => m.id && staffSeen.add(String(m.id)));
-            renderStaffMessages(true);
-        } catch (err) { showToast('Failed to send message', 'error'); }
+        showToast('Socket disconnected', 'error');
+    }
+    if (input) input.value = '';
+}
+
+function emitTyping() {
+    if(!socket) return;
+    socket.emit('typing', { to: 'staff_group', isTyping: true });
+}
+
+function onStaffScroll() {
+    const c = document.getElementById('staffMessagesArea');
+    const jump = document.getElementById('jumpPill');
+    if (c.scrollHeight - c.scrollTop - c.clientHeight > 100) {
+        if (jump) jump.classList.add('show');
+    } else {
+        if (jump) jump.classList.remove('show');
     }
 }
 
-// ---- BULK EMAIL ----
-async function sendBulkEmail() {
-    const subj = document.getElementById('emailSubject').value.trim();
-    const body = document.getElementById('emailBody').value.trim();
-    const target = document.getElementById('emailTargetGroup').value;
-    if (!subj || !body) { showToast('Subject and body required', 'error'); return; }
-    await logModeratorAction('Bulk email', `${target} users`, `Subject: ${subj}`);
-    showToast(`Email sent to ${target} users (simulated)`, 'success');
-    closeModal('bulkEmailModal');
-    document.getElementById('emailSubject').value = '';
-    document.getElementById('emailBody').value = '';
+function jumpToLatest() {
+    const c = document.getElementById('staffMessagesArea');
+    if(c) c.scrollTop = c.scrollHeight;
+    const jump = document.getElementById('jumpPill');
+    if(jump) jump.classList.remove('show');
 }
 
-// ---- EXPORT REPORT ----
-function exportReport() {
-    const data = {
-        generated_at: new Date().toISOString(),
-        generated_by: currentUser?.username,
-        summary: {
-            total_users: allUsers.length,
-            active_tools: allTools.filter(t=>t.approved).length,
-            pending_tools: allTools.filter(t=>!t.approved).length,
-            open_tickets: allTickets.filter(t=>t.status==='open').length,
-            closed_tickets: allTickets.filter(t=>t.status==='closed').length,
-            total_announcements: allAnnouncements.length,
-            ip_bans: ipBans.length,
-            user_notes: userNotes.length,
-        }
-    };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `sarveik_report_${Date.now()}.json`; a.click();
-    showToast('Report exported', 'success');
+function toggleChatSound() {
+    chatSoundEnabled = !chatSoundEnabled;
+    const btn = document.getElementById('soundToggleBtn');
+    if(btn) btn.innerHTML = chatSoundEnabled ? '<i class="fas fa-volume-up"></i>' : '<i class="fas fa-volume-mute"></i>';
 }
 
-// ---- REFRESH ALL ----
-async function refreshAllData() {
-    showToast('Refreshing all data…', 'info');
-    await Promise.all([ loadStats(), loadAllUsers(), loadAllTools(), loadTickets(), loadAnnouncements(), loadActivityLog(), loadModeratorStats() ]);
-    if (staffTabActive()) loadStaffConference();
-    showToast('All data refreshed', 'success');
-}
-
-// ---- SOCKET ----
+// ---- SOCKET INIT ----
 function initSocket() {
-    try {
-        socket = io();
-        socket.on('connect', () => {
-            if (staffGroupId) socket.emit('join_group', staffGroupId);
-            if (staffTabActive()) setChatStatus(true, 'Live');
-        });
-        socket.on('disconnect', () => { if (staffTabActive()) setChatStatus(false, 'Reconnecting…'); });
-        socket.on('new_support_ticket', d => {
-            addNotification(`New ticket #${d.ticketId} from ${d.fromUser}: ${d.subject}`, 'info', 'fa-ticket-alt');
-            loadTickets(); loadStats();
-        });
-        socket.on('support_reminder', d => { addNotification(`⏰ Ticket #${d.ticketId} waiting ${d.minutesSince}min`, 'warning', 'fa-clock'); });
-        socket.on('ticket_reply', d => {
-            if (currentTicketId === d.ticketId) openTicketConversation(currentTicketId);
-            else addNotification(`New reply on ticket #${d.ticketId}`, 'info', 'fa-reply');
-            loadTickets();
-        });
-        socket.on('new_announcement', d => {
-            addNotification(`New announcement: ${d?.title || ''}`, 'info', 'fa-bullhorn');
-            loadAnnouncements();
-        });
-        socket.on('group_message', (data) => {
-            if (!staffGroupId || data.groupId !== staffGroupId) return;
-            onIncomingStaffMessage({
-                id: data.id || null,
+    if (typeof io === 'undefined') return;
+    socket = io();
+    
+    socket.on('connect', () => {
+        const dot = document.getElementById('chatStatusDot');
+        const txt = document.getElementById('chatOnlineCount');
+        if(dot) dot.classList.add('on');
+        if(txt) txt.textContent = 'Connected';
+    });
+
+    socket.on('disconnect', () => {
+        const dot = document.getElementById('chatStatusDot');
+        const txt = document.getElementById('chatOnlineCount');
+        if(dot) dot.classList.remove('on');
+        if(txt) txt.textContent = 'Disconnected';
+    });
+
+    socket.on('group_message', (data) => {
+        if (staffGroupId && data.groupId === staffGroupId) {
+            staffMessages.push({
+                id: data.id || Date.now(),
                 sender_id: data.from,
-                sender_name: data.fromName || `Moderator ${data.from}`,
+                sender_name: data.fromName,
                 content: data.message,
                 created_at: data.timestamp || new Date().toISOString()
             });
-        });
-        socket.on('typing', (d) => {
-            if (!d || d.groupId !== staffGroupId || d.name === currentUser?.username) return;
-            typingUsers[d.name] = true; renderTyping();
-            setTimeout(() => { delete typingUsers[d.name]; renderTyping(); }, 3000);
-        });
-    } catch(e) { console.warn('Socket not available:', e.message); }
+            
+            const c = document.getElementById('staffMessagesArea');
+            const wasAtBottom = c.scrollHeight - c.scrollTop - c.clientHeight < 50;
+            
+            renderStaffMessages();
+            
+            if (wasAtBottom) {
+                jumpToLatest();
+            } else {
+                const jump = document.getElementById('jumpPill');
+                if(jump) {
+                    jump.classList.add('show');
+                    document.getElementById('jumpPillText').textContent = 'New message from ' + (data.fromName || 'Staff');
+                }
+            }
+
+            if (chatSoundEnabled && data.from !== currentUser?.id) {
+                // Simple beep using AudioContext
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.frequency.value = 800;
+                    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.1);
+                } catch(e) {}
+            }
+        }
+    });
+    
+    socket.on('typing', (data) => {
+        const line = document.getElementById('typingLine');
+        if (line) {
+            if (data.isTyping) {
+                line.textContent = 'Someone is typing...';
+                clearTimeout(line._timeout);
+                line._timeout = setTimeout(() => { line.textContent = ''; }, 3000);
+            } else {
+                line.textContent = '';
+            }
+        }
+    });
 }
 
-// ---- INIT ----
-async function init() {
+// ---- INITIALIZATION ----
+document.addEventListener('DOMContentLoaded', async () => {
+    const ok = await checkSession();
+    if (!ok) return;
+    
     initTheme();
     initSocket();
-    if (await checkSession()) {
-        updateSoundIcon();
-        onAnnCatChange();
-        loadStats();
-        joinStaffLounge();
-        setTimeout(() => {
-            loadAllUsers();
-            loadAllTools();
-            loadTickets();
-            loadAnnouncements();
-            loadActivityLog();
-            loadModeratorStats();
-            renderNotes();
-            renderIPBans();
-        }, 800);
-    }
-}
-
-init();
+    loadStats();
+});
 </script>
 </body>
 </html>

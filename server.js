@@ -216,11 +216,15 @@ function validateIntParam(value, paramName) {
 }
 
 // Clean expired OTPs every 10 minutes
+// Clean expired OTPs and Announcements every 10 minutes
 setInterval(async () => {
     try {
         await pool.query('DELETE FROM otp_store WHERE expires_at < NOW()');
         await pool.query('DELETE FROM password_resets WHERE expires_at < NOW()');
-    } catch (err) { console.error('OTP cleanup error:', err); }
+        
+        // 🚨 NEW: Automatically delete expired announcements
+        await pool.query('DELETE FROM announcements WHERE deadline IS NOT NULL AND deadline < CURRENT_DATE');
+    } catch (err) { console.error('Cleanup error:', err); }
 }, 10 * 60 * 1000);
 setInterval(() => pool.query("DELETE FROM message_files WHERE created_at < NOW() - INTERVAL '24 hours'").catch(console.error), 60 * 60 * 1000);
 // ==================== RATE LIMITING ====================
@@ -5445,24 +5449,78 @@ app.post('/api/tools/:id/recommend', isAdminOrModerator, async (req, res) => {
     }
 });
 
+// GET: Fetch announcements (Supports direct links like /api/announcements?category=internship)
 app.get('/api/announcements', async (req, res) => {
     try {
-        const result = await pool.query('SELECT * FROM announcements ORDER BY created_at DESC');
+        const { category, subcategory } = req.query;
+        let query = 'SELECT * FROM announcements';
+        const params = [];
+        const conditions = [];
+
+        if (category && ['internship', 'workshop', 'job'].includes(category)) {
+            conditions.push(`category = $${params.length + 1}`);
+            params.push(category);
+        }
+
+        if (subcategory && subcategory !== 'all') {
+            conditions.push(`subcategory = $${params.length + 1}`);
+            params.push(subcategory);
+        }
+
+        if (conditions.length > 0) {
+            query += ' WHERE ' + conditions.join(' AND ');
+        }
+
+        query += ' ORDER BY created_at DESC';
+        const result = await pool.query(query, params);
         res.json(result.rows);
     } catch (err) {
+        console.error('Fetch announcements error:', err);
         res.status(500).json({ error: err.message });
     }
 });
 
+// POST: Create announcement (Updated to accept all moderator dashboard fields)
 app.post('/api/announcements', isAdminOrModerator, async (req, res) => {
-    const { title, content } = req.body;
+    const { 
+        title, 
+        content, 
+        category, 
+        subcategory, 
+        org, 
+        mode, 
+        deadline, 
+        link, 
+        priority 
+    } = req.body;
+
+    if (!title || !content) {
+        return res.status(400).json({ error: 'Title and content are required' });
+    }
+
     try {
-        await pool.query(
-            'INSERT INTO announcements (title, content, created_by, created_at) VALUES ($1, $2, $3, NOW())',
-            [title, content, req.session.userId]
+        const result = await pool.query(
+            `INSERT INTO announcements 
+            (title, content, category, subcategory, org, mode, deadline, link, priority, created_by, created_at) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW()) RETURNING *`,
+            [
+                title, 
+                content, 
+                category || 'internship', 
+                subcategory || null, 
+                org || null, 
+                mode || null, 
+                deadline || null, 
+                link || null, 
+                priority || 'normal', 
+                req.session.userId
+            ]
         );
-        res.json({ success: true });
+        
+        console.log(`✅ Announcement created: ${title} [${category}]`);
+        res.json({ success: true, announcement: result.rows[0] });
     } catch (err) {
+        console.error('Create announcement error:', err);
         res.status(500).json({ error: err.message });
     }
 });
