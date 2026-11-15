@@ -1562,7 +1562,7 @@
             btn.disabled=true; btn.innerHTML='Logging in... <span class="loading-spinner"></span>';
             try{
                 await apiCall('/login',{method:'POST',body:JSON.stringify({username:id,password:pwd,remember:true,rememberDays:AUTH_DAYS})});
-                const profile=await apiCall('/profile');
+                const profile=await apiCall('/api/profile');
 
                 if(remember){
                     localStorage.setItem('nova_remember', JSON.stringify({ username:id, role: normalizeRole(profile.role) }));
@@ -1585,7 +1585,7 @@
         let _redirectingLoggedIn = false;
         async function checkSession(){
             try{
-                const profile = await apiCall('/profile');
+                const profile = await apiCall('/api/profile');
                 if (profile && profile.id) {
                     saveAuth(profile);
                     updateHeaderUI();
