@@ -909,55 +909,7 @@ async function _awardStreakReward(userId, currentStreak, longestStreak, reward, 
 }
 
 // ==================== GET /api/user/streak ====================
-app.get('/api/user/streak', isAuthenticated, async (req, res) => {
-    try {
-        const { rows } = await pool.query(
-            `SELECT current_streak, longest_streak, last_login_date, multiplier
-             FROM user_streak WHERE user_id = $1`,
-            [req.session.userId]
-        );
 
-        const today = new Date().toISOString().slice(0, 10);
-        const row = rows[0] || { current_streak: 0, longest_streak: 0, last_login_date: null, multiplier: 1.0 };
-
-        const checkedInToday = row.last_login_date
-            ? new Date(row.last_login_date).toISOString().slice(0, 10) === today
-            : false;
-
-        // Preview: what would tomorrow's login award (if they keep the streak)?
-        const nextStreak = checkedInToday ? row.current_streak + 1 : row.current_streak + 1;
-        const nextReward = computeStreakReward(nextStreak);
-
-        // 7-day calendar (last 6 days + today) for a UI heatmap
-        const calendar = [];
-        for (let i = 6; i >= 0; i--) {
-            const d = new Date();
-            d.setUTCDate(d.getUTCDate() - i);
-            const iso = d.toISOString().slice(0, 10);
-            calendar.push({
-                date: iso,
-                checkedIn: row.last_login_date
-                    ? new Date(row.last_login_date).toISOString().slice(0, 10) === iso
-                    : false,
-                isToday: iso === today
-            });
-        }
-
-        res.json({
-            currentStreak: row.current_streak,
-            longestStreak: row.longest_streak,
-            multiplier: Number(row.multiplier) || 1.0,
-            checkedInToday,
-            lastLoginDate: row.last_login_date,
-            nextRewardPreview: nextReward,     // { multiplier, xp, credits, milestone }
-            milestones: STREAK_MILESTONES,      // shown in UI as upcoming goals
-            calendar
-        });
-    } catch (err) {
-        console.error('GET /api/user/streak error:', err);
-        res.status(500).json({ error: 'Server error' });
-    }
-});
 
 async function getDailyQuests(userId) {
     const today = new Date().toISOString().slice(0,10);
@@ -1261,6 +1213,56 @@ const isAuthenticated = async (req, res, next) => {
         res.status(500).json({ error: 'Server error' });
     }
 };
+
+app.get('/api/user/streak', isAuthenticated, async (req, res) => {
+    try {
+        const { rows } = await pool.query(
+            `SELECT current_streak, longest_streak, last_login_date, multiplier
+             FROM user_streak WHERE user_id = $1`,
+            [req.session.userId]
+        );
+
+        const today = new Date().toISOString().slice(0, 10);
+        const row = rows[0] || { current_streak: 0, longest_streak: 0, last_login_date: null, multiplier: 1.0 };
+
+        const checkedInToday = row.last_login_date
+            ? new Date(row.last_login_date).toISOString().slice(0, 10) === today
+            : false;
+
+        // Preview: what would tomorrow's login award (if they keep the streak)?
+        const nextStreak = checkedInToday ? row.current_streak + 1 : row.current_streak + 1;
+        const nextReward = computeStreakReward(nextStreak);
+
+        // 7-day calendar (last 6 days + today) for a UI heatmap
+        const calendar = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setUTCDate(d.getUTCDate() - i);
+            const iso = d.toISOString().slice(0, 10);
+            calendar.push({
+                date: iso,
+                checkedIn: row.last_login_date
+                    ? new Date(row.last_login_date).toISOString().slice(0, 10) === iso
+                    : false,
+                isToday: iso === today
+            });
+        }
+
+        res.json({
+            currentStreak: row.current_streak,
+            longestStreak: row.longest_streak,
+            multiplier: Number(row.multiplier) || 1.0,
+            checkedInToday,
+            lastLoginDate: row.last_login_date,
+            nextRewardPreview: nextReward,     // { multiplier, xp, credits, milestone }
+            milestones: STREAK_MILESTONES,      // shown in UI as upcoming goals
+            calendar
+        });
+    } catch (err) {
+        console.error('GET /api/user/streak error:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
 app.get('/api/profile', isAuthenticated, async (req, res) => {
     try {
         const result = await pool.query(
