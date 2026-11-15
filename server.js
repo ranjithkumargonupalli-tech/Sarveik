@@ -171,6 +171,9 @@ app.use('/.well-known', express.static(path.join(__dirname, 'public', '.well-kno
 
 
 // ==================== SESSION MIDDLEWARE ====================
+// 45 days in milliseconds: 45 * 24 hours * 60 mins * 60 secs * 1000 ms
+const FORTY_FIVE_DAYS = 45 * 24 * 60 * 60 * 1000; 
+
 const sessionMiddleware = session({
     store: new pgSession({
         pool: pool,
@@ -181,7 +184,7 @@ const sessionMiddleware = session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        maxAge: 1000 * 60 * 60,
+        maxAge: FORTY_FIVE_DAYS, // ✅ Now set to 45 days
         httpOnly: true,
         sameSite: 'lax',
         secure: process.env.NODE_ENV === 'production'
@@ -1014,10 +1017,7 @@ passport.use(new GoogleStrategy({
           
           await initializeUserCredits(user.id);
           sendWelcomeEmail(email, username).catch(err => console.error('Welcome email failed:', err.message));
-          sendAdminAlert({ 
-            subject: 'New User Registration (Google Sign-In)', 
-            message: `New user ${username} (${email}) registered via Google Sign-In.` 
-          }).catch(err => console.error('Admin alert failed:', err.message));
+          
         }
       }
       return done(null, user);
@@ -1778,16 +1778,24 @@ io.on('connection', (socket) => {
                 'INSERT INTO group_messages (group_id, sender_id, content) VALUES ($1, $2, $3) RETURNING id',
                 [groupId, userId, message]
             );
-            const payload = { groupId, from: userId, fromName: session.username, groupName,
-                message, timestamp: new Date().toISOString(), id: result.rows[0].id };
 
             // everyone else in the group who is NOT looking at it right now
+                        // 1. Fetch info and members FIRST
             const room = io.sockets.adapter.rooms.get(`group_${groupId}`) || new Set();
             const [info, members] = await Promise.all([
                 pool.query('SELECT name FROM groups WHERE id = $1', [groupId]),
                 pool.query('SELECT user_id FROM group_members WHERE group_id = $1 AND user_id <> $2', [groupId, userId])
             ]);
+            
+            // 2. Define groupName
             const groupName = info.rows[0]?.name || 'Group';
+
+            // 3. NOW build the payload
+            const payload = { groupId, from: userId, fromName: session.username, groupName,
+                message, timestamp: new Date().toISOString(), id: result.rows[0].id };
+
+            // 4. Loop through members and send
+        
             for (const m of members.rows) {
                 const entry = onlineUsers.get(m.user_id);
                 const inRoom = entry && [...entry.socketIds].some(sid => room.has(sid));
@@ -2254,7 +2262,6 @@ app.post('/register', authLimiter, async (req, res) => {
         }
         
         sendWelcomeEmail(email, username).catch(err => console.error('Welcome email failed:', err.message));
-        sendAdminAlert({ subject: 'New User Registration', message: `New user ${username} (${email}) registered.` }).catch(err => console.error('Admin alert failed:', err.message));
         res.status(201).send('Registration successful! Please login.');
     } catch (err) {
         console.error(err);
@@ -3867,7 +3874,7 @@ app.get('/api/support/tickets', isAuthenticated, async (req, res) => {
         let countQuery = `SELECT COUNT(*) FROM support_tickets t`;
         if (!isModOrAdmin) countQuery += ` WHERE t.user_id = $1`;
         const countRes = await pool.query(countQuery, !isModOrAdmin ? [req.session.userId] : []);
-        const total = parseInt(unread.rows[0]?.count || 0) + parseInt(pending.rows[0]?.count || 0);
+        const total = parseInt(countRes.rows[0]?.count || 0);
 
         res.json({ tickets, total, limit: parseInt(limit), offset: parseInt(offset) });
     } catch (err) {
