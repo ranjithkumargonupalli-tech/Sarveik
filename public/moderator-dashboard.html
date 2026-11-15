@@ -955,12 +955,20 @@ function renderNotifications() {
 // ---- STATS ----
 async function loadStats() {
     try {
-        const [users, tools, tickets, anns] = await Promise.all([
+        // Fetch all data concurrently
+        const [usersRes, toolsRes, ticketsRes, annsRes] = await Promise.all([
             apiCall('/admin/users').catch(() => []),
             apiCall('/api/admin/tools').catch(() => []),
-            apiCall('/api/support/tickets').catch(() => []),
+            apiCall('/api/support/tickets').catch(() => ({ tickets: [] })), // Default to object
             apiCall('/api/announcements').catch(() => []),
         ]);
+
+        // Ensure we are always working with arrays
+        const users = Array.isArray(usersRes) ? usersRes : [];
+        const tools = Array.isArray(toolsRes) ? toolsRes : [];
+        const tickets = Array.isArray(ticketsRes) ? ticketsRes : (ticketsRes.tickets || []);
+        const anns = Array.isArray(annsRes) ? annsRes : [];
+
         allUsers = users; allTools = tools; allTickets = tickets; allAnnouncements = anns;
 
         const totalU = users.length;
@@ -969,6 +977,7 @@ async function loadStats() {
         const openTk = tickets.filter(t => t.status === 'open').length;
         const banned = users.filter(u => u.is_banned).length;
 
+        // Update the DOM
         document.getElementById('totalUsers').textContent = totalU.toLocaleString();
         document.getElementById('totalTools').textContent = activeTools.toLocaleString();
         document.getElementById('pendingTools').textContent = pendingT.toLocaleString();
@@ -989,9 +998,11 @@ async function loadStats() {
         initCharts(users, tools, tickets);
         loadWidgets(tickets, users, tools);
         loadRecentActivity();
-    } catch(e) { console.error(e); showToast('Error loading stats', 'error'); }
+    } catch(e) { 
+        console.error(e); 
+        showToast('Error loading stats', 'error'); 
+    }
 }
-
 function initCharts(users, tools, tickets) {
     const tick = 'rgba(61,98,119,0.9)', grid = 'rgba(30,90,120,0.08)';
     const ch1 = document.getElementById('userGrowthChart')?.getContext('2d');
@@ -1230,7 +1241,13 @@ async function autoAssignTicket(ticketId) {
 
 // ---- SUPPORT TICKETS ----
 async function loadTickets() {
-    try { allTickets = await apiCall('/api/support/tickets'); } catch(e) { allTickets = []; }
+    try { 
+        const res = await apiCall('/api/support/tickets'); 
+        // Handle both array and object responses safely
+        allTickets = Array.isArray(res) ? res : (res.tickets || []);
+    } catch(e) { 
+        allTickets = []; 
+    }
     applyTicketFiltersAndRender();
 }
 
