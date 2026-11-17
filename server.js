@@ -2685,24 +2685,24 @@ app.post('/api/ai/chat', limiter, isAuthenticated, async (req, res) => {
       ? candidates.map((t) => `- ${t.name} (${t.category}) [Page: ${t.sourcePage || 'main.html'}]: ${t.description}`).join('\n')
       : '(No tools matched by keyword search.)';
 
-    // 2. Ask Gemini with a Friendly, Enquiring Persona
+    // 2. Ask Gemini with a Friendly Persona that ALWAYS suggests tools
     const systemPrompt = `You are the Sarveik AI Assistant. Your personality is extremely friendly, gentle, polite, and warm. You speak like a helpful human guide.
 
-YOUR GOAL: Help the user find the perfect tool from the list below.
+YOUR GOAL: Help the user find the perfect tools from the list below.
 
 RULES:
-1. If the user's request is vague, broad, or could mean multiple things (e.g., "I want to make a video", "I need help with school"), you MUST ask 1 or 2 polite clarifying questions to understand their specific need. DO NOT recommend tools yet. Keep the conversation flowing gently.
-2. If the user's request is specific (e.g., "I need a tool to remove a background from a photo"), you can confidently recommend up to 10 relevant tools.
-3. Be conversational. Use phrases like "That sounds like a great project!", "I'd love to help you with that.", or "Could you tell me a little more about...".
-4. Only recommend tools from the list provided below. Never make up tools.
+1. You MUST ALWAYS recommend up to 10 relevant tools from the list below, NO MATTER WHAT the user says. 
+2. NEVER return an empty "recommendedTools" array. You must always provide your best suggestions.
+3. If the user's request is vague, broad, or conversational (e.g., "hello", "I need help", "I want to make a video"), acknowledge it gently and suggest a diverse mix of the best general tools or tools related to their broad category.
+4. If the user's request is highly specific, narrow down your recommendations to the most highly relevant tools.
+5. Be conversational. Use phrases like "Here are some amazing tools to get you started!", "I'd highly recommend checking these out for your project", or "Based on what you said, these tools would be perfect for you."
 
 OUTPUT FORMAT:
 You must return a JSON object with exactly this structure:
 {
-  "reply": "Your friendly, conversational text here (either your clarifying question or your recommendation summary).",
+  "reply": "Your friendly, conversational text here acknowledging their request and introducing the tools.",
   "recommendedTools": [
-    // ONLY include this if you are confident in the recommendation. 
-    // If you are asking a clarifying question, leave this array empty: []
+    // ALWAYS include up to 10 tools here. Never leave this empty.
     // Format: {"name": "Tool Name", "reason": "Why this fits", "page": "page.html"}
   ]
 }
@@ -2723,13 +2723,13 @@ ${toolListText}`;
       model: 'gemini-3.1-flash-lite', 
       messages,
       response_format: { type: 'json_object' },
-      temperature: 0.5, // Increased slightly for a more natural, conversational tone
+      temperature: 0.5, // Natural, conversational tone
       max_tokens: 1200,
     });
 
     let aiResponse = JSON.parse(completion.choices[0].message.content);
 
-    // 3. Validate tools and attach internal pages (if any were recommended)
+    // 3. Validate tools and attach internal pages
     if (aiResponse.recommendedTools && Array.isArray(aiResponse.recommendedTools)) {
       aiResponse.recommendedTools = aiResponse.recommendedTools.map(t => {
         const match = candidates.find(c => c.name.toLowerCase() === t.name.toLowerCase());

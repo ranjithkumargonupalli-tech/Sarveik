@@ -113,7 +113,6 @@ h2 .count{margin-left:auto;font-family:var(--body);font-size:.75rem;font-weight:
 .card{background:var(--card);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.2rem;display:flex;align-items:center;gap:1rem;position:relative;overflow:hidden;box-shadow:0 3px 14px rgba(14,116,144,.07);transition:border-color .25s,box-shadow .25s,transform .25s;animation:rise .45s ease both}
 .card:hover{border-color:var(--border-h);box-shadow:var(--shadow);transform:translateY(-2px)}
 @keyframes rise{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
-/* grid cards stack: the name gets the full card width, buttons sit on their own row (fixes merged / clipped names) */
 .grid .card{flex-direction:column;align-items:stretch;gap:.8rem}
 .grid .card .actions{width:100%;padding-top:.75rem;border-top:1px solid var(--border)}
 .grid .card .actions .btn-primary{flex:1}
@@ -131,16 +130,17 @@ h2 .count{margin-left:auto;font-family:var(--body);font-size:.75rem;font-weight:
 .meta{flex:1;min-width:0}
 .name-row{display:flex;align-items:center;gap:.5rem;min-width:0}
 .name{font-family:var(--display);font-weight:700;font-size:.95rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
-.name-row .pro,.name-row .ver{flex-shrink:0}
 .time{margin-left:auto;padding-left:.5rem;font-size:.7rem;color:var(--muted);white-space:nowrap;flex-shrink:0}
 .card.has-unread .time{color:#128c7e;font-weight:700}
 .sub{color:var(--muted);font-size:.78rem;margin-top:.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .preview{display:flex;align-items:center;gap:.4rem;margin-top:.2rem;font-size:.8rem;color:var(--sub);min-width:0}
 .preview .txt{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .unread{background:var(--wa);color:#fff;border-radius:var(--pill);min-width:20px;height:20px;padding:0 6px;font-size:.68rem;font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0}
-.pro{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;padding:1px 7px;border-radius:var(--pill);font-size:.6rem;font-weight:700}
-.ver{background:var(--green);color:#fff;padding:1px 5px;border-radius:var(--pill);font-size:.55rem}
 .actions{display:flex;gap:.35rem;flex-shrink:0}
+
+/* MINI BADGE */
+.mini-badge{background:rgba(14,165,233,.1);color:#0b7fb3;font-size:.6rem;padding:1px 6px;border-radius:var(--pill);border:1px solid rgba(14,165,233,.2);margin-left:4px;white-space:nowrap;font-weight:600;display:inline-flex;align-items:center;gap:2px}
+
 .request-card{border-left:3px solid var(--cyan);background:rgba(224,244,255,.75)}
 .sent-card{border-left:3px solid var(--amber);background:rgba(255,247,230,.8)}
 .group-card{border-left:3px solid var(--green);background:rgba(220,252,238,.75)}
@@ -280,7 +280,7 @@ hr{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--bor
     <button class="tab" id="tabBtnConnections" data-tab="connections" role="tab"><i class="fas fa-address-book"></i> Your Connections <span id="tabReqBadge" class="badge" style="display:none"></span></button>
   </div>
 
-  <!-- TAB 1: YOUR NETWORK (active in last 7 days) -->
+  <!-- TAB 1: YOUR NETWORK -->
   <div class="tab-panel show" id="tabNetwork">
 
     <h2><i class="fas fa-user-friends"></i> Your Network <span class="count" id="netCount"></span></h2>
@@ -319,7 +319,7 @@ hr{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--bor
     </div>
   </div>
 
-  <!-- TAB 2: YOUR CONNECTIONS (everyone + pending + sent) -->
+  <!-- TAB 2: YOUR CONNECTIONS -->
   <div class="tab-panel" id="tabConnections">
 
     <h2><i class="fas fa-address-book"></i> All Connections <span class="count" id="allCount"></span></h2>
@@ -350,7 +350,7 @@ hr{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--bor
   <button id="confirmGroup" class="btn btn-primary" style="width:100%;margin-top:1.1rem"><i class="fas fa-check-circle"></i> Create Group</button>
 </div></div>
 
-<!-- In-page confirm dialog (replaces the browser's confirm() popup) -->
+<!-- In-page confirm dialog -->
 <div id="confirmModal" class="modal"><div class="modal-content cf-box">
   <p id="cfMsg"></p>
   <div class="cf-btns">
@@ -365,9 +365,9 @@ hr{border:none;height:1px;background:linear-gradient(90deg,transparent,var(--bor
    HELPERS
    ========================================================= */
 const $ = id => document.getElementById(id);
-const RECENT_MS = 10 * 24 * 60 * 60 * 1000;   // names / chats / requests only count for 10 days
-const ACTIVE_MS = 7 * 24 * 60 * 60 * 1000;    // "Your Network" only shows people active in the last 7 days
-const PRESENCE_MS = 15 * 60 * 1000;           // someone shows as Online only if they chatted in the last 15 min (use 10 * 60 * 1000 for 10 min)
+const RECENT_MS = 10 * 24 * 60 * 60 * 1000;
+const ACTIVE_MS = 7 * 24 * 60 * 60 * 1000;
+const PRESENCE_MS = 15 * 60 * 1000;
 const safeParse = (raw, fb) => { try { const v = JSON.parse(raw); return v == null ? fb : v; } catch (_) { return fb; } };
 const store = {
   get: (k, fb) => safeParse(localStorage.getItem(k), fb),
@@ -451,14 +451,13 @@ let friends = [], requests = [], sentRequests = [], groups = [], pickerFriends =
 let filters = { status: '', search: '' };
 let connQuery = '';
 let sortMode = store.get('sarveik_sort', 'recent');
-const online = new Map();        // id -> status
-const unread = new Map();        // id -> count
-const seen = new Map();          // id -> last chat activity (ms)
-let lastChat = store.get('sarveik_lastchat', {});   // id -> { ts, text }
+const online = new Map();
+const unread = new Map();
+const seen = new Map();
+let lastChat = store.get('sarveik_lastchat', {});
 let selected = [];
 
 function saveLast() { store.set('sarveik_lastchat', lastChat); }
-/* drop anything older than 10 days */
 function pruneLast() {
   const cut = Date.now() - RECENT_MS; let changed = false;
   Object.keys(lastChat).forEach(k => { if (!lastChat[k] || (lastChat[k].ts || 0) < cut) { delete lastChat[k]; changed = true; } });
@@ -470,7 +469,6 @@ function touchChat(id, text, ts) {
   lastChat[id] = { ts: ts || Date.now(), text: text != null ? text : (prev.text || '') };
   saveLast();
 }
-/* newest chat time inside the 10-day window, otherwise 0 (= not a recent chat) */
 function chatTs(f) {
   const server = f.last_message_at ? new Date(f.last_message_at).getTime() : 0;
   const local = (lastChat[String(f.id)] || {}).ts || 0;
@@ -498,7 +496,6 @@ $('tabBtnConnections').addEventListener('click', () => setTab('connections'));
 
 /* =========================================================
    REAL-TIME NOTIFICATIONS
-   in-page popup · system notification (tab hidden) · Web Push (tab closed) · sound · vibration · tab title
    ========================================================= */
 const prefs = { sound: true, vibrate: true, system: true };
 let swReg = null;
@@ -522,7 +519,6 @@ const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platfo
 const isStandalone = !!(navigator.standalone || (window.matchMedia && matchMedia('(display-mode: standalone)').matches));
 const notifDefaultHTML = $('notifText').innerHTML;
 function refreshBanner() {
-  /* iPhone only allows notifications for apps added to the Home Screen */
   const needInstall = isIOS && !isStandalone;
   $('notifBanner').classList.toggle('show', needInstall || permissionState() === 'default');
   $('enableNotifBtn').style.display = needInstall ? 'none' : '';
@@ -534,7 +530,7 @@ function refreshBanner() {
 async function testPush() {
   const b = $('testPushBtn'), o = b.innerHTML; b.disabled = true; b.innerHTML = '<i class="fas fa-spinner spin"></i> Sending…';
   try {
-    await subscribePush();   // make sure this device is registered first
+    await subscribePush();
     const r = await api('/api/push/test', { method: 'POST' });
     showToast(`Test sent to ${r.sent} device(s). Lock your phone to see it.` + (r.failed && r.failed.length ? ` (failed: ${r.failed.join(', ')})` : ''), r.sent ? 'success' : 'error');
   } catch (e) { showToast(e.message || 'Test failed', 'error'); }
@@ -547,7 +543,6 @@ function urlB64(b64) {
   const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
   return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
 }
-/* registers this device for server push so alerts arrive even when the site is closed */
 async function subscribePush() {
   try {
     await swReady;
@@ -610,7 +605,6 @@ async function systemNotify({ title, body, tag, icon, friendId, groupId }) {
   } catch (_) {}
 }
 
-/* popup card; consecutive messages from the same chat collapse into one card */
 const waActive = new Map();
 function waPopup({ id, name, avatarUrl, text, href, kind }) {
   const key = String(id);
@@ -665,7 +659,6 @@ document.addEventListener('visibilitychange', () => {
   updateTitle();
 });
 
-/* single entry point: popup if the tab is visible, system notification if hidden */
 function notify({ key, title, body, avatarUrl, icon, friendId, groupId, kind }) {
   const href = groupId ? 'chat.html?group=' + groupId : friendId ? 'chat.html?friend=' + friendId : null;
   playTone(); buzz();
@@ -680,11 +673,11 @@ function onIncomingMessage(data) {
   const name = (f && (f.display_name || f.username)) || data.fromUsername || 'New message';
   touchChat(fromId, text, data.timestamp ? new Date(data.timestamp).getTime() : Date.now());
   unread.set(Number(fromId), (unread.get(Number(fromId)) || 0) + 1);
-  if (!['away', 'busy'].includes(online.get(Number(fromId)))) online.set(Number(fromId), 'online');   // they are chatting right now
+  if (!['away', 'busy'].includes(online.get(Number(fromId)))) online.set(Number(fromId), 'online');
   seen.set(Number(fromId), Date.now());
   renderFriends(); updateBadges(); updateTitle();
   flashCard(fromId);
-  notify({ key: 'msg-f' + fromId, title: name, body: text, avatarUrl: f && f.avatar_url, icon: f && f.avatar_url, friendId: fromId });
+  notify({ key: 'msg-f' + fromId, title: name, body: text, avatarUrl: f && (f.avatar_base64 || f.avatar_url), icon: f && f.avatar_url, friendId: fromId });
 }
 
 /* =========================================================
@@ -714,16 +707,16 @@ async function loadStats() {
 }
 
 /* =========================================================
-   FRIENDS — "Your Network" = active in last 7 days, "Your Connections" = everyone
+   FRIENDS
    ========================================================= */
 async function loadFriends() {
   const box = $('friendsList'); if (!friends.length) skeleton(box);
   try {
     const p = new URLSearchParams();
-    if (filters.search) p.append('search', filters.search);      // status filter is applied locally (see renderFriends)
+    if (filters.search) p.append('search', filters.search);
     friends = await api('/api/friends?' + p);
     friends.forEach(f => {
-      online.set(f.id, f.status || 'offline');                   // server is the source of truth
+      online.set(f.id, f.status || 'offline');
       if (f.last_active) seen.set(f.id, Number(f.last_active)); else seen.delete(f.id);
     });
     renderFriends();
@@ -731,13 +724,11 @@ async function loadFriends() {
     box.innerHTML = `<div class="empty">Couldn't load your network: ${esc(e.message)} <button class="btn btn-sm btn-outline" onclick="loadFriends()">Retry</button></div>`;
   }
 }
-/* Online = chatted within PRESENCE_MS. Away / Busy are kept as set by the user. Everyone else = Offline. */
 function statusOf(f) {
   const st = online.get(f.id) || f.status || 'offline';
   if (st === 'online' && Date.now() - (seen.get(f.id) || 0) > PRESENCE_MS) return 'offline';
   return st;
 }
-/* active = online/away/busy now, has unread messages, or was active / chatted in the last 7 days */
 function isActive(f) {
   if (statusOf(f) !== 'offline') return true;
   if (unread.get(f.id)) return true;
@@ -764,21 +755,34 @@ function sorted(list) {
   });
   return arr;
 }
+
 function friendCard(f, i) {
   const u = unread.get(f.id) || 0, ts = chatTs(f), txt = ts ? chatText(f) : '', st = statusOf(f);
   const stCls = ['online', 'away', 'busy'].includes(st) ? st : '';
+  const imgSrc = f.avatar_base64 || f.avatar_url;
+  
+  // Extract professional details
+  const profArr = [];
+  if (f.role) profArr.push(f.role);
+  if (f.company) profArr.push(f.company);
+  const profText = profArr.length ? profArr.join(' @ ') : (f.profession || 'Professional');
+
   return `
     <div class="card ${ts ? 'recent' : ''} ${u ? 'has-unread' : ''}" data-id="${f.id}" style="animation-delay:${Math.min(i, 12) * .03}s">
       <div class="info">
-        <div class="av-wrap">${avatar(f.avatar_url, f.display_name || f.username)}<span class="dot ${stCls}" title="${st === 'online' ? 'Active now' : st === 'away' ? 'Away' : st === 'busy' ? 'Busy' : 'Offline'}"></span></div>
+        <div class="av-wrap">
+          ${avatar(imgSrc, f.display_name || f.username)}
+          <span class="dot ${stCls}" title="${st === 'online' ? 'Active now' : st === 'away' ? 'Away' : st === 'busy' ? 'Busy' : 'Offline'}"></span>
+        </div>
         <div class="meta">
           <div class="name-row">
             <span class="name" title="${esc(f.display_name || f.username)}">${esc(f.display_name || f.username)}</span>
-            ${f.is_pro ? '<span class="pro">PRO</span>' : ''}${f.is_verified ? '<span class="ver"><i class="fas fa-check"></i></span>' : ''}
+            ${f.top_badge ? `<span class="mini-badge"><i class="fas fa-medal"></i> ${esc(f.top_badge)}</span>` : ''}
             ${ts ? `<span class="time">${timeAgo(ts)}</span>` : ''}
           </div>
+          <div class="sub">${esc(profText)} · @${esc(f.username)}</div>
           ${ts && txt ? `<div class="preview"><span class="txt">${esc(txt)}</span>${u ? `<span class="unread">${u > 99 ? '99+' : u}</span>` : ''}</div>`
-            : `<div class="sub">@${esc(f.username)} · ${esc(f.profession || 'Professional')}</div>${u ? `<div class="preview"><span class="unread">${u}</span></div>` : ''}`}
+            : u ? `<div class="preview"><span class="unread">${u}</span></div>` : ''}
         </div>
       </div>
       <div class="actions">
@@ -790,7 +794,6 @@ function friendCard(f, i) {
 }
 function renderFriends() {
   const box = $('friendsList');
-  /* Your Network: only people active in the last 7 days */
   const list = sorted(friends.filter(f => isActive(f) && (!filters.status || statusOf(f) === filters.status)));
   $('netCount').textContent = list.length ? list.length + ' active' : '';
   if (!filters.status && !filters.search) setStat('sOnline', friends.filter(f => statusOf(f) === 'online').length);
@@ -801,11 +804,14 @@ function renderFriends() {
   }
   renderAll();
 }
-/* Your Connections: whole list */
 function renderAll() {
   const box = $('allList');
   const q = connQuery.trim().toLowerCase();
-  const list = sorted(friends.filter(f => !q || `${f.display_name || ''} ${f.username || ''} ${f.profession || ''}`.toLowerCase().includes(q)));
+  const list = sorted(friends.filter(f => {
+    if (!q) return true;
+    const haystack = `${f.display_name || ''} ${f.username || ''} ${f.role || ''} ${f.company || ''} ${f.profession || ''}`.toLowerCase();
+    return haystack.includes(q);
+  }));
   $('allCount').textContent = list.length ? list.length + ' connection' + (list.length > 1 ? 's' : '') : '';
   if (!list.length) { box.innerHTML = '<div class="empty" style="grid-column:1/-1">' + (friends.length ? 'No matching connections.' : 'No connections yet. Add some professionals from “Your Network”.') + '</div>'; return; }
   box.innerHTML = list.map(friendCard).join('');
@@ -829,6 +835,7 @@ async function friendListClick(e) {
 }
 $('friendsList').addEventListener('click', friendListClick);
 $('allList').addEventListener('click', friendListClick);
+
 async function unfriend(id, btn) {
   if (!(await askConfirm('Remove this connection?', 'Remove'))) return;
   const orig = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner spin"></i>';
@@ -842,7 +849,7 @@ async function unfriend(id, btn) {
 }
 
 /* =========================================================
-   REQUESTS (only the last 10 days are shown)
+   REQUESTS
    ========================================================= */
 async function loadRequests() {
   const box = $('requestsList'); skeleton(box, 1);
@@ -851,15 +858,18 @@ async function loadRequests() {
     requests = all.filter(r => !r.created_at || Date.now() - new Date(r.created_at).getTime() <= RECENT_MS);
     updateBadges();
     if (!requests.length) { box.innerHTML = '<div class="empty">No pending requests.</div>'; return; }
-    box.innerHTML = requests.map(r => `
+    box.innerHTML = requests.map(r => {
+      const imgSrc = r.avatar_base64 || r.avatar_url;
+      return `
       <div class="card request-card" style="margin-bottom:.7rem">
-        <div class="info"><div class="av-wrap">${avatar(r.avatar_url, r.display_name || r.username)}</div>
-          <div class="meta"><div class="name-row"><span class="name">${esc(r.display_name || r.username)}</span>${r.is_pro ? '<span class="pro">PRO</span>' : ''}${r.created_at ? `<span class="time">${timeAgo(new Date(r.created_at).getTime())}</span>` : ''}</div>
+        <div class="info"><div class="av-wrap">${avatar(imgSrc, r.display_name || r.username)}</div>
+          <div class="meta"><div class="name-row"><span class="name">${esc(r.display_name || r.username)}</span>${r.created_at ? `<span class="time">${timeAgo(new Date(r.created_at).getTime())}</span>` : ''}</div>
           <div class="sub">@${esc(r.username)} · ${esc(r.profession || 'Professional')}</div></div></div>
         <div class="actions">
           <button class="btn btn-sm btn-success acc-btn" data-id="${r.id}"><i class="fas fa-check"></i> Accept</button>
           <button class="btn btn-sm btn-outline dec-btn" data-id="${r.id}"><i class="fas fa-times"></i> Decline</button>
-        </div></div>`).join('');
+        </div></div>`;
+    }).join('');
   } catch (e) { box.innerHTML = `<div class="empty">Couldn't load requests: ${esc(e.message)}</div>`; }
 }
 $('requestsList').addEventListener('click', async e => {
@@ -874,9 +884,7 @@ $('requestsList').addEventListener('click', async e => {
 });
 
 /* =========================================================
-   SENT REQUESTS (withdraw)
-   Needs:  GET    /api/friends/sent         -> [{ id, username, display_name, avatar_url, profession, created_at }]
-           DELETE /api/friends/request/:id  -> withdraws a request you sent
+   SENT REQUESTS
    ========================================================= */
 async function loadSent() {
   const box = $('sentList');
@@ -886,14 +894,17 @@ async function loadSent() {
     if (!Array.isArray(sentRequests)) sentRequests = [];
     $('sentCount').textContent = sentRequests.length ? sentRequests.length + ' sent' : '';
     if (!sentRequests.length) { box.innerHTML = '<div class="empty">You have no sent requests.</div>'; return; }
-    box.innerHTML = sentRequests.map(r => `
+    box.innerHTML = sentRequests.map(r => {
+      const imgSrc = r.avatar_base64 || r.avatar_url;
+      return `
       <div class="card sent-card" style="margin-bottom:.7rem">
-        <div class="info"><div class="av-wrap">${avatar(r.avatar_url, r.display_name || r.username)}</div>
-          <div class="meta"><div class="name-row"><span class="name">${esc(r.display_name || r.username)}</span>${r.is_pro ? '<span class="pro">PRO</span>' : ''}${r.created_at ? `<span class="time">${timeAgo(new Date(r.created_at).getTime())}</span>` : ''}</div>
+        <div class="info"><div class="av-wrap">${avatar(imgSrc, r.display_name || r.username)}</div>
+          <div class="meta"><div class="name-row"><span class="name">${esc(r.display_name || r.username)}</span>${r.created_at ? `<span class="time">${timeAgo(new Date(r.created_at).getTime())}</span>` : ''}</div>
           <div class="sub">@${esc(r.username)} · ${esc(r.profession || 'Professional')} · Pending</div></div></div>
         <div class="actions">
           <button class="btn btn-sm btn-danger wd-btn" data-id="${r.id}"><i class="fas fa-undo"></i> Withdraw</button>
-        </div></div>`).join('');
+        </div></div>`;
+    }).join('');
   } catch (e) {
     $('sentCount').textContent = '';
     box.innerHTML = `<div class="empty">Couldn't load sent requests: ${esc(e.message)} <button class="btn btn-sm btn-outline" onclick="loadSent()">Retry</button></div>`;
@@ -921,7 +932,6 @@ async function sendRequest(username, btn) {
     await api('/api/friends/request', { method: 'POST', body: { friendUsername: username } });
     sent = true;
   } catch (e) {
-    /* the request is saved before the server step that used to fail (email), so a server-side 5xx still means "sent" */
     if ((e.status && e.status >= 500) || /server error/i.test(e.message || '')) sent = true;
     else showToast(e.message || 'Failed to send request', 'error');
   }
@@ -952,16 +962,40 @@ async function searchUsers() {
     const users = await api('/api/users/search?q=' + encodeURIComponent(q));
     if (seq !== searchSeq) return;
     if (!users.length) { box.innerHTML = '<div class="empty">No professionals found.</div>'; return; }
-    box.innerHTML = users.map(u => `
+    
+    box.innerHTML = users.map(u => {
+      const imgSrc = u.avatar_base64 || u.avatar_url;
+      const profArr = [];
+      if (u.role) profArr.push(u.role);
+      if (u.company) profArr.push(u.company);
+      const profText = profArr.length ? profArr.join(' @ ') : (u.profession || 'Professional');
+
+      return `
       <div class="card" style="margin-bottom:.6rem">
-        <div class="info"><div class="av-wrap">${avatar(u.avatar_url, u.display_name || u.username)}</div>
-        <div class="meta"><div class="name-row"><span class="name">${esc(u.display_name || u.username)}</span>${u.is_pro ? '<span class="pro">PRO</span>' : ''}</div>
-        <div class="sub">@${esc(u.username)} · ${esc(u.profession || 'Professional')}</div></div></div>
-        <div class="actions"><button class="btn btn-sm btn-primary send-btn" data-u="${esc(u.username)}"><i class="fas fa-user-plus"></i> Connect</button></div>
-      </div>`).join('');
+        <div class="info">
+          <div class="av-wrap">${avatar(imgSrc, u.display_name || u.username)}</div>
+          <div class="meta">
+            <div class="name-row">
+              <span class="name">${esc(u.display_name || u.username)}</span>
+              ${u.top_badge ? `<span class="mini-badge"><i class="fas fa-medal"></i> ${esc(u.top_badge)}</span>` : ''}
+            </div>
+            <div class="sub">@${esc(u.username)} · ${esc(profText)}</div>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-sm btn-outline prof-btn" data-id="${u.id}"><i class="fas fa-user-circle"></i> Profile</button>
+          <button class="btn btn-sm btn-primary send-btn" data-u="${esc(u.username)}"><i class="fas fa-user-plus"></i> Connect</button>
+        </div>
+      </div>`;
+    }).join('');
   } catch (e) { if (seq === searchSeq) box.innerHTML = `<div class="empty">Error searching: ${esc(e.message)}</div>`; }
 }
-$('searchResults').addEventListener('click', e => { const b = e.target.closest('.send-btn'); if (b) sendRequest(b.dataset.u, b); });
+$('searchResults').addEventListener('click', e => {
+  const prof = e.target.closest('.prof-btn');
+  if (prof) { showProfile(prof.dataset.id); return; }
+  const b = e.target.closest('.send-btn');
+  if (b) sendRequest(b.dataset.u, b);
+});
 $('searchBtn').addEventListener('click', searchUsers);
 $('searchUser').addEventListener('input', debounce(searchUsers, 300));
 $('searchUser').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); searchUsers(); } });
@@ -1035,7 +1069,6 @@ $('createGroupBtn').addEventListener('click', async () => {
   $('groupModal').style.display = 'block';
   $('memberList').innerHTML = '<div class="empty"><i class="fas fa-spinner spin"></i> Loading connections…</div>';
   renderSelected();
-  /* always load the full list — the main list may be filtered by search / status */
   try { pickerFriends = await api('/api/friends'); } catch (_) { pickerFriends = friends; }
   renderMembers(); $('groupName').focus();
 });
@@ -1054,35 +1087,118 @@ $('confirmGroup').addEventListener('click', async () => {
 $('groupName').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); $('confirmGroup').click(); } });
 
 /* =========================================================
-   PROFILE MODAL
+   PROFILE MODAL (Enhanced to show DP, Socials, Extended Details)
    ========================================================= */
 async function showProfile(userId) {
   $('profileModal').style.display = 'block';
-  const c = $('profileBody'); c.innerHTML = '<div class="empty"><i class="fas fa-spinner spin"></i> Loading…</div>';
-  let p = null;
-  try { p = await api('/api/users/' + userId); } catch (_) { p = friends.find(f => String(f.id) === String(userId)); }
+  const c = $('profileBody'); c.innerHTML = '<div class="empty"><i class="fas fa-spinner spin"></i> Loading profile…</div>';
+  
+  let p = null, ext = {};
+  try {
+    const [userRes, extRes] = await Promise.all([
+      api('/api/users/' + userId),
+      api('/api/profile/extended?userId=' + userId).catch(() => ({}))
+    ]);
+    p = userRes;
+    ext = extRes || {};
+  } catch (_) {
+    p = friends.find(f => String(f.id) === String(userId));
+  }
+  
   if (!p) { c.innerHTML = '<div class="empty">Profile not available.</div>'; return; }
+
   const safeUrl = u => /^https?:\/\//i.test(u || '') ? u : null;
-  const socials = [['github', 'fab fa-github', 'GitHub'], ['twitter', 'fab fa-twitter', 'Twitter'], ['linkedin', 'fab fa-linkedin', 'LinkedIn'], ['website', 'fas fa-globe', 'Website']]
-    .filter(([k]) => safeUrl(p[k])).map(([k, ic, l]) => `<a href="${esc(p[k])}" target="_blank" rel="noopener noreferrer"><i class="${ic}"></i> ${l}</a>`);
+  
+  // Combine social links from user table and extended profile
+  const socials = [
+    ['github', 'fab fa-github', 'GitHub', p.github],
+    ['twitter', 'fab fa-twitter', 'Twitter', p.twitter],
+    ['linkedin', 'fab fa-linkedin', 'LinkedIn', p.linkedin],
+    ['website', 'fas fa-globe', 'Website', ext.website]
+  ].filter(([k, icon, label, url]) => safeUrl(url)).map(([k, icon, label, url]) => 
+    `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer"><i class="${icon}"></i> ${label}</a>`
+  );
+
   const joined = p.created_at ? new Date(p.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' }) : 'N/A';
   const row = (ic, l, v) => `<div class="prow"><i class="fas ${ic}"></i><span class="l">${l}</span><span class="v">${esc(v)}</span></div>`;
-  c.innerHTML = `
-    <div class="ph">${avatar(p.avatar_url, p.display_name || p.username, 'pav', 'pav-ph')}
-      <div class="pname">${esc(p.display_name || p.username)}</div><div class="puser">@${esc(p.username)}</div>
+  
+  const imgSrc = p.avatar_base64 || p.avatar_url;
+  
+  let html = `
+    <div class="ph">
+      ${avatar(imgSrc, p.display_name || p.username, 'pav', 'pav-ph')}
+      <div class="pname">${esc(p.display_name || p.username)}</div>
+      <div class="puser">@${esc(p.username)}</div>
       <div class="pbadges">
-        ${p.is_pro ? '<span><i class="fas fa-crown"></i> PRO</span>' : ''}${p.is_verified ? '<span><i class="fas fa-check-circle"></i> Verified</span>' : ''}
+        ${p.top_badge ? `<span><i class="fas fa-medal"></i> ${esc(p.top_badge)}</span>` : ''}
         ${p.level ? `<span><i class="fas fa-star"></i> Level ${esc(p.level)}</span>` : ''}
         ${p.is_online !== undefined ? `<span><i class="fas fa-circle" style="color:${p.is_online ? 'var(--green)' : 'var(--muted)'};font-size:.5rem"></i> ${p.is_online ? 'Online' : 'Offline'}</span>` : ''}
-      </div></div>
+      </div>
+    </div>
     ${p.bio ? `<div class="pbio">${esc(p.bio)}</div>` : ''}
-    <div class="psec"><div class="psec-t">Professional</div>
-      ${row('fa-briefcase', 'Profession', p.profession || 'Not specified')}${row('fa-map-marker-alt', 'Location', p.location || 'Not specified')}
-      ${p.company ? row('fa-building', 'Company', p.company) : ''}${p.skills ? row('fa-tags', 'Skills', p.skills) : ''}</div>
-    <div class="psec"><div class="psec-t">Activity</div>${row('fa-calendar-plus', 'Joined', joined)}</div>
-    ${socials.length ? `<div class="psec"><div class="psec-t">Social &amp; Web</div><div class="plinks">${socials.join('')}</div></div>` : ''}
-    <div class="pact"><button class="btn btn-primary" id="pMsg"><i class="fas fa-comment"></i> Message</button>
-      <button class="btn btn-outline" id="pClose"><i class="fas fa-times"></i> Close</button></div>`;
+    
+    ${(ext.role || ext.company || ext.location || ext.skills) ? `
+    <div class="psec">
+      <div class="psec-t">Professional Details</div>
+      ${ext.role ? row('fa-briefcase', 'Role', ext.role) : ''}
+      ${ext.company ? row('fa-building', 'Company', ext.company) : ''}
+      ${ext.location ? row('fa-map-marker-alt', 'Location', ext.location) : ''}
+      ${ext.skills ? row('fa-tags', 'Skills', ext.skills) : ''}
+    </div>` : ''}
+    
+    <div class="psec">
+      <div class="psec-t">Activity</div>
+      ${row('fa-calendar-plus', 'Joined', joined)}
+    </div>
+    
+    ${socials.length ? `<div class="psec"><div class="psec-t">Social & Web</div><div class="plinks">${socials.join('')}</div></div>` : ''}
+  `;
+
+  // Add Extended Details (Experience, Projects, Certificates) if they exist
+  if (ext.experience && ext.experience.length > 0) {
+    html += `<div class="psec"><div class="psec-t">Experience</div>`;
+    ext.experience.forEach(e => {
+      html += `<div style="margin-bottom:.6rem;font-size:.85rem;">
+        <div style="font-weight:600;color:var(--text);">${esc(e.title || '')} ${e.company ? '@ ' + esc(e.company) : ''}</div>
+        ${e.duration ? `<div style="color:var(--muted);font-size:.75rem;">${esc(e.duration)}</div>` : ''}
+        ${e.description ? `<div style="color:var(--sub);margin-top:.2rem;">${esc(e.description)}</div>` : ''}
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (ext.projects && ext.projects.length > 0) {
+    html += `<div class="psec"><div class="psec-t">Projects</div>`;
+    ext.projects.forEach(pr => {
+      html += `<div style="margin-bottom:.6rem;font-size:.85rem;">
+        <div style="font-weight:600;color:var(--text);">${esc(pr.title || '')}</div>
+        ${pr.tech ? `<div style="color:var(--muted);font-size:.75rem;">${esc(pr.tech)}</div>` : ''}
+        ${pr.description ? `<div style="color:var(--sub);margin-top:.2rem;">${esc(pr.description)}</div>` : ''}
+        ${pr.url ? `<a href="${esc(pr.url)}" target="_blank" style="color:var(--cyan);font-size:.75rem;">View Project →</a>` : ''}
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (ext.certificates && ext.certificates.length > 0) {
+    html += `<div class="psec"><div class="psec-t">Certificates</div>`;
+    ext.certificates.forEach(c => {
+      html += `<div style="margin-bottom:.6rem;font-size:.85rem;">
+        <div style="font-weight:600;color:var(--text);">${esc(c.title || '')}</div>
+        ${c.issuer ? `<div style="color:var(--muted);font-size:.75rem;">${esc(c.issuer)} ${c.date ? '• ' + esc(c.date) : ''}</div>` : ''}
+        ${c.url ? `<a href="${esc(c.url)}" target="_blank" style="color:var(--cyan);font-size:.75rem;">View Certificate →</a>` : ''}
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  html += `<div class="pact">
+    <button class="btn btn-primary" id="pMsg"><i class="fas fa-comment"></i> Message</button>
+    <button class="btn btn-outline" id="pClose"><i class="fas fa-times"></i> Close</button>
+  </div>`;
+
+  c.innerHTML = html;
+  
   $('pMsg').onclick = () => { touchChat(p.id, undefined, Date.now()); location.href = 'chat.html?friend=' + p.id; };
   $('pClose').onclick = () => $('profileModal').style.display = 'none';
 }
@@ -1105,7 +1221,6 @@ socket.on('disconnect', () => { setTimeout(() => { if (!socket.connected) socket
 
 socket.on('private_message', data => {
   if (me.id != null && String(data.from) === String(me.id)) {
-    /* message I sent from another tab/device — bump that chat to top */
     if (data.to != null) { touchChat(data.to, data.message || data.content || '', Date.now()); renderFriends(); }
     return;
   }
@@ -1161,7 +1276,7 @@ $('mmClose').addEventListener('click', closeMenu);
 async function doLogout(e) {
   e.preventDefault(); closeMenu();
   if (!(await askConfirm('Log out of Sarveik?', 'Log out'))) return;
-  try {   // stop push for this device so the next person on this phone does not get your messages
+  try {
     const reg = await navigator.serviceWorker.getRegistration();
     const sub = reg && reg.pushManager ? await reg.pushManager.getSubscription() : null;
     if (sub) { await api('/api/push/unsubscribe', { method: 'POST', body: { endpoint: sub.endpoint } }); await sub.unsubscribe(); }
@@ -1177,7 +1292,7 @@ $('mLogoutBtn').addEventListener('click', doLogout);
    INIT
    ========================================================= */
 setInterval(() => { if (!document.hidden && me.id) { loadUnread(); loadStats(); } }, 30000);
-setInterval(() => { pruneLast(); renderFriends(); }, 60000);   // keep "5m / 1h" labels fresh and drop chats older than 10 days
+setInterval(() => { pruneLast(); renderFriends(); }, 60000);
 (async () => {
   pruneLast();
   setTab(store.get('sarveik_tab', 'network'));
