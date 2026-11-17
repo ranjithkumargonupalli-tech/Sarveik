@@ -1772,6 +1772,7 @@
                 this.bindPublicViewEvents();
                 this.initTabs();
                 this.initTheme();
+                await this.loadExtendedPreview(publicViewUserId); 
                 return;
             }
 
@@ -1812,14 +1813,19 @@
         // ============================================================
         // AVATAR LOADING (persistent across redeploys via localStorage)
         // ============================================================
-        loadAvatarForUser(user) {
-            // Priority 1: localStorage cached base64 (survives server redeploy)
+                loadAvatarForUser(user) {
+            // Priority 1: Base64 from database
+            if (user.avatar_base64) {
+                $('#avatarPreview').attr('src', user.avatar_base64);
+                return;
+            }
+            // Priority 2: localStorage cached base64 (fallback)
             const cached = localStorage.getItem('nova_avatar_base64_' + user.id);
             if (cached) {
                 $('#avatarPreview').attr('src', cached);
                 return;
             }
-            // Priority 2: server URL (with 404 fallback)
+            // Priority 3: server URL (legacy)
             if (user.avatar_url) {
                 const $img = $('#avatarPreview');
                 $img.off('error.avatarFallback');
@@ -1830,7 +1836,7 @@
                 $img.attr('src', user.avatar_url + '?t=' + Date.now());
                 return;
             }
-            // Priority 3: generated SVG
+            // Priority 4: generated SVG
             $('#avatarPreview').attr('src', generateAvatarSVG(user.username));
         }
 
@@ -1991,21 +1997,149 @@
         // ============================================================
         // EXTENDED FIELDS (Professional Details)
         // ============================================================
-        loadExtendedFields() {
-            const key = 'nova_extended_' + this.userData.id;
-            let ext = {};
-            try { ext = JSON.parse(localStorage.getItem(key) || '{}'); } catch {}
+        // REPLACE loadExtendedFields() with this:
+        async loadExtendedFields() {
+            try {
+                const res = await fetch('/api/profile/extended', { credentials: 'include' });
+                const ext = await res.json();
 
-            $('#role').val(ext.role || '');
-            $('#company').val(ext.company || '');
-            $('#location').val(ext.location || '');
-            $('#website').val(ext.website || '');
-            $('#skills').val(ext.skills || '');
+                $('#role').val(ext.role || '');
+                $('#company').val(ext.company || '');
+                $('#location').val(ext.location || '');
+                $('#website').val(ext.website || '');
+                $('#skills').val(ext.skills || '');
 
-            this.renderList('experienceList', ext.experience || [], 'experience');
-            this.renderList('projectsList', ext.projects || [], 'project');
-            this.renderList('certificatesList', ext.certificates || [], 'certificate');
-            this.renderList('achievementsList', ext.achievements || [], 'achievement');
+                this.renderList('experienceList', ext.experience || [], 'experience');
+                this.renderList('projectsList', ext.projects || [], 'project');
+                this.renderList('certificatesList', ext.certificates || [], 'certificate');
+                this.renderList('achievementsList', ext.achievements_list || [], 'achievement');
+            } catch (e) {
+                console.error('Failed to load extended profile', e);
+            }
+        }
+
+        // REPLACE saveExtendedData() with this:
+        async saveExtendedData() {
+            const ext = this.collectExtendedData();
+            try {
+                const res = await fetch('/api/profile/extended', {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify(ext)
+                });
+                if (res.ok) {
+                    this.showToast('Extended details saved', 'success');
+                    this.loadExtendedPreview(); // Refresh preview
+                } else {
+                    throw new Error();
+                }
+            } catch {
+                this.showToast('Failed to save extended details', 'error');
+            }
+        }
+
+        // REPLACE loadExtendedPreview() with this:
+               async loadExtendedPreview(targetUserId = null) {
+            const container = $('#extendedPreviewContainer');
+            const url = targetUserId ? `/api/profile/extended?userId=${targetUserId}` : '/api/profile/extended';
+            
+            try {
+                const res = await fetch(url, { credentials: 'include' });
+                const ext = await res.json();
+                
+                // Get the correct user object based on whether it's a public view or owner view
+                const user = targetUserId ? this.publicUser : this.userData;
+                if (!user) return;
+
+                // Generate the header card (DP + Name)
+                let html = `
+                    <div class="card" style="display:flex;align-items:center;gap:1.5rem;padding:1.5rem;background:linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(74, 222, 128, 0.1));">
+                        <img src="${user.avatar_base64 || user.avatar_url || generateAvatarSVG(user.username)}" 
+                             style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:4px solid var(--accent-blue);box-shadow:0 4px 15px rgba(56,189,248,0.3);"
+                             onerror="this.src='${generateAvatarSVG(user.username)}'">
+                        <div>
+                            <h2 style="font-family:'Poppins',sans-serif;font-size:1.6rem;margin-bottom:0.2rem;color:var(--text-primary);">
+                                ${this.escapeHtml(user.display_name || user.username)}
+                            </h2>
+                            <div style="color:var(--text-muted);font-size:0.95rem;margin-bottom:0.5rem;">@${this.escapeHtml(user.username)}</div>
+                            
+                            ${(ext.role || ext.company) ? `
+                                <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(56,189,248,0.15);padding:6px 14px;border-radius:20px;font-weight:600;color:var(--accent-blue);font-size:0.9rem;">
+                                    <i class="fas fa-briefcase"></i> 
+                                    ${this.escapeHtml(ext.role || '')} ${ext.company ? '@ ' + this.escapeHtml(ext.company) : ''}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+
+                const hasAny = ext.role || ext.company || ext.skills || (ext.projects && ext.projects.length) ||
+                               (ext.experience && ext.experience.length) || (ext.certificates && ext.certificates.length) ||
+                               (ext.achievements_list && ext.achievements_list.length);
+
+                // If there are no professional details, just show the header card in public view
+                if (!hasAny) { 
+                    if (targetUserId) container.html(html); 
+                    else container.empty(); 
+                    return; 
+                }
+
+                // Professional Details
+                const hasProfessional = ext.role || ext.company || ext.location || ext.website || ext.skills;
+                if (hasProfessional) {
+                    html += `<div class="card"><h3><i class="fas fa-briefcase"></i> Professional Details</h3><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;">`;
+                    if (ext.role) html += `<div><div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;">Role</div><div style="font-weight:600;margin-top:0.25rem;">${this.escapeHtml(ext.role)}</div></div>`;
+                    if (ext.company) html += `<div><div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;">Company</div><div style="font-weight:600;margin-top:0.25rem;">${this.escapeHtml(ext.company)}</div></div>`;
+                    if (ext.location) html += `<div><div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;">Location</div><div style="font-weight:600;margin-top:0.25rem;">${this.escapeHtml(ext.location)}</div></div>`;
+                    if (ext.website) html += `<div><div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;font-weight:700;">Website</div><div style="margin-top:0.25rem;"><a href="${this.escapeAttr(ext.website)}" target="_blank" style="color:var(--accent-blue);font-weight:600;">${this.escapeHtml(ext.website)}</a></div></div>`;
+                    html += `</div>`;
+                    
+                    if (ext.skills) {
+                        const skills = ext.skills.split(',').map(s => s.trim()).filter(Boolean);
+                        html += `<div style="margin-top:1.25rem;"><div style="font-size:0.75rem;color:var(--text-muted);text-transform:uppercase;font-weight:700;margin-bottom:0.5rem;">Skills</div><div class="skills-tags">${skills.map(s => `<span class="skill-tag">${this.escapeHtml(s)}</span>`).join('')}</div></div>`;
+                    }
+                    html += `</div>`;
+                }
+
+                // Experience
+                if (ext.experience && ext.experience.length) {
+                    html += `<div class="card"><h3><i class="fas fa-history"></i> Experience</h3>`;
+                    ext.experience.forEach(e => {
+                        html += `<div class="display-list-item"><h5>${this.escapeHtml(e.title || '')}${e.company ? ' @ ' + this.escapeHtml(e.company) : ''}</h5>${e.duration ? `<div class="meta"><i class="far fa-calendar"></i> ${this.escapeHtml(e.duration)}</div>` : ''}${e.description ? `<p>${this.escapeHtml(e.description)}</p>` : ''}</div>`;
+                    });
+                    html += `</div>`;
+                }
+
+                // Projects
+                if (ext.projects && ext.projects.length) {
+                    html += `<div class="card"><h3><i class="fas fa-code"></i> Projects</h3>`;
+                    ext.projects.forEach(p => {
+                        html += `<div class="display-list-item"><h5>${this.escapeHtml(p.title || '')}</h5>${p.tech ? `<div class="meta"><i class="fas fa-tools"></i> ${this.escapeHtml(p.tech)}</div>` : ''}${p.description ? `<p>${this.escapeHtml(p.description)}</p>` : ''}${p.url ? `<a href="${this.escapeAttr(p.url)}" target="_blank">View Project →</a>` : ''}</div>`;
+                    });
+                    html += `</div>`;
+                }
+
+                // Certificates
+                if (ext.certificates && ext.certificates.length) {
+                    html += `<div class="card"><h3><i class="fas fa-certificate"></i> Certificates</h3>`;
+                    ext.certificates.forEach(c => {
+                        html += `<div class="display-list-item"><h5>${this.escapeHtml(c.title || '')}</h5>${c.issuer ? `<div class="meta"><i class="fas fa-building"></i> ${this.escapeHtml(c.issuer)}${c.date ? ' • ' + this.escapeHtml(c.date) : ''}</div>` : ''}${c.url ? `<a href="${this.escapeAttr(c.url)}" target="_blank">View Certificate →</a>` : ''}</div>`;
+                    });
+                    html += `</div>`;
+                }
+
+                // Achievements
+                if (ext.achievements_list && ext.achievements_list.length) {
+                    html += `<div class="card"><h3><i class="fas fa-trophy"></i> Achievements</h3>`;
+                    ext.achievements_list.forEach(a => {
+                        html += `<div class="display-list-item"><h5>${this.escapeHtml(a.title || '')}</h5>${a.date ? `<div class="meta"><i class="far fa-calendar"></i> ${this.escapeHtml(a.date)}</div>` : ''}${a.description ? `<p>${this.escapeHtml(a.description)}</p>` : ''}</div>`;
+                    });
+                    html += `</div>`;
+                }
+
+                container.html(html);
+            } catch (e) { console.error(e); }
         }
 
         renderList(containerId, items, type) {
@@ -2344,25 +2478,54 @@
         // ============================================================
         async loadStatsForBadges() {
             try {
-                const [gamification, stats, friends] = await Promise.all([
-                    fetch('/api/gamification/status', { credentials: 'include' }).then(r => r.ok ? r.json() : {}).catch(() => ({})),
-                    fetch('/api/stats', { credentials: 'include' }).then(r => r.ok ? r.json() : {}).catch(() => ({})),
-                    fetch('/api/friends', { credentials: 'include' }).then(r => r.ok ? r.json() : []).catch(() => [])
-                ]);
-                this.userLevel = gamification.level || this.userLevel;
-                this.statsForBadges = {
-                    toolsUsed: stats.toolsUsed || 0,
-                    friendsCount: stats.friendsCount || 0,
-                    level: this.userLevel,
-                    hasPremium: this.premiumStatus.isPremium || this.premiumStatus.hasAnalytics ||
-                                this.premiumStatus.hasPrioritySupport || this.premiumStatus.isFeatured,
-                    joinDate: this.userData.created_at ? new Date(this.userData.created_at) : null
-                };
-                this.statsForBadges.isEarlyBird = this.statsForBadges.joinDate
-                    ? (Date.now() - this.statsForBadges.joinDate) < 30 * 24 * 60 * 60 * 1000
-                    : false;
-                this.renderBadges();
+                const res = await fetch('/api/gamification/status', { credentials: 'include' });
+                const gamification = await res.json();
+                
+                this.userLevel = gamification.level || 1;
+                const achievements = gamification.achievements || [];
+                
+                this.renderRealBadges(achievements);
             } catch (e) { console.error('Badges error:', e); }
+        }
+
+        renderRealBadges(achievements) {
+            const container = document.getElementById('badgesContainer');
+            if (!container) return;
+
+            if (achievements.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-medal"></i>No achievements found.</div>';
+                return;
+            }
+
+            const earned = achievements.filter(b => b.earned).length;
+            
+            let html = `<div style="width:100%;margin-bottom:1.25rem;">
+                <div style="display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;">
+                    <div style="background:rgba(56,189,248,0.12);border:1px solid rgba(56,189,248,0.3);border-radius:18px;padding:8px 20px;text-align:center;">
+                        <div style="font-family:Poppins,sans-serif;font-size:1.5rem;font-weight:800;color:var(--accent-blue);">${earned}</div>
+                        <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Earned</div>
+                    </div>
+                    <div style="background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.3);border-radius:18px;padding:8px 20px;text-align:center;">
+                        <div style="font-family:Poppins,sans-serif;font-size:1.5rem;font-weight:800;color:var(--accent-green);">${achievements.length}</div>
+                        <div style="font-size:0.72rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.8px;">Total</div>
+                    </div>
+                </div>
+            </div>`;
+
+            achievements.forEach(b => {
+                html += `<div class="achievement-badge ${b.earned ? '' : 'locked'}" style="margin-bottom:0.5rem; width:100%;">
+                    <i class="fas ${b.icon || 'fa-medal'}"></i>
+                    <div style="flex:1;">
+                        <div style="font-weight:600; color: ${b.earned ? 'inherit' : 'var(--text-muted)'};">${b.name}</div>
+                        <div style="font-size:0.75rem;opacity:0.8;">${b.description}</div>
+                    </div>
+                    <div style="font-size:0.85rem; font-weight:700; color: ${b.earned ? 'var(--accent-green)' : 'var(--text-muted)'};">
+                        ${b.earned ? '✓' : '+' + b.xpReward + ' XP'}
+                    </div>
+                </div>`;
+            });
+
+            container.innerHTML = html;
         }
 
         renderBadges() {
@@ -3280,7 +3443,46 @@
         // EVENT BINDING
         // ============================================================
         bindEvents() {
-            $('#avatarUpload').off('change').on('change', (e) => this.handleAvatarUpload(e.target.files[0]));
+                    // REPLACE the avatar upload logic in profile.html
+        $('#avatarUpload').on('change', function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            if (file.size > 2 * 1024 * 1024) {
+                return window.profileInstance.showToast('Image must be under 2MB', 'error');
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const base64Image = event.target.result;
+                
+                // Show loading state
+                $('#uploadProgress').addClass('active');
+
+                fetch('/profile/avatar-base64', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ image: base64Image })
+                })
+                .then(res => {
+                    if (!res.ok) throw new Error('Upload failed');
+                    
+                    // Update the UI immediately
+                    $('#avatarPreview').attr('src', base64Image);
+                    window.profileInstance.userData.avatar_base64 = base64Image;
+                    
+                    // Clear cache so it persists on refresh
+                    localStorage.removeItem('nova_profile_data');
+                    localStorage.setItem('nova_avatar_base64_' + window.profileInstance.userData.id, base64Image);
+                    
+                    window.profileInstance.showToast('Avatar updated successfully!', 'success');
+                })
+                .catch(err => window.profileInstance.showToast(err.message, 'error'))
+                .finally(() => $('#uploadProgress').removeClass('active'));
+            };
+            reader.readAsDataURL(file);
+        });
             $('#saveProfileBtn').off('click').on('click', () => this.saveProfile());
             $('#resetAboutBtn').off('click').on('click', () => this.resetAboutForm());
             $('#changePasswordForm').off('submit').on('submit', (e) => this.handlePasswordChange(e));

@@ -1266,10 +1266,7 @@ app.get('/api/user/streak', isAuthenticated, async (req, res) => {
 app.get('/api/profile', isAuthenticated, async (req, res) => {
     try {
         const result = await pool.query(
-            `SELECT id, username, email, role, display_name, 
-                    bio, phone, github, twitter, linkedin,
-                    avatar_url, created_at, updated_at,
-                    email_verified, avatar_style
+            `SELECT id, username, email, role, display_name, bio, phone, github, twitter, linkedin, avatar_url, avatar_base64, created_at, updated_at, email_verified, avatar_style
              FROM users WHERE id = $1`,
             [req.session.userId]
         );
@@ -2684,24 +2681,36 @@ app.post('/api/ai/chat', limiter, isAuthenticated, async (req, res) => {
     // 1. Local prefilter
     const candidates = await prefilterTools(message, 20);
     
-    // Include the page name in the prompt so the AI knows it
     const toolListText = candidates.length
       ? candidates.map((t) => `- ${t.name} (${t.category}) [Page: ${t.sourcePage || 'main.html'}]: ${t.description}`).join('\n')
-      : '(No tools matched.)';
+      : '(No tools matched by keyword search.)';
 
-    // 2. Ask Gemini (Optimized for speed and Top 10)
-    const systemPrompt = `You are the Sarveik AI Assistant. Recommend the TOP 10 most relevant tools from the list below based on the user's request.
-    RULES:
-    - Only recommend tools from the list.
-    - Return a JSON object with: {"reply": string, "recommendedTools": [{"name": string, "reason": string, "page": string}]}
-    - "page" must be the exact [Page: ...] value from the list (e.g., "editing.html").
-    - Return up to 10 tools. If fewer match, return only the ones that do.
-    
-    AVAILABLE TOOLS:
-    ${toolListText}`;
+    // 2. Ask Gemini with a Friendly, Enquiring Persona
+    const systemPrompt = `You are the Sarveik AI Assistant. Your personality is extremely friendly, gentle, polite, and warm. You speak like a helpful human guide.
+
+YOUR GOAL: Help the user find the perfect tool from the list below.
+
+RULES:
+1. If the user's request is vague, broad, or could mean multiple things (e.g., "I want to make a video", "I need help with school"), you MUST ask 1 or 2 polite clarifying questions to understand their specific need. DO NOT recommend tools yet. Keep the conversation flowing gently.
+2. If the user's request is specific (e.g., "I need a tool to remove a background from a photo"), you can confidently recommend up to 10 relevant tools.
+3. Be conversational. Use phrases like "That sounds like a great project!", "I'd love to help you with that.", or "Could you tell me a little more about...".
+4. Only recommend tools from the list provided below. Never make up tools.
+
+OUTPUT FORMAT:
+You must return a JSON object with exactly this structure:
+{
+  "reply": "Your friendly, conversational text here (either your clarifying question or your recommendation summary).",
+  "recommendedTools": [
+    // ONLY include this if you are confident in the recommendation. 
+    // If you are asking a clarifying question, leave this array empty: []
+    // Format: {"name": "Tool Name", "reason": "Why this fits", "page": "page.html"}
+  ]
+}
+
+AVAILABLE TOOLS:
+${toolListText}`;
 
     const history = getAIHistory(req);
-    // Only send the last 6 messages (3 turns) to speed up generation
     const recentHistory = history.slice(-6); 
     
     const messages = [
@@ -2710,18 +2719,17 @@ app.post('/api/ai/chat', limiter, isAuthenticated, async (req, res) => {
       { role: 'user', content: message },
     ];
 
-    // Added timeout and optimized model
     const completion = await aiClient.chat.completions.create({
-      model: 'gemini-3.1-flash-lite', // Switched to Lite for speed
+      model: 'gemini-3.1-flash-lite', 
       messages,
       response_format: { type: 'json_object' },
-      temperature: 0.3,
+      temperature: 0.5, // Increased slightly for a more natural, conversational tone
       max_tokens: 1200,
     });
 
     let aiResponse = JSON.parse(completion.choices[0].message.content);
 
-    // 3. Validate tools and attach internal pages
+    // 3. Validate tools and attach internal pages (if any were recommended)
     if (aiResponse.recommendedTools && Array.isArray(aiResponse.recommendedTools)) {
       aiResponse.recommendedTools = aiResponse.recommendedTools.map(t => {
         const match = candidates.find(c => c.name.toLowerCase() === t.name.toLowerCase());
@@ -2928,32 +2936,28 @@ app.put('/api/profile/update', isAuthenticated, async (req, res) => {
     }
 });
 
-// ==================== AVATAR UPLOAD ====================
-app.post('/api/profile/avatar', isAuthenticated, upload.single('avatar'), async (req, res) => {
-    if (!req.file) return res.status(400).send('No file uploaded');
+// ✅ ADD THIS NEW ROUTE
+app.post('/api/profile/avatar-base64', isAuthenticated, async (req, res) => {
+    const { image } = req.body; 
+    
+    if (!image || !image.startsWith('data:image/')) {
+        return res.status(400).send('Invalid image format');
+    }
+    
+    // Limit size to ~2MB
+    if (image.length > 2.5 * 1024 * 1024) {
+        return res.status(400).send('Image is too large. Max size is 2MB.');
+    }
+
     try {
-        const buffer = fs.readFileSync(req.file.path);
-        const fileType = await fileTypeFromBuffer(buffer);
-        if (!fileType || !['image/jpeg', 'image/png', 'image/gif'].includes(fileType.mime)) {
-            fs.unlinkSync(req.file.path);
-            return res.status(400).send('Invalid image file');
-        }
-        const avatarUrl = '/uploads/avatars/' + req.file.filename;
+        // Save the Base64 string directly into the database
         await pool.query(
-            'UPDATE users SET avatar_url = $1 WHERE id = $2',
-            [avatarUrl, req.session.userId]
+            'UPDATE users SET avatar_base64 = $1, avatar_style = $2 WHERE id = $3',
+            [image, 'uploaded', req.session.userId]
         );
-        
-        // Also update avatar_style to 'uploaded' when user uploads
-        await pool.query(
-            'UPDATE users SET avatar_style = $1 WHERE id = $2',
-            ['uploaded', req.session.userId]
-        );
-        
         res.send('Avatar uploaded successfully');
     } catch (err) {
         console.error(err);
-        if (req.file) fs.unlinkSync(req.file.path);
         res.status(500).send('Server error');
     }
 });
@@ -5079,10 +5083,14 @@ app.get('/api/users/search', isAuthenticated, async (req, res) => {
     if (!query || query.length < 2) return res.json([]);
     try {
         const result = await pool.query(
-            `SELECT id, username, display_name, avatar_url
-             FROM users
-             WHERE (username ILIKE $1 OR display_name ILIKE $1) AND id != $2
-             ORDER BY username LIMIT 10`,
+            `SELECT u.id, u.username, u.display_name, u.avatar_url,
+                    u.github, u.linkedin,
+                    up.role, up.company, up.location, up.skills, up.website,
+                    (SELECT a.icon || ' ' || a.name FROM user_achievements ua JOIN achievements a ON ua.achievement_id = a.id WHERE ua.user_id = u.id ORDER BY a.xp_reward DESC LIMIT 1) as top_badge
+             FROM users u
+             LEFT JOIN user_profiles up ON u.id = up.user_id
+             WHERE (u.username ILIKE $1 OR u.display_name ILIKE $1) AND u.id != $2
+             ORDER BY u.username LIMIT 10`,
             [`%${query}%`, req.session.userId]
         );
         res.json(result.rows);
@@ -5090,6 +5098,37 @@ app.get('/api/users/search', isAuthenticated, async (req, res) => {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
     }
+});
+
+app.get('/api/friends', isAuthenticated, async (req, res) => {
+    try {
+        const uid = req.session.userId, { search, status } = req.query;
+        const params = [uid]; let extra = '';
+        if (search) { params.push(`%${search}%`); extra = ` AND (u.username ILIKE $2 OR u.display_name ILIKE $2)`; }
+        
+        const result = await pool.query(`
+            SELECT u.id, u.username, u.display_name, u.avatar_url, u.status,
+                   u.github, u.linkedin,
+                   up.role, up.company, up.location, up.skills, up.website,
+                   lm.content AS last_message, lm.created_at AS last_message_at,
+                   (SELECT a.icon || ' ' || a.name FROM user_achievements ua JOIN achievements a ON ua.achievement_id = a.id WHERE ua.user_id = u.id ORDER BY a.xp_reward DESC LIMIT 1) as top_badge
+            FROM friendships f
+            JOIN users u ON u.id = CASE WHEN f.user_id = $1 THEN f.friend_id ELSE f.user_id END
+            LEFT JOIN user_profiles up ON u.id = up.user_id
+            LEFT JOIN LATERAL (
+                SELECT content, created_at FROM messages m
+                WHERE (m.sender_id = $1 AND m.receiver_id = u.id) OR (m.sender_id = u.id AND m.receiver_id = $1)
+                ORDER BY created_at DESC LIMIT 1) lm ON true
+            WHERE (f.user_id = $1 OR f.friend_id = $1) AND f.status = 'accepted'${extra}`, params);
+            
+        let rows = result.rows.map(r => ({
+            ...r,
+            status: presenceOf(r.id, r.status),
+            last_active: lastActive.get(r.id) || null
+        }));
+        if (status) rows = rows.filter(r => r.status === status);
+        res.json(rows);
+    } catch (err) { console.error(err); res.status(500).json({ error: 'Server error' }); }
 });
 
 
@@ -5193,6 +5232,38 @@ app.post('/api/profile/toggle-2fa', isAuthenticated, async (req, res) => {
     } catch (err) {
         console.error(err);
         res.status(500).send('Server error');
+    }
+});
+// ==================== EXTENDED PROFILE ROUTES ====================
+app.get('/api/profile/extended', isAuthenticated, async (req, res) => {
+    try {
+        const result = await pool.query('SELECT * FROM user_profiles WHERE user_id = $1', [req.session.userId]);
+        res.json(result.rows[0] || {});
+    } catch (err) {
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+app.put('/api/profile/extended', isAuthenticated, async (req, res) => {
+    const { role, company, location, website, skills, experience, projects, certificates, achievements } = req.body;
+    try {
+        await pool.query(`
+            INSERT INTO user_profiles (user_id, role, company, location, website, skills, experience, projects, certificates, achievements_list, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+            ON CONFLICT (user_id) DO UPDATE SET
+                role = EXCLUDED.role, company = EXCLUDED.company, location = EXCLUDED.location,
+                website = EXCLUDED.website, skills = EXCLUDED.skills, experience = EXCLUDED.experience,
+                projects = EXCLUDED.projects, certificates = EXCLUDED.certificates, 
+                achievements_list = EXCLUDED.achievements_list, updated_at = NOW()
+        `, [
+            req.session.userId, role, company, location, website, skills,
+            JSON.stringify(experience || []), JSON.stringify(projects || []),
+            JSON.stringify(certificates || []), JSON.stringify(achievements || [])
+        ]);
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Failed to save profile' });
     }
 });
 
@@ -6056,6 +6127,27 @@ app.get('/api/csrf-token', (req, res) => {
         await setupChatMediaTable();
         await setupPushTable(); // <-- NEW: Creates all gamification tables and seeds data
         await buildIndex();
+                // Add this inside the try block of your startup IIFE
+                // 1. Add avatar_base64 to users table for DP storage
+        await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_base64 TEXT;`);
+
+        // 2. Create user_profiles table for About section
+        await pool.query(`
+            CREATE TABLE IF NOT EXISTS user_profiles (
+                user_id INT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+                role VARCHAR(255),
+                company VARCHAR(255),
+                location VARCHAR(255),
+                website VARCHAR(255),
+                skills VARCHAR(500),
+                experience JSONB DEFAULT '[]',
+                projects JSONB DEFAULT '[]',
+                certificates JSONB DEFAULT '[]',
+                achievements_list JSONB DEFAULT '[]',
+                updated_at TIMESTAMP DEFAULT NOW()
+            );
+        `);
+        
     } catch (err) {
         console.error('❌ Database connection failed:', err.message);
         process.exit(1);
