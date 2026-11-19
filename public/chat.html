@@ -506,7 +506,7 @@ async function seedActivity(list, type) {
     try {
       const url = type === 'f' ? `/api/messages/${x.id}?offset=0&limit=1` : `/api/groups/${x.id}/messages?offset=0&limit=1`;
       const m = norm((await api(url))[0]);
-      if (m) activity[ckey(type, x.id)] = { t: new Date(m.created_at).getTime(), p: m.fileType ? filePreviewText(m.fileType, m.fileName) : (splitReply(m.content).text || '📎 File'), i: type === 'f' && m.sender_id === x.id ? 1 : 0 };
+      if (m) activity[ckey(type, x.id)] = { t: new Date(m.created_at).getTime(), p: m.fileType ? filePreviewText(m.fileType, m.fileName) : (splitReply(m.content).text || '📎 File'), i: type === 'f' && String(m.sender_id) === String(x.id) ? 1 : 0 };
     } catch (e) {}
   }));
   saveActivity();
@@ -734,7 +734,7 @@ function renderFriends() {
   if (!list.length) { c.innerHTML = '<div class="hint">No friends found</div>'; return; }
   c.innerHTML = list.map(f => convRow('f', f.id,
     `<div class="avatar">${esc(f.username[0].toUpperCase())}${f.online ? '<div class="online-dot"></div>' : ''}</div>`,
-    f.username, f.online ? '● Online' : 'Tap to chat', currentFriendId === f.id && !currentGroupId)).join('');
+    f.username, f.online ? '● Online' : 'Tap to chat', String(currentFriendId) === String(f.id) && !currentGroupId)).join('');
 }
 async function loadGroups() {
   try {
@@ -748,7 +748,7 @@ function renderGroups() {
   if (!groups.length) { c.innerHTML = '<div class="hint">No groups yet. Create one!</div>'; return; }
   c.innerHTML = sortByActivity(groups, 'g').map(g => convRow('g', g.id,
     '<div class="avatar group-av"><i class="fas fa-users"></i></div>',
-    g.name, `${g.member_count} members`, currentGroupId === g.id && !currentFriendId)).join('');
+    g.name, `${g.member_count} members`, String(currentGroupId) === String(g.id) && !currentFriendId)).join('');
 }
 /* one delegated listener per list (no re-binding on every render) */
 $('friendList').addEventListener('click', e => { const el = e.target.closest('.conv-item'); if (el) selectFriend(+el.dataset.id); });
@@ -832,7 +832,7 @@ function resetReply() { replyToId = null; $('replyPreview').classList.remove('vi
 
 async function selectFriend(id) {
   showChatView();
-  if (currentFriendId === id && !currentGroupId) { clearUnread('f', id); renderFriends(); markRead(id); return; }
+  if (String(currentFriendId) === String(id) && !currentGroupId) { clearUnread('f', id); renderFriends(); markRead(id); return; }
   cancelRec(); voiceStop(); newTypingStyle();
   if (currentGroupId) { socket?.emit('leave_group', currentGroupId); currentGroupId = null; }
   currentFriendId = id; resetReply(); hideTyping();
@@ -845,7 +845,7 @@ async function selectFriend(id) {
 }
 async function selectGroup(id) {
   showChatView();
-  if (currentGroupId === id) return;
+  if (String(currentGroupId) === String(id)) return;
   cancelRec(); voiceStop(); newTypingStyle();
   if (currentGroupId) socket?.emit('leave_group', currentGroupId);
   currentGroupId = id; currentFriendId = null; resetReply(); hideTyping();
@@ -942,7 +942,9 @@ function renderFilePreview(msg) {
 }
 function msgHTML(msg) {
   msg = norm(msg);
-  const isMe = msg.sender_id === currentUserId, pending = msg.id < 0;
+  // BUG FIX: Force both to strings to prevent strict equality type mismatch
+  const isMe = String(msg.sender_id) === String(currentUserId);
+  const pending = msg.id < 0;
   const ts = new Date(msg.created_at).getTime();
   const act = (a, ic, t, cls = '') => `<button class="msg-act ${cls}" data-act="${a}" title="${t}"><i class="fas ${ic}"></i></button>`;
   const actions = isMe
@@ -1001,9 +1003,8 @@ async function loadConv(reset = true) {
     if (type !== curType() || id !== curId()) return; // user switched meanwhile
     c.querySelector('.load-more-wrap')?.remove();
     if (type === 'f' && reset) {   // their newest message tells us if they were just active
-      const inc = msgs.filter(m => m.sender_id === id).map(m => new Date(m.created_at).getTime());
-      if (inc.length) { const t = Math.max(...inc); activity[ckey('f', id)] = { ...(activity[ckey('f', id)] || { p: '' }), i: 1, t: Math.max(t, activity[ckey('f', id)]?.t || 0) }; saveActivity(); markActive(id, t); }
-    }
+      const inc = msgs.filter(m => String(m.sender_id) === String(id)).map(m => new Date(m.created_at).getTime());
+      if (inc.length) { const t = Math.max(...inc); activity[ckey('f', id)] = { ...(activity[ckey('f', id)] || { p: '' }), i: 1, t: Math.max(t, activity[ckey('f', id)]?.t || 0) }; saveActivity(); markActive(id, t); } }
     if (!msgs.length && reset) {
       c.innerHTML = `<div class="empty-state"><div class="empty-icon"><i class="fas fa-comment-dots"></i></div><h3>No messages yet</h3><p>${type === 'g' ? 'Be the first!' : 'Say hello!'}</p></div>`;
       hasMore = false; lsSet(mcKey(type, id), []); return;
@@ -1365,374 +1366,195 @@ async function startRec() {
   try { mr = new MediaRecorder(stream, mime ? { mimeType: mime, audioBitsPerSecond: 32000 } : { audioBitsPerSecond: 32000 }); }
   catch (e) { stream.getTracks().forEach(t => t.stop()); return toast('Could not start recording', 'error'); }
   const r = rec = { mr, stream, chunks: [], t0: Date.now(), cancel: false, mime: mr.mimeType || mime || 'audio/webm', timer: null, conv: [curType(), curId()] };
-  mr.ondataavailable = e => { if (e.data && e.data.size) r.chunks.push(e.data); };
-  mr.onstop = () => finishRec(r);
-  mr.start(250);
-  $('recTime').textContent = '0:00'; recUI(true);
+  mr.ondataavailable = e => { if (e.data.size > 0) r.chunks.push(e.data); };
+  mr.onstop = () => {
+    stream.getTracks().forEach(t => t.stop());
+    clearInterval(r.timer);
+    recUI(false);
+    if (r.cancel) return;
+    const dur = Math.min(MAX_VOICE_SEC, Math.round((Date.now() - r.t0) / 1000));
+    if (dur < 1) return toast('Message too short', 'info');
+    const blob = new Blob(r.chunks, { type: r.mime });
+    if (blob.size > MAX_FILE) return toast('Voice message too large', 'error');
+    const ext = r.mime.includes('mp4') ? 'm4a' : r.mime.includes('ogg') ? 'ogg' : 'webm';
+    const name = `Voice_${dur}s.${ext}`;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try { sendFileMessage(reader.result, r.mime, name, blob.size, URL.createObjectURL(blob), { len: reader.result.length, tries: 99, conv: r.conv }); }
+      catch (e) { toast(e.message, 'error'); }
+    };
+    reader.readAsDataURL(blob);
+  };
+  mr.start(100);
+  recUI(true);
+  $('recTime').textContent = '0:00';
   r.timer = setInterval(() => {
-    const s = (Date.now() - r.t0) / 1000;
-    $('recTime').textContent = fmtDur(s);
-    if (s >= MAX_VOICE_SEC) stopRec(false);
+    const sec = Math.round((Date.now() - r.t0) / 1000);
+    $('recTime').textContent = fmtDur(sec);
+    if (sec >= MAX_VOICE_SEC) stopRec();
   }, 200);
-  try { navigator.vibrate?.(15); } catch (e) {}
 }
-function stopRec(cancel) {
+function stopRec(cancel = false) {
   if (!rec) return;
-  rec.cancel = !!cancel;
-  clearInterval(rec.timer);
-  try { if (rec.mr.state !== 'inactive') rec.mr.stop(); else finishRec(rec); } catch (e) { finishRec(rec); }
+  rec.cancel = cancel;
+  try { rec.mr.stop(); } catch (e) { rec = null; recUI(false); }
 }
 function cancelRec() { if (rec) stopRec(true); }
-async function finishRec(r) {
-  if (rec === r) rec = null;
-  clearInterval(r.timer);
-  try { r.stream.getTracks().forEach(t => t.stop()); } catch (e) {}
-  recUI(false);
-  const secs = Math.round((Date.now() - r.t0) / 1000);
-  if (r.cancel) return;
-  if (secs < 1 || !r.chunks.length) return toast('Hold on a little longer – message too short', 'info');
-  if (curType() !== r.conv[0] || curId() !== r.conv[1]) return toast('Voice message discarded (conversation changed)', 'info');
-  try {
-    const base = (r.mime || 'audio/webm').split(';')[0];
-    const blob = new Blob(r.chunks, { type: base });
-    if (blob.size > MAX_FILE) return toast('Voice message too large', 'error');
-    const dataUrl = await readAsDataURL(blob);
-    const ext = base.includes('mp4') ? 'm4a' : base.includes('ogg') ? 'ogg' : 'webm';
-    sendFileMessage(dataUrl, base, `voice_${secs}s.${ext}`, blob.size, URL.createObjectURL(blob), { len: dataUrl.length, tries: 99, conv: r.conv });
-  } catch (err) { toast(err.message || 'Could not send voice message', 'error'); }
-}
-$('micBtn').addEventListener('click', () => { rec ? stopRec(false) : startRec(); });
-$('recCancel').addEventListener('click', () => cancelRec());
+
+$('micBtn').addEventListener('click', startRec);
+$('recCancel').addEventListener('click', () => stopRec(true));
 $('recSend').addEventListener('click', () => stopRec(false));
 
-/* ============ EMOJI ============ */
-const emojis = ['😀','😃','😄','😁','😅','😂','🤣','😊','😇','🙂','😉','😍','🥰','😘','😋','😜','🤪','🧐','🤓','😎','🤩','🥳','😏','😒','😔','😟','😫','🥺','😢','😭','😤','😠','😡','🤯','😳','😱','😰','🤗','🤔','🤫','😶','😬','🙄','😴','🤒','🤑','🤠','💀','👻','💩','💋','❤️','🧡','💛','💚','💙','💜','🖤','💯','💥','💫','👋','✋','👌','✌️','🤞','👍','👎','👏','🙌','🙏','💪','👀','🎉','🎊','🎈','🎁','🏆','⭐','🌟','✨','🌈','🌙','☀️','⚡','❄️','🔥','💧','🌊','🎶','🎵','🎸','🎤','🎧','🎮','🎯','🚀','🌍','🌺','🌸','🌹','🌻','🍕','🍔','🍟','🌮','🍜','🍣','🍰','🎂','☕','🍺','🥂','💖','🎀','🧸'];
+/* ============ EMOJI PICKER ============ */
+const EMOJIS = ['😀','😃','😄','😁','😆','😅','😂','🤣','😊','😇','🙂','🙃','😉','😌','😍','🥰','😘','😗','😙','😚','😋','😛','😝','😜','🤪','🤨','🧐','🤓','😎','🤩','🥳','😏','😒','😞','😔','😟','😕','🙁','☹️','😣','😖','😫','😩','🥺','😢','😭','😤','😠','😡','🤬','🤯','😳','🥵','🥶','😱','😨','😰','😥','😓','🤗','🤔','🤭','🤫','🤥','😶','😐','😑','😬','🙄','😯','😦','😧','😮','😲','🥱','😴','🤤','😪','😵','🤐','🥴','🤢','🤮','🤧','😷','🤒','🤕','🤑','🤠','😈','👿','👹','👺','🤡','💩','👻','💀','☠️','👽','👾','🤖','🎃','😺','😸','😹','😻','😼','😽','🙀','😿','😾','👋','🤚','🖐','✋','🖖','👌','🤏','✌️','🤞','🤟','🤘','🤙','👈','👉','👆','🖕','👇','☝️','👍','👎','✊','👊','🤛','🤜','👏','🙌','👐','🤲','🤝','🙏','✍️','💅','🤳','💪','🦾','🦿','🦵','🦶','👂','🦻','👃','🧠','🦷','🦴','👀','👁','👅','👄','💋','🩸'];
+let emojiEl = null;
 $('emojiBtn').addEventListener('click', e => {
   e.stopPropagation();
-  const old = $('emojiPicker'); if (old) return old.remove();
-  const picker = document.createElement('div'); picker.id = 'emojiPicker'; picker.className = 'emoji-picker';
-  const r = e.currentTarget.getBoundingClientRect(), vh = window.visualViewport ? visualViewport.height : innerHeight;
-  picker.style.bottom = `${vh - r.top + 6}px`;
-  if (innerWidth < 520) { picker.style.left = '8px'; picker.style.right = '8px'; picker.style.minWidth = '0'; picker.style.gridTemplateColumns = 'repeat(8,1fr)'; }
-  else picker.style.left = `${Math.max(8, Math.min(r.left, innerWidth - 260))}px`;
-  emojis.forEach(em => {
-    const b = document.createElement('button'); b.className = 'emoji-btn'; b.textContent = em;
-    b.addEventListener('click', () => { const ta = $('msgInput'); ta.value += em; updateChar(); autoGrow(); picker.remove(); });
-    picker.appendChild(b);
+  if (emojiEl) { emojiEl.remove(); emojiEl = null; return; }
+  emojiEl = document.createElement('div');
+  emojiEl.className = 'emoji-picker';
+  emojiEl.innerHTML = EMOJIS.map(em => `<button class="emoji-btn">${em}</button>`).join('');
+  const rect = $('emojiBtn').getBoundingClientRect();
+  emojiEl.style.left = Math.min(rect.left, window.innerWidth - 260) + 'px';
+  emojiEl.style.bottom = (window.innerHeight - rect.top + 8) + 'px';
+  document.body.appendChild(emojiEl);
+  emojiEl.addEventListener('click', e => {
+    if (e.target.classList.contains('emoji-btn')) {
+      $('msgInput').value += e.target.textContent;
+      $('msgInput').focus(); updateChar();
+    }
   });
-  document.body.appendChild(picker);
-  setTimeout(() => document.addEventListener('click', function close(ev) {
-    if (!picker.contains(ev.target)) { picker.remove(); document.removeEventListener('click', close); }
-  }), 50);
 });
+document.addEventListener('click', e => { if (emojiEl && !emojiEl.contains(e.target) && e.target !== $('emojiBtn')) { emojiEl.remove(); emojiEl = null; } });
 
-/* ============ SEARCH MESSAGES ============ */
-$('searchMsgBtn').addEventListener('click', () => { $('searchModal').classList.add('open'); $('searchMsgInput').value = ''; $('searchResults').innerHTML = ''; $('searchMsgInput').focus(); });
+/* ============ SEARCH ============ */
+$('searchMsgBtn').addEventListener('click', () => { $('searchModal').classList.add('open'); $('searchMsgInput').focus(); });
+$('searchMsgInput').addEventListener('input', async e => {
+  const q = e.target.value.trim(); if (q.length < 2) { $('searchResults').innerHTML = ''; return; }
+  const msgs = [...document.querySelectorAll('.msg')];
+  const hits = msgs.filter(m => (m.querySelector('.msg-text')?.textContent || '').toLowerCase().includes(q.toLowerCase()));
+  if (!hits.length) { $('searchResults').innerHTML = '<div class="hint">No matches</div>'; return; }
+  $('searchResults').innerHTML = hits.map(m => `<div class="conv-item" style="margin:4px 0" onclick="document.querySelector('.msg[data-id=\\'${m.dataset.id}\\']').scrollIntoView({block:'center'});$('searchModal').classList.remove('open')"><div class="conv-sub">${esc((m.querySelector('.msg-text')?.textContent || '').slice(0, 60))}</div></div>`).join('');
+});
 $('clearSearchBtn').addEventListener('click', () => { $('searchMsgInput').value = ''; $('searchResults').innerHTML = ''; });
-$('searchMsgInput').addEventListener('input', function () {
-  const term = this.value.trim().toLowerCase(), res = $('searchResults');
-  if (!term) { res.innerHTML = ''; return; }
-  const hits = [...document.querySelectorAll('.msg[data-id]')].filter(el => (el.querySelector('.msg-text')?.textContent || '').toLowerCase().includes(term));
-  res.innerHTML = hits.length
-    ? `<div style="margin-bottom:6px;color:var(--text2);font-size:.7rem">Found ${hits.length} messages</div>` + hits.map(el => {
-        const t = el.querySelector('.msg-text').textContent.trim();
-        return `<div class="search-hit" data-id="${el.dataset.id}" style="padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer">${esc(t.length > 60 ? t.slice(0, 60) + '…' : t)}</div>`;
-      }).join('')
-    : '<div style="color:var(--text3)">No messages found</div>';
-});
-$('searchResults').addEventListener('click', e => {
-  const h = e.target.closest('.search-hit'); if (!h) return;
-  document.querySelector(`.msg[data-id="${h.dataset.id}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  $('searchModal').classList.remove('open');
-});
-
-/* ============ READ RECEIPTS (gray ✓ = sent, green ✓✓ = seen by the other person) ============ */
-const seenCut = lsGet('nc_seen', {});   // friendId -> time up to which that friend has read my messages
-const viewingChat = () => !document.hidden && (!isMobile() || $('app').classList.contains('in-chat'));
-
-/* 0 = not seen, -1 = seen (time unknown), >0 = time it was seen. Private chats only. */
-function seenTs(m) {
-  if (curType() !== 'f') return 0;
-  const v = m.read_at || m.seen_at || m.readAt || m.seenAt;
-  if (v) return new Date(v).getTime() || -1;
-  if (m.is_read === true || m.is_read === 1 || m.is_read === '1' || m.read === true || m.read === 1 || m.seen === true || m.seen === 1 || m.is_seen === true || m.is_seen === 1) return -1;
-  const cut = seenCut[currentFriendId];
-  if (cut && new Date(m.created_at).getTime() <= cut) return cut;
-  return 0;
-}
-/* Live wording – refreshed every 2 seconds */
-function seenText(t) {
-  if (!t || t < 0) return 'Seen';
-  const s = Math.max(0, Math.floor((Date.now() - t) / 1000));
-  if (s < 5) return 'Seen just now';
-  if (s < 60) return `Seen ${s}s ago`;
-  const m = Math.floor(s / 60);
-  if (m < 60) return m === 1 ? 'Seen 1 minute ago' : `Seen ${m} minutes ago`;
-  const h = Math.floor(m / 60);
-  return h === 1 ? 'Seen 1 hour ago' : `Seen ${h} hours ago`;
-}
-function markSeen(el, t) {
-  if (el.dataset.seen) return;
-  el.dataset.seen = '1'; el.dataset.seenAt = t > 0 ? t : 0;
-  const s = el.querySelector('.msg-status'); if (s) s.innerHTML = '<i class="fas fa-check-double"></i>';
-  scheduleSeenLabel();
-}
-/* The "Seen …" label sits under the LAST message of mine that has been seen, in this chat only */
-function updateSeenLabel() {
-  document.querySelectorAll('.seen-label').forEach(x => x.remove());
-  if (curType() !== 'f') return;
-  const seen = document.querySelectorAll('.msg.out[data-seen="1"]');
-  const last = seen[seen.length - 1]; if (!last) return;
-  const meta = last.querySelector('.msg-meta'); if (!meta) return;
-  const l = document.createElement('span');
-  l.className = 'seen-label'; l.dataset.t = last.dataset.seenAt || 0; l.textContent = seenText(+l.dataset.t);
-  meta.appendChild(l);
-}
-let slRaf = 0;
-function scheduleSeenLabel() { cancelAnimationFrame(slRaf); slRaf = requestAnimationFrame(updateSeenLabel); }
-new MutationObserver(scheduleSeenLabel).observe($('messagesArea'), { childList: true });   // new chat / new message → refresh label
-setInterval(() => { const l = document.querySelector('.seen-label'); if (l) l.textContent = seenText(+l.dataset.t); }, SEEN_REFRESH);   // updates every 2 seconds
-
-/* Friend read everything I sent up to time `at` */
-function applySeen(fid, at) {
-  const t = at || Date.now();
-  seenCut[fid] = Math.max(seenCut[fid] || 0, t); lsSet('nc_seen', seenCut);
-  markActive(fid);                                  // they are in the chat right now
-  if (currentFriendId !== fid || currentGroupId) return;
-  document.querySelectorAll('.msg.out:not([data-seen]):not(.sending)').forEach(el => {
-    if (+el.dataset.id > 0 && +el.dataset.timestamp <= t) markSeen(el, t);
-  });
-}
-/* Fallback if the server only stores is_read / read_at (no live event): re-check my unseen messages every 2 seconds */
-let pollBusy = false;
-async function pollSeen() {
-  if (pollBusy || document.hidden || curType() !== 'f') return;
-  const unseen = [...document.querySelectorAll('.msg.out:not([data-seen]):not(.sending)')].filter(e => +e.dataset.id > 0);
-  if (!unseen.length) return;
-  const fid = currentFriendId;
-  pollBusy = true;
-  try {
-    const msgs = await api(`/api/messages/${fid}?offset=0&limit=${MSG_LIMIT}`);
-    if (fid !== currentFriendId || currentGroupId) return;
-    msgs.forEach(m => {
-      if (m.sender_id !== currentUserId) return;
-      const el = document.querySelector(`.msg[data-id="${m.id}"]`); if (!el || el.dataset.seen) return;
-      const t = seenTs(m); if (t) markSeen(el, t > 0 ? t : Date.now());
-    });
-  } catch (e) {} finally { pollBusy = false; }
-}
-setInterval(pollSeen, SEEN_REFRESH);
-
-/* ============ TYPING ANIMATIONS ============ */
-const TYPING_KEYS = ['bounce', 'wave', 'pulse', 'pen', 'letters'];
-const TYPING_HTML = {
-  bounce: '<span>Typing</span><div class="typing-dots"><span></span><span></span><span></span></div>',
-  wave: '<span>Typing</span><div class="tp-wave"><i></i><i></i><i></i><i></i><i></i></div>',
-  pulse: '<span>Typing</span><div class="tp-pulse"><span></span><span></span><span></span></div>',
-  pen: '<div class="tp-pen"><i class="fas fa-pen-nib"></i><b></b></div><span>Writing…</span>',
-  letters: '<div class="tp-letters">' + [...'typing...'].map((c, i) => `<span style="--i:${i}">${c}</span>`).join('') + '</div>'
-};
-let typingStyle = localStorage.getItem('nc_typing') || 'random', typingKill = 0;
-/* "Change every message": every NEW message gets a different animation (a shuffled cycle – never the same one twice in a row).
-   The animation is kept while that same message is still being typed (pauses don't change it) and is reset when the message arrives. */
-let typingMsgKey = null, typingQueue = [], lastTypingKey = '';
-function nextTypingKey() {
-  if (!typingQueue.length) {
-    typingQueue = [...TYPING_KEYS].sort(() => Math.random() - 0.5);
-    if (typingQueue[0] === lastTypingKey) typingQueue.push(typingQueue.shift());
-  }
-  return (lastTypingKey = typingQueue.shift());
-}
-const newTypingStyle = () => { typingMsgKey = null; };
-$('typingSelect').value = TYPING_KEYS.includes(typingStyle) ? typingStyle : 'random';
-$('typingSelect').addEventListener('change', e => {
-  typingStyle = e.target.value; localStorage.setItem('nc_typing', typingStyle);
-  if (curType() && !typingEl) { newTypingStyle(); showTyping(); setTimeout(() => { if (typingEl && !typingEl.dataset.live) { hideTyping(); newTypingStyle(); } }, 2500); }   // quick preview
-  else toast('Typing animation updated', 'info');
-});
-function showTyping(live) {
-  if (typingEl && typingEl.isConnected) { if (live) { typingEl.dataset.live = '1'; clearTimeout(typingKill); typingKill = setTimeout(hideTyping, 5000); } return; }
-  const key = (typingStyle !== 'random' && TYPING_HTML[typingStyle]) ? typingStyle : (typingMsgKey = typingMsgKey || nextTypingKey());
-  const c = $('messagesArea');
-  typingEl = document.createElement('div'); typingEl.className = 'typing-indicator';
-  if (live) typingEl.dataset.live = '1';
-  typingEl.innerHTML = TYPING_HTML[key];
-  c.appendChild(typingEl); c.scrollTop = c.scrollHeight;
-  clearTimeout(typingKill); if (live) typingKill = setTimeout(hideTyping, 5000);   // safety: "stopped typing" event may get lost
-  renderStatusLine();
-}
-function hideTyping() {
-  clearTimeout(typingKill);
-  if (typingEl) { typingEl.remove(); typingEl = null; if (currentFriendId && !currentGroupId) renderStatusLine(); }
-}
 
 /* ============ SOCKET ============ */
-let firstConnect = true;
+let newTypingStyle = () => {}; // placeholder overwritten by style picker
+let hideTyping = () => {};
 function initSocket() {
-  socket = io({ withCredentials: true, reconnectionDelay: 500, reconnectionDelayMax: 4000 });
+  socket = io({ withCredentials: true });
   socket.on('connect', () => {
-    $('connPulse').className = 'pulse'; $('connLabel').textContent = 'Connected';
+    $('connPulse').classList.remove('off');
+    $('connLabel').textContent = 'Connected';
+    flushRetries();
     if (currentGroupId) socket.emit('join_group', currentGroupId);
-    if (!firstConnect) { loadConv(true); loadFriends(); }   // catch up on anything missed while the phone slept
-    firstConnect = false;
-    setTimeout(flushRetries, 400);                          // resend any photo the server dropped for being too big
   });
   socket.on('disconnect', () => {
-    $('connPulse').className = 'pulse off'; $('connLabel').textContent = 'Reconnecting…';
-    /* Socket.IO drops the connection when a message is bigger than the server's limit (maxHttpBufferSize) → that upload never arrived */
-    if (pendingMedia.size) {
-      const jobs = [];
-      pendingMedia.forEach(id => { const j = mediaJobs[id]; if (j) jobs.push(j); delete mediaJobs[id]; document.querySelector(`.msg[data-temp="${id}"]`)?.remove(); });
-      pendingMedia.clear();
-      const again = jobs.filter(j => j.file && j.tries < 4);
-      if (again.length) {
-        const biggest = Math.max(...again.map(j => j.len));
-        if (biggest > 900 * 1024) {                          // too big for the server → learn a smaller limit and remember it
-          payloadLimit = Math.max(80 * 1024, Math.floor(Math.min(...again.map(j => j.len)) * 0.5));
-          lsSet('nc_payload', payloadLimit);
-        }
-        retryQueue.push(...again);
-        toast(`Server refused a big upload – resending the photo smaller (limit now ~${fmtSize(payloadLimit)})…`, 'info');
-      } else if (jobs.length) {
-        toast('File not sent – the connection dropped while uploading. If it keeps happening, the server message limit (maxHttpBufferSize) is smaller than the file.', 'error');
-      }
+    $('connPulse').classList.add('off');
+    $('connLabel').textContent = 'Reconnecting…';
+  });
+  socket.on('private_message', data => {
+    // If I sent it from another tab/device
+    if (String(data.from) === String(currentUserId)) {
+      touch('f', data.to, 'You: ' + (data.message || data.content || ''), new Date(data.timestamp).getTime(), false);
+      if (String(currentFriendId) === String(data.to)) appendMsg(data);
+      return;
+    }
+    // Message from friend
+    const ts = new Date(data.timestamp).getTime();
+    markActive(data.from, ts);
+    if (String(currentFriendId) === String(data.from) && !document.hidden) {
+      appendMsg(data);
+      markRead(data.from);
+      touch('f', data.from, data.message || data.content || '', ts, true);
+    } else {
+      addUnread('f', data.from);
+      touch('f', data.from, data.message || data.content || '', ts, true);
+      flashRow('f', data.from);
+      notify(data.fromUsername || 'New Message', data.message || data.content || filePreviewText(data.fileType, data.fileName), () => selectFriend(+data.from), { friendId: data.from });
     }
   });
-
-  socket.on('private_message', msg => {
-    if (msg.from === currentUserId) return;
-    newTypingStyle();                                       // next message from them gets a fresh typing animation
-    const nm = norm(msg);
-    const text = nm.fileType ? filePreviewText(nm.fileType, nm.fileName) : (splitReply(msg.message).text || '📎 File');
-    const isCurrent = currentFriendId === msg.from && !currentGroupId;
-    touch('f', msg.from, text, null, true);
-    markActive(msg.from);                                   // they just messaged → online
-    flashRow('f', msg.from);
-    if (isCurrent) {
-      appendMsg({ id: msg.id || Date.now(), sender_id: msg.from, content: msg.message || '', created_at: msg.timestamp || new Date().toISOString(),
-        is_boosted: false, fileData: nm.fileData, fileType: nm.fileType, fileName: nm.fileName, fileSize: nm.fileSize || 0,
-        replyTo: msg.replyTo || msg.reply_to || null, reply_content: msg.replyContent });
-      if (viewingChat()) markRead(msg.from);
-    }
-    const hidden = document.hidden || !$('app').classList.contains('in-chat') && isMobile();
-    if (!isCurrent || document.hidden || hidden) {
-      addUnread('f', msg.from); renderFriends();
-      const f = friends.find(x => x.id === msg.from);
-      notify(f?.username || 'New message', text.slice(0, 80), () => { $('tabFriends').click(); selectFriend(msg.from); }, { friendId: msg.from });
-      if (!f) loadFriends();
-    }
-    if (msg.tempId && msg.realMessage) replaceTempMsg(msg.tempId, msg.realMessage);
-  });
-
   socket.on('group_message', data => {
-    const nd = norm(data);
-    const text = nd.fileType ? filePreviewText(nd.fileType, nd.fileName) : (splitReply(data.message).text || '📎 File');
-    const mine = data.from === currentUserId;
-    const isCurrent = data.groupId === currentGroupId;
-    if (!mine) { touch('g', data.groupId, text); flashRow('g', data.groupId); }
-    if (isCurrent && !mine) {
-      appendMsg({ id: data.id || Date.now(), sender_id: data.from, content: data.message || '', created_at: data.timestamp || new Date().toISOString(),
-        is_boosted: false, fileData: nd.fileData, fileType: nd.fileType, fileName: nd.fileName, fileSize: nd.fileSize || 0,
-        replyTo: data.replyTo || data.reply_to || null, reply_content: data.replyContent });
+    const ts = new Date(data.timestamp).getTime();
+    if (String(currentGroupId) === String(data.groupId) && !document.hidden) {
+      appendMsg(data);
+      touch('g', data.groupId, `${data.fromName || 'Someone'}: ${data.message || data.content || ''}`, ts, true);
+    } else {
+      addUnread('g', data.groupId);
+      touch('g', data.groupId, `${data.fromName || 'Someone'}: ${data.message || data.content || ''}`, ts, true);
+      flashRow('g', data.groupId);
+      notify(data.groupName || 'New Group Message', `${data.fromName}: ${data.message || data.content || 'Media'}`, () => selectGroup(+data.groupId), { groupId: data.groupId });
     }
-    if (!mine && (!isCurrent || document.hidden || (isMobile() && !$('app').classList.contains('in-chat')))) {
-      addUnread('g', data.groupId); renderGroups();
-      const g = groups.find(x => x.id === data.groupId);
-      notify(g ? g.name : 'New group message', text.slice(0, 80), () => { $('tabGroups').click(); selectGroup(data.groupId); }, { groupId: data.groupId });
-      if (!g) loadGroups();
+  });
+  socket.on('typing', data => {
+    if (String(currentFriendId) !== String(data.from)) return;
+    if (data.isTyping) {
+      if (!typingEl) {
+        typingEl = document.createElement('div');
+        typingEl.className = 'typing-indicator';
+        typingEl.innerHTML = `<div class="typing-dots"><span></span><span></span><span></span></div> <span>typing…</span>`;
+        $('messagesArea').appendChild(typingEl);
+      }
+      renderStatusLine();
+    } else {
+      hideTyping();
+      renderStatusLine();
     }
-    if (data.tempId && data.realMessage) replaceTempMsg(data.tempId, data.realMessage);
   });
-
-  socket.on('message_confirmed', d => { if (d.tempId && d.realMessage) replaceTempMsg(d.tempId, d.realMessage); });
-
-  // the other person opened the chat and read my messages (server emits one of these names)
-  ['messages_read', 'message_read', 'read_receipt', 'messages_seen'].forEach(ev => socket.on(ev, d => {
-    if (d === null || typeof d !== 'object') d = { by: d };
-    const fid = +(d.by ?? d.from ?? d.reader ?? d.readerId ?? d.userId ?? d.friendId);
-    if (!fid) return;
-    const at = d.readAt || d.read_at || d.seenAt || d.seen_at || d.timestamp;
-    applySeen(fid, at ? (new Date(at).getTime() || Date.now()) : Date.now());
-  }));
-
-  /* Presence is based on chat activity only. The server's "online" is ignored; an explicit "offline" is respected. */
-  socket.on('user_status', d => {
-    if (d && d.status !== 'online' && d.userId) { offlineCut[d.userId] = Date.now(); presence[d.userId] = 0; syncPresence(); }
+  socket.on('message_confirmed', data => {
+    const el = document.querySelector(`.msg[data-temp="${data.tempId}"]`);
+    if (el) {
+      el.dataset.id = data.realMessage.id;
+      el.classList.remove('sending');
+      el.querySelector('.msg-status').innerHTML = '<i class="fas fa-check"></i>';
+    }
   });
-  socket.on('typing', d => {
-    if (d && d.from && d.isTyping) markActive(d.from);       // typing = active
-    if (currentFriendId === d.from && !currentGroupId && d.isTyping) showTyping(true); else if (currentFriendId === d.from) hideTyping();
+  socket.on('message_failed', data => {
+    const el = document.querySelector(`.msg[data-temp="${data.tempId}"]`);
+    if (el) el.querySelector('.msg-status').innerHTML = '<i class="fas fa-exclamation-circle" style="color:var(--red)"></i>';
+    toast(data.reason || 'Message failed to send', 'error');
   });
-  socket.on('friend_request_notification', d => {
-    notify('New friend request', `${d.fromUsername || 'Someone'} wants to connect`, () => $('tabRequests').click());
-    loadRequests(); loadFriends();
-  });
-  socket.on('connection_accepted', d => { notify('Request accepted', `${d.fromUsername} is now your friend 🎉`); loadFriends(); loadRequests(); });
-  socket.on('level_up', d => { notify('Level up! 🎉', `You reached level ${d.newLevel}`); fetchStats(); });
-  socket.on('achievement_unlocked', d => { notify('Achievement 🏆', `${d.name} (+${d.xp} XP)`); fetchStats(); });
-  socket.on('quest_ready', d => notify('Quest ready 📋', (d.action || '').replace('_', ' ')));
 }
-/* Swap the temporary bubble for the server's copy – and keep the quoted reply + media even if the server doesn't echo them */
-function replaceTempMsg(tempId, real) {
-  pendingMedia.delete(tempId);
-  const job = mediaJobs[tempId]; delete mediaJobs[tempId];
-  const el = document.querySelector(`.msg[data-temp="${tempId}"]`); if (!el) return;
-  const ri = el.querySelector('.reply-indicator');
-  const prev = ri ? { id: ri.dataset.rid, content: ri.querySelector('.ri-text')?.textContent || 'media' } : null;
-  const oldPhoto = el.querySelector('.msg-file.photo');
-  const oldVoice = el.querySelector('.voice');
-  const tmp = document.createElement('div');
-  const n = norm(real);
-  const rm = { id: real.id || real._id || Date.now(), sender_id: real.sender_id || currentUserId, content: real.content || '',
-    created_at: real.created_at || new Date().toISOString(), is_boosted: real.is_boosted || false,
-    fileData: n.fileData, fileType: n.fileType, fileName: n.fileName, fileSize: n.fileSize || 0,
-    replyTo: real.replyTo ?? real.reply_to ?? null };
-  if (!rm.fileData && (oldPhoto || oldVoice)) {          // server did not echo the media → keep what we already show
-    if (job) toast('Heads-up: the server confirmed your message without the photo/voice data. If your friend only sees the file name, the server is not forwarding fileData.', 'info');
-    rm.fileData = oldPhoto ? oldPhoto.dataset.open : oldVoice.dataset.src;
-    rm.fileType = rm.fileType || (oldPhoto ? 'image/jpeg' : 'audio/webm');
-    rm.fileName = rm.fileName || (oldPhoto ? oldPhoto.dataset.name : '');
-  }
-  if (replyInfo(rm) === null && prev) { rm.replyTo = prev; }
-  tmp.innerHTML = msgHTML(rm);
-  if (tmp.firstElementChild) el.replaceWith(tmp.firstElementChild);
-}
+hideTyping = () => { if (typingEl) { typingEl.remove(); typingEl = null; } renderStatusLine(); };
 
-/* ============ NAV ============ */
-$('homeBtn').addEventListener('click', () => location.href = '/main.html');
+/* Typing animation picker */
+const TYPING_STYLES = ['bounce', 'wave', 'pulse', 'pen', 'letters'];
+let typingStyle = localStorage.getItem('nc_typing') || 'random';
+$('typingSelect').value = typingStyle;
+$('typingSelect').addEventListener('change', e => { typingStyle = e.target.value; localStorage.setItem('nc_typing', typingStyle); newTypingStyle(); });
+newTypingStyle = () => {
+  const style = typingStyle === 'random' ? TYPING_STYLES[Math.floor(Math.random() * TYPING_STYLES.length)] : typingStyle;
+  let inner = '';
+  if (style === 'bounce') inner = `<div class="typing-dots"><span></span><span></span><span></span></div>`;
+  if (style === 'wave') inner = `<div class="tp-wave"><i></i><i></i><i></i><i></i><i></i></div>`;
+  if (style === 'pulse') inner = `<div class="tp-pulse"><span></span><span></span><span></span></div>`;
+  if (style === 'pen') inner = `<div class="tp-pen"><i class="fas fa-pen"></i><b></b></div>`;
+  if (style === 'letters') inner = `<div class="tp-letters"><span style="--i:0">T</span><span style="--i:1">y</span><span style="--i:2">p</span><span style="--i:3">i</span><span style="--i:4">n</span><span style="--i:5">g</span><span style="--i:6">.</span><span style="--i:7">.</span><span style="--i:7">.</span></div>`;
+  // Use inner HTML for future typing elements
+};
+
+/* ============ EVENT LISTENERS / INIT ============ */
+$('homeBtn').addEventListener('click', () => location.href = 'dashboard.html');
+$('profileBtn').addEventListener('click', () => location.href = 'profile.html');
+$('logoutBtn').addEventListener('click', async () => {
+  if (!confirm('Logout?')) return;
+  await api('/logout', { method: 'POST' });
+  wipeLocal();
+  location.href = '/';
+});
 $('clearBtn').addEventListener('click', clearChat);
-$('profileBtn').addEventListener('click', () => location.href = '/profile.html');
-$('logoutBtn').addEventListener('click', async () => { if (confirm('Log out?')) { await api('/logout', { method: 'POST' }); wipeLocal(); navigator.serviceWorker?.controller?.postMessage({ type: 'logout' }); location.href = '/'; } });
-$('creditsChip').addEventListener('click', () => { fetchStats(); toast('Refreshed!', 'info'); });
-$('xpChip').addEventListener('click', () => { fetchStats(); toast('Refreshed!', 'info'); });
 
-/* ============ INIT: paint from cache instantly, refresh everything in parallel ============ */
-setInterval(() => { if (currentUserId && !document.hidden) fetchStats(); }, 30000);
-function boot() {
-  // 1) instant paint from last visit
-  friends = lsGet('nc_friends', []).map(f => ({ ...f, online: isOnline(f.id) })); groups = lsGet('nc_groups', []);
-  const st = lsGet('nc_stats', null); if (st) { $('creditsAmt').textContent = st.credits; $('userLvl').textContent = st.level; }
-  if (friends.length) renderFriends(); if (groups.length) renderGroups();
-  // 2) everything else at the same time (nothing waits for anything else)
-  startSocket();
-  const lists = Promise.all([loadFriends(), loadGroups(), loadRequests()]);
-  checkAuth().then(async ok => {
-    if (!ok) return;
-    fetchStats();
-    await lists;
-    const p = new URLSearchParams(location.search), fi = p.get('friend'), gi = p.get('group');
-    if (fi && !isNaN(+fi)) selectFriend(+fi); else if (gi && !isNaN(+gi)) { $('tabGroups').click(); selectGroup(+gi); }
-  });
-  // 3) push setup last, in the background
-  (window.requestIdleCallback || (f => setTimeout(f, 800)))(initPush);
-}
-/* socket.io.js loads deferred; the app must NOT wait for it (lists, chats and cache all work without it) */
-function startSocket(n = 0) {
-  if (window.io) return initSocket();
-  if (n < 200) setTimeout(() => startSocket(n + 1), 50);
-  else toast('Live connection unavailable – check your network', 'error');
-}
-boot();
+(async () => {
+  if (!await checkAuth()) return;
+  initSocket();
+  await fetchStats();
+  await Promise.all([loadFriends(), loadGroups(), loadRequests()]);
+  
+  // Auto-select friend from URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const friendId = urlParams.get('friend');
+  if (friendId) selectFriend(+friendId);
+})();
 </script>
 </body>
 </html>
