@@ -895,7 +895,7 @@ async function _awardStreakReward(userId, currentStreak, longestStreak, reward, 
     // Live socket notification (fires only if the user is currently connected)
     const sock = onlineUsers.get(userId);
     if (sock && sock.socketId) {
-        io.to(sock.socketId).emit('streak_updated', {
+        io.to(`user_${userId}`).emit('streak_updated', {
             currentStreak,
             longestStreak,
             streakType,
@@ -1050,6 +1050,31 @@ async function checkAchievements(userId) {
             }
             console.log(`User ${userId} unlocked achievement: ${ach.name}`);
         }
+    }
+}
+// ==================== AUTO DAILY CHECK-IN ====================
+// First time a logged-in user is seen each day → streak + daily credits + login quest.
+// The DB guard in updateStreak() is the real protection against double rewards;
+// this Map just avoids hitting the DB on every request.
+const checkinDay = new Map();   // userId -> 'YYYY-MM-DD' (UTC)
+
+async function runDailyCheckIn(userId) {
+    if (!userId) return null;
+    const today = new Date().toISOString().slice(0, 10);
+    if (checkinDay.get(userId) === today) return null;
+    checkinDay.set(userId, today);          // set FIRST so parallel requests can't run it twice
+    try {
+        const streak = await updateStreak(userId);
+        if (!streak || streak.error) { checkinDay.delete(userId); return null; }   // allow retry
+        if (streak.streakType !== 'already') {
+            await updateQuestProgress(userId, 'login');
+            await checkAchievements(userId);
+        }
+        return streak;
+    } catch (err) {
+        checkinDay.delete(userId);
+        console.error('Daily check-in error:', err);
+        return null;
     }
 }
 
@@ -1207,6 +1232,7 @@ const isAuthenticated = async (req, res, next) => {
             }
             req.session.role = String(result.rows[0].role || '').trim().toLowerCase();
         }
+        runDailyCheckIn(req.session.userId);
         next();
     } catch (err) {
         console.error(err);
@@ -1995,6 +2021,7 @@ io.on('connection', (socket) => {
     userEntry.socketId = socket.id;
     
     socket.join(`user_${userId}`);
+    runDailyCheckIn(userId);
     
     if (session.role === 'admin' || session.role === 'moderator') {
         socket.join('admin_room');
@@ -2681,9 +2708,7 @@ app.post('/login', authLimiter, async (req, res) => {
             else res.send('Login successful');
         });
 
-        updateStreak(user.id).catch(err => console.error('Streak error:', err));
-        updateQuestProgress(user.id, 'login').catch(err => console.error('Quest error:', err));
-        checkAchievements(user.id).catch(err => console.error('Achievement error:', err));
+        runDailyCheckIn(user.id);
 
     } catch (err) {
         console.error('Login error:', err);
@@ -2702,7 +2727,7 @@ app.post('/logout', logoutHandler);
 app.post('/api/logout', logoutHandler);
 
 app.get('/check-session', (req, res) => {
-    if (req.session.userId) res.json({ loggedIn: true, username: req.session.username });
+    if (req.session.userId) res.json({ loggedIn: true, username: req.session.username, userId: req.session.userId });
     else res.json({ loggedIn: false });
 });
 
@@ -2724,6 +2749,7 @@ app.get('/auth/google/callback', (req, res, next) => {
             req.session.username = user.username;
             req.session.email = user.email;
             req.session.role = normalizedRole;
+            runDailyCheckIn(user.id);
             res.redirect(normalizedRole === 'admin' ? '/admin-dashboard.html' : '/main.html');
         });
     })(req, res, next);
@@ -3858,29 +3884,12 @@ app.get('/api/credits/opportunities', isAuthenticated, async (req, res) => {
 
 app.post('/api/credits/claim-daily', isAuthenticated, async (req, res) => {
     try {
-        await ensureUserCredits(req.session.userId);
-        const lastClaim = await pool.query(
-            `SELECT created_at FROM credit_transactions
-             WHERE user_id = $1 AND type = 'bonus' AND description LIKE '%Daily login%'
-               AND created_at::date = CURRENT_DATE
-             ORDER BY created_at DESC LIMIT 1`,
-            [req.session.userId]
-        );
-        if (lastClaim.rows.length > 0) {
+        checkinDay.delete(req.session.userId);                 // force a fresh check
+        const r = await runDailyCheckIn(req.session.userId);
+        if (!r || r.streakType === 'already') {
             return res.status(400).json({ error: 'Daily bonus already claimed today' });
         }
-        const dailyBonus = 5;
-        await pool.query(
-            `UPDATE user_credits SET balance = balance + $1, lifetime_earned = lifetime_earned + $1
-             WHERE user_id = $2`,
-            [dailyBonus, req.session.userId]
-        );
-        await pool.query(
-            `INSERT INTO credit_transactions (user_id, amount, type, description)
-             VALUES ($1, $2, 'bonus', 'Daily login bonus')`,
-            [req.session.userId, dailyBonus]
-        );
-        res.json({ success: true, message: `Claimed ${dailyBonus} credits!` });
+        res.json({ success: true, message: `Day ${r.currentStreak} streak! +${r.credits} credits, +${r.xp} XP` });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
