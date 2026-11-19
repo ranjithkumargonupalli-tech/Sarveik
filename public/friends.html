@@ -662,13 +662,19 @@ document.addEventListener('visibilitychange', () => {
 function notify({ key, title, body, avatarUrl, icon, friendId, groupId, kind }) {
   const href = groupId ? 'chat.html?group=' + groupId : friendId ? 'chat.html?friend=' + friendId : null;
   playTone(); buzz();
+  let handledByNative = false;
   try {
     if (window.SarveikNative && typeof window.SarveikNative.showNotification === 'function') {
       window.SarveikNative.showNotification(title, body, href || 'friends.html');
+      handledByNative = true;
     }
   } catch(e) {}
-  if (document.hidden || !document.hasFocus()) systemNotify({ title, body, tag: key, icon, friendId, groupId });
-  else waPopup({ id: key, name: title, avatarUrl, text: body, href, kind });
+  if (!handledByNative) {
+    if (document.hidden || !document.hasFocus()) systemNotify({ title, body, tag: key, icon, friendId, groupId });
+    else waPopup({ id: key, name: title, avatarUrl, text: body, href, kind });
+  } else if (!document.hidden && document.hasFocus()) {
+    waPopup({ id: key, name: title, avatarUrl, text: body, href, kind });
+  }
 }
 
 function onIncomingMessage(data) {
